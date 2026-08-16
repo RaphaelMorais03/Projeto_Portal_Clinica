@@ -1,0 +1,1532 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NPS Atendimento — Amor Saúde</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <style>
+    :root{
+      --navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;
+      --green:#15803d;--green-bg:#dcfce7;
+      --amber:#b45309;--amber-bg:#fef3c7;
+      --blue:#1d4ed8;--blue-bg:#dbeafe;
+      --purple:#7c3aed;--purple-bg:#ede9fe;
+      --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;
+      --gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;
+      --gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;
+      --shadow:0 4px 20px rgba(10,31,68,.08);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    .s-header{background:var(--navy);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 12px rgba(10,31,68,.3);}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-icon{width:40px;height:40px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);}
+    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
+    .s-logo-name{font-size:16px;font-weight:800;color:white;}
+    .s-logo-sub{font-size:10px;color:rgba(255,255,255,.4);}
+    .back-btn{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .back-btn:hover{background:rgba(255,255,255,.2);}
+    .content{max-width:1400px;margin:0 auto;padding:24px 24px 60px;}
+
+    /* ── TABS ── */
+    .tab-bar{display:flex;gap:4px;margin-bottom:20px;background:white;padding:6px;border-radius:12px;border:1px solid var(--gray-200);width:fit-content;box-shadow:var(--shadow);}
+    .tab-btn{padding:7px 18px;border-radius:8px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px;}
+    .tab-btn.active{background:var(--navy);color:white;}
+    .tab-btn:hover:not(.active){background:var(--gray-100);}
+    .hist-badge{background:var(--red);color:white;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;min-width:18px;text-align:center;}
+    .tab-btn.active .hist-badge{background:rgba(255,255,255,.25);}
+
+    /* ── UPLOAD ── */
+    .upload-zone{background:white;border:2.5px dashed var(--gray-300);border-radius:20px;padding:64px 30px;text-align:center;margin-top:4px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);}
+    .upload-zone:hover,.upload-zone.drag{border-color:var(--navy);background:var(--gray-50);}
+    .upload-icon{font-size:52px;color:var(--gray-300);margin-bottom:18px;display:block;}
+    .upload-title{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:8px;}
+    .upload-sub{font-size:13px;color:var(--gray-500);margin-bottom:22px;line-height:1.7;max-width:520px;margin-left:auto;margin-right:auto;}
+    .upload-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:26px;}
+    .upload-chip{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--gray-500);display:flex;align-items:center;gap:5px;}
+    .upload-chip i{color:var(--green);}
+    .btn-upload{padding:11px 26px;background:var(--navy);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background .2s;}
+    .btn-upload:hover{background:var(--navy-mid);}
+
+    /* ── MODAL ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .modal-box{background:white;border-radius:20px;padding:28px 30px;max-width:580px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.25);max-height:92vh;overflow-y:auto;}
+    .modal-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:5px;display:flex;align-items:center;gap:9px;}
+    .modal-sub{font-size:12px;color:var(--gray-500);margin-bottom:22px;line-height:1.6;}
+    .mapper-row{margin-bottom:14px;}
+    .mapper-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-500);margin-bottom:5px;display:block;}
+    .mapper-select,.f-input-modal{width:100%;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color .2s;}
+    .mapper-select:focus,.f-input-modal:focus{border-color:var(--navy);}
+    .preview-wrap{overflow-x:auto;margin:14px 0;}
+    .preview-table{width:100%;border-collapse:collapse;font-size:11px;}
+    .preview-table th{background:var(--gray-100);padding:6px 10px;text-align:left;color:var(--gray-500);font-weight:700;white-space:nowrap;}
+    .preview-table td{padding:6px 10px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .modal-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--gray-100);}
+    .btn-p{padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-p:hover{background:var(--navy-mid);}
+    .btn-p:disabled{opacity:.5;cursor:not-allowed;}
+    .btn-s{padding:9px 14px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+    .btn-s:hover{background:var(--gray-200);}
+    .btn-green{padding:8px 14px;background:#16a34a;color:white;border:none;border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-green:hover{background:var(--green);}
+    .btn-green:disabled{opacity:.5;cursor:not-allowed;}
+
+    /* ── INFO BAR ── */
+    .info-bar{background:white;border:1px solid var(--gray-200);border-radius:14px;padding:11px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:var(--shadow);}
+    .file-chip{display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:white;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;}
+    .info-chip{display:inline-flex;align-items:center;gap:5px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:4px 11px;font-size:11px;font-weight:600;color:var(--gray-600);}
+    .scale-chip{background:var(--purple-bg);color:var(--purple);border:1px solid #c4b5fd;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:700;}
+    .hist-chip{background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:700;}
+    .search-input{padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;color:var(--gray-800);background:var(--gray-50);outline:none;min-width:200px;transition:border-color .2s;}
+    .search-input:focus{border-color:var(--navy);}
+
+    /* ── KPI GRID ── */
+    .kpi-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr 1fr;gap:14px;margin-bottom:22px;}
+    .kpi-card{background:white;border:1px solid var(--gray-200);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);border-top:3px solid transparent;}
+    .kpi-card.c-nps  {border-top-color:var(--navy);}
+    .kpi-card.c-tot  {border-top-color:var(--purple);}
+    .kpi-card.c-prom {border-top-color:var(--green);}
+    .kpi-card.c-pass {border-top-color:var(--blue);}
+    .kpi-card.c-detr {border-top-color:var(--red);}
+    .kpi-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;margin-bottom:10px;}
+    .c-nps  .kpi-icon{background:rgba(10,31,68,.1);color:var(--navy);}
+    .c-tot  .kpi-icon{background:var(--purple-bg);color:var(--purple);}
+    .c-prom .kpi-icon{background:var(--green-bg);color:var(--green);}
+    .c-pass .kpi-icon{background:var(--blue-bg);color:var(--blue);}
+    .c-detr .kpi-icon{background:#fee2e2;color:var(--red);}
+    .kpi-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:4px;}
+    .kpi-val{font-size:28px;font-weight:900;letter-spacing:-.5px;font-variant-numeric:tabular-nums;color:var(--gray-800);}
+    .c-nps  .kpi-val{font-size:44px;}
+    .c-prom .kpi-val{color:var(--green);}
+    .c-pass .kpi-val{color:var(--blue);}
+    .c-detr .kpi-val{color:var(--red);}
+    .c-tot  .kpi-val{color:var(--purple);}
+    .kpi-sub{font-size:11px;font-weight:600;margin-top:4px;color:var(--gray-400);}
+    .nps-zone{display:inline-block;font-size:11px;font-weight:700;margin-top:8px;padding:3px 10px;border-radius:20px;}
+    .dist-bar{display:flex;height:7px;border-radius:4px;overflow:hidden;width:100%;margin-top:10px;gap:1px;}
+
+    /* ── DASH GRID ── */
+    .dash-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:20px;}
+    .card{background:white;border:1px solid var(--gray-200);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;}
+    .card-header{padding:15px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
+    .card-title{font-size:14px;font-weight:800;color:var(--navy);}
+
+    /* ── TABLE ── */
+    .table-wrap{overflow-x:auto;max-height:440px;overflow-y:auto;}
+    table{width:100%;border-collapse:collapse;min-width:480px;}
+    thead th{padding:10px 14px;text-align:left;font-size:10px;font-weight:800;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);position:sticky;top:0;}
+    th.num,td.num{text-align:right;}
+    td{padding:11px 14px;border-bottom:1px solid var(--gray-100);font-size:13px;white-space:nowrap;}
+    tbody tr.main-row{cursor:pointer;}
+    tbody tr.main-row:hover td{background:#fafbfd;}
+    tbody tr.main-row.open td{background:#f0fdf4;}
+    .rank-medal{font-size:16px;}
+    .rank-num{font-size:11px;font-weight:800;color:var(--gray-400);}
+    .nps-num{font-weight:900;font-size:15px;}
+    .badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;}
+    .b-excel{background:var(--green-bg);color:var(--green);}
+    .b-qual {background:var(--blue-bg);color:var(--blue);}
+    .b-aper {background:var(--amber-bg);color:var(--amber);}
+    .b-crit {background:#fee2e2;color:var(--red);}
+    .expand-btn{width:26px;height:26px;border-radius:6px;border:none;background:none;cursor:pointer;color:var(--gray-400);display:inline-flex;align-items:center;justify-content:center;transition:all .12s;font-size:11px;}
+    .expand-btn:hover{background:var(--green-bg);color:var(--green);}
+
+    /* ── DETAIL ROW ── */
+    .detail-row td{padding:0!important;border-bottom:1px solid var(--gray-200);}
+    .detail-inner{padding:14px 18px 18px;background:#f0fdf4;}
+    .detail-ttl{font-size:11px;font-weight:800;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .det-table-wrap{background:white;border:1px solid #bbf7d0;border-radius:10px;overflow:hidden;}
+    .det-table{width:100%;border-collapse:collapse;font-size:11px;}
+    .det-table th{background:#f0fdf4;color:var(--green);font-size:10px;font-weight:800;padding:7px 12px;text-align:left;}
+    .det-table td{padding:7px 12px;border-bottom:1px solid #f0fdf4;color:var(--gray-700);}
+    .det-table tbody tr:last-child td{border-bottom:none;}
+    .note-circle{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:900;}
+    .n-prom{background:var(--green-bg);color:var(--green);}
+    .n-pass{background:var(--blue-bg);color:var(--blue);}
+    .n-detr{background:#fee2e2;color:var(--red);}
+
+    /* ── HISTÓRICO ── */
+    .hist-section-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+    .hist-card{background:white;border:1px solid var(--gray-200);border-radius:14px;padding:16px 20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:18px;margin-bottom:10px;transition:all .15s;}
+    .hist-card:hover{border-color:#c4b5fd;transform:translateY(-1px);}
+    .hist-nps-block{min-width:70px;text-align:center;flex-shrink:0;}
+    .hist-nps-val{font-size:32px;font-weight:900;letter-spacing:-.5px;line-height:1;}
+    .hist-zona-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:4px;}
+    .hist-info{flex:1;min-width:0;}
+    .hist-title{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .hist-stats{font-size:11px;color:var(--gray-500);margin-bottom:3px;}
+    .hist-meta{font-size:10px;color:var(--gray-400);}
+    .hist-actions{display:flex;gap:6px;flex-shrink:0;}
+    .btn-danger{padding:7px 10px;background:#fee2e2;color:var(--red);border:1.5px solid #fecaca;border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;}
+    .btn-danger:hover{background:var(--red);color:white;}
+    .hist-dist{display:flex;height:5px;border-radius:3px;overflow:hidden;gap:1px;margin-top:6px;width:80px;}
+    .month-group{margin-bottom:28px;}
+
+    /* ── EMPTY / BANNER ── */
+    .empty-state{text-align:center;padding:48px 20px;color:var(--gray-400);}
+    .empty-state i{font-size:36px;margin-bottom:12px;display:block;opacity:.3;}
+    .empty-state p{font-size:13px;font-weight:600;}
+    .hist-banner{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:var(--green);}
+    .hist-banner button{margin-left:auto;padding:5px 12px;background:var(--green);color:white;border:none;border-radius:7px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;}
+
+    /* ── ABA POR ATENDENTE ── */
+    .atend-card{background:white;border:1px solid var(--gray-200);border-radius:16px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden;}
+    .atend-card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;transition:background .15s;gap:12px;user-select:none;}
+    .atend-card-header:hover{background:var(--gray-50);}
+    .atend-nome{font-size:14px;font-weight:800;color:var(--navy);}
+    .atend-stats{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .atend-body{display:none;border-top:1px solid var(--gray-100);}
+    .atend-body.open{display:block;}
+    .id-chip{display:inline-block;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;color:var(--gray-700);font-family:monospace;cursor:pointer;transition:all .15s;margin:1px;}
+    .id-chip:hover{background:var(--navy);color:white;border-color:var(--navy);}
+    .copy-all-btn{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:8px;padding:5px 14px;font-family:inherit;font-size:11px;font-weight:700;color:var(--gray-600);cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;margin-bottom:10px;}
+    .copy-all-btn:hover{background:var(--navy);color:white;border-color:var(--navy);}
+    @media(max-width:1024px){.kpi-grid{grid-template-columns:1fr 1fr 1fr;}.dash-grid{grid-template-columns:1fr;}}
+    @media(max-width:640px){.kpi-grid{grid-template-columns:1fr 1fr;}.content{padding:14px 14px 60px;}.hist-card{flex-wrap:wrap;}.hist-actions{width:100%;justify-content:flex-end;}}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+
+  <header class="s-header">
+    <div class="s-logo">
+      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="" id="headerLogo"></div>
+      <div>
+        <div class="s-logo-name">NPS — Atendimento</div>
+        <div class="s-logo-sub">Pesquisa de satisfação · Call Center</div>
+      </div>
+    </div>
+    <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+  </header>
+
+  <div class="content">
+
+    <!-- ── TAB BAR ── -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabImportar" onclick="setTab('importar')">
+        <i class="fas fa-file-arrow-up"></i> Nova Importação
+      </button>
+      <button class="tab-btn" id="tabHistorico" onclick="setTab('historico')">
+        <i class="fas fa-clock-rotate-left"></i> Histórico
+        <span class="hist-badge" id="histCount">0</span>
+      </button>
+      <button class="tab-btn" id="tabAtendente" onclick="setTab('atendente')">
+        <i class="fas fa-id-card"></i> Por Atendente
+      </button>
+    </div>
+
+    <!-- ── UPLOAD ── -->
+    <div id="uploadSection">
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <i class="fas fa-file-arrow-up upload-icon"></i>
+        <div class="upload-title">Importar planilha de NPS</div>
+        <div class="upload-sub">
+          Arraste o arquivo CSV exportado do seu sistema de atendimento.<br>
+          O sistema detecta as colunas automaticamente — mesmo que estejam com nomes diferentes ou em outra ordem.
+        </div>
+        <div class="upload-chips">
+          <span class="upload-chip"><i class="fas fa-check"></i> Atendente / Agente / Operador</span>
+          <span class="upload-chip"><i class="fas fa-check"></i> Nota / Resposta / Score / Rating</span>
+          <span class="upload-chip"><i class="fas fa-check"></i> Data / Timestamp</span>
+          <span class="upload-chip"><i class="fas fa-check"></i> Comentário / Feedback / Mensagem</span>
+          <span class="upload-chip"><i class="fas fa-check"></i> Escala 1–5 ou 0–10 (auto)</span>
+        </div>
+        <input type="file" id="fileInput" accept=".csv,.txt" style="display:none;" onchange="onFileChange(event)">
+        <button class="btn-upload" onclick="event.stopPropagation();document.getElementById('fileInput').click()">
+          <i class="fas fa-folder-open"></i> Selecionar arquivo CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- ── MODAL DE MAPEAMENTO ── -->
+    <div class="modal-overlay" id="mapperModal" style="display:none;">
+      <div class="modal-box">
+        <div class="modal-title">
+          <i class="fas fa-table-columns" style="color:var(--purple);"></i>
+          Confirmar mapeamento de colunas
+        </div>
+        <div class="modal-sub">
+          O sistema tentou identificar as colunas automaticamente. Confirme ou corrija antes de processar.
+          Campos com <strong>*</strong> são obrigatórios.
+        </div>
+        <div class="mapper-row">
+          <label class="mapper-label">👤 Atendente / Agente *</label>
+          <select class="mapper-select" id="mapAtendente"></select>
+        </div>
+        <div class="mapper-row">
+          <label class="mapper-label">⭐ Nota / Resposta / NPS *</label>
+          <select class="mapper-select" id="mapResposta"></select>
+        </div>
+        <div class="mapper-row">
+          <label class="mapper-label">📅 Data (opcional)</label>
+          <select class="mapper-select" id="mapData"></select>
+        </div>
+        <div class="mapper-row">
+          <label class="mapper-label">💬 Comentário / Feedback (opcional)</label>
+          <select class="mapper-select" id="mapComentario"></select>
+        </div>
+        <div class="mapper-row">
+          <label class="mapper-label">🔢 ID do Caso / Protocolo (opcional)</label>
+          <select class="mapper-select" id="mapIdCaso"></select>
+        </div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:6px;">
+          <i class="fas fa-eye"></i> Prévia — primeiros 3 registros
+        </div>
+        <div class="preview-wrap"><table class="preview-table" id="previewTable"></table></div>
+        <div class="modal-actions">
+          <button class="btn-s" onclick="cancelarMapeamento()"><i class="fas fa-times"></i> Cancelar</button>
+          <button class="btn-p" onclick="confirmarMapeamento()"><i class="fas fa-play"></i> Processar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODAL SALVAR PERÍODO ── -->
+    <div class="modal-overlay" id="saveModal" style="display:none;">
+      <div class="modal-box" style="max-width:420px;">
+        <div class="modal-title">
+          <i class="fas fa-cloud-arrow-up" style="color:var(--green);"></i>
+          Salvar período no histórico
+        </div>
+        <div class="modal-sub">
+          Os resultados serão salvos permanentemente e poderão ser visualizados por todos os administradores a qualquer momento.
+        </div>
+        <div class="mapper-row">
+          <label class="mapper-label">📅 Mês de referência *</label>
+          <input type="month" id="savePeriodo" class="mapper-select" style="cursor:pointer;">
+        </div>
+        <div class="mapper-row">
+          <label class="mapper-label">🏷️ Rótulo (opcional)</label>
+          <input type="text" id="saveLabel" class="f-input-modal" placeholder="Ex: Semana 1, Exportação completa...">
+        </div>
+        <div id="saveInfo" style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--gray-600);margin-bottom:16px;display:none;">
+          <i class="fas fa-info-circle" style="color:var(--blue);"></i>
+          <span id="saveInfoTxt"></span>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-s" onclick="document.getElementById('saveModal').style.display='none'">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button class="btn-p" id="btnConfirmarSalvar" onclick="confirmarSalvar()">
+            <i class="fas fa-cloud-arrow-up"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div id="dashSection" style="display:none;">
+
+      <!-- Banner histórico -->
+      <div class="hist-banner" id="histBanner" style="display:none;">
+        <i class="fas fa-clock-rotate-left"></i>
+        <span id="histBannerTxt">Visualizando dados do histórico</span>
+        <button onclick="voltarUpload()"><i class="fas fa-rotate-right"></i> Nova Importação</button>
+      </div>
+
+      <!-- Info bar -->
+      <div class="info-bar">
+        <span class="file-chip"><i class="fas fa-file-csv"></i> <span id="infoFile">—</span></span>
+        <span class="info-chip" id="infoPeriod" style="display:none;"><i class="fas fa-calendar-range"></i> <span id="infoPeriodTxt"></span></span>
+        <span class="scale-chip" id="infoScale"></span>
+        <span class="hist-chip" id="infoHistChip" style="display:none;"><i class="fas fa-cloud-check"></i> Dados salvos</span>
+        <input class="search-input" type="text" id="searchInput" placeholder="🔍 Buscar atendente..." oninput="filtrar(this.value)">
+        <span style="margin-left:auto;font-size:11px;color:var(--gray-400);" id="infoCount"></span>
+        <button class="btn-green" id="btnSalvar" style="display:none;" onclick="abrirSalvar()">
+          <i class="fas fa-cloud-arrow-up"></i> Salvar período
+        </button>
+        <button class="btn-s" onclick="exportarNpsExcel()" style="background:#15803d;color:white;border:none;" title="Exportar relatório Excel">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
+        <button class="btn-s" onclick="voltarUpload()"><i class="fas fa-rotate-right"></i> Nova importação</button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card c-nps">
+          <div class="kpi-icon"><i class="fas fa-star"></i></div>
+          <div class="kpi-lbl">NPS Geral</div>
+          <div class="kpi-val" id="kpiNPS">—</div>
+          <div id="kpiZone" class="nps-zone"></div>
+          <div class="dist-bar" id="distBar"></div>
+        </div>
+        <div class="kpi-card c-tot">
+          <div class="kpi-icon"><i class="fas fa-list-check"></i></div>
+          <div class="kpi-lbl">Total de pesquisas</div>
+          <div class="kpi-val" id="kpiTotal">—</div>
+          <div class="kpi-sub" id="kpiAtend"></div>
+        </div>
+        <div class="kpi-card c-prom">
+          <div class="kpi-icon"><i class="fas fa-thumbs-up"></i></div>
+          <div class="kpi-lbl">Promotores</div>
+          <div class="kpi-val" id="kpiProm">—</div>
+          <div class="kpi-sub" id="kpiPromPct" style="color:var(--green);"></div>
+        </div>
+        <div class="kpi-card c-pass">
+          <div class="kpi-icon"><i class="fas fa-minus"></i></div>
+          <div class="kpi-lbl">Passivos</div>
+          <div class="kpi-val" id="kpiPass">—</div>
+          <div class="kpi-sub" id="kpiPassPct" style="color:var(--blue);"></div>
+        </div>
+        <div class="kpi-card c-detr">
+          <div class="kpi-icon"><i class="fas fa-thumbs-down"></i></div>
+          <div class="kpi-lbl">Detratores</div>
+          <div class="kpi-val" id="kpiDetr">—</div>
+          <div class="kpi-sub" id="kpiDetrPct" style="color:var(--red);"></div>
+        </div>
+      </div>
+
+      <!-- Grid principal -->
+      <div class="dash-grid">
+        <!-- Gráfico -->
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-chart-bar" style="color:var(--purple);font-size:15px;"></i>
+            <span class="card-title">NPS por Atendente</span>
+            <span id="chartLabel" style="margin-left:auto;font-size:11px;color:var(--gray-400);"></span>
+          </div>
+          <div style="padding:16px 16px 12px;">
+            <canvas id="npsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Ranking -->
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-trophy" style="color:var(--amber);font-size:15px;"></i>
+            <span class="card-title">Ranking Completo</span>
+            <span id="rankLabel" style="margin-left:auto;font-size:11px;color:var(--gray-400);"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:42px;">#</th>
+                  <th>Atendente</th>
+                  <th class="num">Pesq.</th>
+                  <th class="num">NPS</th>
+                  <th>Zona</th>
+                  <th style="width:34px;"></th>
+                </tr>
+              </thead>
+              <tbody id="rankBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HISTÓRICO ── -->
+    <!-- ── POR ATENDENTE ── -->
+    <div id="atendenteSection" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <input class="search-input" type="text" id="searchAtend" placeholder="🔍 Buscar atendente..." oninput="renderPorAtendente()" style="flex:1;min-width:180px;">
+        <select id="filtroTipoAtend" class="search-input" onchange="renderPorAtendente()" style="width:180px;">
+          <option value="">Todos os tipos</option>
+          <option value="p">Promotores</option>
+          <option value="s">Passivos</option>
+          <option value="d">Detratores</option>
+        </select>
+
+      </div>
+      <div id="atendCardsContainer">
+        <div style="text-align:center;padding:40px;color:var(--gray-400);">
+          <i class="fas fa-file-import" style="font-size:2rem;display:block;margin-bottom:10px;opacity:.3;"></i>
+          Importe um arquivo para visualizar por atendente.
+        </div>
+      </div>
+    </div>
+
+    <div id="historicoSection" style="display:none;">
+      <div id="histList">
+        <div class="empty-state">
+          <i class="fas fa-clock-rotate-left"></i>
+          <p>Carregando histórico...</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <script>
+    /* ════════════════════════════════════════
+       ESTADO
+    ════════════════════════════════════════ */
+    let _rawData     = [];
+    let _headers     = [];
+    let _colMap      = {};
+    let _scale       = 5;
+    let _allRanking  = [];
+    let _viewRanking = [];
+    let _chartInst   = null;
+    let _openRow     = null;
+    let _fileName    = '';
+    let _aggregated  = null;   // resumo processado pronto para salvar
+    let _histMode    = false;  // true quando visualizando dados do histórico
+    let _activeTab   = 'importar';
+
+    /* ════════════════════════════════════════
+       DETECÇÃO DE COLUNAS
+    ════════════════════════════════════════ */
+    const ALIASES = {
+      atendente: ['atendente','agente','operador','operadora','colaborador','nome',
+                  'user','usuario','responsavel','agent','operator','nomeagente',
+                  'nomeatendente','attendant','agentename','nomecompleto','atend'],
+      resposta:  ['resposta','nota','score','avaliacao','rating','nps','pontuacao',
+                  'satisfacao','grade','notanps','feedbackscore','notaatendimento',
+                  'classificacao','avaliacaonps','notafinal','pontuacaonps','nota1a5',
+                  'nota1a10','notapesquisa','codigorespostaagente'],
+      data:      ['data','date','datetime','datahora','dataatendimento','criadoem',
+                  'createdat','timestamp','horario','hora','datahorario','dtatend',
+                  'dataabertura','dataresposta','dataenvio','datapesquisa',
+                  'datapesquisanps','dataavaliacao','datacriacao','dataregistro'],
+      comentario:['comentario','observacao','mensagem','message','feedback','comment',
+                  'texto','notas','notes','justificativa','motivo','descricao','obs',
+                  'comentariocliente','textorespostaaberta','resposta_aberta',
+                  'feedbackcliente','textoaberto','respostaaberta'],
+      idCaso:    ['id','caso','case','idcaso','caseid','numerocaso','protocolo','ticket',
+                  'atendimento','numerodeatendimento','atendimentoid',
+                  'idatendimento','codigoatendimento','numerochamado','idprotocolo',
+                  'codigocaso','numeroproto','conversationid','casekey','casenumber',
+                  'nroatendimento','numerodaocorrencia','identificador','idocorrencia']
+    };
+
+    function norm(s) {
+      return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function detectColumns(headers) {
+      const found = { atendente:null, resposta:null, data:null, comentario:null, idCaso:null };
+      headers.forEach(h => {
+        const hn = norm(h);
+        for (const [field, aliases] of Object.entries(ALIASES)) {
+          if (found[field]) continue;
+          if (aliases.includes(hn)) { found[field] = h; return; }
+          // Parcial: só hn.includes(a) + alias >= 6 chars
+          // Evita falsos positivos: 'Atendimento' não vira atendente pelo alias curto 'atend'
+          if (aliases.some(a => a.length >= 6 && hn.length >= 5 && hn.includes(a))) {
+            found[field] = h;
+          }
+        }
+      });
+      return found;
+    }
+
+    /* ════════════════════════════════════════
+       ESCALA E NPS
+    ════════════════════════════════════════ */
+    function detectScale(data, col) {
+      const vals = data.map(r => parseFloat(String(r[col]||'').replace(',','.')))
+                       .filter(n => !isNaN(n));
+      return Math.max(...vals) > 5 ? 10 : 5;
+    }
+
+    function classify(v, scale) {
+      if (scale === 5) { if (v === 5) return 'p'; if (v === 4) return 's'; return 'd'; }
+      if (v >= 9) return 'p'; if (v >= 7) return 's'; return 'd';
+    }
+
+    function calcNPS(p, d, t) { return t > 0 ? Math.round(((p - d) / t) * 100) : 0; }
+
+    function zonaInfo(nps) {
+      if (nps >= 75) return { label:'Zona de Excelência', bg:'var(--green-bg)', color:'var(--green)' };
+      if (nps >= 50) return { label:'Zona de Qualidade',  bg:'var(--blue-bg)',  color:'var(--blue)'  };
+      if (nps >= 0)  return { label:'Aperfeiçoamento',    bg:'var(--amber-bg)', color:'var(--amber)' };
+      return               { label:'Zona Crítica',        bg:'#fee2e2',         color:'var(--red)'   };
+    }
+
+    function badgeZona(nps) {
+      const z = zonaInfo(nps);
+      const cls = nps>=75?'b-excel':nps>=50?'b-qual':nps>=0?'b-aper':'b-crit';
+      return `<span class="badge ${cls}">${z.label.replace('Zona de ','').replace('Zona ','')}</span>`;
+    }
+
+    function pct(n, t) { return t > 0 ? Math.round(n / t * 100) : 0; }
+
+    /* ════════════════════════════════════════
+       LEITURA DO ARQUIVO
+    ════════════════════════════════════════ */
+    window.onFileChange = function(e) {
+      const file = e.target.files[0]; if (!file) return;
+      _fileName = file.name;
+      parseFile(file);
+    };
+
+    function parseFile(file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: h => h.replace(/^﻿/, '').trim(),
+        complete(results) {
+          if (!results.data.length) { toast('Arquivo vazio ou sem dados reconhecíveis.','error'); return; }
+          _rawData = results.data;
+          _headers = results.meta.fields || [];
+          const detected = detectColumns(_headers);
+          if (!detected.atendente || !detected.resposta) {
+            showMapper(detected);
+          } else {
+            _colMap = detected;
+            processData();
+          }
+        },
+        error(err) { toast('Erro ao ler o arquivo: ' + (err.message || err),'error'); }
+      });
+    }
+
+    /* ── Drag & drop ── */
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag'); });
+    dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f) { _fileName = f.name; parseFile(f); }
+    });
+
+    /* ════════════════════════════════════════
+       MODAL DE MAPEAMENTO
+    ════════════════════════════════════════ */
+    function showMapper(detected) {
+      const none = '<option value="">— não disponível —</option>';
+      const opts = _headers.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join('');
+      ['mapAtendente','mapResposta','mapIdCaso'].forEach(id => {
+        document.getElementById(id).innerHTML = opts;
+      });
+      ['mapData','mapComentario','mapIdCaso'].forEach(id => {
+        document.getElementById(id).innerHTML = none + opts;
+      });
+      if (detected.atendente)  document.getElementById('mapAtendente').value  = detected.atendente;
+      if (detected.idCaso)     document.getElementById('mapIdCaso').value     = detected.idCaso;
+      if (detected.resposta)   document.getElementById('mapResposta').value   = detected.resposta;
+      if (detected.data)       document.getElementById('mapData').value       = detected.data;
+      if (detected.comentario) document.getElementById('mapComentario').value = detected.comentario;
+      const rows3 = _rawData.slice(0, 3);
+      const head  = `<thead><tr>${_headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>`;
+      const body  = `<tbody>${rows3.map(r=>`<tr>${_headers.map(h=>`<td>${esc(String(r[h]||''))}</td>`).join('')}</tr>`).join('')}</tbody>`;
+      document.getElementById('previewTable').innerHTML = head + body;
+      document.getElementById('mapperModal').style.display = 'flex';
+    }
+
+    window.cancelarMapeamento = function() {
+      document.getElementById('mapperModal').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+    };
+
+    window.confirmarMapeamento = function() {
+      const a = document.getElementById('mapAtendente').value;
+      const r = document.getElementById('mapResposta').value;
+      if (!a || !r) { toast('Selecione ao menos Atendente e Nota/Resposta.','error'); return; }
+      _colMap = {
+        atendente:  a,
+        resposta:   r,
+        data:       document.getElementById('mapData').value       || null,
+        comentario: document.getElementById('mapComentario').value || null,
+        idCaso:     document.getElementById('mapIdCaso').value     || null
+      };
+      document.getElementById('mapperModal').style.display = 'none';
+      processData();
+    };
+
+    /* ════════════════════════════════════════
+       PROCESSAMENTO
+    ════════════════════════════════════════ */
+    function processData() {
+      const { atendente:cA, resposta:cR, data:cD, comentario:cC } = _colMap;
+      _scale = detectScale(_rawData, cR);
+
+      let tP=0, tS=0, tD=0, tT=0;
+      const map   = {};
+      const datas = [];
+
+      _rawData.forEach(row => {
+        const nome = (row[cA] || '').trim() || 'Desconhecido';
+        const raw  = String(row[cR] || '').replace(',', '.').trim();
+        const val  = parseFloat(raw);
+        if (isNaN(val) || val < 0) return;
+        tT++;
+        if (!map[nome]) map[nome] = { nome, total:0, p:0, s:0, d:0, pesquisas:[] };
+        map[nome].total++;
+        const tipo = classify(val, _scale);
+        if (tipo==='p') { tP++; map[nome].p++; }
+        else if (tipo==='s') { tS++; map[nome].s++; }
+        else { tD++; map[nome].d++; }
+        const cI = _colMap.idCaso;
+        map[nome].pesquisas.push({
+          val, tipo,
+          data:       cD ? (row[cD] || '') : null,
+          comentario: cC ? (row[cC] || '') : null,
+          idCaso:     cI ? (row[cI] || '') : null
+        });
+        if (cD && row[cD]) datas.push(row[cD]);
+      });
+
+      if (!tT) { toast('Nenhuma nota numérica válida encontrada na coluna selecionada.','error'); return; }
+
+      _allRanking = Object.values(map)
+        .map(a => ({ ...a, nps: calcNPS(a.p, a.d, a.total) }))
+        .sort((a, b) => b.nps - a.nps || b.total - a.total);
+      _viewRanking = [..._allRanking];
+
+      // Armazenar resumo para salvar
+      _aggregated = {
+        npsGeral:       calcNPS(tP, tD, tT),
+        totalPesquisas: tT,
+        promotores:     tP,
+        passivos:       tS,
+        detratores:     tD,
+        escala:         _scale,
+        nomeArquivo:    _fileName,
+        ranking:        _allRanking.map(({nome,total,p,s,d,nps}) => ({nome,total,p,s,d,nps}))
+      };
+
+      atualizarKPIs(tP, tS, tD, tT, datas);
+      renderChart(_viewRanking);
+      renderRanking(_viewRanking);
+      if (_activeTab === 'atendente') renderPorAtendente();
+
+      // Info bar
+      document.getElementById('infoFile').textContent  = _fileName;
+      document.getElementById('infoScale').textContent = 'Escala 1–' + _scale;
+      document.getElementById('infoCount').textContent = tT + ' pesquisas · ' + _allRanking.length + ' atendentes';
+      document.getElementById('infoHistChip').style.display = 'none';
+
+      // Mostrar botão salvar
+      const btnS = document.getElementById('btnSalvar');
+      btnS.style.display   = 'inline-flex';
+      btnS.disabled        = false;
+      btnS.innerHTML       = '<i class="fas fa-cloud-arrow-up"></i> Salvar período';
+
+      // Ocultar banner histórico
+      document.getElementById('histBanner').style.display = 'none';
+      _histMode = false;
+
+      document.getElementById('uploadSection').style.display = 'none';
+      document.getElementById('dashSection').style.display   = 'block';
+      setTab('importar', true); // ativa aba sem esconder dashSection
+    }
+
+    function atualizarKPIs(tP, tS, tD, tT, datas) {
+      const nps  = calcNPS(tP, tD, tT);
+      const zona = zonaInfo(nps);
+      document.getElementById('kpiNPS').textContent   = nps;
+      document.getElementById('kpiNPS').style.color   = zona.color;
+      const zEl = document.getElementById('kpiZone');
+      zEl.textContent = zona.label; zEl.style.background = zona.bg; zEl.style.color = zona.color;
+      document.getElementById('kpiTotal').textContent = tT;
+      document.getElementById('kpiAtend').textContent = _allRanking.length + ' atendente(s)';
+      document.getElementById('kpiProm').textContent  = tP;
+      document.getElementById('kpiPass').textContent  = tS;
+      document.getElementById('kpiDetr').textContent  = tD;
+      document.getElementById('kpiPromPct').textContent = pct(tP,tT) + '% do total';
+      document.getElementById('kpiPassPct').textContent = pct(tS,tT) + '% do total';
+      document.getElementById('kpiDetrPct').textContent = pct(tD,tT) + '% do total';
+      document.getElementById('distBar').innerHTML =
+        `<div style="flex:${tP||1};background:var(--green);"></div>` +
+        `<div style="flex:${tS||1};background:var(--blue);"></div>` +
+        `<div style="flex:${tD||1};background:var(--red);"></div>`;
+      if (datas && datas.length) {
+        const sorted = [...datas].sort();
+        document.getElementById('infoPeriodTxt').textContent = sorted[0] + ' → ' + sorted[sorted.length - 1];
+        document.getElementById('infoPeriod').style.display = 'inline-flex';
+      } else {
+        document.getElementById('infoPeriod').style.display = 'none';
+      }
+    }
+
+    /* ════════════════════════════════════════
+       SALVAR PERÍODO
+    ════════════════════════════════════════ */
+    window.abrirSalvar = function() {
+      if (!_aggregated) return;
+      const now  = new Date();
+      const yyyy = now.getFullYear();
+      const mm   = String(now.getMonth()+1).padStart(2,'0');
+      document.getElementById('savePeriodo').value = yyyy + '-' + mm;
+      document.getElementById('saveLabel').value   = '';
+      // Info resumo
+      const inf = document.getElementById('saveInfo');
+      document.getElementById('saveInfoTxt').textContent =
+        `${_aggregated.totalPesquisas} pesquisas · NPS ${_aggregated.npsGeral} · ${_aggregated.ranking.length} atendentes · Escala 1–${_aggregated.escala}`;
+      inf.style.display = 'block';
+      document.getElementById('btnConfirmarSalvar').disabled = false;
+      document.getElementById('saveModal').style.display = 'flex';
+    };
+
+    window.confirmarSalvar = async function() {
+      const periodo = document.getElementById('savePeriodo').value;
+      if (!periodo) { toast('Selecione o mês de referência','error'); return; }
+      if (!_aggregated) return;
+      if (!window.fbNpsPush) { toast('Firebase não inicializado','error'); return; }
+
+      const label = document.getElementById('saveLabel').value.trim();
+      const snap = {
+        periodo,
+        label:          label || null,
+        importadoEm:    new Date().toISOString(),
+        importadoPor:   sessionStorage.getItem('usuario') || '—',
+        nomeArquivo:    _aggregated.nomeArquivo,
+        escala:         _aggregated.escala,
+        npsGeral:       _aggregated.npsGeral,
+        totalPesquisas: _aggregated.totalPesquisas,
+        promotores:     _aggregated.promotores,
+        passivos:       _aggregated.passivos,
+        detratores:     _aggregated.detratores,
+        ranking:        _aggregated.ranking
+      };
+
+      document.getElementById('btnConfirmarSalvar').disabled = true;
+      document.getElementById('btnConfirmarSalvar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+      try {
+        await window.fbNpsPush('nps/' + periodo, snap);
+        document.getElementById('saveModal').style.display = 'none';
+        toast('Período salvo com sucesso! ✅','success');
+
+        // Atualiza botão salvar
+        const btnS = document.getElementById('btnSalvar');
+        btnS.innerHTML = '<i class="fas fa-check"></i> Salvo';
+        btnS.disabled  = true;
+
+        // Mostra chip "Dados salvos"
+        document.getElementById('infoHistChip').style.display = 'inline-flex';
+
+        // Atualiza badge do histórico
+        carregarContadorHistorico();
+      } catch(e) {
+        toast('Erro ao salvar: ' + e.message, 'error');
+        document.getElementById('btnConfirmarSalvar').disabled = false;
+        document.getElementById('btnConfirmarSalvar').innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Salvar';
+      }
+    };
+
+    /* ════════════════════════════════════════
+       HISTÓRICO
+    ════════════════════════════════════════ */
+    function carregarContadorHistorico() {
+      if (!window.fbNpsGet) return;
+      window.fbNpsGet('nps').then(snap => {
+        const data = snap.val() || {};
+        let total = 0;
+        Object.values(data).forEach(periodo => {
+          total += Object.keys(periodo).length;
+        });
+        document.getElementById('histCount').textContent = total;
+      }).catch(()=>{});
+    }
+
+    window.setTab = function(tab, preserveDash) {
+      _activeTab = tab;
+      document.getElementById('tabImportar').classList.toggle('active',   tab === 'importar');
+      document.getElementById('tabHistorico').classList.toggle('active',  tab === 'historico');
+      document.getElementById('tabAtendente').classList.toggle('active',  tab === 'atendente');
+
+      document.getElementById('historicoSection').style.display  = tab === 'historico'  ? 'block' : 'none';
+      document.getElementById('atendenteSection').style.display  = tab === 'atendente'  ? 'block' : 'none';
+
+      if (tab === 'historico') {
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('dashSection').style.display   = 'none';
+        carregarHistorico();
+      } else if (tab === 'atendente') {
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('dashSection').style.display   = 'none';
+        renderPorAtendente();
+      } else {
+        if (!preserveDash) {
+          const temDados = _allRanking.length > 0;
+          document.getElementById('dashSection').style.display   = temDados ? 'block' : 'none';
+          document.getElementById('uploadSection').style.display = temDados ? 'none'  : 'block';
+        }
+      }
+    };
+
+    function carregarHistorico() {
+      if (!window.fbNpsGet) {
+        document.getElementById('histList').innerHTML =
+          '<div class="empty-state"><i class="fas fa-wifi-slash"></i><p>Firebase não inicializado</p></div>';
+        return;
+      }
+      document.getElementById('histList').innerHTML =
+        '<div class="empty-state"><i class="fas fa-spinner fa-spin" style="opacity:.5;"></i><p>Carregando...</p></div>';
+
+      window.fbNpsGet('nps').then(snap => {
+        renderHistorico(snap.val() || {});
+      }).catch(err => {
+        document.getElementById('histList').innerHTML =
+          `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Erro ao carregar: ${esc(err.message||'')}</p></div>`;
+      });
+    }
+
+    function renderHistorico(data) {
+      // data = { "2026-05": { pushId: {...}, ... }, ... }
+      const periodos = Object.entries(data).sort((a,b) => b[0].localeCompare(a[0]));
+
+      let total = 0;
+      periodos.forEach(([, imp]) => total += Object.keys(imp).length);
+      document.getElementById('histCount').textContent = total;
+
+      if (!periodos.length) {
+        document.getElementById('histList').innerHTML =
+          '<div class="empty-state"><i class="fas fa-clock-rotate-left"></i><p>Nenhum período salvo ainda.<br>Importe um CSV e clique em "Salvar período".</p></div>';
+        return;
+      }
+
+      let html = '';
+      periodos.forEach(([periodo, imports]) => {
+        const [yyyy, mm] = periodo.split('-');
+        const mesNome = new Date(Number(yyyy), Number(mm)-1, 1)
+          .toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+
+        html += `<div class="month-group">
+          <div class="hist-section-title">
+            <i class="fas fa-calendar-alt"></i> ${mesNome}
+          </div>`;
+
+        Object.entries(imports)
+          .sort((a,b) => (b[1].importadoEm||'').localeCompare(a[1].importadoEm||''))
+          .forEach(([id, d]) => {
+            const zona    = zonaInfo(d.npsGeral);
+            const dataFmt = d.importadoEm
+              ? new Date(d.importadoEm).toLocaleDateString('pt-BR',
+                  {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
+              : '—';
+            const tP = d.promotores||0, tS = d.passivos||0, tD = d.detratores||0, tT = d.totalPesquisas||0;
+
+            html += `
+            <div class="hist-card">
+              <div class="hist-nps-block">
+                <div class="hist-nps-val" style="color:${zona.color};">${d.npsGeral}</div>
+                <div class="hist-zona-badge" style="background:${zona.bg};color:${zona.color};">
+                  ${zona.label.replace('Zona de ','').replace('Zona ','')}
+                </div>
+                <div class="hist-dist" style="margin:6px auto 0;">
+                  <div style="flex:${tP||1};background:var(--green);"></div>
+                  <div style="flex:${tS||1};background:var(--blue);"></div>
+                  <div style="flex:${tD||1};background:var(--red);"></div>
+                </div>
+              </div>
+              <div class="hist-info">
+                <div class="hist-title">${esc(d.label || d.nomeArquivo || periodo)}</div>
+                <div class="hist-stats">
+                  ${tT} pesquisas &nbsp;·&nbsp;
+                  ${(d.ranking||[]).length} atendentes &nbsp;·&nbsp;
+                  Escala 1–${d.escala||'?'} &nbsp;·&nbsp;
+                  <span style="color:var(--green);">▮</span> ${tP} &nbsp;
+                  <span style="color:var(--blue);">▮</span> ${tS} &nbsp;
+                  <span style="color:var(--red);">▮</span> ${tD}
+                </div>
+                <div class="hist-meta">Salvo em ${dataFmt} por ${esc(d.importadoPor||'—')}</div>
+              </div>
+              <div class="hist-actions">
+                <button class="btn-p" onclick="carregarSalvo('${esc(periodo)}','${esc(id)}')">
+                  <i class="fas fa-eye"></i> Visualizar
+                </button>
+                <button class="btn-danger" onclick="deletarSalvo('${esc(periodo)}','${esc(id)}')" title="Excluir">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>`;
+          });
+
+        html += '</div>';
+      });
+
+      document.getElementById('histList').innerHTML = html;
+    }
+
+    window.carregarSalvo = function(periodo, id) {
+      if (!window.fbNpsGet) return;
+      window.fbNpsGet('nps/' + periodo + '/' + id).then(snap => {
+        const d = snap.val();
+        if (!d) { toast('Dados não encontrados','error'); return; }
+
+        // Carrega ranking (sem pesquisas individuais)
+        _allRanking  = (d.ranking||[]).map(r => ({ ...r, pesquisas:[] }));
+        _viewRanking = [..._allRanking];
+        _scale       = d.escala || 10;
+        _fileName    = d.nomeArquivo || periodo;
+        _aggregated  = null; // não salvar novamente
+        _histMode    = true;
+
+        const tP=d.promotores||0, tS=d.passivos||0, tD=d.detratores||0, tT=d.totalPesquisas||0;
+        const [yyyy,mm] = periodo.split('-');
+        const mesNome = new Date(Number(yyyy),Number(mm)-1,1)
+          .toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+
+        atualizarKPIs(tP, tS, tD, tT, null);
+
+        // Info bar
+        document.getElementById('infoFile').textContent  = d.label || d.nomeArquivo || periodo;
+        document.getElementById('infoScale').textContent = 'Escala 1–' + _scale;
+        document.getElementById('infoCount').textContent = tT + ' pesquisas · ' + _allRanking.length + ' atendentes';
+        document.getElementById('infoPeriod').style.display   = 'none';
+        document.getElementById('infoHistChip').style.display = 'none';
+        document.getElementById('btnSalvar').style.display    = 'none';
+
+        // Banner
+        const ban = document.getElementById('histBanner');
+        document.getElementById('histBannerTxt').textContent =
+          `Histórico: ${d.label ? esc(d.label) + ' — ' : ''}${mesNome}`;
+        ban.style.display = 'flex';
+
+        renderChart(_viewRanking);
+        renderRanking(_viewRanking);
+
+        // Muda para aba importar e exibe dash
+        document.getElementById('historicoSection').style.display = 'none';
+        document.getElementById('uploadSection').style.display    = 'none';
+        document.getElementById('dashSection').style.display      = 'block';
+        _activeTab = 'importar';
+        document.getElementById('tabImportar').classList.add('active');
+        document.getElementById('tabHistorico').classList.remove('active');
+
+        toast('Período carregado: ' + (d.label || mesNome),'success');
+      }).catch(e => toast('Erro: ' + esc(e.message||e),'error'));
+    };
+
+    window.deletarSalvo = function(periodo, id) {
+      if (!confirm('Excluir este registro do histórico?\n\nEsta ação não pode ser desfeita.')) return;
+      if (!window.fbNpsRemove) return;
+      window.fbNpsRemove('nps/' + periodo + '/' + id).then(() => {
+        toast('Registro excluído','success');
+        carregarHistorico();
+      }).catch(e => toast('Erro: ' + esc(e.message||e),'error'));
+    };
+
+    /* ════════════════════════════════════════
+       GRÁFICO
+    ════════════════════════════════════════ */
+    function renderChart(ranking) {
+      const top    = ranking.slice(0, Math.min(12, ranking.length));
+      const labels = top.map(r => r.nome.split(' ').slice(0, 2).join(' '));
+      const data   = top.map(r => r.nps);
+      const colors = data.map(n =>
+        n >= 75 ? 'rgba(21,128,61,.80)'
+        : n >= 50 ? 'rgba(29,78,216,.80)'
+        : n >= 0  ? 'rgba(180,83,9,.80)'
+        : 'rgba(198,40,40,.80)'
+      );
+      document.getElementById('chartLabel').textContent = 'Top ' + top.length;
+      const ctx = document.getElementById('npsChart').getContext('2d');
+      if (_chartInst) _chartInst.destroy();
+      _chartInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label:'NPS', data, backgroundColor:colors, borderRadius:5, borderSkipped:false }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              min: -100, max: 100,
+              grid: { color: 'rgba(0,0,0,.05)' },
+              ticks: { font: { size:11, family:'Inter' } }
+            },
+            y: { ticks: { font: { size:11, family:'Inter' }, color:'#334155' } }
+          }
+        }
+      });
+    }
+
+
+
+    /* ════════════════════════════════════════
+       EXPORTAR EXCEL — NPS POR COLABORADOR
+    ════════════════════════════════════════ */
+    window.exportarNpsExcel = function() {
+      const ranking = _viewRanking || [];
+      if (!ranking.length) { toast('Nenhum dado para exportar', 'error'); return; }
+
+      // ── Monta CSV com BOM para Excel reconhecer UTF-8 ──
+      const SEP = ';';
+      const BOM = '\uFEFF';
+
+      // Período (do infoPeriodTxt se disponível)
+      const periodo = document.getElementById('infoPeriodTxt')
+        ? document.getElementById('infoPeriodTxt').textContent || ''
+        : '';
+      const arquivo = document.getElementById('infoFile')
+        ? document.getElementById('infoFile').textContent || 'NPS'
+        : 'NPS';
+      const agora = new Date().toLocaleString('pt-BR');
+
+      // Cabeçalho
+      const linhas = [
+        ['Relatório NPS — Amor Saúde Pirituba'],
+        ['Gerado em: ' + agora + (periodo ? '  |  Período: ' + periodo : '')],
+        [],
+        [
+          'Colaborador',
+          'Total Avaliações',
+          'Promotores',
+          '% Promotores',
+          'Passivos',
+          '% Passivos',
+          'Detratores',
+          '% Detratores',
+          'NPS'
+        ]
+      ];
+
+      ranking.forEach(r => {
+        const pct = v => r.total > 0 ? ((v / r.total) * 100).toFixed(1).replace('.', ',') + '%' : '0%';
+        linhas.push([
+          r.nome,
+          r.total,
+          r.p,
+          pct(r.p),
+          r.s,
+          pct(r.s),
+          r.d,
+          pct(r.d),
+          r.nps
+        ]);
+      });
+
+      // Linha de totais
+      const totP = ranking.reduce((s,r) => s+r.p, 0);
+      const totS = ranking.reduce((s,r) => s+r.s, 0);
+      const totD = ranking.reduce((s,r) => s+r.d, 0);
+      const totT = ranking.reduce((s,r) => s+r.total, 0);
+      const npsGeral = totT > 0 ? Math.round(((totP - totD) / totT) * 100) : 0;
+      const pctG = v => totT > 0 ? ((v/totT)*100).toFixed(1).replace('.',',')+'%' : '0%';
+
+      linhas.push([]);
+      linhas.push([
+        'TOTAL GERAL',
+        totT,
+        totP, pctG(totP),
+        totS, pctG(totS),
+        totD, pctG(totD),
+        npsGeral
+      ]);
+
+      // Converte para CSV string
+      const csv = BOM + linhas.map(row =>
+        row.map(cell => {
+          const s = String(cell ?? '');
+          // Envolve em aspas se tiver separador, aspas ou quebra
+          return s.includes(SEP) || s.includes('"') || s.includes('\n')
+            ? '"' + s.replace(/"/g, '""') + '"'
+            : s;
+        }).join(SEP)
+      ).join('\r\n');
+
+      // Download
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'NPS_Colaboradores_' + new Date().toISOString().slice(0,10) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('Relatório exportado com sucesso!', 'success');
+    };
+
+    /* ════════════════════════════════════════
+       ABA POR ATENDENTE
+    ════════════════════════════════════════ */
+    window.copiarId = function(id, e) {
+      if (!id || id === '—') return;
+      e && e.stopPropagation();
+      navigator.clipboard.writeText(id).then(() => {
+        toast('ID copiado: ' + id, 'success');
+      }).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = id; document.body.appendChild(el);
+        el.select(); document.execCommand('copy');
+        document.body.removeChild(el);
+        toast('ID copiado: ' + id, 'success');
+      });
+    };
+
+    window.copiarTodosIds = function() {
+      const filtroTipo = document.getElementById('filtroTipoAtend').value;
+      const busca = (document.getElementById('searchAtend').value || '').toLowerCase();
+      let ids = [];
+      (_viewRanking || []).forEach(r => {
+        if (busca && !r.nome.toLowerCase().includes(busca)) return;
+        (r.pesquisas || []).forEach(p => {
+          if (!p.idCaso) return;
+          if (filtroTipo && p.tipo !== filtroTipo) return;
+          ids.push(p.idCaso);
+        });
+      });
+      if (!ids.length) { toast('Nenhum ID encontrado com os filtros atuais', 'error'); return; }
+      const txt = ids.join('\n');
+      navigator.clipboard.writeText(txt).then(() => {
+        toast(ids.length + ' IDs copiados!', 'success');
+      }).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = txt; document.body.appendChild(el);
+        el.select(); document.execCommand('copy');
+        document.body.removeChild(el);
+        toast(ids.length + ' IDs copiados!', 'success');
+      });
+    };
+
+    // Estado dos filtros individuais por atendente
+    const _atendFiltros = {}; // { i: { tipo:'', busca:'' } }
+
+    function getFiltroAtend(i) {
+      return _atendFiltros[i] || { tipo: '', busca: '' };
+    }
+
+    window.setFiltroAtend = function(i, campo, valor) {
+      if (!_atendFiltros[i]) _atendFiltros[i] = { tipo:'', busca:'' };
+      _atendFiltros[i][campo] = valor;
+      renderBodyAtend(i);
+    };
+
+    function renderBodyAtend(i) {
+      const r = (_viewRanking || [])[i];
+      if (!r) return;
+      const f = getFiltroAtend(i);
+      const buscaId = f.busca.toLowerCase().trim();
+
+      // Filtra pesquisas deste atendente pelos filtros locais
+      const pesquisasFilt = (r.pesquisas || []).filter(p => {
+        if (f.tipo && p.tipo !== f.tipo) return false;
+        if (buscaId && p.idCaso && !String(p.idCaso).toLowerCase().includes(buscaId)) return false;
+        return true;
+      });
+
+      const hasId   = r.pesquisas.some(p => p.idCaso);
+      const hasData = pesquisasFilt.some(p => p.data);
+      const hasCom  = pesquisasFilt.some(p => p.comentario);
+      const idsAtend = pesquisasFilt.filter(p => p.idCaso).map(p => p.idCaso);
+
+      // Contagem total (sem filtro de tipo) para os badges do header
+      const tots = (r.pesquisas||[]).reduce((acc,p)=>{ acc[p.tipo]=(acc[p.tipo]||0)+1; return acc; },{});
+
+      const thStyle = 'padding:8px 10px;text-align:left;color:var(--gray-500);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);position:sticky;top:0;';
+
+      const rows = pesquisasFilt.slice(0,500).map(p => `<tr style="border-bottom:1px solid var(--gray-100);">
+        <td style="padding:7px 10px;text-align:center;">
+          <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
+            <span class="note-circle n-${p.tipo}">${p.val}</span>
+            ${p.idCaso ? `<span style="font-size:10px;font-weight:700;color:var(--gray-500);font-family:monospace;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:5px;padding:1px 6px;">${esc(String(p.idCaso))}</span>` : ''}
+          </div>
+        </td>
+        <td style="padding:7px 10px;">${p.tipo==='p'?'<span class="badge b-excel">Promotor</span>':p.tipo==='d'?'<span class="badge b-crit">Detrator</span>':'<span class="badge b-qual">Passivo</span>'}</td>
+        ${hasData ? `<td style="padding:7px 10px;color:var(--gray-500);white-space:nowrap;">${esc(p.data||'—')}</td>` : ''}
+        ${hasCom  ? `<td style="padding:7px 10px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.comentario||'—')}</td>` : ''}
+      </tr>`).join('');
+
+      const overflow = pesquisasFilt.length > 500
+        ? `<tr><td colspan="10" style="text-align:center;padding:8px;font-size:11px;color:var(--gray-400);">Exibindo 500 de ${pesquisasFilt.length}</td></tr>` : '';
+
+      const body = document.getElementById('ab-' + i);
+      if (!body) return;
+      body.innerHTML = `<div style="padding:14px 18px 6px;">
+        <!-- Filtros individuais -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+          <div style="display:flex;border:1.5px solid var(--gray-200);border-radius:9px;overflow:hidden;">
+            ${['','p','s','d'].map(t => {
+              const labels = {'':`Todos (${r.total})`, p:`▲ Promotores (${tots.p||0})`, s:`▬ Passivos (${tots.s||0})`, d:`▼ Detratores (${tots.d||0})`};
+              const colors = {p:'var(--green)', s:'#3b82f6', d:'var(--red)', '':'var(--navy)'};
+              const active = f.tipo === t;
+              return `<button onclick="setFiltroAtend(${i},'tipo','${t}')" style="padding:5px 11px;border:none;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;background:${active?(colors[t]||'var(--navy)'):'white'};color:${active?'white':(colors[t]||'var(--gray-600)')};">${labels[t]}</button>`;
+            }).join('')}
+          </div>
+
+
+          <span style="font-size:11px;color:var(--gray-400);margin-left:auto;">${pesquisasFilt.length} resultado(s)</span>
+        </div>
+        <!-- Tabela -->
+        <div style="overflow:auto;max-height:400px;border:1px solid var(--gray-200);border-radius:10px;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+              <tr>
+                <th style="${thStyle}text-align:center;">Nota${hasId?' · ID Caso':''}</th>
+                <th style="${thStyle}">Tipo</th>
+                ${hasData ? `<th style="${thStyle}">Data</th>` : ''}
+                ${hasCom  ? `<th style="${thStyle}">Comentário</th>` : ''}
+              </tr>
+            </thead>
+            <tbody>${rows}${overflow}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    window.renderPorAtendente = function() {
+      const c = document.getElementById('atendCardsContainer');
+      if (!c) return;
+      const ranking = _viewRanking || [];
+      if (!ranking.length) {
+        c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--gray-400);">
+          <i class="fas fa-file-import" style="font-size:2rem;display:block;margin-bottom:10px;opacity:.3;"></i>
+          Importe um arquivo para visualizar por atendente.</div>`;
+        return;
+      }
+
+      const busca = (document.getElementById('searchAtend').value || '').toLowerCase();
+      let html = '';
+
+      ranking.filter(r => !busca || r.nome.toLowerCase().includes(busca)).forEach((r, i) => {
+        const npsColor = zonaInfo(r.nps).color;
+        const tots = (r.pesquisas||[]).reduce((acc,p)=>{ acc[p.tipo]=(acc[p.tipo]||0)+1; return acc; },{});
+        const hasId = (r.pesquisas||[]).some(p => p.idCaso);
+
+        html += `<div class="atend-card" id="ac-${i}">
+          <div class="atend-card-header" onclick="toggleAtendCard(${i})">
+            <div>
+              <div class="atend-nome">${esc(r.nome)}</div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">${r.total} avaliação(ões)${hasId?' · com IDs':''}</div>
+            </div>
+            <div class="atend-stats">
+              <span class="atend-nps-badge" style="background:${npsColor}20;color:${npsColor};">NPS ${r.nps}</span>
+              ${(tots.p||0)>0?`<span style="font-size:11px;color:var(--green);font-weight:700;">▲ ${tots.p}</span>`:''}
+              ${(tots.s||0)>0?`<span style="font-size:11px;color:#3b82f6;font-weight:700;">▬ ${tots.s}</span>`:''}
+              ${(tots.d||0)>0?`<span style="font-size:11px;color:var(--red);font-weight:700;">▼ ${tots.d}</span>`:''}
+              <i class="fas fa-chevron-down" id="aci-${i}" style="font-size:11px;color:var(--gray-400);transition:transform .2s;margin-left:4px;"></i>
+            </div>
+          </div>
+          <div class="atend-body" id="ab-${i}"></div>
+        </div>`;
+      });
+
+      if (!html) html = '<div style="text-align:center;padding:30px;color:var(--gray-400);">Nenhum atendente encontrado.</div>';
+      c.innerHTML = html;
+    };
+
+    window.toggleAtendCard = function(i) {
+      const body = document.getElementById('ab-' + i);
+      const icon = document.getElementById('aci-' + i);
+      const isOpen = body.classList.contains('open');
+      if (!isOpen) {
+        body.classList.add('open');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        renderBodyAtend(i); // renderiza só quando abre
+      } else {
+        body.classList.remove('open');
+        if (icon) icon.style.transform = '';
+      }
+    };
+
+    window.copiarIdsAtend = function(i, e) {
+      e && e.stopPropagation();
+      const r = (_viewRanking||[])[i];
+      if (!r) return;
+      const f = getFiltroAtend(i);
+      const ids = (r.pesquisas||[])
+        .filter(p => p.idCaso && (!f.tipo || p.tipo === f.tipo) && (!f.busca || String(p.idCaso).toLowerCase().includes(f.busca.toLowerCase())))
+        .map(p => String(p.idCaso));
+      if (!ids.length) { toast('Nenhum ID para copiar', 'error'); return; }
+      navigator.clipboard.writeText(ids.join('\n')).then(() => {
+        toast(ids.length + ' IDs copiados!', 'success');
+      }).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = ids.join('\n'); document.body.appendChild(el);
+        el.select(); document.execCommand('copy'); document.body.removeChild(el);
+        toast(ids.length + ' IDs copiados!', 'success');
+      });
+    };
+
+    /* ════════════════════════════════════════
+       RANKING TABLE
+    ════════════════════════════════════════ */
+    function renderRanking(ranking) {
+      _openRow = null;
+      document.getElementById('rankLabel').textContent = ranking.length + ' atendente(s)';
+      const tbody = document.getElementById('rankBody');
+      if (!ranking.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+          <i class="fas fa-user-slash"></i><p>Nenhum atendente encontrado</p>
+        </div></td></tr>`;
+        return;
+      }
+
+      const hasData = !!_colMap.data;
+      const hasCom  = !!_colMap.comentario;
+      const temPesquisas = ranking.some(r => r.pesquisas && r.pesquisas.length > 0);
+
+      let html = '';
+      ranking.forEach((r, i) => {
+        const medal    = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+        const pos      = medal || `<span class="rank-num">#${i+1}</span>`;
+        const npsColor = zonaInfo(r.nps).color;
+
+        let detalheHtml = '';
+        if (!temPesquisas || !r.pesquisas || !r.pesquisas.length) {
+          // Modo histórico — sem pesquisas individuais
+          detalheHtml = `<div style="text-align:center;padding:16px;font-size:12px;color:var(--gray-400);">
+            <i class="fas fa-info-circle"></i>
+            Pesquisas individuais não disponíveis — dados carregados do histórico.
+            <div style="margin-top:8px;display:flex;justify-content:center;gap:20px;font-weight:700;">
+              <span style="color:var(--green);">▲ ${r.p} promotores</span>
+              <span style="color:var(--blue);">▬ ${r.s} passivos</span>
+              <span style="color:var(--red);">▼ ${r.d} detratores</span>
+            </div>
+          </div>`;
+        } else {
+          const hasId  = r.pesquisas.some(p => p.idCaso);
+          const dtHead = `<tr>
+            ${hasId   ? '<th>ID Caso</th>' : ''}
+            <th>Nota</th><th>Tipo</th>
+            ${hasData ? '<th>Data</th>' : ''}
+            ${hasCom  ? '<th>Comentário</th>' : ''}
+          </tr>`;
+          const detRows = r.pesquisas.slice(0,200).map(p => `<tr>
+            ${hasId   ? `<td><span class="id-chip" onclick="copiarId('${esc(p.idCaso||'')}',event)" title="Clique para copiar">${esc(p.idCaso||'—')}</span></td>` : ''}
+            <td><span class="note-circle n-${p.tipo}">${p.val}</span></td>
+            <td>${p.tipo==='p'
+              ? '<span class="badge b-excel">Promotor</span>'
+              : p.tipo==='d'
+              ? '<span class="badge b-crit">Detrator</span>'
+              : '<span class="badge b-qual">Passivo</span>'
+            }</td>
+            ${hasData ? `<td style="color:var(--gray-500);">${esc(p.data||'—')}</td>` : ''}
+            ${hasCom  ? `<td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;">${esc(p.comentario||'—')}</td>` : ''}
+          </tr>`).join('');
+          const aviso = r.pesquisas.length > 200
+            ? `<tr><td colspan="${2+(hasData?1:0)+(hasCom?1:0)}" style="text-align:center;font-size:11px;color:var(--gray-400);padding:8px;">
+                Exibindo 200 de ${r.pesquisas.length} pesquisas</td></tr>` : '';
+          detalheHtml = `<div class="det-table-wrap">
+            <table class="det-table"><thead>${dtHead}</thead><tbody>${detRows}${aviso}</tbody></table>
+          </div>`;
+        }
+
+        html += `
+        <tr class="main-row" id="mrow-${i}" onclick="toggleDetail(${i})">
+          <td>${pos}</td>
+          <td style="font-weight:700;">${esc(r.nome)}</td>
+          <td class="num">${r.total}</td>
+          <td class="num"><span class="nps-num" style="color:${npsColor}">${r.nps}</span></td>
+          <td>${badgeZona(r.nps)}</td>
+          <td><button class="expand-btn" id="ebtn-${i}"><i class="fas fa-chevron-down" style="font-size:10px;" id="eico-${i}"></i></button></td>
+        </tr>
+        <tr class="detail-row" id="drow-${i}" style="display:none;">
+          <td colspan="6">
+            <div class="detail-inner">
+              <div class="detail-ttl">
+                <i class="fas fa-receipt"></i>
+                ${esc(r.nome)} &middot; ${r.total} pesquisa(s) &middot; NPS <strong>${r.nps}</strong>
+                &nbsp;·&nbsp;
+                <span style="color:var(--green);">▮</span> ${r.p} prom &nbsp;
+                <span style="color:var(--blue);">▮</span> ${r.s} pass &nbsp;
+                <span style="color:var(--red);">▮</span> ${r.d} detr
+              </div>
+              ${detalheHtml}
+            </div>
+          </td>
+        </tr>`;
+      });
+      tbody.innerHTML = html;
+    }
+
+    window.toggleDetail = function(i) {
+      if (_openRow !== null && _openRow !== i) {
+        const old  = document.getElementById('drow-' + _openRow);
+        const oico = document.getElementById('eico-' + _openRow);
+        const omrow= document.getElementById('mrow-' + _openRow);
+        if (old)   old.style.display = 'none';
+        if (oico)  oico.className    = 'fas fa-chevron-down';
+        if (omrow) omrow.classList.remove('open');
+      }
+      const drow = document.getElementById('drow-' + i);
+      const ico  = document.getElementById('eico-' + i);
+      const mrow = document.getElementById('mrow-' + i);
+      if (!drow) return;
+      const isOpen = drow.style.display !== 'none';
+      drow.style.display = isOpen ? 'none' : '';
+      mrow.classList.toggle('open', !isOpen);
+      if (ico) ico.className = isOpen ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+      _openRow = isOpen ? null : i;
+    };
+
+    /* ════════════════════════════════════════
+       FILTRO E RESET
+    ════════════════════════════════════════ */
+    window.filtrar = function(q) {
+      const nq = (q || '').toLowerCase().trim();
+      _viewRanking = nq
+        ? _allRanking.filter(r => r.nome.toLowerCase().includes(nq))
+        : [..._allRanking];
+      renderChart(_viewRanking);
+      renderRanking(_viewRanking);
+      if (_activeTab === 'atendente') renderPorAtendente();
+    };
+
+    window.voltarUpload = function() {
+      _rawData = []; _headers = []; _colMap = {};
+      _allRanking = []; _viewRanking = []; _openRow = null; _aggregated = null; _histMode = false;
+      if (_chartInst) { _chartInst.destroy(); _chartInst = null; }
+      document.getElementById('dashSection').style.display    = 'none';
+      document.getElementById('historicoSection').style.display = 'none';
+      document.getElementById('uploadSection').style.display  = 'block';
+      document.getElementById('fileInput').value  = '';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('infoPeriod').style.display = 'none';
+      document.getElementById('histBanner').style.display = 'none';
+      document.getElementById('btnSalvar').style.display   = 'none';
+      _activeTab = 'importar';
+      document.getElementById('tabImportar').classList.add('active');
+      document.getElementById('tabHistorico').classList.remove('active');
+    };
+
+    /* ── helper ── */
+    function esc(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                          .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+
+  <script type="module">
+    import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, get, push, remove }
+                                           from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const _app  = initializeApp(window.FIREBASE_CONFIG);
+    const _auth = getAuth(_app);
+    const _db   = getDatabase(_app);
+    window.initFirebaseUtils(_db, ref, get);
+
+    /* Operações Firebase expostas para o script principal */
+    window.fbNpsGet    = (path)       => get(ref(_db, path));
+    window.fbNpsPush   = (path, data) => push(ref(_db, path), data);
+    window.fbNpsRemove = (path)       => remove(ref(_db, path));
+
+    onAuthStateChanged(_auth, async user => {
+      if (!user) { irPara('../login.html'); return; }
+      try {
+        const snap  = await get(ref(_db, 'admin/usuarios/' + user.uid));
+        const perms = (snap.val() || {}).perms || {};
+        if (!perms.admin && !perms.nps && user.email !== 'raphael@amorsaude.com') {
+          irPara('../login.html'); return;
+        }
+      } catch(e) {
+        if (user.email !== 'raphael@amorsaude.com') { irPara('../login.html'); return; }
+      }
+      carregarLogoGlobal(['#headerLogo']);
+      // Carrega contador do histórico ao entrar
+      setTimeout(() => {
+        if (window.fbNpsGet) {
+          window.fbNpsGet('nps').then(snap => {
+            const data = snap.val() || {};
+            let total = 0;
+            Object.values(data).forEach(p => total += Object.keys(p).length);
+            document.getElementById('histCount').textContent = total;
+          }).catch(()=>{});
+        }
+      }, 800);
+    });
+  </script>
+</body>
+</html>
+

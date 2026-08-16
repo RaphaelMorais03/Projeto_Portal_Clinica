@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "relatorios": {
+      ".read": "auth != null && root.child('admin/usuarios/' + auth.uid + '/perms/admin').val() === true",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admin/usuarios/' + auth.uid + '/perms/admin').val() === true)"
+      }
+    },
+    "admin": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "operacao": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "admin_logs": {
+      ".read": "auth != null && root.child('admin/usuarios/' + auth.uid + '/perms/admin').val() === true",
+      ".write": "auth != null"
+    },
+    "exames": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "financeiro": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "nps": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "fechamento": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}

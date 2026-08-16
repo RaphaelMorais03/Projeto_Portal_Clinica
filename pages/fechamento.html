@@ -1,0 +1,834 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Raphael Morais">
+  <title>Fechamento — Amor Saúde Pirituba</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <style>
+    .red-bar{height:3px;background:#C62828;position:fixed;top:0;left:0;right:0;z-index:1000;}
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--green:#15803d;--success:#2ecc71;--danger:#C62828;--employee:#9b59b6;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--card-bg:#ffffff;--input-bg:#ffffff;--border:rgba(0,0,0,0.12);--shadow:0 4px 20px rgba(10,31,68,.1);--primary:#0A1F44;--primary-dark:#122b5e;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    .hidden{display:none!important;}
+    /* ── Header estilo caixa ── */
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
+    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
+    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .header-right{display:flex;align-items:center;gap:10px;}
+    .back-btn-h{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .back-btn-h:hover{background:var(--red-h);}
+    .content{max-width:1100px;margin:0 auto;padding:24px 24px 60px;}
+    /* ── Banner responsável ── */
+    .user-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);border-radius:16px;padding:20px 24px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(10,31,68,.25);}
+    .user-banner-info{display:flex;flex-direction:column;gap:4px;}
+    .user-banner-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;}
+    .user-banner-name{font-size:22px;font-weight:900;color:white;letter-spacing:-.3px;}
+    .user-banner-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;}
+    .user-banner-icon{width:56px;height:56px;background:rgba(255,255,255,.12);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;}
+    #mainSystem{display:block;max-width:1100px;margin:0 auto;}
+    header{text-align:center;margin-bottom:24px;position:relative;}
+    .form-group{margin-bottom:18px;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+    label{display:block;margin-bottom:8px;font-weight:600;color:var(--gray);font-size:.92rem;}
+    input,select{width:100%;padding:12px 15px;border-radius:10px;border:1px solid rgba(0,0,0,0.2);background:var(--input-bg);color:var(--gray);font-size:1rem;outline:none;transition:border .2s,box-shadow .2s;font-family:inherit;}
+    input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,0.12);}
+    button,input[type="button"]{border:none;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s ease;}
+    button{padding:14px 24px;font-size:1rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:10px;}
+    .btn-primary{background:var(--primary);color:white;}.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 14px rgba(10,31,68,0.25);}
+    .btn-success{background:var(--success);color:white;}.btn-success:hover{background:#27ae60;transform:translateY(-1px);}
+    .btn-danger{background:#C62828;color:white;}.btn-danger:hover{background:#ad1f1f;transform:translateY(-1px);}
+    .btn-secondary{background:#e5e7eb;color:#111827;}
+    .btn-small{padding:8px 14px;font-size:.9rem;}
+    .panel{background:white;border:1px solid var(--gray-200);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);}
+    .panel h2{color:var(--gray);margin-bottom:22px;display:flex;align-items:center;gap:10px;}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+    .step{background:rgba(255,255,255,0.45);border:1px solid rgba(0,0,0,0.08);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;color:var(--gray);}
+    .step-number{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,0.08);font-weight:700;flex-shrink:0;}
+    .step.active{background:rgba(10,31,68,0.1);border-color:rgba(10,31,68,0.22);color:#0A1F44;}
+    .step.active .step-number{background:var(--primary);color:white;}
+    .step.done{background:rgba(46,204,113,0.12);border-color:rgba(46,204,113,0.2);}
+    .step.done .step-number{background:var(--success);color:white;}
+    .step-title{font-weight:700;}.step-subtitle{font-size:.82rem;opacity:.8;}
+    .screen{display:none;}.screen.active{display:block;}
+    .search-results{margin-top:10px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:white;box-shadow:var(--shadow);}
+    .search-result-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #eee;color:#111827;}
+    .search-result-item:hover{background:#f0f0f0;}
+    .selected-professional{background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.08);border-radius:14px;padding:18px;display:grid;gap:10px;margin-bottom:20px;}
+    .selected-professional strong{color:var(--primary-dark);}
+    .items-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+    .items-header h3{color:var(--primary);}
+    .item-row{display:grid;grid-template-columns:80px 1fr 150px 150px 80px;gap:15px;margin-bottom:15px;align-items:center;}
+    .item-row.header{font-weight:bold;color:var(--primary);}
+    .items-total{text-align:right;font-size:1.15rem;font-weight:bold;color:var(--primary);margin-top:20px;padding-top:20px;border-top:2px solid rgba(0,0,0,0.1);}
+    .professional-info{display:grid;grid-template-columns:1fr 1fr;gap:15px;padding:20px;background:rgba(0,0,0,0.06);border-radius:12px;margin-bottom:20px;}
+    .info-label{font-weight:600;color:var(--primary);}
+    .result-item{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px dashed rgba(0,0,0,0.1);}
+    .result-item.total{font-weight:700;font-size:1.2rem;color:var(--gray);border-top:2px solid var(--gray);border-bottom:none;margin-top:10px;padding-top:15px;}
+    .step-actions{display:flex;justify-content:space-between;gap:12px;margin-top:24px;flex-wrap:wrap;}
+    .badge{padding:4px 10px;border-radius:12px;font-size:.75rem;display:inline-block;}
+    .badge.funcionario{background:rgba(155,89,182,0.2);color:var(--employee);}
+    .badge.pj-presumido{background:rgba(255,193,7,0.2);color:#b45309;}
+    .empty-state{text-align:center;padding:40px;color:var(--gray);}
+    .empty-state i{font-size:3rem;margin-bottom:20px;opacity:.3;}
+    .toast-container{position:fixed;top:20px;right:20px;z-index:9999;}
+    .toast{background:#333;color:#fff;padding:12px 20px;margin-bottom:10px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;animation:slideIn .3s ease;max-width:350px;}
+    .toast.success{background:var(--success);}.toast.error{background:var(--danger);}.toast.info{background:#0A1F44;}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    .modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px;}
+    .modal-content{background:var(--card-bg);padding:30px;border-radius:16px;max-width:400px;width:90%;text-align:center;color:var(--gray);box-shadow:var(--shadow);}
+    .modal-buttons{display:flex;gap:15px;justify-content:center;margin-top:25px;}
+    footer{text-align:center;margin-top:40px;padding:20px;color:var(--gray);border-top:1px solid rgba(0,0,0,0.1);}
+    .back-portal{position:fixed;bottom:20px;right:20px;background:#C62828;color:white;border:none;border-radius:10px;padding:10px 16px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;box-shadow:0 4px 16px rgba(10,31,68,0.3);transition:all .2s;z-index:999;}
+    .back-portal:hover{background:#ad1f1f;transform:translateY(-1px);}
+    @media(max-width:900px){.steps,.form-row,.professional-info{grid-template-columns:1fr;}}
+    @media(max-width:768px){.item-row{grid-template-columns:1fr;gap:8px;}.step-actions{flex-direction:column;}.step-actions button{width:100%;}}
+    @media print{.no-print,header,.steps,footer,.step-actions,#toastBox,#confirmModal,.back-portal{display:none!important;}body,#mainSystem{background:white!important;color:black!important;padding:0!important;margin:0!important;}}
+
+    /* ── Tabs ── */
+    .tabs-bar{display:flex;gap:0;border-bottom:2px solid rgba(0,0,0,0.1);margin:-4px -4px 22px;}
+    .tab-btn{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 22px;font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-500,#64748b);cursor:pointer;transition:all .15s;border-radius:6px 6px 0 0;display:inline-flex;align-items:center;gap:8px;}
+    .tab-btn:hover{color:#0A1F44;background:rgba(10,31,68,.05);}
+    .tab-btn.active{color:#0A1F44;border-bottom-color:#0A1F44;}
+    .tab-pane{animation:tabIn .18s ease;}
+    @keyframes tabIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+    /* ── Modal Cadastro ── */
+    #modalCadastro .modal-content{max-width:560px;width:100%;text-align:left;padding:30px 32px;}
+    #modalCadastro label{color:var(--gray);}
+    #modalCadastro input,#modalCadastro select{background:#fff;}
+    .modal-header-cad{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+    .modal-header-cad h3{color:#0A1F44;font-size:1.1rem;display:flex;align-items:center;gap:10px;margin:0;}
+    .btn-modal-close{background:none;border:none;cursor:pointer;color:#94a3b8;font-size:18px;padding:2px 6px;border-radius:6px;transition:color .15s;}
+    .btn-modal-close:hover{color:#C62828;}
+    .prof-card-selected{background:rgba(10,31,68,.06);border:1.5px solid rgba(10,31,68,.18);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;}
+    .prof-card-avatar{width:42px;height:42px;border-radius:50%;background:#0A1F44;color:white;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .prof-card-info{flex:1;}
+    .prof-card-nome{font-weight:700;color:#0A1F44;font-size:14px;}
+    .prof-card-doc{font-size:12px;color:#64748b;margin-top:2px;}
+    .prof-none{text-align:center;padding:22px;color:#94a3b8;font-size:13px;border:1.5px dashed #e2e8f0;border-radius:12px;}
+    .prof-none i{display:block;font-size:28px;margin-bottom:8px;opacity:.4;}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+  <div id="toastBox" class="toast-container"></div>
+
+  <!-- Header estilo caixa -->
+  <div class="s-header">
+    <div class="s-logo">
+      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
+      <div>
+        <div class="s-logo-name">Amor Saúde</div>
+        <div class="s-logo-sub">Fechamento · Pirituba</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="back-btn-h" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal">
+    <div class="modal-content">
+      <h3>Confirmação</h3>
+      <p id="confirmMessage"></p>
+      <div class="modal-buttons">
+        <button id="confirmYes" class="btn-success">Sim</button>
+        <button id="confirmNo" class="btn-danger">Não</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal: Cadastro / Edição de Profissional ── -->
+  <div id="modalCadastro" class="modal">
+    <div class="modal-content">
+      <div class="modal-header-cad">
+        <h3 id="modalCadTitulo"><i class="fas fa-user-plus"></i> Novo Profissional</h3>
+        <button class="btn-modal-close" onclick="fecharModalCadastro()" title="Fechar"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Nome Completo *</label><input type="text" id="modalProfNome" placeholder="Nome completo do profissional"></div>
+        <div class="form-group"><label>CPF *</label><input type="text" id="modalProfCpf" placeholder="000.000.000-00" maxlength="14"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de Pagamento *</label>
+          <select id="modalProfRegime">
+            <option value="">Selecione...</option>
+            <option value="funcionario">Sem Descontos</option>
+            <option value="pj-presumido">Lucro Presumido (PJ)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Chave PIX</label><input type="text" id="modalProfPix" placeholder="Opcional"></div>
+      </div>
+      <input type="hidden" id="modalProfId">
+      <div class="modal-buttons" style="justify-content:flex-start;gap:12px;margin-top:20px;">
+        <button class="btn-success" onclick="salvarModalCadastro()"><i class="fas fa-save"></i> Salvar</button>
+        <button class="btn-secondary" onclick="fecharModalCadastro()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="back-portal no-print" onclick="irPara('../login.html')">🏠 Voltar ao Portal</button>
+
+  <div class="content">
+  <div id="mainSystem">
+    <!-- Banner responsável -->
+    <div class="user-banner" id="userBanner">
+      <div class="user-banner-info">
+        <div class="user-banner-label">Responsável</div>
+        <div class="user-banner-name" id="nomeResponsavel">—</div>
+        <div class="user-banner-sub" id="dataHojeFech">—</div>
+      </div>
+      <div class="user-banner-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+    </div>
+    <header style="display:none;">
+      <div style="display:inline-flex;align-items:center;gap:12px;background:#0A1F44;color:white;padding:10px 24px;border-radius:12px;margin-bottom:10px;">
+        <img src="../assets/favicon.png" alt="Logo" style="width:32px;height:32px;object-fit:contain;" id="logoHeader">
+        <div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-0.3px;">Fechamento Médico</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.5;letter-spacing:0.5px;">Amor Saúde · Pirituba</div>
+        </div>
+      </div>
+      <p class="subtitle" id="userGreeting"></p>
+      <div style="margin-top:10px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:6px 14px;" class="no-print">
+        <i class="fas fa-user-tie" style="color:#0A1F44;font-size:13px;"></i>
+        <label style="margin:0;font-size:12px;font-weight:700;color:#0A1F44;white-space:nowrap;">Responsável:</label>
+        <span id="badgeResponsavel" style="font-size:13px;font-weight:600;color:#0A1F44;">—</span>
+      </div>
+      <div class="theme-toggle no-print">
+        <button id="themeToggle" class="btn-small"><i class="fas fa-moon"></i> Tema Escuro</button>
+      </div>
+    </header>
+
+    <div class="steps no-print">
+      <div id="step1" class="step active"><div class="step-number">1</div><div><div class="step-title">Profissional</div><div class="step-subtitle">Selecione quem será pago</div></div></div>
+      <div id="step2" class="step"><div class="step-number">2</div><div><div class="step-title">Cálculo</div><div class="step-subtitle"></div></div></div>
+      <div id="step3" class="step"><div class="step-number">3</div><div><div class="step-title">Resultado</div><div class="step-subtitle"></div></div></div>
+    </div>
+
+    <div id="screenProfissional" class="panel screen active">
+
+      <!-- Tabs -->
+      <div class="tabs-bar no-print">
+        <button class="tab-btn active" onclick="switchTab('tabSelecionar',this)"><i class="fas fa-magnifying-glass"></i> Selecionar</button>
+        <button class="tab-btn" onclick="switchTab('tabCadastros',this)"><i class="fas fa-users"></i> Cadastros</button>
+      </div>
+
+      <!-- ── Tab 1: Selecionar ── -->
+      <div id="tabSelecionar" class="tab-pane">
+        <div class="form-group">
+          <label>Buscar profissional</label>
+          <input type="text" id="buscaProfissional" placeholder="Digite o nome para buscar...">
+          <div id="resultadosBusca" class="search-results hidden"></div>
+        </div>
+
+        <!-- Card do profissional selecionado -->
+        <div id="profSelectedArea" style="margin-bottom:18px;"></div>
+
+        <div class="step-actions no-print" style="margin-top:4px;">
+          <div></div>
+          <button class="btn-primary" onclick="irParaCalculo()"><i class="fas fa-arrow-right"></i> Continuar para cálculo</button>
+        </div>
+      </div>
+
+      <!-- ── Tab 2: Cadastros ── -->
+      <div id="tabCadastros" class="tab-pane" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:18px;">
+          <button class="btn-primary" onclick="abrirModalCadastro()"><i class="fas fa-user-plus"></i> Novo Profissional</button>
+        </div>
+        <div id="semProfissionais" class="empty-state hidden"><i class="fas fa-users"></i><p>Nenhum cadastro encontrado</p></div>
+        <div id="listaProfissionais"></div>
+      </div>
+
+    </div>
+
+    <div id="screenCalculo" class="panel screen">
+      <h2><i class="fas fa-calculator"></i> Cálculo</h2>
+      <div class="selected-professional">
+        <div><strong>Profissional:</strong> <span id="calcProfissionalNome">-</span></div>
+        <div><strong>Documento:</strong> <span id="calcProfissionalCpf">-</span></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Buscar Profissional *</label>
+          <input type="text" id="calcBusca" placeholder="Digite o nome para buscar…" autocomplete="off">
+          <div id="calcResultados" class="search-results hidden"></div>
+          <input type="hidden" id="selectProfissional">
+        </div>
+        <div class="form-group"><label>Pagamento</label><select id="formaPagamento" onchange="togglePagoCheckbox()"><option value="pix">PIX</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option></select></div>
+      </div>
+      <div class="items-header">
+        <h3>Itens</h3>
+        <button class="btn-primary btn-small" onclick="adicionarItem()"><i class="fas fa-plus"></i> Adicionar</button>
+      </div>
+      <div class="items-table">
+        <div class="item-row header"><div>Qtd</div><div>Descrição</div><div>Unitário</div><div>Total</div><div></div></div>
+        <div id="itensContainer"></div>
+      </div>
+      <div class="items-total" id="totalItens">Subtotal: R$ 0,00</div>
+      <div class="step-actions no-print">
+        <button class="btn-secondary" onclick="voltarParaProfissional()"><i class="fas fa-arrow-left"></i> Voltar</button>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn-danger" onclick="limparCalculo()"><i class="fas fa-broom"></i> Limpar</button>
+          <button class="btn-primary" onclick="calcularEAvancar()"><i class="fas fa-calculator"></i> Calcular e continuar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="screenResultado" class="panel screen">
+      <h2><i class="fas fa-chart-bar"></i> Resultado</h2>
+      <div id="resultado" style="display:none;">
+        <div class="professional-info">
+          <div><span class="info-label">Nome:</span> <span id="infoNome">-</span></div>
+          <div><span class="info-label">Documento:</span> <span id="infoCpf">-</span></div>
+          <div><span class="info-label">Tipo:</span> <span id="infoTipo">-</span></div>
+          <div><span class="info-label">Data:</span> <span id="infoData">-</span></div>
+        </div>
+        <div class="result-item"><span>Subtotal:</span><span id="valorSubtotal">R$ 0,00</span></div>
+        <div id="impostosContainer" style="display:none;">
+          <div class="result-item"><span>PIS (0,65%):</span><span id="pis">R$ 0,00</span></div>
+          <div class="result-item"><span>CSLL (1,0%):</span><span id="csll">R$ 0,00</span></div>
+          <div class="result-item"><span>COFINS (3,0%):</span><span id="cofins">R$ 0,00</span></div>
+          <div class="result-item" id="irrfItem" style="display:none;"><span>IRRF (1,5%):</span><span id="irrf">R$ 0,00</span></div>
+        </div>
+        <div class="result-item total"><span>VALOR LÍQUIDO:</span><span id="liquido">R$ 0,00</span></div>
+        <div id="pagoHojeContainer" style="display:none;" class="no-print">
+          <input type="checkbox" id="pagoHojeCheckbox"> <label for="pagoHojeCheckbox" style="display:inline;margin:0;">Pago hoje?</label>
+        </div>
+      </div>
+      <div id="semResultado" class="empty-state"><i class="fas fa-calculator"></i><p>Faça o cálculo para visualizar o resultado.</p></div>
+      <div class="step-actions no-print">
+        <button class="btn-secondary" onclick="voltarParaCalculo()"><i class="fas fa-arrow-left"></i> Voltar</button>
+        <button class="btn-success" onclick="gerarRecibo()"><i class="fas fa-receipt"></i> Gerar Recibo</button>
+      </div>
+    </div>
+
+    <footer><p>© 2026 Desenvolvido por Raphael Morais</p></footer>
+  </div>
+
+  <script>
+    // ── Taxas ──
+    const TAXAS = {PIS:0.0065,CSLL:0.01,COFINS:0.03,IRRF:0.015,LIMITE_IRRF:666.67};
+
+    function formatarMoeda(v){const n=Number(v||0);return n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+    function parseValorMonetario(v){if(!v)return 0;return parseFloat(v.replace(/\./g,'').replace(',','.'))||0;}
+    function mascaraMoeda(e){const i=e.target;let v=i.value.replace(/\D/g,'');v=(parseInt(v||'0',10)/100).toFixed(2)+'';v=v.replace('.',',');v=v.replace(/\B(?=(\d{3})+(?!\d))/g,'.');i.value=v;}
+
+    function confirmar(msg){return new Promise(res=>{const m=document.getElementById('confirmModal');document.getElementById('confirmMessage').textContent=msg;m.style.display='flex';document.getElementById('confirmYes').onclick=()=>{m.style.display='none';res(true);};document.getElementById('confirmNo').onclick=()=>{m.style.display='none';res(false);};});}
+    function debounce2(f,d){let t;return function(...a){clearTimeout(t);t=setTimeout(()=>f.apply(this,a),d);};}
+
+    // ── Lista base de profissionais ──
+    const baseProfissionais = [
+      {nome:'Francisco Sánchez Montaño',documento:'238.526.928-73',categoria:'repasse'},
+      {nome:'Sérgio Alejandro de La Zerda Gutierrez',documento:'231.537.798-64',categoria:'repasse'},
+      {nome:'Felipe Rocha Codarin',documento:'369.885.038-97',categoria:'repasse'},
+      {nome:'Gustavo Gasparetto Bittar',documento:'093.451.076-81',categoria:'repasse'},
+      {nome:'Tacianne Gusman Cavichini',documento:'042.022.557-98',categoria:'repasse'},
+      {nome:'Vera Lucia Ribeiro Cinalli',documento:'102.945.688-75',categoria:'repasse'},
+      {nome:'Roberta Valadão Negri',documento:'073.675.786-42',categoria:'repasse'},
+      {nome:'Breno Gomes Cavalcanti',documento:'049.645.094-86',categoria:'repasse'},
+      {nome:'André de Freitas',documento:'178.327.678-98',categoria:'repasse'},
+      {nome:'Marcos Antonio Machado',documento:'323.378.938-63',categoria:'repasse'},
+      {nome:'Antonio Carlos Medeiros Filho',documento:'088.867.763-49',categoria:'repasse'},
+      {nome:'Holter Dr Sèrgio',documento:'237.892.608-19',categoria:'repasse'},
+      {nome:'Andre Piacentini Medeiros De Souza Brito',documento:'347.547.988-56',categoria:'repasse'},
+      {nome:'Ronaldo Borkowski',documento:'220.164.778-06',categoria:'repasse'},
+      {nome:'Maria Aparecida Ferreira da Silva Gonzaga',documento:'118.194.748-01',categoria:'repasse'},
+      {nome:'Danilo Costa e Carvalho Pinto',documento:'370.670.248-70',categoria:'repasse'},
+      {nome:'Vanessa Yumi Sakamoto',documento:'783.536.102-72',categoria:'repasse'},
+      {nome:'Priscila Rosa Da Silva',documento:'386.543.278-63',categoria:'repasse'},
+      {nome:'Aline Santos de Almeida',documento:'037.485.593-56',categoria:'repasse'},
+      {nome:'Teste Ergometrico',documento:'074.619.301-76',categoria:'repasse'},
+      {nome:'Wilson Takeo Sakamoto',documento:'657.667.762-68',categoria:'repasse'},
+      {nome:'Teófilo Martín Rondon Aguirre',documento:'216.854.548-01',categoria:'repasse'},
+      {nome:'Yuledis Legra Legra',documento:'706.092.792-11',categoria:'repasse'},
+      {nome:'Ruben Horacio Igarzabal',documento:'228.827.728-90',categoria:'repasse'},
+      {nome:'Silvia Regina Motta Da Prato',documento:'032.360.508-70',categoria:'repasse'},
+      {nome:'Carlos Alexandre De Souza Rocha',documento:'676.194.522-49',categoria:'repasse'},
+      {nome:'Fabiano Hiromichi Makimoto',documento:'526.432.042-04',categoria:'repasse'},
+      {nome:'Fabio Guimaraes Hourneaux de Moura',documento:'880.908.258-34',categoria:'repasse'},
+      {nome:'Álvaro Humberto Garcia Sanchez',documento:'703.120.682-04',categoria:'repasse'},
+      {nome:'Griselda Natalia Rojas Gutierrez',documento:'238.528.048-50',categoria:'repasse'},
+      {nome:'Vinicius De Alencar Da Rocha',documento:'357.202.358-09',categoria:'repasse'},
+      {nome:'Luis Fernando Massoni Garcia',documento:'360.470.048-57',categoria:'repasse'},
+      {nome:'Glauco Chiaradia Ferreira',documento:'139.117.848-30',categoria:'repasse'},
+      {nome:'Lucimar Miguel Da Silva',documento:'029.509.984-45',categoria:'repasse'},
+      {nome:'Ansára Alcantara Durante',documento:'407.404.998-82',categoria:'repasse'},
+      {nome:'Cinthya Dos Santos Pestana Brito',documento:'333.202.758-10',categoria:'repasse'},
+      {nome:'Leticia Sucell Mantilla Osorio',documento:'067.905.911-33',categoria:'repasse'},
+      {nome:'Grasiela Passuello',documento:'348.486.468-04',categoria:'repasse'},
+      {nome:'Juan Ignacio Espinoza Morales',documento:'214.473.468-23',categoria:'repasse'},
+      {nome:'Luiz Fernando Silveira Fahed',documento:'230.410.641-20',categoria:'repasse'},
+      {nome:'Diovani Costa Madeira',documento:'099.440.316-07',categoria:'repasse'},
+      {nome:'Felipe Zatyrko Morgensztern',documento:'344.465.238-05',categoria:'repasse'},
+      {nome:'Thales Teixeira De Noroes',documento:'019.872.933-20',categoria:'repasse'},
+      {nome:'Dr. Sergio Mapa',documento:'343.462.918-13',categoria:'repasse'},
+      {nome:'Linda Luciana Oliveira Santana',documento:'779.556.682-00',categoria:'repasse'},
+      {nome:'André Yuzo Eguchi',documento:'166.934.618-83',categoria:'repasse'},
+      {nome:'Breno Bauab',documento:'418.595.848-02',categoria:'repasse'},
+      {nome:'Lais Aparecida Saderio Galaverna',documento:'393.510.088-43',categoria:'repasse'},
+      {nome:'Camila Mayumi Hammoud Mukai',documento:'418.926.998-00',categoria:'repasse'},
+      {nome:'Caroline Barreto Nascimento de Jesus',documento:'421.825.258-07',categoria:'repasse'},
+      {nome:'Juliano Cezar Silva Mota',documento:'332.228.678-95',categoria:'repasse'},
+      {nome:'Camila Santos Souza',documento:'388.893.278-55',categoria:'repasse'},
+      {nome:'Wania Eliza de Almeida',documento:'085.412.606-66',categoria:'repasse'},
+      {nome:'Laís Poubel de Medeiros Moura',documento:'127.742.736-41',categoria:'repasse'},
+      {nome:'Fernando Castrillon Lara Veiga',documento:'898.885.291-53',categoria:'repasse'},
+      {nome:'Vinicius Rodrigo Da Silva Oliveira',documento:'366.753.948-78',categoria:'repasse'},
+      {nome:'Saily Hinojosa Zayas',documento:'067.547.281-40',categoria:'repasse'},
+      {nome:'Caridad Vega Pupo',documento:'065.537.031-59',categoria:'repasse'},
+      {nome:'Isabela Ferreira dos Santos Barbosa',documento:'460.656.088-66',categoria:'repasse'},
+      {nome:'Ricardo Monteiro de Andrade',documento:'137.068.197-67',categoria:'repasse'},
+      {nome:'Anne Yoshimura Pestana',documento:'446.944.098-16',categoria:'repasse'},
+      {nome:'Willy Vladimir Marzana Morales',documento:'082.781.941-22',categoria:'repasse'},
+      {nome:'Heitor Zuleta de Barros Couto',documento:'432.830.588-30',categoria:'repasse'},
+      {nome:'Pedro Henrique Martins do Couto',documento:'149.871.606-76',categoria:'repasse'},
+      {nome:'Adalto Ferreira Guedes',documento:'105.403.477-01',categoria:'repasse'},
+      {nome:'Larissa Matos Silveira',documento:'066.510.689-03',categoria:'repasse'}
+    ];
+
+    let profissionais = [], itens = [], dadosCalculo = null, usuario = null, currentStep = 1;
+    let _profSelecionado = null; // profissional escolhido no Step 1
+
+    window.fechamentoExtras  = [];
+    window.fechamentoDeleted = [];
+    // Lista base do Firebase (admin/profissionais); null = não carregado ainda, [] = carregado mas vazio
+    window._baseProfFirebase = null;
+
+    window.atualizarListaGeralFechamento = function() {
+      const extras   = window.fechamentoExtras  || [];
+      const apagados = window.fechamentoDeleted || [];
+      const overridden = extras.filter(e=>e.overrideCpf).map(e=>e.overrideCpf);
+      // Usa Firebase como fonte primária; cai no hardcoded se Firebase ainda não carregou ou estiver vazio
+      const srcBase = (window._baseProfFirebase && window._baseProfFirebase.length)
+        ? window._baseProfFirebase
+        : baseProfissionais;
+      const base = srcBase
+        .filter(b=>!apagados.includes(b.documento.replace(/\D/g,''))&&!overridden.includes(b.documento.replace(/\D/g,'')))
+        .map(b=>({...b, id: b.id || b.documento.replace(/\D/g,''), categoria: b.categoria||'repasse', regime: b.regime||'pj-presumido'}));
+      profissionais = [...base,...extras].sort((a,b)=>a.nome.localeCompare(b.nome));
+      atualizarListas();
+    };
+
+    const usuSessao = sessionStorage.getItem('usuario');
+    if (usuSessao) { usuario=usuSessao; }
+
+    function _preencherBanner(nome) {
+      usuario = nome;
+      const el = document.getElementById('nomeResponsavel');
+      if (el) el.textContent = nome.split(' ').slice(0,2).join(' ');
+    }
+    if (usuSessao) _preencherBanner(usuSessao);
+
+    window._setUsuario = function(nome) {
+      _preencherBanner(nome);
+      sessionStorage.setItem('usuario', nome);
+    };
+
+    // Data de hoje no banner
+    (function(){
+      const now = new Date();
+      const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+      const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+      const el = document.getElementById('dataHojeFech');
+      if (el) el.textContent = dias[now.getDay()] + ', ' + now.getDate() + ' de ' + meses[now.getMonth()] + ' de ' + now.getFullYear();
+    })();
+    window._setUsuario = function(nome){
+      usuario = nome;
+      const badge = document.getElementById('badgeResponsavel');
+      if (badge) badge.textContent = nome.split(' ').slice(0, 2).join(' ');
+      const el = document.getElementById('userGreeting');
+      if (el) el.textContent = 'Olá, ' + nome.split(' ')[0] + '! 👋';
+    };
+    // Aplica imediatamente se já veio do sessionStorage
+    if (usuSessao) window._setUsuario(usuSessao);
+    // Logo sempre lida do sessionStorage na hora de gerar o recibo
+
+    function salvarTema(e){localStorage.setItem('theme',e?'dark':'light');}
+    function aplicarTemaSalvo(){const t=localStorage.getItem('theme');if(t==='dark')document.body.classList.add('dark-theme');atualizarBotaoTema();}
+    function atualizarBotaoTema(){const b=document.getElementById('themeToggle');if(!b)return;b.innerHTML=document.body.classList.contains('dark-theme')?'<i class="fas fa-sun"></i> Tema Claro':'<i class="fas fa-moon"></i> Tema Escuro';}
+    function toggleTheme(){document.body.classList.toggle('dark-theme');salvarTema(document.body.classList.contains('dark-theme'));atualizarBotaoTema();}
+
+    function atualizarEtapas(){
+      [1,2,3].forEach(n=>{const s=document.getElementById(`step${n}`);s.classList.remove('active','done');if(n<currentStep)s.classList.add('done');if(n===currentStep)s.classList.add('active');});
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById(currentStep===1?'screenProfissional':currentStep===2?'screenCalculo':'screenResultado').classList.add('active');
+    }
+
+    function irParaCalculo(){
+      if(!_profSelecionado){toast('Selecione um profissional antes de continuar','error');return;}
+      const p=_profSelecionado;
+      document.getElementById('selectProfissional').value=p.id||p.documento.replace(/\D/g,'');
+      document.getElementById('calcBusca').value=p.nome;
+      document.getElementById('calcProfissionalNome').textContent=p.nome;
+      document.getElementById('calcProfissionalCpf').textContent=p.documento;
+      currentStep=2;atualizarEtapas();
+    }
+    function voltarParaProfissional(){currentStep=1;atualizarEtapas();}
+    function voltarParaCalculo(){currentStep=2;atualizarEtapas();}
+    function irParaResultado(){currentStep=3;atualizarEtapas();}
+
+    const buscarDebounced=debounce2(function(){
+      const t=document.getElementById('buscaProfissional').value.toLowerCase().trim();
+      const r=document.getElementById('resultadosBusca');
+      if(t.length<2){r.classList.add('hidden');r.innerHTML='';return;}
+      const f=profissionais.filter(p=>p.nome.toLowerCase().includes(t));
+      if(!f.length){r.classList.add('hidden');r.innerHTML='';return;}
+      r.innerHTML=f.map((p,i)=>`<div class="search-result-item" data-index="${i}">${esc(p.nome)} - ${esc(p.documento)}</div>`).join('');
+      r.classList.remove('hidden');r.dataset.currentResults=JSON.stringify(f);
+    },300);
+
+    function atualizarResumoProfissional(p){
+      const area=document.getElementById('profSelectedArea');
+      if(!p){
+        area.innerHTML='<div class="prof-none"><i class="fas fa-user-slash"></i>Nenhum profissional selecionado.<br>Use a busca acima para encontrar e selecionar.</div>';
+        return;
+      }
+      const initials=p.nome.split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const tipo=p.regime==='funcionario'?'Sem Descontos':'PJ Lucro Presumido';
+      area.innerHTML=`<div class="prof-card-selected">
+        <div class="prof-card-avatar">${esc(initials)}</div>
+        <div class="prof-card-info">
+          <div class="prof-card-nome">${esc(p.nome)}</div>
+          <div class="prof-card-doc">CPF: ${esc(p.documento)} · ${tipo}${p.chavePix?` · PIX: ${esc(p.chavePix)}`:''}  </div>
+        </div>
+        <button class="btn-secondary btn-small" onclick="_profSelecionado=null;atualizarResumoProfissional(null);document.getElementById('buscaProfissional').value='';" title="Remover seleção" style="flex-shrink:0;padding:6px 10px;"><i class="fas fa-xmark"></i></button>
+      </div>`;
+    }
+
+    function selecionarProfissionalBase(p){
+      _profSelecionado=p;
+      document.getElementById('buscaProfissional').value='';
+      document.getElementById('resultadosBusca').classList.add('hidden');
+      document.getElementById('resultadosBusca').innerHTML='';
+      atualizarResumoProfissional(p);
+    }
+
+    function selecionarProfissionalCalculo(p){
+      const id=p.id||p.documento.replace(/\D/g,'');
+      document.getElementById('selectProfissional').value=id;
+      document.getElementById('calcBusca').value=p.nome;
+      document.getElementById('calcResultados').classList.add('hidden');
+      document.getElementById('calcResultados').innerHTML='';
+      document.getElementById('calcProfissionalNome').textContent=p.nome;
+      document.getElementById('calcProfissionalCpf').textContent=p.documento;
+    }
+
+    const calcBuscarDebounced=debounce2(function(){
+      const t=document.getElementById('calcBusca').value.toLowerCase().trim();
+      const r=document.getElementById('calcResultados');
+      if(t.length<2){r.classList.add('hidden');r.innerHTML='';return;}
+      const f=profissionais.filter(p=>p.nome.toLowerCase().includes(t));
+      if(!f.length){r.classList.add('hidden');r.innerHTML='';return;}
+      r.innerHTML=f.map((p,i)=>`<div class="search-result-item" data-index="${i}"><strong>${esc(p.nome)}</strong><span style="display:block;font-size:11px;color:#64748b;">${esc(p.documento)} · ${p.regime==='funcionario'?'Sem Descontos':'PJ'}</span></div>`).join('');
+      r.classList.remove('hidden');r.dataset.currentResults=JSON.stringify(f);
+    },300);
+
+    // ── Modal de cadastro ──
+    window.switchTab = function(tabId, btn){
+      document.querySelectorAll('.tab-pane').forEach(t=>t.style.display='none');
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.getElementById(tabId).style.display='block';
+      btn.classList.add('active');
+    };
+
+    window.abrirModalCadastro = function(id){
+      if(id){
+        const p=profissionais.find(x=>x.id===String(id));if(!p)return;
+        document.getElementById('modalProfId').value=p.id;
+        document.getElementById('modalProfNome').value=p.nome;
+        document.getElementById('modalProfCpf').value=p.documento;
+        document.getElementById('modalProfRegime').value=p.regime||'pj-presumido';
+        document.getElementById('modalProfPix').value=p.chavePix||'';
+        document.getElementById('modalCadTitulo').innerHTML='<i class="fas fa-user-edit"></i> Editar Profissional';
+      } else {
+        document.getElementById('modalProfId').value='';
+        document.getElementById('modalProfNome').value='';
+        document.getElementById('modalProfCpf').value='';
+        document.getElementById('modalProfRegime').value='';
+        document.getElementById('modalProfPix').value='';
+        document.getElementById('modalCadTitulo').innerHTML='<i class="fas fa-user-plus"></i> Novo Profissional';
+      }
+      document.getElementById('modalCadastro').style.display='flex';
+      setTimeout(()=>document.getElementById('modalProfNome').focus(),50);
+    };
+
+    window.fecharModalCadastro = function(){
+      document.getElementById('modalCadastro').style.display='none';
+    };
+
+    window.salvarModalCadastro = function(){
+      const id=document.getElementById('modalProfId').value;
+      const nome=document.getElementById('modalProfNome').value.trim();
+      const doc=document.getElementById('modalProfCpf').value.trim();
+      const regime=document.getElementById('modalProfRegime').value;
+      const pix=document.getElementById('modalProfPix').value.trim();
+      if(!nome){toast('Informe o nome completo','error');return;}
+      if(!doc){toast('Informe o CPF','error');return;}
+      if(!regime){toast('Selecione o tipo de pagamento','error');return;}
+      const docLimpo=doc.replace(/\D/g,'');
+      if(id){
+        // edição
+        if(profissionais.some(x=>x.documento.replace(/\D/g,'')===docLimpo&&x.id!==id)){toast('CPF já cadastrado para outro profissional','error');return;}
+        const extras=[...(window.fechamentoExtras||[])];
+        const idx=extras.findIndex(x=>x.id===id);
+        const novo={id:docLimpo,nome,documento:doc,regime,categoria:'repasse',chavePix:pix};
+        if(idx!==-1)extras[idx]=novo;
+        else extras.push({...novo,overrideCpf:id});
+        window.saveFechamentoExtras(extras);
+        toast('Profissional atualizado!','success');
+      } else {
+        // novo
+        if(profissionais.some(p=>p.documento.replace(/\D/g,'')===docLimpo)){toast('CPF já cadastrado','error');return;}
+        const extras=[...(window.fechamentoExtras||[]),{id:docLimpo,nome,documento:doc,regime,categoria:'repasse',chavePix:pix}];
+        window.saveFechamentoExtras(extras);
+        toast('Profissional cadastrado!','success');
+      }
+      fecharModalCadastro();
+    };
+
+    function preencherEdicao(id){ window.abrirModalCadastro(id); }
+
+    function atualizarListas(){
+      const lista=document.getElementById('listaProfissionais');
+      if(!profissionais.length){document.getElementById('semProfissionais').classList.remove('hidden');lista.innerHTML='';return;}
+      document.getElementById('semProfissionais').classList.add('hidden');
+      let html='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><tr style="border-bottom:2px solid #e5e7eb;"><th style="text-align:left;padding:8px;">Nome</th><th>Tipo</th><th>Ações</th></tr>';
+      profissionais.forEach(p=>{
+        const t=p.regime==='funcionario'?'Sem Descontos':'PJ';
+        html+=`<tr style="border-bottom:1px solid #f3f4f6;"><td style="padding:8px;">${esc(p.nome)}</td><td style="text-align:center;padding:8px;"><span class="badge ${esc(p.regime||'pj-presumido')}">${t}</span></td><td style="text-align:center;padding:8px;"><button class="btn-primary btn-small" onclick="preencherEdicao('${p.id}')"><i class="fas fa-edit"></i></button> <button class="btn-danger btn-small" onclick="excluir('${p.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+      });
+      html+='</table></div>';lista.innerHTML=html;
+    }
+
+    async function excluir(id){
+      if(await confirmar('Excluir este cadastro?')){
+        const srcBase=(window._baseProfFirebase&&window._baseProfFirebase.length)?window._baseProfFirebase:baseProfissionais;
+        const isBase=srcBase.find(b=>b.documento.replace(/\D/g,'')=== id);
+        if(isBase){window.saveFechamentoDeleted([...(window.fechamentoDeleted||[]),id]);}
+        else{window.saveFechamentoExtras((window.fechamentoExtras||[]).filter(p=>p.id!==id));}
+        toast('Excluído','success');
+      }
+    }
+
+    function adicionarItem(){itens.push({id:Date.now()+Math.floor(Math.random()*1000),qtd:1,descricao:'',valorUnitario:0,valorTotal:0});renderizarItens();}
+    function removerItem(id){itens=itens.filter(i=>i.id!==id);renderizarItens();}
+    function atualizarItem(id,campo,valor){const item=itens.find(i=>i.id===id);if(!item)return;if(campo==='qtd')item.qtd=parseInt(valor,10)||1;if(campo==='descricao')item.descricao=valor.toUpperCase();if(campo==='valorUnitario')item.valorUnitario=parseFloat(valor)||0;item.valorTotal=item.qtd*item.valorUnitario;renderizarItens();}
+    function atualizarItemValorUnitario(inp,id){let v=parseValorMonetario(inp.value);atualizarItem(id,'valorUnitario',v);inp.value=formatarMoeda(v);}
+
+    function renderizarItens(){
+      const c=document.getElementById('itensContainer');let html='',total=0;
+      itens.forEach(i=>{total+=i.valorTotal;html+=`<div class="item-row"><input type="number" value="${i.qtd}" min="1" onchange="atualizarItem(${i.id},'qtd',this.value)"><input type="text" value="${esc(i.descricao)}" placeholder="Descrição" onchange="atualizarItem(${i.id},'descricao',this.value)"><input type="text" value="${formatarMoeda(i.valorUnitario)}" onblur="atualizarItemValorUnitario(this,${i.id})" onkeyup="mascaraMoeda(event)" placeholder="0,00"><div>R$ ${formatarMoeda(i.valorTotal)}</div><div><button class="btn-danger btn-small" onclick="removerItem(${i.id})"><i class="fas fa-trash"></i></button></div></div>`;});
+      c.innerHTML=html;document.getElementById('totalItens').innerHTML=`Subtotal: R$ ${formatarMoeda(total)}`;
+    }
+
+    function togglePagoCheckbox(){const f=document.getElementById('formaPagamento').value,c=document.getElementById('pagoHojeContainer');if(f==='dinheiro')c.style.display='flex';else{c.style.display='none';document.getElementById('pagoHojeCheckbox').checked=false;}}
+
+    function calcular(){
+      const idSel=document.getElementById('selectProfissional').value;
+      const p=profissionais.find(x=>x.id===idSel);
+      if(!p){toast('Selecione um profissional','error');return false;}
+      if(!itens.length){toast('Adicione pelo menos um item','error');return false;}
+      for(const i of itens){if(!i.descricao||!i.descricao.trim()){toast('Todos os itens precisam de descrição','error');return false;}if(i.qtd<=0||i.valorUnitario<=0){toast('Quantidade e valor devem ser maiores que zero','error');return false;}}
+      const sub=itens.reduce((s,i)=>s+i.valorTotal,0);
+      if(sub<=0){toast('Adicione itens com valor positivo','error');return false;}
+      let pis=0,csll=0,irrf=0,cofins=0;
+      if(p.regime==='pj-presumido'){
+        if(sub>215.05){pis=Math.round(sub*TAXAS.PIS*100)/100;csll=Math.round(sub*TAXAS.CSLL*100)/100;cofins=Math.round(sub*TAXAS.COFINS*100)/100;document.getElementById('impostosContainer').style.display='block';if(sub>TAXAS.LIMITE_IRRF){irrf=Math.round(sub*TAXAS.IRRF*100)/100;document.getElementById('irrfItem').style.display='flex';}else{document.getElementById('irrfItem').style.display='none';}}
+        else{document.getElementById('impostosContainer').style.display='none';}
+      }else{document.getElementById('impostosContainer').style.display='none';}
+      const td=Math.round((pis+csll+irrf+cofins)*100)/100,liq=Math.round((sub-td)*100)/100,data=new Date().toLocaleString('pt-BR');
+      togglePagoCheckbox();
+      dadosCalculo={profissional:p,formaPagamento:document.getElementById('formaPagamento').value,itens:[...itens],subtotal:sub,pis,csll,irrf,cofins,totalDescontos:td,liquido:liq,data};
+      document.getElementById('infoNome').textContent=p.nome;document.getElementById('infoCpf').textContent=p.documento;
+      document.getElementById('infoTipo').textContent=p.regime==='funcionario'?'Sem Descontos':'PJ';document.getElementById('infoData').textContent=data;
+      document.getElementById('valorSubtotal').textContent=`R$ ${formatarMoeda(sub)}`;
+      document.getElementById('pis').textContent=`R$ ${formatarMoeda(pis)}`;document.getElementById('csll').textContent=`R$ ${formatarMoeda(csll)}`;
+      document.getElementById('cofins').textContent=`R$ ${formatarMoeda(cofins)}`;document.getElementById('irrf').textContent=`R$ ${formatarMoeda(irrf)}`;
+      document.getElementById('liquido').textContent=`R$ ${formatarMoeda(liq)}`;
+      document.getElementById('resultado').style.display='block';document.getElementById('semResultado').style.display='none';
+      return true;
+    }
+
+    function calcularEAvancar(){if(calcular())irParaResultado();}
+
+    function limparCalculo(){itens=[];dadosCalculo=null;document.getElementById('resultado').style.display='none';document.getElementById('semResultado').style.display='block';document.getElementById('pagoHojeContainer').style.display='none';document.getElementById('pagoHojeCheckbox').checked=false;adicionarItem();}
+
+    function montarHtmlRecibo(dados){
+      const fmtPag={pix:'PIX',dinheiro:'Dinheiro',transferencia:'Transferência'}[dados.formaPagamento]||dados.formaPagamento;
+      const now=new Date(),data=now.toLocaleDateString('pt-BR'),hora=now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      let aliq=0;if(dados.profissional.regime==='pj-presumido'&&dados.subtotal>0)aliq=dados.totalDescontos/dados.subtotal;
+      const valid=dados.itens.filter(i=>i.descricao.trim()!==''&&i.valorTotal!==0);
+      let linhas=valid.map(i=>`<tr><td class="col-qtd">${i.qtd}</td><td>${esc(i.descricao)}</td><td class="col-valor">R$ ${formatarMoeda(i.valorTotal)}</td><td class="col-valor col-liquido">R$ ${formatarMoeda(i.valorTotal*(1-aliq))}</td></tr>`).join('');
+      linhas+=`<tr class="linha-totais"><td colspan="2"></td><td class="col-valor total-bruto">Total bruto: R$ ${formatarMoeda(dados.subtotal)}</td><td class="col-valor total-liquido">TOTAL: R$ ${formatarMoeda(dados.liquido)}</td></tr>`;
+      const _phc=document.getElementById('pagoHojeCheckbox'); const pago=_phc?_phc.checked:false;
+      const dia=String(now.getDate()).padStart(2,'0'),mes=String(now.getMonth()+1).padStart(2,'0'),ano=now.getFullYear();
+      const dataPag=pago?`${dia}/${mes}/${ano}`:'_______/_______/_____';
+      const imp=dados.profissional.regime==='pj-presumido'?`Impostos: PIS: R$ ${formatarMoeda(dados.pis)} | CSLL: R$ ${formatarMoeda(dados.csll)} | COFINS: R$ ${formatarMoeda(dados.cofins)}${dados.irrf>0?` | IRRF: R$ ${formatarMoeda(dados.irrf)}`:''}` :'';
+      const nomeU=usuario||'Sistema';
+      const logoVal = window._logoUrl || sessionStorage.getItem('logoDataUrl') || sessionStorage.getItem('caixaHeaderImg') || '';
+      return`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Repasse Consolidado</title><style>@page{size:A4;margin:0}body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#000}.recibo{width:210mm;min-height:297mm;box-sizing:border-box;padding:8mm;margin:0 auto}.cabecalho img{height:60px;width:auto;max-width:150px;object-fit:contain;flex-shrink:0;}.cabecalho{display:flex;align-items:center;justify-content:space-between;margin-bottom:8mm}.titulo-container{flex:1;text-align:center}.titulo{font-size:26px;font-weight:500}.linha-topo{border:none;border-top:1px solid #000;margin:0 0 8mm 0}.topo{display:grid;grid-template-columns:1fr 1fr;gap:6mm;font-size:12px}.topo .dir{text-align:right}.pagoa{margin:8mm 0 6mm;font-size:14px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:6px 8px;vertical-align:middle}th{text-align:center}.col-qtd{width:10%;text-align:center}.col-valor{width:22.5%;text-align:right}.col-liquido{font-weight:700}.linha-totais td{font-weight:700}.impostos{margin-top:4mm;font-size:12px}.validacao{margin:6mm 0 4mm;text-align:center;font-size:12px;line-height:1.5}.rodape{margin-top:10mm;padding-top:6mm;font-size:12px}.rodape-assinatura{display:flex;justify-content:space-between;margin-bottom:8mm;gap:30mm}.assin{text-align:center;width:80mm;flex:1}.assin .label{font-size:12px}.info-pagamento{margin-top:2mm;font-size:12px;line-height:1.6}.info-pagamento .titulo-info{font-weight:700;margin-bottom:3mm;text-transform:uppercase}.quitado{margin-top:3mm;font-weight:600}</style></head><body><div class="recibo"><div class="cabecalho"><div style="width:80px;display:flex;align-items:center;">${logoVal?`<img src="${logoVal}" style="height:60px;width:auto;object-fit:contain;" alt="Logo">`:'<span style="font-size:12px;font-weight:700;">Amor Saúde</span>'}</div><div class="titulo-container"><div class="titulo">Repasse Consolidado</div></div><div style="width:80px"></div></div><hr class="linha-topo"><div class="topo"><div><div style="font-weight:700">Amor Saúde SP Pirituba</div><div>Avenida Doutor Felipe Pinel — Pirituba / São Paulo/SP</div><div>Data/Hora: ${data} ${hora} - Pagamento: ${fmtPag}</div></div><div class="dir"><div>Usuário: ${esc(nomeU)}</div></div></div><div class="pagoa"><strong>Pago a: ${esc(dados.profissional.nome)}</strong> / CPF/CNPJ: <strong>${esc(dados.profissional.documento)}</strong></div><table><thead><tr><th>Qtd</th><th>Item</th><th>Valor Bruto</th><th>Valor Líquido</th></tr></thead><tbody>${linhas}</tbody></table>${imp?`<div class="impostos">${esc(imp)}</div>`:''}<div class="validacao">Declaro que conferi e validei os serviços prestados, estando de acordo com os valores apurados, ciente de que o pagamento desta agenda será realizado conforme calendário financeiro da clínica.</div><div class="rodape"><div class="rodape-assinatura"><div class="assin"><div style="width:55%;margin:0 auto;border-bottom:1px solid #000;height:14px;margin-bottom:4px;"></div><div class="label">Carimbo e Assinatura do Médico</div></div>${(dados.formaPagamento==='dinheiro'&&pago)?`<div class="assin"><div style="width:55%;margin:0 auto;border-bottom:1px solid #000;height:14px;margin-bottom:4px;"></div><div class="label">Assinatura do Responsável</div></div>`:''}</div><div class="info-pagamento"><div class="titulo-info">INFORMAÇÕES DE PAGAMENTO</div><p>Forma de pagamento: (${dados.formaPagamento==='transferencia'?'X':' '}) Transferência &nbsp;&nbsp;(${dados.formaPagamento==='dinheiro'?'X':' '}) Dinheiro &nbsp;&nbsp;Data: ${dataPag}</p><p class="quitado">${pago?'☑':'☐'} Quitado conforme comprovante bancário em anexo</p></div></div></div><sc`+'ript>window.print();<'+'/script></body></html>';
+    }
+
+    function gerarRecibo(){
+      if(!dadosCalculo){toast('Calcule primeiro','error');return;}
+      // Salva no Firebase antes de imprimir
+      if (window._fbSet && window._userUid) {
+        const id = Date.now();
+        const registro = {
+          id: id,
+          profissional: dadosCalculo.profissional,
+          formaPagamento: dadosCalculo.formaPagamento,
+          itens: dadosCalculo.itens,
+          subtotal: dadosCalculo.subtotal,
+          pis: dadosCalculo.pis,
+          csll: dadosCalculo.csll,
+          irrf: dadosCalculo.irrf,
+          cofins: dadosCalculo.cofins,
+          totalDescontos: dadosCalculo.totalDescontos,
+          liquido: dadosCalculo.liquido,
+          criadoEm: new Date().toISOString(),
+          criadoPor: usuario || '—',
+          criadoPorUid: window._userUid,
+          pagoHoje: document.getElementById('pagoHojeCheckbox') ? document.getElementById('pagoHojeCheckbox').checked : false
+        };
+        window._fbSet('fechamento/registros/' + id, registro).catch(()=>{});
+      }
+      const w=window.open('','_blank');
+      if(!w){toast('Pop-up bloqueado — permita pop-ups para imprimir','error');return;}
+      w.document.write(montarHtmlRecibo(dadosCalculo));w.document.close();
+    }
+
+    document.addEventListener('DOMContentLoaded',function(){
+      aplicarTemaSalvo();
+
+      // ── Busca Step 1 (Profissional) ──
+      document.getElementById('buscaProfissional').addEventListener('keyup',buscarDebounced);
+      document.getElementById('resultadosBusca').addEventListener('click',function(e){
+        const item=e.target.closest('.search-result-item');if(!item)return;
+        const res=JSON.parse(document.getElementById('resultadosBusca').dataset.currentResults||'[]');
+        const p=res[parseInt(item.dataset.index,10)];if(!p)return;
+        selecionarProfissionalBase(p);
+      });
+
+      // ── Busca Step 2 (Cálculo) ──
+      document.getElementById('calcBusca').addEventListener('keyup',calcBuscarDebounced);
+      document.getElementById('calcBusca').addEventListener('input',function(){
+        if(!this.value.trim()){document.getElementById('selectProfissional').value='';document.getElementById('calcProfissionalNome').textContent='-';document.getElementById('calcProfissionalCpf').textContent='-';}
+      });
+      document.getElementById('calcResultados').addEventListener('click',function(e){
+        const item=e.target.closest('.search-result-item');if(!item)return;
+        const res=JSON.parse(document.getElementById('calcResultados').dataset.currentResults||'[]');
+        const p=res[parseInt(item.dataset.index,10)];if(!p)return;
+        selecionarProfissionalCalculo(p);
+      });
+
+      // ── Máscara CPF no modal ──
+      document.getElementById('modalProfCpf').addEventListener('input',function(){
+        let v=this.value.replace(/\D/g,'').slice(0,11);
+        v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+        this.value=v;
+      });
+
+      // ── Fechar dropdowns ao clicar fora ──
+      document.addEventListener('click',function(e){
+        if(!document.getElementById('calcBusca').contains(e.target)&&!document.getElementById('calcResultados').contains(e.target))
+          document.getElementById('calcResultados').classList.add('hidden');
+        if(!document.getElementById('buscaProfissional').contains(e.target)&&!document.getElementById('resultadosBusca').contains(e.target))
+          document.getElementById('resultadosBusca').classList.add('hidden');
+      });
+
+      // ── Fechar modal ao clicar no overlay ──
+      document.getElementById('modalCadastro').addEventListener('click',function(e){
+        if(e.target===this)fecharModalCadastro();
+      });
+
+      document.getElementById('themeToggle').addEventListener('click',toggleTheme);
+      atualizarResumoProfissional(null);
+      window.atualizarListaGeralFechamento();
+      if(!itens.length)adicionarItem();
+      atualizarEtapas();
+    });
+  </script>
+
+  </div></div><!-- /content -->
+  <script type="module">
+    import { initializeApp }                  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged }         from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const _app  = initializeApp(window.FIREBASE_CONFIG);
+    const _db   = getDatabase(_app);
+    const _auth = getAuth(_app);
+    window.initFirebaseUtils(_db, ref, get);
+
+    onAuthStateChanged(_auth, user => {
+      if (!user) { irPara('../login.html'); return; }
+      window._fbSet    = (path, data) => set(ref(_db, path), data);
+      window._userUid  = user.uid;
+      carregarLogoGlobal(['#headerLogo']);
+      // Garante logo disponível para o recibo
+      get(ref(_db, 'admin/logo')).then(snap => {
+        const d = snap.val();
+        if (d && d.dataUrl) {
+          sessionStorage.setItem('logoDataUrl', d.dataUrl);
+          window._logoUrl = d.dataUrl;
+          // Atualiza também os elementos de logo na página
+          const imgs = document.querySelectorAll('#headerLogo, #logoHeader');
+          imgs.forEach(img => { if (img) img.src = d.dataUrl; });
+        }
+      }).catch(()=>{});
+      // Busca nome completo do usuário no Firebase
+      get(ref(_db, 'admin/usuarios/' + user.uid)).then(snap => {
+        if (snap.exists() && snap.val().nomeCompleto) {
+          if (typeof window._setUsuario === 'function') window._setUsuario(snap.val().nomeCompleto);
+        } else if (user.email && typeof window._setUsuario === 'function') {
+          window._setUsuario(user.email.split('@')[0]);
+        }
+      }).catch(()=>{});
+    });
+
+    // Carrega profissionais do painel admin como base primária (admin/profissionais)
+    onValue(ref(_db, 'admin/profissionais'), snap => {
+      const d = snap.val();
+      if (d && typeof d === 'object') {
+        window._baseProfFirebase = Object.values(d)
+          .filter(p => p && p.nome && p.documento)
+          .map(p => ({
+            nome: p.nome,
+            documento: p.documento,
+            regime: p.regime || 'pj-presumido',
+            categoria: 'repasse',
+            id: p.documento.replace(/\D/g,'')
+          }));
+      } else {
+        window._baseProfFirebase = []; // Firebase vazio → usa hardcoded como fallback
+      }
+      window.atualizarListaGeralFechamento();
+    });
+
+    onValue(ref(_db, 'fechamento/profissionais_extras'), snap => {
+      window.fechamentoExtras = snap.val() || [];
+      window.atualizarListaGeralFechamento();
+    });
+    onValue(ref(_db, 'fechamento/profissionais_apagados'), snap => {
+      window.fechamentoDeleted = snap.val() || [];
+      window.atualizarListaGeralFechamento();
+    });
+
+    window.saveFechamentoExtras  = async arr => set(ref(_db, 'fechamento/profissionais_extras'), arr);
+    window.saveFechamentoDeleted = async arr => set(ref(_db, 'fechamento/profissionais_apagados'), arr);
+  </script>
+</body>
+</html>
+

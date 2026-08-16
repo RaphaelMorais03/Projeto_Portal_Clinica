@@ -1,0 +1,1047 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retirada de Exames — Amor Saúde Pirituba</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-800:#1e293b;--green:#15803d;--green-bg:#dcfce7;--amber:#92400e;--amber-bg:#fef3c7;--orange:#c2410c;--orange-bg:#ffedd5;--shadow:0 4px 20px rgba(10,31,68,.1);}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
+    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);letter-spacing:-.3px;}
+    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .header-right{display:flex;align-items:center;gap:10px;}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;flex-shrink:0;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .status-lbl{font-size:11px;color:var(--gray-500);}
+    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .back-btn:hover{background:var(--red-h);}
+    .content{max-width:1140px;margin:0 auto;padding:28px 24px 60px;}
+    .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+    .stat-card{background:white;border:1px solid var(--gray-200);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);}
+    .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+    .stat-num{font-size:28px;font-weight:800;color:var(--navy);letter-spacing:-1px;line-height:1;}
+    .stat-lbl{font-size:11px;color:var(--gray-400);font-weight:500;margin-top:3px;}
+    .panel{background:white;border:1px solid var(--gray-200);border-radius:18px;padding:24px;margin-bottom:20px;box-shadow:var(--shadow);}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
+    .panel-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+    .panel-title i{color:var(--red);}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+    .form-group{display:flex;flex-direction:column;gap:6px;}
+    .f-label{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--gray-500);}
+    .f-input,.f-select{padding:10px 13px;border:1.5px solid var(--gray-200);border-radius:10px;font-family:inherit;font-size:14px;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color .2s,box-shadow .2s;}
+    .f-input:focus,.f-select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);background:white;}
+    .tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:2px solid var(--gray-100);padding-bottom:0;}
+    .tab-btn{padding:10px 18px;border:none;background:none;border-radius:10px 10px 0 0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;color:var(--gray-400);border-bottom:3px solid transparent;display:flex;align-items:center;gap:7px;transition:all .18s;margin-bottom:-2px;}
+    .tab-btn:hover{color:var(--navy);}
+    .tab-btn.active{color:var(--navy);border-bottom-color:var(--red);background:var(--gray-50);}
+    .tab-pane{display:none;}.tab-pane.active{display:block;}
+    .filtros{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+    .filtro-wrap{position:relative;flex:1;min-width:180px;}
+    .filtro-wrap .f-input{padding-left:36px;}
+    .filtro-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:12px;pointer-events:none;}
+    .exames-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+    .exame-card{background:white;border:1.5px solid var(--gray-200);border-radius:14px;padding:16px;transition:all .18s;position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:130px;}
+    .exame-card:hover{border-color:var(--navy);box-shadow:0 6px 20px rgba(10,31,68,.1);}
+    .exame-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+    .exame-card.pendente::before{background:var(--amber);}
+    .exame-card.urgente::before{background:var(--orange);}
+    .exame-card.critico::before{background:var(--red);}
+    .card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:10px;}
+    .card-nome{font-size:14px;font-weight:800;color:var(--navy);line-height:1.2;}
+    .card-tipo{font-size:12px;color:var(--gray-500);margin-top:3px;}
+    .card-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+    .badge-ok{background:var(--green-bg);color:var(--green);}
+    .badge-amber{background:var(--amber-bg);color:var(--amber);}
+    .badge-orange{background:var(--orange-bg);color:var(--orange);}
+    .badge-red{background:#fee2e2;color:var(--red);}
+    .card-info{font-size:11px;color:var(--gray-500);display:flex;flex-direction:column;gap:3px;margin-bottom:12px;}
+    .card-info span{display:flex;align-items:center;gap:5px;}
+    .card-info i{width:12px;color:var(--gray-400);}
+    .card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--gray-100);padding-top:10px;}
+    .btn-baixa{padding:7px 14px;background:var(--navy);color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .2s;}
+    .btn-baixa:hover{background:var(--navy-mid);}
+    .btn-del-card{width:30px;height:30px;background:rgba(198,40,40,.08);border:none;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--red);font-size:12px;transition:all .15s;flex-shrink:0;}
+    .btn-del-card:hover{background:var(--red);color:white;}
+    /* ── CADASTRAR VIA AMEI ── */
+    .cad-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid var(--gray-100);background:white;}
+    .cad-row:nth-child(even){background:var(--gray-50);}
+    .cad-chk{margin-top:3px;flex-shrink:0;width:16px;height:16px;cursor:pointer;}
+    .cad-nome{font-size:13px;font-weight:700;color:var(--navy);line-height:1.3;}
+    .cad-exames{display:flex;flex-direction:column;gap:6px;flex:1;}
+    .cad-exame-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .cad-select{padding:4px 8px;border:1px solid var(--gray-200);border-radius:7px;font-family:inherit;font-size:12px;color:var(--navy);background:white;cursor:pointer;flex:1;min-width:180px;}
+    .cad-del-exame{background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:12px;padding:2px 5px;}
+    .cad-del-exame:hover{color:var(--red);}
+    .cad-add-exame{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:7px;padding:3px 10px;font-family:inherit;font-size:11px;font-weight:700;color:var(--gray-600);cursor:pointer;white-space:nowrap;}
+    .cad-add-exame:hover{background:var(--navy);color:white;border-color:var(--navy);}
+    .cad-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap;}
+    .cad-sel-info{font-size:12px;color:var(--gray-500);font-weight:600;}
+    .hist-table{width:100%;border-collapse:collapse;font-size:13px;}
+    .hist-table th{text-align:left;padding:10px 14px;background:var(--gray-50);color:var(--gray-500);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--gray-200);}
+    .hist-table td{padding:11px 14px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);}
+    .hist-table tr:hover td{background:var(--gray-50);}
+    .hist-empty{text-align:center;padding:40px;color:var(--gray-400);font-size:13px;}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,31,68,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:white;border-radius:18px;width:100%;max-width:500px;box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden;}
+    .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;}
+    .modal-header h3{font-size:16px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+    .modal-close{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--gray-500);font-size:14px;transition:all .15s;}
+    .modal-close:hover{background:var(--gray-200);}
+    .modal-body{padding:20px 24px 24px;}
+    .modal-info{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:12px 16px;margin-bottom:18px;}
+    .modal-info .mi-nome{font-size:15px;font-weight:800;color:var(--navy);}
+    .modal-info .mi-sub{font-size:12px;color:var(--gray-500);margin-top:3px;}
+    .toast-box{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+    .toast{padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;color:white;box-shadow:0 4px 14px rgba(0,0,0,.2);animation:slideIn .3s ease;max-width:320px;}
+    @keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+    .toast.success{background:var(--green);}.toast.error{background:var(--red);}.toast.info{background:var(--navy);}
+    .loading-state{text-align:center;padding:50px 20px;color:var(--gray-400);}
+    .spinner{width:36px;height:36px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .empty-state{text-align:center;padding:50px 20px;color:var(--gray-400);}
+    .empty-state i{font-size:40px;margin-bottom:12px;display:block;opacity:.3;}
+    .empty-state p{font-size:13px;}
+    @media(max-width:768px){.stats-bar{grid-template-columns:1fr 1fr;}.form-row{grid-template-columns:1fr;}.exames-grid{grid-template-columns:1fr;}.content{padding:16px 14px 60px;}}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+  <div class="toast-box" id="toastBox"></div>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)fecharModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-box-open" style="color:var(--green)"></i> Registrar Retirada</h3>
+        <button class="modal-close" onclick="fecharModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-info">
+          <div class="mi-nome" id="mNome">—</div>
+          <div class="mi-sub" id="mSub">—</div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="f-label">Quem retirou *</label>
+          <input class="f-input" type="text" id="mQuemRetirou" placeholder="Nome de quem está retirando">
+        </div>
+        <div class="form-group" style="margin-bottom:18px;">
+          <label class="f-label">Atendente que entregou *</label>
+          <input class="f-input" id="mAtendente" type="text" placeholder="Nome do atendente"
+            style="background:#f8fafc;">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button style="flex:1;padding:11px;background:var(--navy);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;" onclick="confirmarBaixa()">
+            <i class="fas fa-check"></i> Confirmar Retirada
+          </button>
+          <button style="padding:11px 18px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;" onclick="fecharModal()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="s-header">
+    <div class="s-logo">
+      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
+      <div>
+        <div class="s-logo-name">Amor Saúde</div>
+        <div class="s-logo-sub">Retirada de Exames · Pirituba</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-lbl" id="statusLbl">Conectando...</span>
+      <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats-bar">
+      <div class="stat-card"><div class="stat-icon" style="background:#eff6ff;">📋</div><div><div class="stat-num" id="stTotal">—</div><div class="stat-lbl">Total na gaveta</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--amber-bg);">⏳</div><div><div class="stat-num" id="stHoje">—</div><div class="stat-lbl">Chegaram hoje</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fee2e2;">🔴</div><div><div class="stat-num" id="stAtrasados">—</div><div class="stat-lbl">Parados +7 dias</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--green-bg);">✅</div><div><div class="stat-num" id="stRetirados">—</div><div class="stat-lbl">Retirados hoje</div></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="tabs">
+        <button class="tab-btn active" id="tabGaveta"    onclick="mudarTab('gaveta')"><i class="fas fa-inbox"></i> Gaveta Digital</button>
+        <button class="tab-btn"        id="tabCadastrar" onclick="mudarTab('cadastrar')"><i class="fas fa-paste"></i> Cadastrar Exame</button>
+        <button class="tab-btn"        id="tabHistorico" onclick="mudarTab('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico</button>
+        <button class="tab-btn"        id="tabRelatorios" onclick="mudarTab('relatorios')"><i class="fas fa-file-lines"></i> Relatórios</button>
+      </div>
+
+      <!-- GAVETA -->
+      <div class="tab-pane active" id="paneGaveta">
+        <div class="filtros">
+          <div class="filtro-wrap"><i class="fas fa-search filtro-icon"></i><input class="f-input" type="text" id="filtroBusca" placeholder="Buscar por nome do paciente..." oninput="renderGaveta()"></div>
+          <div class="filtro-wrap" style="max-width:200px;">
+            <select class="f-select" id="filtroTipo" onchange="renderGaveta()">
+              <option value="">Todos os tipos</option>
+              <option value="Ecocardiograma">Ecocardiograma</option>
+              <option value="EEG">EEG</option>
+              <option value="ENMG">ENMG</option>
+              <option value="Potencial Evocado">Potencial Evocado</option>
+              <option value="Teste Ergométrico">Teste Ergométrico</option>
+              <option value="Ultrassom">Ultrassom (todos)</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+          <div class="filtro-wrap" style="max-width:180px;">
+            <select class="f-select" id="filtroStatus" onchange="renderGaveta()">
+              <option value="">Todos</option>
+              <option value="hoje">Chegaram hoje</option>
+              <option value="semana">Essa semana</option>
+              <option value="atrasados">+7 dias parado</option>
+              <option value="prontos">Resultado disponível</option>
+            </select>
+          </div>
+        </div>
+        <div class="exames-grid" id="gavetaGrid"><div class="loading-state"><div class="spinner"></div>Carregando exames...</div></div>
+      </div>
+
+      <!-- CADASTRAR EXAME -->
+      <div class="tab-pane" id="paneCadastrar">
+        <div style="background:#eff6ff;border:1px solid #c7d2fe;border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#3730a3;line-height:1.6;">
+          <i class="fas fa-info-circle"></i> Cole o texto da sala de espera do AMEI. O sistema detecta o tipo de exame automaticamente.
+          Você pode editar o tipo ou adicionar exames extras antes de salvar.
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <label class="f-label" style="font-size:11px;">Data do exame</label>
+            <input class="f-input" type="date" id="cadData" style="margin-top:4px;">
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <label class="f-label" style="font-size:11px;">Filtrar status</label>
+            <select class="f-select" id="cadFiltroStatus" onchange="parseCadastrar()" style="margin-top:4px;">
+              <option value="atendido">Só Atendidos</option>
+              <option value="todos">Todos</option>
+            </select>
+          </div>
+        </div>
+        <textarea id="cadTexto" style="width:100%;height:160px;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:12px;font-family:monospace;font-size:12px;resize:vertical;outline:none;transition:border .2s;" placeholder="Cole aqui o texto da sala de espera do AMEI..." oninput="parseCadastrar()" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
+
+        <!-- Adicionar paciente manualmente -->
+        <div style="margin-top:10px;padding:12px 14px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
+            <i class="fas fa-user-plus"></i> Adicionar paciente manualmente
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+            <div style="flex:2;min-width:160px;">
+              <label class="f-label" style="font-size:10px;">Nome do paciente</label>
+              <input class="f-input" id="cadManualNome" type="text" placeholder="Nome completo"
+                style="margin-top:3px;font-size:12px;padding:7px 10px;"
+                onkeydown="if(event.key==='Enter') adicionarManual()">
+            </div>
+            <div style="flex:1;min-width:140px;">
+              <label class="f-label" style="font-size:10px;">Tipo de exame</label>
+              <select class="f-select" id="cadManualTipo" style="margin-top:3px;font-size:12px;padding:7px 10px;">
+                <option value="Ecocardiograma">Ecocardiograma</option>
+                <option value="EEG">EEG</option>
+                <option value="ENMG">ENMG</option>
+                <option value="Potencial Evocado">Potencial Evocado</option>
+                <option value="Teste Ergométrico">Teste Ergométrico</option>
+                <option value="Ultrassom">Ultrassom</option>
+                <option value="Ultrassom - Abdome total">Ultrassom - Abdome total</option>
+                <option value="Ultrassom - Mamas">Ultrassom - Mamas</option>
+                <option value="Ultrassom - Próstata">Ultrassom - Próstata</option>
+                <option value="Ultrassom - Transvaginal">Ultrassom - Transvaginal</option>
+                <option value="Ultrassom - Obstétrico">Ultrassom - Obstétrico</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+            <button onclick="adicionarManual()"
+              style="padding:7px 16px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
+              <i class="fas fa-plus"></i> Adicionar
+            </button>
+          </div>
+        </div>
+
+        <div id="cadResult" style="display:none;margin-top:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:12px;font-weight:700;color:var(--navy);" id="cadResultTit">— pacientes</div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-600);cursor:pointer;">
+              <input type="checkbox" id="cadChkAll" onchange="toggleCadAll(this.checked)"> Selecionar todos
+            </label>
+          </div>
+          <div style="border:1.5px solid var(--gray-200);border-radius:12px;overflow:hidden;max-height:360px;overflow-y:auto;" id="cadLista"></div>
+          <div class="cad-footer">
+            <span class="cad-sel-info" id="cadSelInfo">Nenhum selecionado</span>
+            <button id="cadBtnAdd" onclick="adicionarCadastro()" disabled
+              style="padding:10px 20px;background:var(--navy);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;opacity:.5;transition:all .2s;">
+              <i class="fas fa-plus-circle"></i> Adicionar à Gaveta (<span id="cadSelCount">0</span>)
+            </button>
+          </div>
+        </div>
+        <div id="cadEmpty" style="display:none;text-align:center;padding:24px;color:var(--gray-400);">
+          <i class="fas fa-paste" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3;"></i>
+          Nenhum paciente detectado. Verifique o texto colado.
+        </div>
+      </div>
+
+            <!-- RELATÓRIOS GERADOS -->
+      <div class="tab-pane" id="paneRelatorios">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);">Relatórios gerados no Cadastrar</div>
+          <button onclick="renderRelatorios()" style="padding:6px 12px;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
+            <i class="fas fa-rotate-right"></i> Atualizar
+          </button>
+        </div>
+        <div id="relatoriosLista">
+          <div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO -->
+      <div class="tab-pane" id="paneHistorico">
+        <div class="filtros" style="margin-bottom:14px;">
+          <div class="filtro-wrap"><i class="fas fa-search filtro-icon"></i><input class="f-input" type="text" id="filtroHist" placeholder="Buscar no histórico..." oninput="renderHistorico()"></div>
+          <div class="filtro-wrap" style="max-width:160px;"><input class="f-input" type="date" id="filtroHistData" onchange="renderHistorico()"></div>
+          <button onclick="exportarHistorico()" style="padding:9px 16px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+        </div>
+        <div id="histContainer"><div class="loading-state"><div class="spinner"></div>Carregando histórico...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAIS DE SUCESSO / LOADING -->
+  <div id="importSuccessModal" style="display:none;position:fixed;inset:0;background:rgba(10,31,68,.55);z-index:9000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
+    <div style="background:white;border-radius:22px;max-width:420px;width:100%;padding:36px 28px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.3);">
+      <div style="width:72px;height:72px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:34px;">✅</div>
+      <div style="font-size:20px;font-weight:900;color:var(--navy);margin-bottom:8px;">Importação concluída!</div>
+      <div style="font-size:14px;color:var(--gray-500);margin-bottom:6px;" id="importSuccessMsg">—</div>
+      <div id="importSuccessBreakdown" style="display:flex;justify-content:center;gap:12px;margin:16px 0;flex-wrap:wrap;"></div>
+      <button onclick="fecharImportModal()" style="background:var(--navy);color:white;border:none;border-radius:12px;padding:12px 32px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;">Ver na Gaveta</button>
+    </div>
+  </div>
+  <div id="importLoadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(10,31,68,.6);z-index:8999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+    <div style="background:white;border-radius:20px;padding:36px 40px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35);min-width:280px;">
+      <div style="width:52px;height:52px;border:4px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px;"></div>
+      <div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:6px;" id="importLoadingTxt">Importando exames...</div>
+      <div style="font-size:13px;color:var(--gray-400);" id="importLoadingSub">Salvando no Firebase</div>
+      <div style="width:100%;background:var(--gray-200);border-radius:8px;height:6px;margin-top:16px;overflow:hidden;">
+        <div id="importLoadingBar" style="height:100%;background:var(--navy);border-radius:8px;width:0%;transition:width .25s;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const app  = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getDatabase(app);
+    window.initFirebaseUtils(db, ref, get);
+
+    // Status de conexão
+    onValue(ref(db, '.info/connected'), snap => {
+      const online = snap.val();
+      const dot = document.getElementById('statusDot');
+      const lbl = document.getElementById('statusLbl');
+      if (dot) dot.style.background = online ? '#22c55e' : '#f59e0b';
+      if (lbl) lbl.textContent = online ? 'Conectado' : 'Sem conexão';
+    });
+
+    let examesPendentes = {}, examesRetirados = {};
+
+    onAuthStateChanged(auth, user => {
+      const grid = document.getElementById('gavetaGrid');
+      if (!user) {
+        if (grid) grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-lock"></i><p>Sessão expirada. <a href="login.html">Fazer login</a></p></div>';
+        return;
+      }
+
+      // Preenche atendente com usuário logado (via sessionStorage)
+      const _atenInput = document.getElementById('mAtendente');
+      if (_atenInput) {
+        const _atenNome = sessionStorage.getItem('usuario') || '';
+        _atenInput.value = _atenNome;
+      }
+
+      // Logo
+      carregarLogoGlobal(['#headerLogo']);
+
+      onValue(ref(db, 'exames/pendentes'), snap => {
+        examesPendentes = snap.val() || {};
+        window.renderGaveta();
+        atualizarStats();
+      }, err => { console.warn('Pendentes:', err.message); });
+
+      onValue(ref(db, 'exames/retirados'), snap => {
+        examesRetirados = snap.val() || {};
+        window.renderHistorico();
+        atualizarStats();
+      }, err => { console.warn('Retirados:', err.message); });
+    });
+
+    function atualizarStats() {
+      const hoje = new Date().toISOString().slice(0,10);
+      const pend = Object.values(examesPendentes);
+      const ret  = Object.values(examesRetirados);
+      document.getElementById('stTotal').textContent     = pend.length;
+      document.getElementById('stHoje').textContent      = pend.filter(e => (e.cadastradoEm ? e.cadastradoEm.slice(0,10) : null) === hoje).length;
+      document.getElementById('stAtrasados').textContent = pend.filter(e => diasParado(e) >= 7).length;
+      document.getElementById('stRetirados').textContent = ret.filter(e => (e.retiradoEm ? e.retiradoEm.slice(0,10) : null) === hoje).length;
+    }
+
+    function diasParado(exame) {
+      const d = new Date(exame.cadastradoEm || exame.dataExame);
+      return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    window.renderGaveta = function() {
+      var _fb = document.getElementById('filtroBusca'), _ft = document.getElementById('filtroTipo'), _fs = document.getElementById('filtroStatus');
+      const busca  = ((_fb ? _fb.value : '') || '').toLowerCase();
+      const tipo   = (_ft ? _ft.value : '') || '';
+      const status = (_fs ? _fs.value : '') || '';
+      const hoje   = new Date().toISOString().slice(0,10);
+
+      let lista = Object.entries(examesPendentes).map(([id, e]) => ({ id, ...e }));
+      if (busca)  lista = lista.filter(e => e.paciente ? e.paciente.toLowerCase().includes(busca) : false);
+      if (tipo)   lista = lista.filter(e => {
+        if (tipo === 'Ultrassom') return (e.tipo||'').startsWith('Ultrassom');
+        return e.tipo === tipo;
+      });
+      if (status === 'hoje')      lista = lista.filter(e => (e.cadastradoEm ? e.cadastradoEm.slice(0,10) : null) === hoje);
+      if (status === 'semana')    lista = lista.filter(e => diasParado(e) <= 7);
+      if (status === 'atrasados') lista = lista.filter(e => diasParado(e) >= 7);
+      if (status === 'prontos')   lista = lista.filter(e => e.dataPrazo && e.dataPrazo <= hoje);
+      lista.sort((a,b) => (a.cadastradoEm||'').localeCompare(b.cadastradoEm||''));
+
+      const grid = document.getElementById('gavetaGrid');
+      if (!lista.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-inbox"></i><p>Nenhum exame na gaveta</p></div>'; return; }
+
+      grid.innerHTML = lista.map(e => {
+        const dias = diasParado(e);
+        let cardClass='pendente', badgeClass='badge-ok', badgeTxt='Hoje';
+
+        // Badge de prazo para exames com resultado demorado
+        let prazoBadge = '';
+        if (e.dataPrazo) {
+          const hoje2   = new Date().toISOString().slice(0,10);
+          const prazoFmt = new Date(e.dataPrazo+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+          if (e.dataPrazo > hoje2) {
+            // Ainda dentro do prazo
+            prazoBadge = `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;color:#475569;border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-top:4px;"><i class="fas fa-clock"></i> Pronto em: ${prazoFmt}</span>`;
+          } else if (e.dataPrazo === hoje2) {
+            // Pronto hoje
+            prazoBadge = `<span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1d4ed8;border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-top:4px;"><i class="fas fa-bell"></i> Pronto hoje</span>`;
+          } else {
+            // Prazo passou — disponível
+            prazoBadge = `<span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#15803d;border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-top:4px;"><i class="fas fa-circle-check"></i> Disponível desde ${prazoFmt}</span>`;
+          }
+        }
+
+        if (dias >= 14) { cardClass='critico'; badgeClass='badge-red'; badgeTxt=`${dias}d parado`; }
+        else if (dias >= 7) { cardClass='urgente'; badgeClass='badge-orange'; badgeTxt=`${dias}d parado`; }
+        else if (dias >= 3) { badgeClass='badge-amber'; badgeTxt=`${dias}d`; }
+        else if (dias > 0)  { badgeClass='badge-amber'; badgeTxt=`${dias}d`; }
+
+        const dataFmt = e.dataExame ? new Date(e.dataExame+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+        const cadFmt  = e.cadastradoEm ? new Date(e.cadastradoEm).toLocaleDateString('pt-BR') : '—';
+
+        return `<div class="exame-card ${cardClass}">
+          <div class="card-top">
+            <div><div class="card-nome">${esc(e.paciente||'—')}</div><div class="card-tipo">${esc(e.tipo||'—')}</div></div>
+            <span class="card-badge ${badgeClass}"><i class="fas fa-clock"></i>${badgeTxt}</span>
+          </div>
+          <div class="card-info">
+            ${prazoBadge}
+            <span><i class="fas fa-calendar"></i>Data do exame: ${dataFmt}</span>
+            <span><i class="fas fa-inbox"></i>Cadastrado em: ${cadFmt}</span>
+            ${e.atendenteCad ? `<span><i class="fas fa-user"></i>Por: ${esc(e.atendenteCad)}</span>` : ''}
+            ${e.obs ? `<span><i class="fas fa-note-sticky"></i>${esc(e.obs)}</span>` : ''}
+          </div>
+          <div class="card-footer">
+            <button class="btn-baixa" onclick="abrirModal('${e.id}')"><i class="fas fa-box-open"></i> Dar Baixa</button>
+            <button class="btn-del-card" onclick="deletarExame('${e.id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+    };
+
+    window.renderHistorico = function() {
+      var _fh = document.getElementById('filtroHist'), _fd = document.getElementById('filtroHistData');
+      const busca = ((_fh ? _fh.value : '') || '').toLowerCase();
+      const data  = (_fd ? _fd.value : '') || '';
+      let lista = Object.entries(examesRetirados).map(([id, e]) => ({ id, ...e }));
+      if (busca) lista = lista.filter(e => (e.paciente ? e.paciente.toLowerCase().includes(busca) : false) || (e.quemRetirou ? e.quemRetirou.toLowerCase().includes(busca) : false));
+      if (data)  lista = lista.filter(e => (e.retiradoEm ? e.retiradoEm.slice(0,10) : null) === data);
+      lista.sort((a,b) => (b.retiradoEm||'').localeCompare(a.retiradoEm||''));
+      const el = document.getElementById('histContainer');
+      if (!lista.length) { el.innerHTML = '<div class="hist-empty">Nenhum exame retirado ainda</div>'; return; }
+      el.innerHTML = `<table class="hist-table"><thead><tr><th>Paciente</th><th>Tipo de Exame</th><th>Retirado por</th><th>Data da Retirada</th></tr></thead><tbody>${lista.map(e=>`<tr><td><strong>${esc(e.paciente||'—')}</strong></td><td>${esc(e.tipo||'—')}</td><td>${esc(e.quemRetirou||'—')}</td><td>${e.retiradoEm?new Date(e.retiradoEm).toLocaleString('pt-BR'):'—'}</td></tr>`).join('')}</tbody></table>`;
+    };
+
+    // cadastrarExame removido — substituído por adicionarCadastro (via AMEI)
+
+    let baixaId = null;
+
+    window.abrirModal = function(id) {
+      const e = examesPendentes[id]; if (!e) return;
+      baixaId = id;
+      document.getElementById('mNome').textContent = e.paciente || '—';
+      const dataFmt = e.dataExame ? new Date(e.dataExame+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+      document.getElementById('mSub').textContent = `${e.tipo||'—'} · Exame de ${dataFmt}`;
+      document.getElementById('mQuemRetirou').value = '';
+      // Auto-preenche com o atendente logado — editável se precisar corrigir
+      const _atenEl = document.getElementById('mAtendente');
+      if (_atenEl) {
+        _atenEl.value = sessionStorage.getItem('usuario') || '';
+        _atenEl.removeAttribute('readonly'); // permite editar se necessário
+      }
+      document.getElementById('modalOverlay').classList.add('open');
+    };
+
+    window.fecharModal = function() { document.getElementById('modalOverlay').classList.remove('open'); baixaId = null; };
+
+    window.confirmarBaixa = function() {
+      const quem = document.getElementById('mQuemRetirou').value.trim();
+      const aten = document.getElementById('mAtendente').value.trim();
+      if (!quem) { toast('Informe quem está retirando', 'error'); return; }
+      if (!aten) { toast('Informe o atendente que entregou', 'error'); return; }
+      if (!baixaId) return;
+      const exame = examesPendentes[baixaId];
+      set(push(ref(db, 'exames/retirados')), { ...exame, quemRetirou:quem, atendenteEntregou:aten, retiradoEm:new Date().toISOString() })
+        .then(() => remove(ref(db, `exames/pendentes/${baixaId}`)))
+        .then(() => { toast(`Baixa registrada para ${exame.paciente}!`, 'success'); fecharModal(); })
+        .catch(e => toast('Erro: ' + e.message, 'error'));
+    };
+
+    window.deletarExame = function(id) {
+      if (!confirm('Remover este exame da gaveta?')) return;
+      remove(ref(db, `exames/pendentes/${id}`)).then(() => toast('Removido', 'info')).catch(e => toast('Erro: '+e.message,'error'));
+    };
+
+    window.exportarHistorico = function() {
+      const lista = Object.values(examesRetirados);
+      if (!lista.length) { toast('Nenhum registro para exportar', 'error'); return; }
+      const rows = [['Paciente','Tipo','Data Exame','Quem Retirou','Atendente','Data Retirada']];
+      lista.sort((a,b) => (b.retiradoEm||'').localeCompare(a.retiradoEm||'')).forEach(e => {
+        rows.push([e.paciente||'',e.tipo||'',e.dataExame?new Date(e.dataExame+'T12:00:00').toLocaleDateString('pt-BR'):'',e.quemRetirou||'',e.atendenteEntregou||'',e.retiradoEm?new Date(e.retiradoEm).toLocaleString('pt-BR'):'']);
+      });
+      const csv = '\uFEFF' + rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+      const a = Object.assign(document.createElement('a'), { href:URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})), download:`historico_${new Date().toISOString().slice(0,10)}.csv` });
+      a.click(); toast('CSV exportado!','success');
+    };
+
+    window.mudarTab = function(tab) {
+      ['gaveta','cadastrar','historico','relatorios'].forEach(t => {
+        const T = t.charAt(0).toUpperCase()+t.slice(1);
+        var _t = document.getElementById('tab'+T);  if (_t)  _t.classList.remove('active');
+        var _p = document.getElementById('pane'+T); if (_p) _p.classList.remove('active');
+      });
+      const T = tab.charAt(0).toUpperCase()+tab.slice(1);
+      var _ta = document.getElementById('tab'+T);  if (_ta)  _ta.classList.add('active');
+      var _pa = document.getElementById('pane'+T); if (_pa) _pa.classList.add('active');
+      if (tab==='historico')  window.renderHistorico();
+      if (tab==='relatorios') window.renderRelatorios();
+      if (tab==='cadastrar') {
+        const d = document.getElementById('cadData');
+        if (d && !d.value) d.valueAsDate = new Date();
+      }
+    };
+
+    // ── RELATÓRIOS GERADOS ──
+    window.renderRelatorios = async function() {
+      const el = document.getElementById('relatoriosLista');
+      if (!el) return;
+      el.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+      try {
+        const snap = await get(ref(db, 'exames/relatorios'));
+        const data = snap.val() || {};
+        const lista = Object.entries(data)
+          .map(([k,v]) => ({key:k,...v}))
+          .sort((a,b) => b.dataGeracao.localeCompare(a.dataGeracao));
+
+        if (!lista.length) {
+          el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--gray-400);">' +
+            '<i class="fas fa-file-lines" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3;"></i>' +
+            'Nenhum relatório gerado ainda.</div>';
+          return;
+        }
+
+        el.innerHTML = lista.map(r => {
+          const dtGer = new Date(r.dataGeracao).toLocaleString('pt-BR');
+          const dtEx  = r.dataExame
+            ? new Date(r.dataExame+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+          const itensHtml = (r.itens||[]).map(item =>
+            '<div style="padding:4px 8px;font-size:11px;color:var(--navy);">' +
+              '<strong>' + esc(item.paciente||'') + '</strong> — ' +
+              (item.exames||[]).map(e =>
+                '<span style="background:var(--gray-100);border-radius:5px;padding:1px 6px;margin:0 2px;font-size:10px;">' +
+                esc(e.tipo||'') + (e.dataPrazo?(' · '+new Date(e.dataPrazo+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})):'') +
+                '</span>'
+              ).join('') +
+            '</div>'
+          ).join('');
+
+          return `<div style="border:1.5px solid var(--gray-200);border-radius:12px;overflow:hidden;margin-bottom:10px;">
+            <div style="background:var(--navy);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <i class="fas fa-file-lines" style="color:rgba(255,255,255,.5);"></i>
+              <span style="color:white;font-weight:700;font-size:13px;">Exame de ${dtEx}</span>
+              <span style="color:rgba(255,255,255,.6);font-size:11px;">${esc(r.usuario||'')}</span>
+              <span style="color:rgba(255,255,255,.5);font-size:10px;margin-left:auto;">${dtGer}</span>
+              <span style="background:rgba(255,255,255,.15);color:white;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;">
+                ${r.totalPacientes||0} pac · ${r.totalExames||0} exames
+              </span>
+              <button onclick="reimprimirRelatorio('${r.key}')"
+                style="padding:3px 10px;background:#15803d;color:white;border:none;border-radius:6px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">
+                <i class="fas fa-print"></i> Reimprimir
+              </button>
+            </div>
+            <div style="padding:8px 0;max-height:200px;overflow-y:auto;">${itensHtml}</div>
+          </div>`;
+        }).join('');
+      } catch(e) {
+        el.innerHTML = '<div style="color:var(--red);padding:16px;">Erro: ' + e.message + '</div>';
+      }
+    };
+
+    window.reimprimirRelatorio = async function(key) {
+      try {
+        const snap = await get(ref(db, 'exames/relatorios/' + key));
+        const r = snap.val();
+        if (!r) { toast('Relatório não encontrado', 'error'); return; }
+        // Reconstituir formato compatível com imprimirRelatorioExames
+        const itens = (r.itens||[]).map(item => ({
+          paciente: item.paciente,
+          exames:   (item.exames||[]).map(ex => ({id:'x', tipo:ex.tipo}))
+        }));
+        imprimirRelatorioExames(itens, r.dataExame, r.usuario);
+      } catch(e) { toast('Erro: ' + e.message, 'error'); }
+    };
+
+    // ── CADASTRAR VIA AMEI ──
+    const TIPOS_EXAME = [
+      'Ecocardiograma','EEG','ENMG','Potencial Evocado','Teste Ergométrico',
+      'Ultrassom','Ultrassom - Abdome total','Ultrassom - Mamas',
+      'Ultrassom - Próstata','Ultrassom - Transvaginal','Ultrassom - Obstétrico',
+      'Ultrassom - Tireoide','Ultrassom - Rins e vias urinárias',
+      'Ultrassom - Aparelho urinário','Outros'
+    ];
+
+    // Dias para o resultado ficar pronto por tipo de exame
+    const PRAZO_DIAS = {
+      'EEG': 15,
+      'ENMG': 15,
+      'Potencial Evocado': 15,
+      'Teste Ergométrico': 3,
+    };
+
+    function calcularDataPrazo(tipo, dataExame) {
+      const dias = PRAZO_DIAS[tipo];
+      if (!dias || !dataExame) return null;
+      const base = new Date(dataExame + 'T12:00:00');
+      base.setDate(base.getDate() + dias);
+      return base.toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+
+    function detectarTipoAmei(procedimento) {
+      const p = procedimento.trim();
+      const u = p.toUpperCase();
+      // Ecocardiograma
+      if (/ECODOPPLER|ECOCARDIOGRAMA/i.test(u)) return 'Ecocardiograma';
+      // Ergométrico
+      if (/ERGOMETRICO|ERGOMÉTRICO/i.test(u)) return 'Teste Ergométrico';
+      // EEG
+      if (/ELETROENCEFALOGRAMA|EEG/i.test(u)) return 'EEG';
+      // ENMG
+      if (/ELETRONEUROMIOGRAFIA|ENMG/i.test(u)) return 'ENMG';
+      // Potencial Evocado
+      if (/POTENCIAL EVOCADO/i.test(u)) return 'Potencial Evocado';
+      // Ultrassom — preserva subtipo
+      if (/^US\s|^US\s*DE\s|^US\s*[–-]\s|USG|ULTRASSOM/i.test(u)) {
+        // Remove prefixo "US de " e parênteses
+        const sub = p.replace(/^US\s*(de\s*|[–-]\s*)?/i,'').replace(/\(.*?\)/g,'').trim();
+        // Simplificar nomes longos
+        const sl = sub.toLowerCase();
+        if (/abdome/i.test(sl))    return 'Ultrassom - Abdome total';
+        if (/mamas/i.test(sl))     return 'Ultrassom - Mamas';
+        if (/próstat|prostat/i.test(sl)) return 'Ultrassom - Próstata';
+        if (/transvag/i.test(sl))  return 'Ultrassom - Transvaginal';
+        if (/obstétr|obstetric/i.test(sl)) return 'Ultrassom - Obstétrico';
+        if (/tireoid/i.test(sl))   return 'Ultrassom - Tireoide';
+        if (/urinário|urinario|rins/i.test(sl)) return 'Ultrassom - Rins e vias urinárias';
+        if (/aparelho urinário/i.test(sl)) return 'Ultrassom - Aparelho urinário';
+        return sub ? 'Ultrassom - ' + sub.charAt(0).toUpperCase() + sub.slice(1) : 'Ultrassom';
+      }
+      return 'Outros';
+    }
+
+    // Estado da lista de cadastro
+    let _cadItems = []; // [{id, paciente, exames:[{id, tipo}], checked}]
+    let _cadIdSeq = 0;
+
+    function cadId() { return 'ci' + (++_cadIdSeq); }
+
+    window.parseCadastrar = function() {
+      const txt    = document.getElementById('cadTexto').value;
+      const filtro = document.getElementById('cadFiltroStatus').value;
+      _cadItems = [];
+
+      const linhas = txt.split('\n');
+      const vistos = {};
+
+      linhas.forEach(linha => {
+        const cols = linha.trim().split('\t');
+        if (cols.length < 7) return;
+        const nome   = cols[3].trim().replace(/\*+$/,'').trim();
+        const proc   = cols[6].trim();
+        const status = (cols[9] || cols[cols.length-2] || '').toLowerCase();
+        if (!nome || nome.length < 3) return;
+        if (/^(nome|paciente|hora)/i.test(nome)) return;
+        const atendido = status.includes('atendido') && !status.includes('aguard');
+        if (filtro === 'atendido' && !atendido) return;
+
+        // Múltiplos exames por vírgula — deduplicar por tipo
+        const procedimentos = proc.split(',').map(s => s.trim()).filter(Boolean);
+        const examesItem = [];
+        const tiposVistos = new Set();
+        procedimentos.forEach(pr => {
+          const tipo = detectarTipoAmei(pr);
+          if (!tiposVistos.has(tipo)) {
+            tiposVistos.add(tipo);
+            examesItem.push({ id: cadId(), tipo });
+          }
+        });
+        if (!examesItem.length) examesItem.push({ id: cadId(), tipo: 'Outros' });
+
+        // Deduplicar paciente: se mesmo nome, adiciona exames distintos
+        const nomeKey = nome.toUpperCase();
+        if (vistos[nomeKey] !== undefined) {
+          const item = _cadItems[vistos[nomeKey]];
+          const tiposExist = new Set(item.exames.map(e => e.tipo));
+          examesItem.forEach(ex => {
+            if (!tiposExist.has(ex.tipo)) { tiposExist.add(ex.tipo); item.exames.push(ex); }
+          });
+        } else {
+          const itemId = cadId();
+          vistos[nomeKey] = _cadItems.length;
+          _cadItems.push({ id: itemId, paciente: nome, exames: examesItem, checked: true });
+        }
+      });
+
+      // Ordenar alfabeticamente
+      _cadItems.sort((a,b) => a.paciente.localeCompare(b.paciente, 'pt-BR'));
+      renderCadastrar();
+    };
+
+    function renderCadastrar() {
+      const res   = document.getElementById('cadResult');
+      const empty = document.getElementById('cadEmpty');
+      const lista = document.getElementById('cadLista');
+      const tit   = document.getElementById('cadResultTit');
+
+      if (!_cadItems.length && document.getElementById('cadTexto').value.trim()) {
+        res.style.display='none'; empty.style.display='block'; return;
+      }
+      if (!_cadItems.length) { res.style.display='none'; empty.style.display='none'; return; }
+
+      empty.style.display='none'; res.style.display='block';
+      tit.textContent = _cadItems.length + ' paciente(s) identificado(s)';
+
+      const optsHtml = TIPOS_EXAME.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+
+      lista.innerHTML = _cadItems.map((item, i) => `
+        <div class="cad-row" id="cadrow-${item.id}">
+          <input type="checkbox" class="cad-chk" id="chk-${item.id}" ${item.checked?'checked':''}
+            onchange="_cadItems[${i}].checked=this.checked;atualizarCadFooter()">
+          <div class="cad-exames" style="flex:1;">
+            <div class="cad-nome">${esc(item.paciente)}</div>
+            <div id="cadexs-${item.id}">
+              ${item.exames.map((ex, ei) => `
+                <div class="cad-exame-row" id="cadex-${ex.id}">
+                  <select class="cad-select" onchange="_cadItems[${i}].exames[${ei}].tipo=this.value">
+                    ${TIPOS_EXAME.map(t => `<option value="${esc(t)}" ${t===ex.tipo?'selected':''}>${esc(t)}</option>`).join('')}
+                  </select>
+                  ${item.exames.length > 1 ? `<button class="cad-del-exame" onclick="removerExameItem(${i},${ei})" title="Remover"><i class="fas fa-xmark"></i></button>` : ''}
+                </div>`).join('')}
+            </div>
+            <button class="cad-add-exame" onclick="adicionarExameItem(${i})"><i class="fas fa-plus"></i> + exame</button>
+          </div>
+        </div>`).join('');
+
+      atualizarCadFooter();
+    }
+
+    window.adicionarManual = function() {
+      const nomeEl = document.getElementById('cadManualNome');
+      const tipoEl = document.getElementById('cadManualTipo');
+      const nome   = (nomeEl.value || '').trim().toUpperCase();
+      const tipo   = tipoEl.value;
+      if (!nome || nome.length < 3) {
+        nomeEl.style.borderColor = 'var(--red)';
+        setTimeout(() => nomeEl.style.borderColor = '', 1500);
+        toast('Informe o nome do paciente', 'error');
+        return;
+      }
+      // Verificar se já existe na lista
+      const existe = _cadItems.find(i => i.paciente.toUpperCase() === nome);
+      if (existe) {
+        // Adiciona o exame ao paciente existente
+        const tiposExist = new Set(existe.exames.map(e => e.tipo));
+        if (!tiposExist.has(tipo)) {
+          existe.exames.push({ id: cadId(), tipo });
+          toast(nome + ' já estava na lista — exame adicionado', 'info');
+        } else {
+          toast(nome + ' já está na lista com esse exame', 'info');
+        }
+      } else {
+        _cadItems.push({
+          id: cadId(),
+          paciente: nome,
+          exames: [{ id: cadId(), tipo }],
+          checked: true,
+        });
+        toast(nome + ' adicionado à lista', 'success');
+      }
+      nomeEl.value = '';
+      _cadItems.sort((a,b) => a.paciente.localeCompare(b.paciente, 'pt-BR'));
+      renderCadastrar();
+      // Mostrar a lista se estava oculta
+      const res = document.getElementById('cadResult');
+      if (res) res.style.display = 'block';
+    };
+
+    window.adicionarExameItem = function(i) {
+      _cadItems[i].exames.push({ id: cadId(), tipo: 'Outros' });
+      renderCadastrar();
+    };
+
+    window.removerExameItem = function(i, ei) {
+      _cadItems[i].exames.splice(ei, 1);
+      if (!_cadItems[i].exames.length) _cadItems[i].exames.push({ id: cadId(), tipo: 'Outros' });
+      renderCadastrar();
+    };
+
+    window.toggleCadAll = function(checked) {
+      _cadItems.forEach(item => item.checked = checked);
+      renderCadastrar();
+      document.getElementById('cadChkAll').checked = checked;
+    };
+
+    window.atualizarCadFooter = function() {
+      const selecionados = _cadItems.filter(i => i.checked);
+      const totalExames  = selecionados.reduce((s, i) => s + i.exames.length, 0);
+      const info = document.getElementById('cadSelInfo');
+      const btn  = document.getElementById('cadBtnAdd');
+      const cnt  = document.getElementById('cadSelCount');
+      if (info) info.textContent = selecionados.length
+        ? `${selecionados.length} paciente(s) · ${totalExames} exame(s)`
+        : 'Nenhum selecionado';
+      if (btn) { btn.disabled = !selecionados.length; btn.style.opacity = selecionados.length ? '1' : '.5'; }
+      if (cnt) cnt.textContent = totalExames;
+      // Sincroniza checkbox geral
+      const chkAll = document.getElementById('cadChkAll');
+      if (chkAll) chkAll.checked = _cadItems.length > 0 && _cadItems.every(i => i.checked);
+    };
+
+    window.adicionarCadastro = async function() {
+      const selecionados = _cadItems.filter(i => i.checked);
+      if (!selecionados.length) return;
+      const dataExame = document.getElementById('cadData').value || '';
+      const usuario   = sessionStorage.getItem('usuario') || 'Sistema';
+
+      document.getElementById('importLoadingOverlay').style.display = 'flex';
+      let ok = 0, erros = 0;
+      const porTipo = {};
+      const total   = selecionados.reduce((s, i) => s + i.exames.length, 0);
+
+      for (const item of selecionados) {
+        for (const ex of item.exames) {
+          try {
+            const _dataPrazo = calcularDataPrazo(ex.tipo, dataExame);
+            await set(push(ref(db, 'exames/pendentes')), {
+              paciente:     item.paciente.toUpperCase(),
+              tipo:         ex.tipo,
+              dataExame:    dataExame,
+              dataPrazo:    _dataPrazo || null,
+              obs:          'Cadastrado via AMEI',
+              atendenteCad: usuario,
+              cadastradoEm: new Date().toISOString(),
+            });
+            ok++; porTipo[ex.tipo] = (porTipo[ex.tipo] || 0) + 1;
+          } catch(e) { erros++; console.error('[Cadastrar]', e.message); }
+          document.getElementById('importLoadingBar').style.width = Math.round((ok+erros)/total*100) + '%';
+        }
+      }
+
+      document.getElementById('importLoadingOverlay').style.display = 'none';
+      document.getElementById('importSuccessMsg').textContent =
+        `${ok} exame(s) adicionado(s) à gaveta` + (erros ? ` · ${erros} com erro` : '');
+      document.getElementById('importSuccessBreakdown').innerHTML =
+        Object.entries(porTipo).slice(0,6).map(([t,c]) =>
+          `<div style="background:var(--gray-100);border-radius:10px;padding:8px 14px;text-align:center;">
+            <div style="font-size:20px;font-weight:900;color:var(--navy);">${c}</div>
+            <div style="font-size:10px;color:var(--gray-500);">${t.length>20?t.slice(0,18)+'…':t}</div>
+          </div>`).join('');
+      document.getElementById('importSuccessModal').style.display = 'flex';
+
+      // Salvar relatório no Firebase + imprimir
+      if (ok > 0) {
+        const relKey = Date.now() + '_' + Math.random().toString(36).slice(2);
+        const relData = {
+          dataExame:    dataExame,
+          dataGeracao:  new Date().toISOString(),
+          usuario:      usuario,
+          totalPacientes: selecionados.length,
+          totalExames:  selecionados.reduce((s,i)=>s+i.exames.length,0),
+          itens: selecionados.map(item => ({
+            paciente: item.paciente.toUpperCase(),
+            exames:   item.exames.map(ex => ({
+              tipo:      ex.tipo,
+              dataPrazo: calcularDataPrazo(ex.tipo, dataExame) || null,
+            }))
+          }))
+        };
+        try {
+          await set(ref(db, 'exames/relatorios/' + relKey), relData);
+        } catch(e) { console.error('[Relatorio]', e.message); }
+        imprimirRelatorioExames(selecionados, dataExame, usuario);
+      }
+
+      // Limpa só os selecionados
+      _cadItems = _cadItems.filter(i => !i.checked);
+      renderCadastrar();
+      document.getElementById('cadChkAll').checked = false;
+    };
+
+    // ── IMPRIMIR RELATÓRIO DE EXAMES ──
+    function imprimirRelatorioExames(itens, dataExame, usuario) {
+      const win = window.open('', '_blank');
+      if (!win) { toast('Permita pop-ups para imprimir', 'error'); return; }
+
+      const agora   = new Date();
+      const ds      = agora.toLocaleDateString('pt-BR');
+      const hr      = agora.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+      const logoUrl = sessionStorage.getItem('logoDataUrl') || '';
+      const logoHtml = logoUrl
+        ? `<img src="${logoUrl}" alt="Logo" style="height:50px;width:auto;object-fit:contain;">`
+        : '<div style="font-size:18px;font-weight:900;color:#0A1F44;">Amor Saúde</div>';
+      const dataFmt = dataExame
+        ? new Date(dataExame + 'T12:00:00').toLocaleDateString('pt-BR')
+        : ds;
+
+      // Monta linhas da tabela
+      const linhasHtml = itens.flatMap(item =>
+        item.exames.map(ex => {
+          const prazo = calcularDataPrazo(ex.tipo, dataExame);
+          const prazoFmt = prazo
+            ? new Date(prazo + 'T12:00:00').toLocaleDateString('pt-BR')
+            : '—';
+          const badgePrazo = prazo
+            ? `<span style="background:#eff6ff;color:#1d4ed8;border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;">${prazoFmt}</span>`
+            : '<span style="color:#9ca3af;font-size:9px;">—</span>';
+          return `<tr>
+            <td style="border:1px solid #e5e7eb;padding:6px 8px;font-size:11px;font-weight:700;color:#0A1F44;">${esc(item.paciente.toUpperCase())}</td>
+            <td style="border:1px solid #e5e7eb;padding:6px 8px;font-size:11px;text-align:center;">
+              <span style="background:#f1f5f9;border-radius:6px;padding:2px 8px;font-weight:700;color:#374151;">${esc(ex.tipo)}</span>
+            </td>
+            <td style="border:1px solid #e5e7eb;padding:6px 8px;font-size:11px;text-align:center;color:#374151;">${dataFmt}</td>
+            <td style="border:1px solid #e5e7eb;padding:6px 8px;text-align:center;">${badgePrazo}</td>
+          </tr>`;
+        })
+      ).join('');
+
+      const total = itens.reduce((s, i) => s + i.exames.length, 0);
+      const comPrazo = itens.flatMap(i => i.exames).filter(e => PRAZO_DIAS[e.tipo]).length;
+
+      const docHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  @page{size:A4;margin:1.5cm;}
+  body{font-family:system-ui,-apple-system,sans-serif;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  table{width:100%;border-collapse:collapse;}
+</style>
+</head><body>
+<div style="padding:0;">
+  <!-- Cabeçalho -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+    <div style="flex:1;">${logoHtml}<div style="font-size:11px;color:#555;margin-top:4px;">Pirituba · São Paulo</div></div>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:10px;color:#888;">Relatório de Exames</div>
+    </div>
+    <div style="flex:1;text-align:right;">
+      <div style="font-size:10px;color:#888;">Emitido em</div>
+      <div style="font-size:12px;font-weight:700;color:#374151;">${ds} às ${hr}</div>
+    </div>
+  </div>
+
+  <!-- Título -->
+  <div style="text-align:center;margin-bottom:1.5rem;">
+    <div style="font-size:1.8rem;font-weight:900;color:#0A1F44;margin-bottom:.8rem;">RELATÓRIO DE EXAMES</div>
+    <div style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.5rem;background:#61C1D0;border-radius:12px;border:3px solid #980000;color:white;font-size:.9rem;font-weight:800;">
+      👤 ${esc((usuario||'—').toUpperCase())}
+    </div>
+  </div>
+
+  <!-- Resumo -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.3rem;">
+    <div style="border:1.5px solid #e5e7eb;border-radius:12px;padding:14px 16px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#9ca3af;margin-bottom:4px;">Total de exames</div>
+      <div style="font-size:2rem;font-weight:900;color:#0A1F44;">${total}</div>
+    </div>
+    <div style="border:1.5px solid #e5e7eb;border-radius:12px;padding:14px 16px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#9ca3af;margin-bottom:4px;">Pacientes</div>
+      <div style="font-size:2rem;font-weight:900;color:#0A1F44;">${itens.length}</div>
+    </div>
+    <div style="border:1.5px solid #dbeafe;border-radius:12px;padding:14px 16px;text-align:center;background:#eff6ff;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;">Com prazo</div>
+      <div style="font-size:2rem;font-weight:900;color:#1d4ed8;">${comPrazo}</div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:8px;">Exames cadastrados</div>
+  <table>
+    <thead>
+      <tr style="background:#0A1F44;">
+        <th style="border:1px solid #374151;padding:8px;text-align:left;font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;">Paciente</th>
+        <th style="border:1px solid #374151;padding:8px;text-align:center;font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;">Tipo de Exame</th>
+        <th style="border:1px solid #374151;padding:8px;text-align:center;font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;">Data do Exame</th>
+        <th style="border:1px solid #374151;padding:8px;text-align:center;font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;">Resultado Previsto</th>
+      </tr>
+    </thead>
+    <tbody>${linhasHtml}</tbody>
+  </table>
+
+  <!-- Assinatura -->
+  <div style="margin-top:2.5rem;display:flex;justify-content:space-between;align-items:flex-end;">
+    <div style="font-size:10px;color:#9ca3af;">Cadastrado em ${ds} às ${hr}</div>
+    <div style="text-align:center;">
+      <div style="border-top:1.5px solid #374151;width:200px;margin-bottom:6px;"></div>
+      <div style="font-size:11px;font-weight:700;color:#374151;">${esc((usuario||'').toUpperCase())}</div>
+      <div style="font-size:10px;color:#9ca3af;">Responsável pelo cadastro</div>
+    </div>
+  </div>
+</div>
+<scr` + `ipt>window.onload=function(){setTimeout(function(){window.print();},300);}</scr` + `ipt>
+</body></html>`;
+
+      win.document.write(docHtml);
+      win.document.close();
+    }
+
+    // Data padrão
+    const _cadDataEl = document.getElementById('cadData');
+    if (_cadDataEl) _cadDataEl.valueAsDate = new Date();
+
+  </script>
+</body>
+</html>
+

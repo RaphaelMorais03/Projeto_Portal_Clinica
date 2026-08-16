@@ -1,0 +1,497 @@
+﻿<!-- VERSION: v1.1 | login.html | 14/07/2026 | feat: card Contratos + botão de novidades com changelog -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Amor Saúde — Pirituba</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="js/firebase-config.js"></script>
+  <script src="js/shared-utils.js"></script>
+  <style>
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-800:#1e293b;}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html,body{height:100%;font-family:'Inter',sans-serif;}
+    #telaLogin{min-height:100vh;display:flex;align-items:center;justify-content:center;
+               background:linear-gradient(135deg,#c47068 0%,#7da8ad 60%,#4fa8b5 100%);}
+    .login-right{display:flex;align-items:center;justify-content:center;padding:24px;}
+    .login-form-box{width:100%;max-width:400px;background:white;border-radius:24px;
+                    padding:48px 44px;box-shadow:0 24px 64px rgba(0,0,0,.22);}
+    .lf-tag{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);margin-bottom:10px;}
+    .lf-title{font-size:28px;font-weight:900;color:var(--navy);letter-spacing:-.8px;margin-bottom:6px;}
+    .lf-sub{font-size:13px;color:var(--gray-400);margin-bottom:32px;}
+    .lf-field{margin-bottom:16px;}
+    .lf-field label{display:block;font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--gray-500);margin-bottom:8px;}
+    .lf-wrap{position:relative;display:flex;align-items:center;border:1.5px solid var(--gray-200);border-radius:12px;background:var(--gray-50);transition:border-color .2s,box-shadow .2s;}
+    .lf-wrap:focus-within{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);background:white;}
+    .lf-wrap.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(198,40,40,.08);}
+    .lf-ico{padding:0 14px;color:var(--gray-400);font-size:14px;flex-shrink:0;}
+    .lf-input{flex:1;padding:13px 0;border:none;background:transparent;font-family:inherit;font-size:14px;color:var(--gray-800);outline:none;}
+    .lf-input::placeholder{color:var(--gray-300);}
+    .eye-btn{padding:0 14px;background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:13px;transition:color .15s;}
+    .eye-btn:hover{color:var(--navy);}
+    .err-box{display:none;align-items:center;gap:9px;background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:11px 14px;margin-bottom:18px;font-size:13px;color:var(--red);font-weight:500;}
+    .err-box.show{display:flex;animation:shake .38s ease;}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+    .btn-entrar{width:100%;padding:15px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 18px rgba(10,31,68,.26);transition:background .2s,transform .15s;}
+    .btn-entrar:hover:not(:disabled){background:var(--navy-mid);transform:translateY(-1px);}
+    .btn-entrar:disabled{opacity:.6;cursor:not-allowed;}
+    .b-spin{display:none;width:17px;height:17px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:rot .65s linear infinite;}
+    @keyframes rot{to{transform:rotate(360deg)}}
+    #telaPortal{display:none;min-height:100vh;background:#f0f4f8;}
+
+    /* ── Splash ── */
+    #splashScreen{position:fixed;inset:0;background:#0A1F44;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:10000;transition:opacity .45s ease;}
+    #splashScreen.fade-out{opacity:0;pointer-events:none;}
+    .sp-logo{width:72px;height:72px;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;animation:spPop .5s cubic-bezier(.34,1.56,.64,1) both;}
+    .sp-logo img{width:100%;height:100%;object-fit:contain;}
+    .sp-title{font-size:24px;font-weight:900;color:white;letter-spacing:-.5px;animation:spFu .4s .15s ease both;}
+    .sp-sub{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:1.5px;text-transform:uppercase;animation:spFu .4s .25s ease both;}
+    .sp-dots{display:flex;gap:8px;margin-top:8px;animation:spFu .4s .35s ease both;}
+    .sp-dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);}
+    .sp-dots span:nth-child(1){animation:spDot 1.2s .0s ease-in-out infinite;}
+    .sp-dots span:nth-child(2){animation:spDot 1.2s .2s ease-in-out infinite;}
+    .sp-dots span:nth-child(3){animation:spDot 1.2s .4s ease-in-out infinite;}
+    @keyframes spPop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+    @keyframes spFu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes spDot{0%,80%,100%{background:rgba(255,255,255,.2);transform:scale(.8)}40%{background:rgba(255,255,255,.9);transform:scale(1.2)}}
+    .p-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .p-logo{display:flex;align-items:center;gap:12px;}
+    .p-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .p-logo-icon img{width:100%;height:100%;object-fit:contain;}
+    .p-logo-name{font-size:17px;font-weight:800;color:var(--navy);letter-spacing:-.3px;}
+    .p-logo-sub{font-size:10px;color:var(--gray-400);}
+    .p-header-right{display:flex;align-items:center;gap:12px;}
+    .p-user{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:6px;}
+    .btn-sair{background:var(--red);color:white;border:none;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-sair:hover{background:var(--red-h);}
+    .p-content{max-width:1000px;margin:0 auto;padding:48px 24px 60px;}
+    .p-greeting{margin-bottom:36px;}
+    .p-greeting-sub{font-size:13px;color:var(--gray-400);margin-bottom:6px;}
+    .p-greeting-title{font-size:30px;font-weight:900;color:var(--navy);letter-spacing:-.8px;}
+    .portal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+    .portal-card{background:white;border:1.5px solid var(--gray-200);border-radius:20px;padding:28px 28px 24px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(10,31,68,.06);}
+    .portal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .25s;}
+    .portal-card:hover{border-color:var(--navy);transform:translateY(-3px);box-shadow:0 12px 32px rgba(10,31,68,.13);}
+    .portal-card:hover::before{transform:scaleX(1);}
+    .pc-icon{width:56px;height:56px;border-radius:16px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;flex-shrink:0;}
+    .pc-icon img{width:100%;height:100%;object-fit:contain;}
+    .pc-name{font-size:18px;font-weight:800;color:var(--navy);letter-spacing:-.3px;}
+    .pc-desc{font-size:13px;color:var(--gray-400);line-height:1.55;}
+    .pc-arrow{margin-top:auto;font-size:12px;font-weight:700;color:var(--red);display:flex;align-items:center;gap:5px;transition:gap .18s;}
+    .portal-card:hover .pc-arrow{gap:9px;}
+    .s-overlay{position:fixed;inset:0;background:var(--navy);display:none;align-items:center;justify-content:center;flex-direction:column;gap:13px;z-index:9999;}
+    .s-overlay.show{display:flex;}
+    .s-icon{font-size:54px;animation:pop .38s cubic-bezier(.34,1.56,.64,1) both;}
+    .s-sys{font-size:12px;color:rgba(255,255,255,.35);letter-spacing:1.8px;text-transform:uppercase;animation:fu .3s .22s ease both;}
+    @keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+    @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @media(max-width:860px){.portal-grid{grid-template-columns:1fr;}.p-header{padding:0 20px;}}
+
+    /* ── BOTÃO NOVIDADES ── */
+    .novidades-fab{position:fixed;bottom:24px;right:24px;z-index:1000;}
+    .novidades-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0A1F44,#122b5e);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:0 6px 24px rgba(10,31,68,.35);transition:all .2s;position:relative;}
+    .novidades-btn:hover{transform:scale(1.1);box-shadow:0 8px 32px rgba(10,31,68,.45);}
+    .novidades-dot{position:absolute;top:4px;right:4px;width:14px;height:14px;background:#C62828;border-radius:50%;border:2.5px solid white;animation:pulse-dot 1.8s ease-in-out infinite;}
+    @keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.3);opacity:.8;}}
+    .novidades-panel{position:fixed;bottom:88px;right:24px;width:340px;max-height:480px;background:white;border-radius:18px;box-shadow:0 16px 56px rgba(10,31,68,.22);border:1.5px solid #e2e8f0;z-index:1000;overflow:hidden;flex-direction:column;display:none;}
+    .novidades-panel.aberto{display:flex;}
+    .nov-head{padding:16px 18px 12px;border-bottom:1.5px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .nov-head-title{font-size:14px;font-weight:800;color:#0A1F44;display:flex;align-items:center;gap:8px;}
+    .nov-head-title i{color:#C62828;}
+    .nov-close{background:#f1f5f9;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;color:#64748b;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+    .nov-close:hover{background:#e2e8f0;color:#0A1F44;}
+    .nov-lista{overflow-y:auto;flex:1;padding:8px 0;}
+    .nov-lista::-webkit-scrollbar{width:4px;}
+    .nov-lista::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
+    .nov-item{padding:12px 18px;border-bottom:1px solid #f8fafc;}
+    .nov-item:last-child{border-bottom:none;}
+    .nov-item-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+    .nov-modulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:8px;}
+    .nov-data{font-size:10px;color:#94a3b8;font-weight:600;}
+    .nov-desc{font-size:12px;color:#475569;line-height:1.5;}
+    .nov-rodape{padding:10px 18px;border-top:1.5px solid #f1f5f9;font-size:11px;color:#94a3b8;text-align:center;flex-shrink:0;}
+
+  </style>
+</head>
+<body>
+  <!-- ── Splash de carregamento ── -->
+  <div id="splashScreen">
+    <div class="sp-logo"><img src="assets/favicon.png" alt="Logo"></div>
+    <div class="sp-title">Amor Saúde</div>
+    <div class="sp-sub">Carregando portal</div>
+    <div class="sp-dots"><span></span><span></span><span></span></div>
+  </div>
+
+  <div class="s-overlay" id="sOverlay">
+    <div class="s-icon">🏥</div>
+    <div class="s-sys" id="sSys"></div>
+  </div>
+
+  <div id="telaLogin" style="display:none;">
+    <div class="login-right">
+      <div class="login-form-box">
+        <div style="margin-bottom:32px;text-align:center;">
+          <div style="font-size:28px;font-weight:900;color:var(--navy);letter-spacing:-.5px;margin-bottom:4px;">Amor Saúde Pirituba</div>
+          <div class="lf-tag" style="margin-bottom:0;">Acesso ao sistema</div>
+        </div>
+        <h2 class="lf-title">Entrar no Portal</h2>
+        <div class="lf-field">
+          <label>E-mail</label>
+          <div class="lf-wrap" id="wrapEmail">
+            <span class="lf-ico"><i class="fas fa-envelope"></i></span>
+            <input class="lf-input" type="email" id="fEmail" placeholder="seu@email.com" autocomplete="email">
+          </div>
+        </div>
+        <div class="lf-field">
+          <label>Senha</label>
+          <div class="lf-wrap" id="wrapSenha">
+            <span class="lf-ico"><i class="fas fa-lock"></i></span>
+            <input class="lf-input" type="password" id="fSenha" placeholder="••••••••" autocomplete="current-password">
+            <button class="eye-btn" type="button" onclick="toggleOlho()"><i class="fas fa-eye" id="eyeIco"></i></button>
+          </div>
+        </div>
+        <div class="err-box" id="errBox">
+          <i class="fas fa-exclamation-circle"></i>
+          <span id="errMsg">E-mail ou senha incorretos.</span>
+        </div>
+        <button class="btn-entrar" id="btnEntrar" onclick="entrar()">
+          <div class="b-spin" id="bSpin"></div>
+          <span id="bTxt">Entrar no Portal</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="telaPortal">
+    <div class="p-header">
+      <div class="p-logo">
+        <div class="p-logo-icon"><img src="assets/favicon.png" alt="Logo" id="logoHeader"></div>
+        <div>
+          <div class="p-logo-name">Amor Saúde</div>
+          <div class="p-logo-sub">Portal Interno · Pirituba</div>
+        </div>
+      </div>
+      <div class="p-header-right">
+        <div class="p-user"><i class="fas fa-user"></i> <span id="pUserNome">—</span></div>
+        <button class="btn-sair" onclick="sair()"><i class="fas fa-right-from-bracket"></i> Sair</button>
+      </div>
+    </div>
+    <div class="p-content">
+      <div class="p-greeting">
+        <div class="p-greeting-sub">Bem-vindo(a) ao portal</div>
+        <div class="p-greeting-title">O que deseja acessar?</div>
+      </div>
+      <div class="portal-grid">
+        <div class="portal-card" id="cardOrcamentos" style="display:none;" onclick="abrirSistema('pages/orcamentos.html','Sistema de Orçamentos')">
+          <div class="pc-icon" style="background:#0A1F44;"><i class="fas fa-file-invoice-dollar" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Orçamentos</div><div class="pc-desc">Consulte exames, valores, parceiros e preparos. Gere mensagens para WhatsApp.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+        <div class="portal-card" id="cardFechamento" style="display:none;" onclick="abrirSistema('pages/fechamento.html','Sistema de Fechamento')">
+          <div class="pc-icon" style="background:#065f46;"><i class="fas fa-receipt" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Fechamento Médico</div><div class="pc-desc">Cálculo de repasse, impostos PJ e geração de recibo consolidado para impressão.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+        <div class="portal-card" id="cardFinanceiro" style="display:none;" onclick="abrirSistema('pages/financeiro.html','Sistema Financeiro')">
+          <div class="pc-icon" style="background:#92400e;"><i class="fas fa-coins" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Financeiro</div><div class="pc-desc">Geração de recibos em lote para colaboradores. Cadastro e controle de equipe.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+        <div class="portal-card" id="cardExames" style="display:none;" onclick="abrirSistema('pages/exames.html','Retirada de Exames')">
+          <div class="pc-icon" style="background:#1e3a5f;"><i class="fas fa-vials" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Retirada de Exames</div><div class="pc-desc">Gaveta digital de exames. Cadastre, dê baixa e consulte o histórico completo.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+        <div class="portal-card" id="cardCronograma" style="display:none;" onclick="abrirSistema('pages/cronograma.html','Cronograma')">
+          <div class="pc-icon" style="background:#1d4ed8;"><i class="fas fa-calendar-week" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Cronograma</div><div class="pc-desc">Agenda diária por sala, checklist de abertura, notas e controle de caixa.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+        <div class="portal-card" id="cardCaixa" style="display:none;" onclick="abrirSistema('pages/caixa.html','Caixa')">
+          <div class="pc-icon" style="background:#065f46;"><i class="fas fa-cash-register" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Caixa</div><div class="pc-desc">Controle diário de caixa, vales e relatório de produção gerado pelo AMEI.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+        <div class="portal-card" id="cardAdmin" style="display:none;border-color:#fde68a;background:#fffbeb;" onclick="abrirSistema('pages/admin.html','Painel Admin')">
+          <div class="pc-icon" style="background:#92400e;"><i class="fas fa-shield-halved" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name" style="color:#92400e;">Painel Admin</div><div class="pc-desc">Gerenciar usuários, clínica, atendentes e permissões de acesso.</div></div>
+          <div class="pc-arrow" style="color:#92400e;"><i class="fas fa-arrow-right"></i> Gerenciar</div>
+        </div>
+        <div class="portal-card" id="cardDashboard" style="display:none;" onclick="abrirSistema('pages/dashboard.html','Dashboard de Produção')">
+          <div class="pc-icon" style="background:#6d28d9;"><i class="fas fa-chart-line" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Dashboard</div><div class="pc-desc">Produção, recebimentos e comissões de todos os colaboradores.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+        <div class="portal-card" id="cardNps" style="display:none;" onclick="abrirSistema('pages/nps.html','NPS Atendimento')">
+          <div class="pc-icon" style="background:#0891b2;"><i class="fas fa-star" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">NPS</div><div class="pc-desc">Pesquisa de satisfação e ranking do atendimento do call center.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+
+        <div class="portal-card" id="cardContratos" style="display:none;" onclick="abrirSistema('pages/contratos.html','Contratos')">
+          <div class="pc-icon" style="background:#0A1F44;"><i class="fas fa-file-contract" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Contratos</div><div class="pc-desc">Gerador de contrato de neuropsicologia e guia de encaminhamento manual.</div></div>
+          <div class="pc-arrow" style="color:#0A1F44;"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp }           from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+      from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, get }   from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const app  = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getDatabase(app);
+    window.initFirebaseUtils(db, ref, get);
+
+    /* Carrega logo e dados da clínica */
+    carregarLogoGlobal(['#logoHeader']);
+    carregarClinica();
+
+    const TODOS_CARDS = ['cardOrcamentos','cardFechamento','cardFinanceiro','cardExames','cardCronograma','cardCaixa','cardAdmin','cardDashboard','cardNps'];
+
+    function esconderSplash() {
+      const s = document.getElementById('splashScreen');
+      s.classList.add('fade-out');
+      setTimeout(() => { s.style.display = 'none'; }, 450);
+    }
+
+    function mostrarSplash(texto) {
+      const s = document.getElementById('splashScreen');
+      const sub = s.querySelector('.sp-sub');
+      if (sub && texto) sub.textContent = texto;
+      s.style.display = 'flex';
+      s.classList.remove('fade-out');
+    }
+
+    let _portando = false; // evita chamadas duplas de onAuthStateChanged
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        if (_portando) return;
+        _portando = true;
+        clearTimeout(_loginTimeout); // cancela timeout de segurança (login ok)
+        setLoad(false);              // reseta botão imediatamente, sem esperar Firebase
+        mostrarSplash('Carregando portal');
+        await abrirPortal(user);
+        esconderSplash();
+        _portando = false;
+      } else {
+        _portando = false;
+        setLoad(false);          // garante reset se login falhou silenciosamente
+        document.getElementById('telaLogin').style.display  = 'flex';
+        document.getElementById('telaPortal').style.display = 'none';
+        esconderSplash();
+      }
+    });
+
+    async function abrirPortal(user) {
+      let nomeCompleto = user.email.split('@')[0];
+      let perms = {};
+      try {
+        const snap = await get(ref(db, `admin/usuarios/${user.uid}`));
+        if (snap.exists()) {
+          const dados = snap.val();
+          if (dados.nomeCompleto) nomeCompleto = dados.nomeCompleto;
+          perms = dados.perms || {};
+          if (dados.acessoFinanceiro) perms.financeiro = true;
+        }
+      } catch(e) { console.warn('[abrirPortal] permissões:', e.message); }
+
+      // Monta UI completa antes de revelar
+      const primeiroNome = nomeCompleto.split(' ')[0];
+      document.getElementById('pUserNome').textContent = primeiroNome;
+      sessionStorage.setItem('usuario',      nomeCompleto);
+      sessionStorage.setItem('primeiroNome', primeiroNome);
+      sessionStorage.setItem('uid',          user.uid);
+      sessionStorage.setItem('email',        user.email);
+      sessionStorage.setItem('perms',        JSON.stringify(perms));
+
+      const isAdmin = !!perms.admin;
+      if (isAdmin || perms.orcamento)  document.getElementById('cardOrcamentos').style.display = 'flex';
+      if (isAdmin || perms.fechamento) document.getElementById('cardFechamento').style.display = 'flex';
+      if (isAdmin || perms.financeiro) document.getElementById('cardFinanceiro').style.display = 'flex';
+      if (isAdmin || perms.exames)     document.getElementById('cardExames').style.display     = 'flex';
+      if (isAdmin || perms.cronograma) document.getElementById('cardCronograma').style.display = 'flex';
+      // Caixa: visível para todos os usuários autenticados
+      document.getElementById('cardCaixa').style.display = 'flex';
+      iniciarNovidades();
+      if (isAdmin)                     document.getElementById('cardAdmin').style.display      = 'flex';
+      if (isAdmin)                     document.getElementById('cardDashboard').style.display  = 'flex';
+      if (isAdmin || perms.nps)        document.getElementById('cardNps').style.display         = 'flex';
+      if (isAdmin)                     document.getElementById('cardContratos').style.display = 'flex';
+
+      // Revela o portal já montado
+      document.getElementById('telaLogin').style.display  = 'none';
+      document.getElementById('telaPortal').style.display = 'block';
+    }
+
+    let _loginTimeout = null;
+
+    window.entrar = function() {
+      const email = document.getElementById('fEmail').value.trim();
+      const senha = document.getElementById('fSenha').value;
+      limparErro();
+      if (!email) { erro('Informe o e-mail.'); return; }
+      if (!senha)  { erro('Informe a senha.');  return; }
+      setLoad(true);
+
+      // Segurança: se nada acontecer em 12s, desbloqueia o botão
+      clearTimeout(_loginTimeout);
+      _loginTimeout = setTimeout(() => {
+        setLoad(false);
+        erro('Tempo esgotado. Verifique sua conexão e tente novamente.');
+      }, 12000);
+
+      signInWithEmailAndPassword(auth, email, senha).catch(e => {
+        clearTimeout(_loginTimeout);
+        setLoad(false);
+        if (['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(e.code))
+          erro('E-mail ou senha incorretos.');
+        else if (e.code === 'auth/too-many-requests')
+          erro('Muitas tentativas. Aguarde alguns minutos.');
+        else erro('Erro de conexão. Tente novamente.');
+      });
+    };
+
+    window.sair = function() {
+      signOut(auth).then(() => {
+        sessionStorage.clear();
+        // Reseta TODOS os cards para o próximo usuário não ver cards errados
+        TODOS_CARDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+        document.getElementById('telaPortal').style.display = 'none';
+        document.getElementById('telaLogin').style.display  = 'flex';
+        document.getElementById('fEmail').value = '';
+        document.getElementById('fSenha').value = '';
+        limparErro();
+      });
+    };
+
+    window.abrirSistema = function(arquivo, nome) {
+      sessionStorage.setItem('sistema', nome);
+      document.getElementById('sSys').textContent = nome;
+      document.getElementById('sOverlay').classList.add('show');
+      setTimeout(() => irPara(arquivo), 900);
+    };
+
+    window.toggleOlho = function() {
+      const i = document.getElementById('fSenha');
+      const e = document.getElementById('eyeIco');
+      if (i.type === 'password') { i.type = 'text'; e.className = 'fas fa-eye-slash'; }
+      else                       { i.type = 'password'; e.className = 'fas fa-eye'; }
+    };
+
+    function erro(msg) {
+      const b = document.getElementById('errBox');
+      document.getElementById('errMsg').textContent = msg;
+      document.getElementById('wrapEmail').classList.add('err');
+      document.getElementById('wrapSenha').classList.add('err');
+      b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+    }
+    function limparErro() {
+      document.getElementById('errBox').classList.remove('show');
+      document.getElementById('wrapEmail').classList.remove('err');
+      document.getElementById('wrapSenha').classList.remove('err');
+    }
+    function setLoad(on) {
+      document.getElementById('btnEntrar').disabled    = on;
+      document.getElementById('bSpin').style.display   = on ? 'block' : 'none';
+      document.getElementById('bTxt').textContent      = on ? 'Autenticando...' : 'Entrar no Portal';
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') window.entrar(); });
+  
+    // ── CHANGELOG / NOVIDADES ──
+    const CHANGELOG = [
+      { id:'2026-07-14-contratos', data:'14/07/2026', modulo:'Contratos', cor:'#0A1F44', bg:'#eff6ff',
+        desc:'Novo módulo: gerador de contrato de neuropsicologia (com importação do AMEI) e guia de encaminhamento manual.' },
+      { id:'2026-07-14-caixa-recibos', data:'14/07/2026', modulo:'Caixa', cor:'#7c3aed', bg:'#f5f3ff',
+        desc:'Novos recibos: Ressarcimento (devolução ao paciente) e Erro de Sistema (divergência de caixa para o líder).' },
+      { id:'2026-07-14-dashboard-contratos', data:'14/07/2026', modulo:'Dashboard', cor:'#15803d', bg:'#f0fdf4',
+        desc:'Nova aba "Contratos" para controle mensal de repasse da Dra. Lauriana Garcia Pinto.' },
+      { id:'2026-07-07-dashboard-visao', data:'07/07/2026', modulo:'Dashboard', cor:'#15803d', bg:'#f0fdf4',
+        desc:'Nova aba "Visão Geral" com resumo do caixa, NPS, gaveta de exames e comissões do mês.' },
+      { id:'2026-07-07-orcamentos-preparo', data:'07/07/2026', modulo:'Orçamentos', cor:'#b45309', bg:'#fef3c7',
+        desc:'Pop-up de preparo: ao copiar o orçamento, exibe os preparos e pede que copie antes de fechar.' },
+      { id:'2026-06-30-preparos-usg', data:'30/06/2026', modulo:'Orçamentos', cor:'#b45309', bg:'#fef3c7',
+        desc:'Preparos de ultrassom revisados contra o guia oficial (48 tipos). Doppler agora distingue exames com/sem protocolo Luftal.' },
+      { id:'2026-06-30-financeiro-recibo', data:'30/06/2026', modulo:'Financeiro', cor:'#7c3aed', bg:'#f5f3ff',
+        desc:'Recibo: novo modo Manual (descrição livre). Linha de assinatura ajusta ao tamanho do nome do colaborador.' },
+      { id:'2026-06-30-orcamentos-duplic', data:'30/06/2026', modulo:'Orçamentos', cor:'#b45309', bg:'#fef3c7',
+        desc:'Duplicatas removidas: exames com nomes equivalentes (ex: ABDOME TOTAL / US ABDOME TOTAL) agora aparecem como um único card.' },
+    ];
+    const NOV_KEY = 'rclinich_changelog_visto';
+
+    function iniciarNovidades() {
+      const lista = document.getElementById('novidadesLista');
+      if (!lista) return;
+      lista.innerHTML = CHANGELOG.map(item =>
+        '<div class="nov-item">' +
+          '<div class="nov-item-head">' +
+            '<span class="nov-modulo" style="color:'+item.cor+';background:'+item.bg+';">'+item.modulo+'</span>' +
+            '<span class="nov-data">'+item.data+'</span>' +
+          '</div>' +
+          '<div class="nov-desc">'+item.desc+'</div>' +
+        '</div>'
+      ).join('');
+
+      const visto = localStorage.getItem(NOV_KEY);
+      const temNovo = visto !== CHANGELOG[0].id;
+      const fab = document.getElementById('novidadesFab');
+      const dot = document.getElementById('novidadesDot');
+      if (fab) fab.style.display = 'block';
+      if (dot) dot.style.display = temNovo ? 'block' : 'none';
+    }
+
+    const btnNov = document.getElementById('novidadesBtn');
+    const panel  = document.getElementById('novidadesPanel');
+    const btnFch = document.getElementById('novidadesFechar');
+
+    if (btnNov) {
+      btnNov.addEventListener('click', () => {
+        const aberto = panel.classList.toggle('aberto');
+        if (aberto) {
+          localStorage.setItem(NOV_KEY, CHANGELOG[0].id);
+          const dot = document.getElementById('novidadesDot');
+          if (dot) dot.style.display = 'none';
+        }
+      });
+    }
+    if (btnFch) btnFch.addEventListener('click', () => panel.classList.remove('aberto'));
+    document.addEventListener('click', e => {
+      if (panel && btnNov && !panel.contains(e.target) && !btnNov.contains(e.target)) {
+        panel.classList.remove('aberto');
+      }
+    });
+
+  </script>
+
+  <!-- BOTÃO NOVIDADES -->
+  <div class="novidades-fab" id="novidadesFab" style="display:none;">
+    <button class="novidades-btn" id="novidadesBtn" title="O que há de novo?">
+      <i class="fas fa-sparkles"></i>
+      <span class="novidades-dot" id="novidadesDot" style="display:none;"></span>
+    </button>
+  </div>
+  <div class="novidades-panel" id="novidadesPanel">
+    <div class="nov-head">
+      <div class="nov-head-title"><i class="fas fa-sparkles"></i> O que há de novo</div>
+      <button class="nov-close" id="novidadesFechar">✕</button>
+    </div>
+    <div class="nov-lista" id="novidadesLista"></div>
+    <div class="nov-rodape">Atualizado em 14/07/2026</div>
+  </div>
+
+</body>
+</html>
+

@@ -1,0 +1,1916 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Amor Saúde Pirituba</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--amber:#92400e;--amber-bg:#fef3c7;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-800:#1e293b;--green:#15803d;--green-bg:#dcfce7;--shadow:0 4px 20px rgba(10,31,68,.1);}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
+    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
+    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .header-right{display:flex;align-items:center;gap:10px;}
+    .admin-badge{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:5px;}
+    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .back-btn:hover{background:var(--red-h);}
+    .content{max-width:1100px;margin:0 auto;padding:24px 24px 60px;}
+    .page-title{font-size:22px;font-weight:900;color:var(--navy);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+    .page-title i{color:var(--amber);}
+    .tabs{display:flex;gap:6px;margin-bottom:22px;background:white;border:1px solid var(--gray-200);border-radius:14px;padding:6px;box-shadow:var(--shadow);overflow-x:auto;}
+    .tab-btn{flex:1;min-width:100px;padding:9px 12px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--gray-400);display:flex;align-items:center;justify-content:center;gap:5px;transition:all .18s;white-space:nowrap;}
+    .tab-btn:hover{color:var(--navy);background:var(--gray-50);}
+    .tab-btn.active{color:white;background:var(--navy);box-shadow:0 4px 12px rgba(10,31,68,.25);}
+    .tab-pane{display:none;}.tab-pane.active{display:block;}
+    .panel{background:white;border:1px solid var(--gray-200);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
+    .panel-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+    .panel-title i{color:var(--red);}
+    .f-label{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:5px;}
+    .f-input,.f-select{padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:14px;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color .2s;width:100%;}
+    .f-input:focus,.f-select:focus{border-color:var(--navy);background:white;}
+    .btn-p{padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s,transform .15s;}
+    .btn-p:hover{background:var(--navy-mid);transform:translateY(-1px);}
+    .btn-s{padding:9px 14px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+    .btn-s:hover{background:var(--gray-200);}
+    .btn-r{padding:9px 14px;background:var(--red);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-r:hover{background:var(--red-h);}
+    .btn-g{padding:9px 14px;background:var(--green);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-g:hover{background:#166534;}
+    .user-row{display:flex;align-items:center;gap:14px;padding:13px 15px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;margin-bottom:9px;transition:all .18s;}
+    .user-row:hover{border-color:var(--navy);}
+    .user-avatar{width:38px;height:38px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;}
+    .user-info{flex:1;}
+    .user-name{font-size:13px;font-weight:700;color:var(--navy);}
+    .user-email{font-size:11px;color:var(--gray-400);}
+    .user-perms{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
+    .perm-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:#eff6ff;color:#1d4ed8;}
+    .perm-tag.admin{background:var(--amber-bg);color:var(--amber);}
+    .empty-state{text-align:center;padding:48px 24px;color:var(--gray-400);}
+    .empty-state i{font-size:38px;margin-bottom:12px;opacity:.35;display:block;}
+    .empty-state p{font-size:14px;}
+    .log-row{padding:11px 14px;border-bottom:1px solid var(--gray-100);display:flex;align-items:flex-start;gap:12px;}
+    .log-row:last-child{border-bottom:none;}
+    .log-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+    .log-info{flex:1;}
+    .log-msg{font-size:13px;color:var(--gray-800);font-weight:500;}
+    .log-ts{font-size:10px;color:var(--gray-400);margin-top:2px;}
+    .logo-preview-box{width:120px;height:120px;border:2px dashed var(--gray-300);border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--gray-50);cursor:pointer;transition:border-color .2s;flex-shrink:0;}
+    .logo-preview-box:hover{border-color:var(--navy);}
+    .logo-preview-box img{width:100%;height:100%;object-fit:contain;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+    .perm-check{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:9px;cursor:pointer;transition:border-color .2s;}
+    .perm-check:hover{border-color:var(--navy);}
+    .perm-check input{width:16px;height:16px;cursor:pointer;}
+    .perm-check-label{font-size:13px;font-weight:600;color:var(--gray-700);}
+    .perms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;}
+    .toast-box{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+    .toast{padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;color:white;box-shadow:0 4px 14px rgba(0,0,0,.2);animation:sIn .3s ease;max-width:320px;}
+    @keyframes sIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+    .toast.success{background:var(--green);}.toast.error{background:var(--red);}.toast.info{background:var(--navy);}
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+    .modal-bg.open{display:flex;}
+    .modal-box{background:white;border-radius:18px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+    .modal-head{padding:18px 22px 14px;border-bottom:2px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:10;}
+    .modal-title{font-size:16px;font-weight:800;color:var(--navy);}
+    .modal-close{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--gray-500);font-size:14px;}
+    .modal-close:hover{background:var(--gray-200);}
+    .modal-body{padding:22px;}
+    .alias-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:9px;margin-bottom:6px;}
+    .alias-from{font-size:12px;font-weight:700;color:var(--red);min-width:100px;}
+    .alias-arrow{color:var(--gray-400);font-size:11px;}
+    .alias-to{font-size:12px;font-weight:700;color:var(--green);flex:1;}
+    .alias-del{background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:13px;padding:2px 6px;border-radius:5px;transition:color .15s;}
+    .alias-del:hover{color:var(--red);}
+    .planilha-card{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;padding:14px 16px;margin-bottom:12px;transition:border-color .2s;}
+    .planilha-card.connected{background:#f0fdf4;border-color:#bbf7d0;}
+    .planilha-card.connected .pc-status{color:var(--green);}
+    .planilha-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .pc-tipo{font-size:12px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:7px;}
+    .pc-status{font-size:11px;color:var(--gray-400);font-weight:600;}
+    .pc-input-row{display:flex;gap:8px;}
+    .pc-input{flex:1;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:12px;outline:none;background:white;transition:border .2s;}
+    .pc-input:focus{border-color:var(--navy);}
+    .pc-btn{padding:7px 14px;border:none;border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;transition:all .2s;}
+    .pc-btn.save{background:var(--navy);color:white;}
+    .pc-btn.save:hover{background:var(--navy-mid);}
+    .pc-btn.del{background:rgba(198,40,40,.08);color:var(--red);border:1px solid rgba(198,40,40,.15);}
+    .pc-btn.del:hover{background:var(--red);color:white;}
+    .pc-url-display{font-size:10px;color:var(--gray-400);margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    @media(max-width:768px){.form-grid,.form-grid-3{grid-template-columns:1fr;}.tabs{gap:4px;}.tab-btn{min-width:80px;font-size:11px;}.content{padding:14px 14px 60px;}.perms-grid{grid-template-columns:1fr 1fr;}}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+  <div class="toast-box" id="toastBox"></div>
+
+  <!-- MODAL USUÁRIO -->
+  <div class="modal-bg" id="modalUser">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-title" id="modalUserTitle">Novo Usuário</div>
+        <button class="modal-close" onclick="fecharModalUser()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:14px;">
+          <label class="f-label">Nome completo</label>
+          <input class="f-input" id="uNome" placeholder="Ex: Maria Silva">
+        </div>
+        <div style="margin-bottom:14px;">
+          <label class="f-label">E-mail</label>
+          <input class="f-input" id="uEmail" type="email" placeholder="usuario@amorsaude.com">
+        </div>
+        <div style="margin-bottom:14px;">
+          <label class="f-label">Senha (mín. 6 caracteres)</label>
+          <input class="f-input" id="uSenha" type="password" placeholder="••••••••">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label class="f-label">Permissões</label>
+          <div class="perms-grid">
+            <label class="perm-check"><input type="checkbox" id="pOrc"> <span class="perm-check-label">Orçamentos</span></label>
+            <label class="perm-check"><input type="checkbox" id="pExames"> <span class="perm-check-label">Exames</span></label>
+            <label class="perm-check"><input type="checkbox" id="pCrono"> <span class="perm-check-label">Cronograma</span></label>
+            <label class="perm-check"><input type="checkbox" id="pCaixa"> <span class="perm-check-label">Caixa</span></label>
+            <label class="perm-check"><input type="checkbox" id="pFin"> <span class="perm-check-label">Financeiro</span></label>
+            <label class="perm-check"><input type="checkbox" id="pFech"> <span class="perm-check-label">Fechamento</span></label>
+            <label class="perm-check"><input type="checkbox" id="pAdmin"> <span class="perm-check-label" style="color:var(--amber);">⚡ Admin</span></label>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-s" onclick="fecharModalUser()" style="flex:1;justify-content:center;"><i class="fas fa-xmark"></i> Cancelar</button>
+          <button class="btn-p" onclick="salvarUsuario()" style="flex:2;justify-content:center;" id="btnSalvarUser"><i class="fas fa-floppy-disk"></i> Salvar Usuário</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ATENDENTE -->
+  <div class="modal-bg" id="modalAte">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-title" id="modalAteTitle">Novo Atendente</div>
+        <button class="modal-close" onclick="fecharModalAte()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:14px;">
+          <label class="f-label">Nome completo</label>
+          <input class="f-input" id="aNome" placeholder="Ex: Juliana Souza">
+        </div>
+        <div style="margin-bottom:14px;">
+          <label class="f-label">Apelido / Como chamar</label>
+          <input class="f-input" id="aApelido" placeholder="Ex: Juli">
+        </div>
+        <div style="margin-bottom:14px;">
+          <label class="f-label">Cargo</label>
+          <input class="f-input" id="aCargo" placeholder="Ex: Recepcionista">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-s" onclick="fecharModalAte()" style="flex:1;justify-content:center;"><i class="fas fa-xmark"></i> Cancelar</button>
+          <button class="btn-p" onclick="salvarAtendente()" style="flex:2;justify-content:center;"><i class="fas fa-floppy-disk"></i> Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PROFISSIONAL -->
+  <div class="modal-bg" id="modalProf">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-title" id="modalProfTitle">Novo Profissional</div>
+        <button class="modal-close" onclick="fecharModalProf()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:14px;">
+          <label class="f-label">Nome completo</label>
+          <input class="f-input" id="prNome" placeholder="Ex: Dr. João Silva">
+        </div>
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div>
+            <label class="f-label">Especialidade</label>
+            <input class="f-input" id="prEsp" placeholder="Ex: Cardiologia">
+          </div>
+          <div>
+            <label class="f-label">CRM</label>
+            <input class="f-input" id="prCrm" placeholder="Ex: 12345-SP">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div>
+            <label class="f-label">CPF / CNPJ</label>
+            <input class="f-input" id="prDoc" placeholder="000.000.000-00">
+          </div>
+          <div>
+            <label class="f-label">Regime</label>
+            <select class="f-select" id="prRegime">
+              <option value="pj-presumido">PJ — Lucro Presumido</option>
+              <option value="funcionario">Funcionário CLT</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label class="f-label">E-mail</label>
+          <input class="f-input" id="prEmail" type="email" placeholder="medico@email.com">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-s" onclick="fecharModalProf()" style="flex:1;justify-content:center;"><i class="fas fa-xmark"></i> Cancelar</button>
+          <button class="btn-p" onclick="salvarProfissional()" style="flex:2;justify-content:center;"><i class="fas fa-floppy-disk"></i> Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="s-header">
+    <div class="s-logo">
+      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
+      <div><div class="s-logo-name">Amor Saúde</div><div class="s-logo-sub">Painel Admin · Pirituba</div></div>
+    </div>
+    <div class="header-right">
+      <div class="admin-badge"><i class="fas fa-shield-halved"></i> Administrador</div>
+      <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-title"><i class="fas fa-shield-halved"></i> Painel de Administração</div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="tab('usuarios')"><i class="fas fa-users"></i> Usuários</button>
+      <button class="tab-btn" onclick="tab('atendentes')"><i class="fas fa-id-badge"></i> Atendentes</button>
+      <button class="tab-btn" onclick="tab('clinica')"><i class="fas fa-hospital"></i> Clínica</button>
+      <button class="tab-btn" onclick="tab('profissionais')"><i class="fas fa-user-doctor"></i> Profissionais</button>
+      <button class="tab-btn" onclick="tab('colaboradores')"><i class="fas fa-address-card"></i> Colaboradores</button>
+      <button class="tab-btn" onclick="tab('logs')"><i class="fas fa-list-ul"></i> Logs</button>
+      <button class="tab-btn" onclick="tab('config')"><i class="fas fa-gear"></i> Configurações</button>
+    </div>
+
+    <!-- ABA USUÁRIOS -->
+    <div class="tab-pane active" id="paneUsuarios">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-users"></i> Usuários do sistema</div>
+          <button class="btn-p" onclick="abrirModalUser()"><i class="fas fa-plus"></i> Novo usuário</button>
+        </div>
+        <div id="listaUsuarios"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div></div>
+      </div>
+    </div>
+
+    <!-- ABA ATENDENTES -->
+    <div class="tab-pane" id="paneAtendentes">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-id-badge"></i> Atendentes cadastrados</div>
+          <button class="btn-p" onclick="abrirModalAte()"><i class="fas fa-plus"></i> Novo atendente</button>
+        </div>
+        <div id="listaAtendentes"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div></div>
+      </div>
+    </div>
+
+    <!-- ABA CLÍNICA -->
+    <div class="tab-pane" id="paneClinica">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-hospital"></i> Informações da clínica</div>
+          <button class="btn-p" onclick="salvarClinica()"><i class="fas fa-floppy-disk"></i> Salvar</button>
+        </div>
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div>
+            <label class="f-label">Nome da clínica</label>
+            <input class="f-input" id="cNome" placeholder="Ex: Amor Saúde Pirituba">
+          </div>
+          <div>
+            <label class="f-label">Telefone</label>
+            <input class="f-input" id="cTel" placeholder="(11) 99999-9999">
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label class="f-label">Endereço</label>
+          <input class="f-input" id="cEnd" placeholder="Av. Dr. Felipe Pinel, s/n — Pirituba, São Paulo/SP">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label class="f-label">CNPJ</label>
+          <input class="f-input" id="cCnpj" placeholder="00.000.000/0000-00" style="max-width:260px;">
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-image"></i> Logo da clínica</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap;">
+          <div class="logo-preview-box" onclick="document.getElementById('logoFileInput').click()" id="logoPreviewBox">
+            <img id="logoPreviewAdmin" src="../assets/favicon.png" alt="Logo">
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px;line-height:1.6;">Clique na área ao lado para selecionar uma imagem. Use PNG ou JPG. O logo é armazenado no Firebase e aparece automaticamente em todas as páginas.</p>
+            <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="processarLogo(event)">
+            <button class="btn-p" onclick="document.getElementById('logoFileInput').click()"><i class="fas fa-upload"></i> Selecionar imagem</button>
+            <button class="btn-g" onclick="salvarLogo()" style="margin-left:8px;" id="btnSalvarLogo" disabled><i class="fas fa-cloud-arrow-up"></i> Enviar logo</button>
+            <div id="logoStatus" style="margin-top:10px;font-size:12px;color:var(--gray-400);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMAGEM DE CABEÇALHO DO RELATÓRIO DE CAIXA -->
+      <div class="panel" style="margin-top:18px;">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-print"></i> Imagem de Cabeçalho do Relatório de Caixa</div>
+        </div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px;line-height:1.6;">
+          Esta imagem aparece no <strong>centro do cabeçalho</strong> do relatório de caixa impresso.<br>
+          O logo da clínica continua aparecendo no canto superior esquerdo normalmente.
+        </p>
+        <div style="display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;">
+          <div style="width:180px;height:80px;border:2px dashed var(--gray-300);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--gray-50);flex-shrink:0;">
+            <img id="caixaHeaderPreview" src="" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:none;">
+            <span id="caixaHeaderPlaceholder" style="font-size:11px;color:var(--gray-400);text-align:center;padding:8px;"><i class="fas fa-image" style="font-size:22px;display:block;margin-bottom:6px;opacity:.4;"></i>Sem imagem</span>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <input type="file" id="caixaHeaderInput" accept=".png,.jpg,.jpeg,.webp" style="display:none;" onchange="previewCaixaHeader(event)">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn-p" onclick="document.getElementById('caixaHeaderInput').click()"><i class="fas fa-upload"></i> Selecionar imagem</button>
+              <button class="btn-g" onclick="salvarCaixaHeader()" id="btnSalvarCaixaHeader" disabled><i class="fas fa-cloud-arrow-up"></i> Salvar</button>
+              <button class="btn-r" onclick="removerCaixaHeader()"><i class="fas fa-trash"></i> Remover</button>
+            </div>
+            <div id="caixaHeaderStatus" style="margin-top:10px;font-size:12px;color:var(--gray-400);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLANILHA DE NOTAS FISCAIS -->
+      <div class="panel" style="margin-top:18px;">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-table"></i> Planilha de Notas Fiscais</div>
+        </div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px;line-height:1.6;">
+          No Google Sheets: <strong>Arquivo → Compartilhar → Publicar na web → CSV → Publicar</strong>.<br>
+          Cole a URL gerada abaixo. Ao gerar o relatório de caixa, o sistema cruzará automaticamente os nomes
+          dos pacientes com a planilha e exibirá a coluna <strong>N° NF</strong>.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:260px;">
+            <label class="f-label">URL publicada (CSV)</label>
+            <input type="text" id="planilhaNfUrl" class="f-input" placeholder="Cole a URL pública do Google Sheets (pubhtml ou pub?output=csv)">
+          </div>
+          <div style="display:flex;gap:8px;padding-bottom:1px;">
+            <button class="btn-p" onclick="salvarPlanilhaNf()"><i class="fas fa-save"></i> Salvar</button>
+            <button class="btn-s" onclick="testarPlanilhaNf()"><i class="fas fa-vial"></i> Testar</button>
+          </div>
+        </div>
+        <div id="planilhaNfStatus" style="font-size:11px;margin-top:8px;color:var(--gray-400);"></div>
+      </div>
+    </div>
+
+    <!-- ABA PROFISSIONAIS -->
+    <div class="tab-pane" id="paneProfissionais">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-user-doctor"></i> Profissionais de saúde</div>
+          <button class="btn-p" onclick="abrirModalProf()"><i class="fas fa-plus"></i> Novo profissional</button>
+        </div>
+        <div style="margin-bottom:14px;">
+          <input class="f-input" id="buscaProf" placeholder="Buscar por nome ou especialidade..." oninput="filtrarProfissionais()" style="max-width:380px;">
+        </div>
+        <div id="listaProfissionais"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div></div>
+      </div>
+    </div>
+
+    <!-- ABA COLABORADORES -->
+    <div class="tab-pane" id="paneColaboradores">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-address-card"></i> Importar colaboradores do Financeiro</div>
+        </div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:18px;">
+          Importe uma planilha <strong>.xlsx</strong> com as colunas: <strong>Nome, Cargo, CPF, Banco, PIX</strong>.<br>
+          Os colaboradores importados ficarão disponíveis no módulo <strong>Financeiro</strong> para emissão de recibos.
+        </p>
+        <!-- Template download hint -->
+        <div style="background:var(--gray-50);border:1px dashed var(--gray-300);border-radius:10px;padding:14px 18px;margin-bottom:18px;font-size:12px;color:var(--gray-500);">
+          <i class="fas fa-circle-info" style="color:var(--navy);margin-right:6px;"></i>
+          A planilha deve ter cabeçalho na <strong>1ª linha</strong>. Colunas aceitas (em qualquer ordem):
+          <strong>Nome</strong>, <strong>Cargo</strong>, <strong>CPF</strong>, <strong>Banco</strong>, <strong>PIX</strong>.
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+          <input type="file" id="colabXlsxInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="parseColabXlsx(event)">
+          <button class="btn-p" onclick="document.getElementById('colabXlsxInput').click()">
+            <i class="fas fa-file-arrow-up"></i> Selecionar planilha
+          </button>
+          <span id="colabXlsxStatus" style="font-size:12px;color:var(--gray-500);"></span>
+        </div>
+        <!-- Preview table -->
+        <div id="colabXlsxPreview" style="display:none;">
+          <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:10px;" id="colabXlsxCount"></div>
+          <div style="overflow-x:auto;max-height:320px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:10px;margin-bottom:16px;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;" id="colabXlsxTable"></table>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-s" onclick="cancelarImportColab()"><i class="fas fa-xmark"></i> Cancelar</button>
+            <button class="btn-s" id="btnImportAddColab" onclick="importarColabs(false)" style="color:var(--green);border-color:var(--green);">
+              <i class="fas fa-plus"></i> Adicionar aos existentes
+            </button>
+            <button class="btn-p" id="btnImportReplaceColab" onclick="importarColabs(true)">
+              <i class="fas fa-rotate"></i> Substituir tudo
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Lista atual de colaboradores -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-users"></i> Colaboradores cadastrados</div>
+          <span id="colabAdminCount" style="font-size:12px;color:var(--gray-400);"></span>
+        </div>
+        <div id="colabAdminLista"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div></div>
+      </div>
+    </div>
+
+    <!-- ABA LOGS -->
+    <div class="tab-pane" id="paneLogs">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-list-ul"></i> Logs de acesso</div>
+          <button class="btn-s" onclick="carregarLogs()"><i class="fas fa-rotate"></i> Atualizar</button>
+        </div>
+        <div id="listaLogs"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div></div>
+      </div>
+    </div>
+
+    <!-- ABA CONFIGURAÇÕES -->
+    <div class="tab-pane" id="paneConfig">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-gear"></i> Configurações do sistema</div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;">Limpeza de dados</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <button class="btn-s" onclick="limparLogs()"><i class="fas fa-trash"></i> Limpar logs antigos</button>
+            <button class="btn-s" onclick="limparNotas()"><i class="fas fa-eraser"></i> Limpar notas de operação</button>
+          </div>
+        </div>
+        <!-- ── PLANILHAS DE EXAMES (GOOGLE SHEETS) ── -->
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">
+            <i class="fas fa-link" style="color:var(--teal,#61C1D0);"></i> Planilhas de Exames (Google Sheets)
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-bottom:14px;line-height:1.6;">
+            Cole o link de <strong>compartilhamento</strong> de cada planilha do Google Sheets.
+            A planilha deve estar compartilhada como <strong>"Qualquer pessoa com o link pode ver"</strong>.
+            O sistema lê <strong>todas as abas</strong> automaticamente — não precisa publicar como CSV.
+            Após vincular, use o botão <strong>Importar</strong> na tela de Retirada de Exames.
+          </div>
+
+          <div id="pcListContainer">
+            <div style="text-align:center;padding:16px;color:var(--gray-400);font-size:12px;"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+          </div>
+
+          <button onclick="adicionarPlanilhaCard()" style="width:100%;padding:9px;background:var(--gray-50);border:1.5px dashed var(--gray-300);border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;color:var(--gray-500);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;margin-top:4px;" onmouseover="this.style.borderColor='var(--navy)';this.style.color='var(--navy)'" onmouseout="this.style.borderColor='var(--gray-300)';this.style.color='var(--gray-500)'">
+            <i class="fas fa-plus"></i> Adicionar planilha
+          </button>
+
+          <!-- IMPORTAR -->
+          <div style="margin-top:16px;border-top:1.5px solid var(--gray-200);padding-top:16px;">
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px;">
+              <i class="fas fa-file-arrow-up" style="color:var(--green);"></i> Importar Arquivo Local (.xlsx)
+            </div>
+            <div style="font-size:11px;color:var(--gray-400);margin-bottom:12px;line-height:1.6;">
+              Baixe o arquivo diretamente do Google Drive (<strong>Arquivo → Baixar → Microsoft Excel</strong>)
+              e selecione abaixo. Não é necessário publicar nem compartilhar.
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+              <button onclick="document.getElementById('uploadUsg').click()" style="padding:10px;background:var(--gray-50);border:1.5px solid #0369a1;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;color:#0369a1;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='var(--gray-50)'">
+                <i class="fas fa-wave-square"></i> Ultrassom
+              </button>
+              <button onclick="document.getElementById('uploadEco').click()" style="padding:10px;background:var(--gray-50);border:1.5px solid #C62828;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;color:#C62828;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;" onmouseover="this.style.background='#fff1f1'" onmouseout="this.style.background='var(--gray-50)'">
+                <i class="fas fa-heart"></i> Ecocardiograma
+              </button>
+              <button onclick="document.getElementById('uploadNeuro').click()" style="padding:10px;background:var(--gray-50);border:1.5px solid #7c3aed;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background='var(--gray-50)'">
+                <i class="fas fa-brain"></i> Neurológico
+              </button>
+              <button onclick="document.getElementById('uploadErg').click()" style="padding:10px;background:var(--gray-50);border:1.5px solid #f97316;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;color:#f97316;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;" onmouseover="this.style.background='#fff7ed'" onmouseout="this.style.background='var(--gray-50)'">
+                <i class="fas fa-heartbeat"></i> Ergométrico
+              </button>
+            </div>
+            <!-- Inputs file ocultos -->
+            <input type="file" id="uploadUsg"   accept=".xlsx" style="display:none;" onchange="importarArquivoLocal(this,'usg')">
+            <input type="file" id="uploadEco"   accept=".xlsx" style="display:none;" onchange="importarArquivoLocal(this,'eco')">
+            <input type="file" id="uploadNeuro" accept=".xlsx" style="display:none;" onchange="importarArquivoLocal(this,'neuro')">
+            <input type="file" id="uploadErg"   accept=".xlsx" style="display:none;" onchange="importarArquivoLocal(this,'erg')">
+
+          <div id="adminImportSection" style="margin-top:4px;">
+            <div id="adminImportLinks" style="margin-bottom:12px;"></div>
+            <div id="adminImportProgress" style="display:none;margin-top:12px;">
+              <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px;" id="adminImportMsg">Processando...</div>
+              <div style="background:var(--gray-200);border-radius:8px;height:8px;overflow:hidden;">
+                <div id="adminImportBar" style="height:100%;background:var(--navy);border-radius:8px;width:0%;transition:width .3s;"></div>
+              </div>
+            </div>
+            <div id="adminImportDone" style="display:none;margin-top:10px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:700;color:#15803d;">
+              <i class="fas fa-check"></i> <span id="adminImportDoneText">Importado com sucesso!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ALIASES DE COLABORADORES ── -->
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">
+            <i class="fas fa-user-tag" style="color:var(--teal,#61C1D0);"></i> Aliases de Colaboradores
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-bottom:12px;line-height:1.6;">
+            Corrija nomes duplicados no dashboard. Ex: <strong>"fernadac"</strong> → <strong>"Fernanda Clara De Souza Sergio"</strong>
+          </div>
+          <div id="aliasListContainer">
+            <div style="text-align:center;padding:12px;color:var(--gray-400);font-size:12px;"><i class="fas fa-spinner fa-spin"></i></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <input id="aliasFromInput" class="f-input" type="text" placeholder="Nome errado (ex: fernadac)" style="flex:1;font-size:12px;padding:8px 10px;">
+            <span style="display:flex;align-items:center;color:var(--gray-400);font-size:13px;"><i class="fas fa-arrow-right"></i></span>
+            <input id="aliasToInput" class="f-input" type="text" placeholder="Nome correto (ex: Fernanda Clara De Souza Sergio)" style="flex:2;font-size:12px;padding:8px 10px;">
+            <button onclick="salvarAlias()" class="btn-s" style="white-space:nowrap;"><i class="fas fa-plus"></i> Adicionar</button>
+          </div>
+        </div>
+
+        <!-- ── GAVETA DE EXAMES ── -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;">Gaveta de Exames Pendentes</div>
+          <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:16px 18px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Pendentes na gaveta</div>
+                <div style="font-size:32px;font-weight:900;color:var(--navy);letter-spacing:-1px;" id="gavTotalCount">—</div>
+              <div style="font-size:10px;color:var(--gray-400);font-weight:600;margin-top:2px;">exames pendentes</div>
+              </div>
+            <div id="gavCatBreakdown" style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:160px;"></div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <button class="btn-s" id="btnGavAtualizar" onclick="atualizarContGaveta()">
+                  <i class="fas fa-rotate-right"></i> Atualizar contagem
+                </button>
+                <button onclick="limparGaveta()" id="btnLimparGaveta"
+                  style="padding:9px 16px;background:#C62828;color:white;border:none;border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;"
+                  onmouseover="this.style.background='#ad1f1f'" onmouseout="this.style.background='#C62828'">
+                  <i class="fas fa-trash-arrow-up"></i> Limpar gaveta inteira
+                </button>
+              </div>
+            </div>
+            <div id="gavProgressWrap" style="display:none;margin-top:14px;">
+              <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px;" id="gavProgressMsg">Removendo...</div>
+              <div style="background:var(--gray-200);border-radius:8px;height:8px;overflow:hidden;">
+                <div id="gavProgressBar" style="height:100%;background:#C62828;border-radius:8px;width:0%;transition:width .2s;"></div>
+              </div>
+            </div>
+            <div id="gavDoneMsg" style="display:none;margin-top:12px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:700;color:#15803d;">
+              <i class="fas fa-check"></i> <span id="gavDoneText">Gaveta limpa com sucesso!</span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);line-height:1.6;">
+            <i class="fas fa-triangle-exclamation" style="color:#f97316;"></i>
+            Após limpar, acesse <strong>Retirada de Exames → Importar Planilha</strong> para subir a nova planilha organizada.
+            O histórico de retiradas <strong>não é apagado</strong>.
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;">Informações do sistema</div>
+          <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="font-size:12px;color:var(--gray-500);">Versão do portal</div><div style="font-size:12px;font-weight:700;color:var(--navy);">2.0.0</div>
+              <div style="font-size:12px;color:var(--gray-500);">Firebase projeto</div><div style="font-size:12px;font-weight:700;color:var(--navy);">clinica-pirituba</div>
+              <div style="font-size:12px;color:var(--gray-500);">Sessão atual</div><div style="font-size:12px;font-weight:700;color:var(--navy);" id="sUserInfo">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+  // ── PLANILHAS DE EXAMES ──────────────────────────────────────────
+  const PC_TIPOS = [
+    { key:'organizada', label:'Planilha Organizada (recomendado)', icon:'fa-table',      color:'#0A1F44' },
+    { key:'eco',        label:'Ecocardiograma',                    icon:'fa-heart',      color:'#C62828' },
+    { key:'neuro',      label:'Neurológico (EEG / ENMG / PE)',     icon:'fa-brain',      color:'#7c3aed' },
+    { key:'usg',        label:'Ultrassom',                         icon:'fa-wave-square',color:'#0369a1' },
+    { key:'erg',        label:'Teste Ergométrico',                 icon:'fa-heartbeat',  color:'#f97316' },
+  ];
+
+  var _pcLinks = {};  // { key: { url, nome } }
+
+  window.renderPlanilhaCards = function() {
+    const c = document.getElementById('pcListContainer');
+    if (!c) return;
+    if (!Object.keys(_pcLinks).length) {
+      c.innerHTML = '<div style="text-align:center;padding:16px;color:var(--gray-400);font-size:12px;"><i class="fas fa-table" style="font-size:20px;opacity:.2;display:block;margin-bottom:6px;"></i>Nenhuma planilha vinculada ainda</div>';
+      var sec = document.getElementById('adminImportSection');
+      if (sec) sec.style.display = 'none';
+      return;
+    }
+    c.innerHTML = Object.entries(_pcLinks).map(([key, data]) => {
+      const tipo = PC_TIPOS.find(t => t.key === key) || { label: key, icon:'fa-file', color:'#64748b' };
+      var sheetId = data.sheetId || _extrairSheetId(data.url||'') || '—';
+      return `<div class="planilha-card connected" id="pc-${key}">
+        <div class="planilha-card-header">
+          <div class="pc-tipo"><i class="fas ${tipo.icon}" style="color:${tipo.color};"></i>${tipo.label}</div>
+          <span class="pc-status"><i class="fas fa-check-circle"></i> Vinculada</span>
+        </div>
+        <div class="pc-url-display">
+          <i class="fas fa-fingerprint" style="font-size:9px;"></i> ID: ${sheetId.slice(0,20)}...
+          &nbsp;·&nbsp; <a href="https://docs.google.com/spreadsheets/d/${sheetId}" target="_blank" style="color:var(--navy);font-size:10px;">Abrir planilha ↗</a>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button id="adminBtnLink-${key}" class="pc-btn save" onclick="adminImportarPlanilha('${key}')"><i class="fas fa-cloud-arrow-down"></i> Importar</button>
+          <button class="pc-btn save" style="background:var(--gray-100);color:var(--gray-600);border:1px solid var(--gray-200);" onclick="testarPlanilha('${key}')"><i class="fas fa-rotate-right"></i> Testar</button>
+          <button class="pc-btn del" onclick="removerPlanilha('${key}')"><i class="fas fa-xmark"></i> Desvincular</button>
+        </div>
+      </div>`;
+    }).join('');
+    var sec = document.getElementById('adminImportSection');
+    if (sec) sec.style.display = '';
+  };
+
+  var _pcAddCount = 0;
+  window.adicionarPlanilhaCard = function() {
+    const c = document.getElementById('pcListContainer');
+    if (!c) return;
+    const tempId = 'pc-new-' + (++_pcAddCount);
+    const optsHtml = PC_TIPOS.map(t => `<option value="${t.key}">${t.label}</option>`).join('');
+    const div = document.createElement('div');
+    div.className = 'planilha-card';
+    div.id = tempId;
+    div.innerHTML = `
+      <div class="planilha-card-header" style="margin-bottom:10px;">
+        <div class="pc-tipo"><i class="fas fa-plus" style="color:var(--navy);"></i> Nova planilha</div>
+        <button onclick="document.getElementById('${tempId}').remove()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:14px;"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div style="margin-bottom:8px;">
+        <select id="${tempId}-tipo" class="pc-input" style="width:100%;margin-bottom:8px;">
+          <option value="">Selecione o tipo...</option>${optsHtml}
+        </select>
+        <div class="pc-input-row">
+          <input class="pc-input" type="url" id="${tempId}-url" placeholder="https://docs.google.com/spreadsheets/d/...">
+          <button class="pc-btn save" onclick="salvarPlanilha('${tempId}')"><i class="fas fa-save"></i> Salvar</button>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--gray-400);line-height:1.5;">
+        <i class="fas fa-info-circle"></i> Cole o <strong>link de compartilhamento</strong> do Google Sheets. A planilha deve estar compartilhada como <strong>"Qualquer pessoa com o link pode ver"</strong>. O sistema lê todas as abas automaticamente — não precisa publicar como CSV.
+      </div>`;
+    // Limpar o placeholder vazio antes de adicionar
+    if (c.querySelector('.fa-table')) c.innerHTML = '';
+    c.appendChild(div);
+  };
+
+  function _extrairSheetId(url) {
+    var m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : null;
+  }
+
+  window.salvarPlanilha = async function(tempId) {
+    var tipo = document.getElementById(tempId + '-tipo').value;
+    var url  = (document.getElementById(tempId + '-url').value || '').trim();
+    if (!tipo) { toast('Selecione o tipo de planilha', 'error'); return; }
+    if (!url)  { toast('Cole o link da planilha', 'error'); return; }
+    if (!url.includes('docs.google.com/spreadsheets')) {
+      toast('Cole o link do Google Sheets (docs.google.com/spreadsheets/...)', 'error'); return;
+    }
+    var sheetId = _extrairSheetId(url);
+    if (!sheetId) { toast('Não foi possível identificar o ID da planilha', 'error'); return; }
+
+    // Testar acesso antes de salvar
+    toast('Verificando acesso...', 'info');
+    try {
+      var testUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/export?format=xlsx';
+      var r = await fetch(testUrl, { method:'HEAD' });
+      if (!r.ok) throw new Error('A planilha precisa estar compartilhada como "Qualquer pessoa com o link pode ver"');
+    } catch(e) {
+      // HEAD pode falhar por CORS — tenta sem verificar
+    }
+
+    try {
+      var dados = { url: url, sheetId: sheetId, atualizadoEm: new Date().toISOString() };
+      await window._fbSet('admin/planilhasExames/' + tipo, dados);
+      _pcLinks[tipo] = dados;
+      document.getElementById(tempId).remove();
+      window.renderPlanilhaCards();
+      toast('Planilha vinculada! ID: ' + sheetId.slice(0,12) + '...', 'success');
+    } catch(e) { toast('Erro ao salvar: ' + e.message, 'error'); }
+  };
+
+  window.removerPlanilha = async function(key) {
+    if (!confirm('Desvincular esta planilha? Os exames já importados permanecem na gaveta.')) return;
+    try {
+      await window._fbSet('admin/planilhasExames/' + key, null);
+      delete _pcLinks[key];
+      window.renderPlanilhaCards();
+      toast('Planilha desvinculada', 'info');
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  };
+
+  window.testarPlanilha = async function(key) {
+    var data = _pcLinks[key];
+    if (!data) return;
+    var sheetId = data.sheetId || _extrairSheetId(data.url||'');
+    if (!sheetId) { toast('ID da planilha não encontrado', 'error'); return; }
+    toast('Testando conexão...', 'info');
+    try {
+      var exportUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/export?format=xlsx';
+      var r = await fetch(exportUrl);
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' — verifique se está compartilhada como pública');
+      var buf = await r.arrayBuffer();
+      // Não temos XLSX aqui no admin — só verifica tamanho
+      var kb = (buf.byteLength / 1024).toFixed(0);
+      toast('✅ Conexão OK — arquivo de ' + kb + ' KB encontrado', 'success');
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  };
+
+  // ── IMPORTAR ARQUIVO LOCAL (.xlsx) ─────────────────────────────
+  const IMPORT_CUTOFF = new Date(2026, 0, 1); // jan/2026
+
+  window.importarArquivoLocal = async function(input, tipo) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    input.value = '';
+
+    const tipoLabels = {usg:'Ultrassom', eco:'Ecocardiograma', neuro:'Neurológico', erg:'Ergométrico'};
+    const progEl = document.getElementById('adminImportProgress');
+    const barEl  = document.getElementById('adminImportBar');
+    const msgEl  = document.getElementById('adminImportMsg');
+    const doneEl = document.getElementById('adminImportDone');
+    const doneTx = document.getElementById('adminImportDoneText');
+    if (progEl) { progEl.style.display='block'; if (barEl) barEl.style.width='0%'; }
+    if (doneEl) doneEl.style.display='none';
+
+    try {
+      const buf = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload  = e => res(e.target.result);
+        reader.onerror = () => rej(new Error('Erro ao ler arquivo'));
+        reader.readAsArrayBuffer(file);
+      });
+
+      if (msgEl) msgEl.textContent = 'Processando abas (a partir de jan/2026)...';
+      if (barEl) barEl.style.width = '10%';
+
+      const wb = XLSX.read(buf, {type:'array', raw:true, cellDates:true});
+      let pendentes = [], historico = [], abasOk = 0;
+
+      for (let j=0; j<wb.SheetNames.length; j++) {
+        const sname = wb.SheetNames[j];
+        if (/base|cóp|copi|pág|pag/i.test(sname.trim())) continue;
+
+        // Filtro jan/2026
+        const abaDate = _parseAbaDate(sname);
+        if (!abaDate || abaDate < IMPORT_CUTOFF) continue;
+
+        const ws  = wb.Sheets[sname];
+        const res = processarAbaAdmin(ws, tipo, abaDate);
+        pendentes = pendentes.concat(res.pendentes);
+        historico = historico.concat(res.historico);
+        abasOk++;
+        if (barEl) barEl.style.width = Math.round(10 + (j/wb.SheetNames.length)*55) + '%';
+      }
+
+      // Deduplicar por paciente+tipo
+      const vP = new Set(), vH = new Set();
+      pendentes = pendentes.filter(r => { const k=r.paciente+'|'+r.tipo; if(vP.has(k)) return false; vP.add(k); return true; });
+      historico = historico.filter(r => { const k=r.paciente+'|'+r.tipo; if(vH.has(k)) return false; vH.add(k); return true; });
+
+      const total = pendentes.length + historico.length;
+      if (msgEl) msgEl.textContent = `Salvando ${pendentes.length} pendentes + ${historico.length} histórico...`;
+      if (barEl) barEl.style.width = '65%';
+
+      let ok = 0;
+      const now = new Date().toISOString();
+
+      // Salvar pendentes em exames/pendentes
+      for (const item of pendentes) {
+        const key = Date.now() + '_' + Math.random().toString(36).slice(2);
+        await window._fbSet('exames/pendentes/' + key, {
+          paciente: item.paciente, tipo: item.tipo,
+          dataExame: item.dataExame || '',
+          obs: 'Importado de ' + file.name,
+          atendenteCad: 'Admin', cadastradoEm: now,
+          fonte: tipo.toUpperCase(),
+        });
+        ok++;
+        if (barEl) barEl.style.width = Math.round(65 + (ok/total)*30) + '%';
+      }
+
+      // Salvar histórico em exames/historico
+      for (const item of historico) {
+        const key = Date.now() + '_' + Math.random().toString(36).slice(2);
+        await window._fbSet('exames/historico/' + key, {
+          paciente: item.paciente, tipo: item.tipo,
+          dataExame: item.dataExame || '',
+          dataRetirada: item.retiradoEm || '',
+          obs: 'Importado de ' + file.name,
+          atendenteCad: 'Admin', cadastradoEm: now,
+          fonte: tipo.toUpperCase(),
+        });
+        ok++;
+        if (barEl) barEl.style.width = Math.round(65 + (ok/total)*30) + '%';
+      }
+
+      if (barEl) barEl.style.width = '100%';
+      setTimeout(() => { if (progEl) progEl.style.display='none'; }, 1500);
+      if (doneEl) {
+        doneEl.style.display='block';
+        if (doneTx) doneTx.textContent =
+          `${pendentes.length} pendentes + ${historico.length} histórico importados de ${abasOk} aba(s) — ${file.name}`;
+      }
+      toast(`✅ ${pendentes.length} pendentes + ${historico.length} histórico importados!`, 'success');
+      // Atualizar contagem por categoria
+      atualizarContGaveta();
+
+    } catch(e) {
+      console.error('[importarArquivoLocal]', e.message);
+      if (progEl) progEl.style.display='none';
+      toast('Erro: ' + e.message, 'error');
+    }
+  };
+
+  window.carregarPlanilhasLinks = async function() {
+    try {
+      const snap = await window._fbGet('admin/planilhasExames');
+      _pcLinks = {};
+      if (snap && snap.val()) {
+        Object.entries(snap.val()).forEach(([k, v]) => { if (v && v.url) _pcLinks[k] = v; });
+      }
+      window.renderPlanilhaCards();
+    } catch(e) {
+      const c = document.getElementById('pcListContainer');
+      if (c) c.innerHTML = '<div style="font-size:12px;color:var(--red);">Erro ao carregar links</div>';
+    }
+  };
+
+
+
+
+  // ── ALIASES DE COLABORADORES ─────────────────────────────────────
+  var _aliases = {};  // { "fernadac": "Fernanda Clara De Souza Sergio" }
+
+  window.carregarAliases = async function() {
+    const c = document.getElementById('aliasListContainer');
+    try {
+      const snap = await window._fbGet('admin/colaboradorAliases');
+      _aliases = snap && snap.val() ? snap.val() : {};
+      renderAliases();
+    } catch(e) {
+      if (c) c.innerHTML = '<div style="font-size:12px;color:var(--red);">Erro ao carregar aliases</div>';
+    }
+  };
+
+  function renderAliases() {
+    const c = document.getElementById('aliasListContainer');
+    if (!c) return;
+    const entries = Object.entries(_aliases);
+    if (!entries.length) {
+      c.innerHTML = '<div style="font-size:12px;color:var(--gray-400);padding:8px 0;">Nenhum alias cadastrado ainda.</div>';
+      return;
+    }
+    c.innerHTML = entries.map(([from, to]) => `
+      <div class="alias-row">
+        <span class="alias-from">${esc(from)}</span>
+        <span class="alias-arrow"><i class="fas fa-arrow-right"></i></span>
+        <span class="alias-to">${esc(to)}</span>
+        <button class="alias-del" onclick="removerAlias('${esc(from)}')" title="Remover alias"><i class="fas fa-xmark"></i></button>
+      </div>
+    `).join('');
+  }
+
+  window.salvarAlias = async function() {
+    const from = (document.getElementById('aliasFromInput').value || '').trim();
+    const to   = (document.getElementById('aliasToInput').value   || '').trim();
+    if (!from) { toast('Informe o nome errado', 'error'); return; }
+    if (!to)   { toast('Informe o nome correto', 'error'); return; }
+    if (from === to) { toast('Os nomes são iguais', 'error'); return; }
+    try {
+      await window._fbSet('admin/colaboradorAliases/' + from.replace(/[.#$[\]]/g,'_'), to);
+      _aliases[from] = to;
+      renderAliases();
+      document.getElementById('aliasFromInput').value = '';
+      document.getElementById('aliasToInput').value   = '';
+      toast('Alias salvo! O dashboard vai corrigir automaticamente.', 'success');
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  };
+
+  window.removerAlias = async function(from) {
+    const key = from.replace(/[.#$[\]]/g,'_');
+    try {
+      await window._fbSet('admin/colaboradorAliases/' + key, null);
+      delete _aliases[from];
+      renderAliases();
+      toast('Alias removido', 'info');
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  };
+
+  // ── IMPORTAÇÃO GOOGLE SHEETS (ADMIN) ────────────────────────────
+
+  function _extrairSheetIdAdmin(url) {
+    var m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : null;
+  }
+
+  // Helpers de detecção
+  function _isOkAdmin(v) {
+    if (v === null || v === undefined) return false;
+    var s = String(v).trim();
+    if (!s || s.toLowerCase() === 'none') return false;
+    // "OK" texto OU valor não-vazio (data na célula = exame entregue)
+    return /ok/i.test(s) || /\d/.test(s);
+  }
+  function _isRetiradoAdmin(v) {
+    if (v === null || v === undefined) return false;
+    if (v instanceof Date && !isNaN(v)) return true;
+    var s = String(v).trim().toLowerCase();
+    if (!s || s === 'none') return false;
+    if (s.includes('retirado e não anotado')) return true;
+    if (/retirou|retirada/.test(s) && s.length < 30) return true;
+    // Data real — tem ano 20XX ou formato DD/MM/AAAA
+    if (/202\d/.test(s)) return true;
+    if (/\d{2}[\/\-]\d{2}[\/\-]\d{2,4}/.test(s)) return true;
+    // Datetime string do openpyxl: "2026-01-24 00:00:00"
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return true;
+    return false;
+  }
+  function _parseAbaDate(sname) {
+    var digits = sname.replace(/[^0-9]/g, '');
+    var d, m, y;
+    if (digits.length >= 8) {
+      d=parseInt(digits.slice(0,2)); m=parseInt(digits.slice(2,4)); y=parseInt(digits.slice(4,8));
+      var dt = new Date(y, m-1, d);
+      if (dt.getFullYear()===y && dt.getMonth()===m-1) return dt;
+    }
+    if (digits.length === 6) {
+      d=parseInt(digits.slice(0,2)); m=parseInt(digits.slice(2,4)); y=2000+parseInt(digits.slice(4,6));
+      var dt2 = new Date(y, m-1, d);
+      if (dt2.getFullYear()===y && dt2.getMonth()===m-1) return dt2;
+    }
+    return null;
+  }
+
+  // Configuração de colunas por tipo
+  var _colsCfg = {
+    erg:   { nome:0, ok:1, ret:2, exame:null, tipo:'Teste Ergométrico' },
+    eco:   { nome:0, ok:1, ret:2, exame:null, tipo:'Ecocardiograma' },
+    usg:   { nome:0, exame:1, ok:2, ret:3,    tipo:'Ultrassom' },
+    neuro: { nome:0, ok:2, ret:3, exame:null, tipo:'EEG' },
+  };
+
+  function processarAbaAdmin(ws, tipo, abaDate) {
+    var cfg = _colsCfg[tipo] || _colsCfg.erg;
+    var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+    // Encontrar linha de cabeçalho
+    var hdr = -1;
+    for (var i=0; i<Math.min(5,rows.length); i++) {
+      if (rows[i] && rows[i].some(function(v){ return v && /nome/i.test(String(v)); })) {
+        hdr=i; break;
+      }
+    }
+    if (hdr < 0) return { pendentes:[], historico:[] };
+    var pendentes=[], historico=[];
+
+    for (var i=hdr+1; i<rows.length; i++) {
+      var r = rows[i];
+      if (!r || r.length <= cfg.nome) continue;
+      var nome = String(r[cfg.nome]||'').trim().replace(/\*+$/,'').trim().toUpperCase();
+      if (!nome || nome.length < 3) continue;
+      if (/^(nome|paciente|exame|hora|\s)/.test(nome.toLowerCase())) continue;
+
+      var okVal  = r.length > cfg.ok  ? r[cfg.ok]  : null;
+      var retVal = r.length > cfg.ret ? r[cfg.ret] : null;
+      if (!_isOkAdmin(okVal)) continue;
+
+      var exTipo = cfg.tipo;
+      if (cfg.exame !== null && r.length > cfg.exame) {
+        var sub = String(r[cfg.exame]||'').trim();
+        if (sub && !/^(exame|tipo|nome)/i.test(sub)) {
+          exTipo = 'Ultrassom - ' + sub.charAt(0).toUpperCase() + sub.slice(1).toLowerCase();
+        }
+      }
+
+      var dataExStr = abaDate ? abaDate.toISOString().slice(0,10) : '';
+      var entry = { paciente:nome, tipo:exTipo, dataExame:dataExStr };
+
+      if (_isRetiradoAdmin(retVal)) {
+        // Tenta pegar a data de retirada real
+        var retStr = '';
+        if (retVal instanceof Date && !isNaN(retVal)) retStr = retVal.toISOString().slice(0,10);
+        else { var m2=/(\d{2})[\/\-](\d{2})[\/\-](\d{2,4})/.exec(String(retVal||'')); if(m2) retStr=m2[0]; }
+        entry.dataRetirada = retStr;
+        entry.retiradoEm   = retStr || new Date().toISOString().slice(0,10);
+        historico.push(entry);
+      } else {
+        pendentes.push(entry);
+      }
+    }
+    return { pendentes, historico };
+  }
+
+  async function baixarEProcessarPlanilha(key, data) {
+    var sheetId = data.sheetId || _extrairSheetIdAdmin(data.url||'');
+    if (!sheetId) throw new Error('ID não encontrado para ' + key);
+    var exportUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/export?format=xlsx';
+    var resp = await fetch(exportUrl);
+    if (!resp.ok) throw new Error('HTTP '+resp.status+' em '+key+' — verifique compartilhamento público');
+    var buf  = await resp.arrayBuffer();
+    var wb   = XLSX.read(buf, {type:'array', raw:false});
+    var todos = [];
+    var abasOk = 0;
+    for (var j=0; j<wb.SheetNames.length; j++) {
+      var sname = wb.SheetNames[j];
+      if (/^p[áa]gina|^base$|c[oó]pia/i.test(sname.trim())) continue;
+      var ws = wb.Sheets[sname];
+      if (!ws) continue;
+      var regs = processarAbaAdmin(ws, key);
+      todos = todos.concat(regs);
+      abasOk++;
+    }
+    return { regs: todos, abas: abasOk };
+  }
+
+  window.adminImportarPlanilha = async function(key) {
+    var data = _pcLinks[key];
+    if (!data) return;
+    var btn = document.getElementById('adminBtnLink-'+key);
+    if (btn) { btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Lendo '+_pcLinks[key]&&'...'; }
+    var prog = document.getElementById('adminImportProgress');
+    var msg  = document.getElementById('adminImportMsg');
+    var done = document.getElementById('adminImportDone');
+    if (prog) prog.style.display='block';
+    if (done) done.style.display='none';
+    try {
+      var tipo = PC_TIPOS.find(function(t){return t.key===key;})||{label:key};
+      if (msg) msg.textContent = 'Baixando '+tipo.label+'...';
+      document.getElementById('adminImportBar').style.width='20%';
+      var res = await baixarEProcessarPlanilha(key, data);
+      if (msg) msg.textContent = res.regs.length+' pendentes em '+res.abas+' abas — salvando...';
+      document.getElementById('adminImportBar').style.width='60%';
+      // salvar no firebase
+      var usuario = sessionStorage.getItem('usuario')||'Admin';
+      var ok=0;
+      for (var p of res.regs) {
+        await window._fbSet('exames/pendentes/'+Date.now()+'_'+Math.random().toString(36).slice(2), {
+          paciente:p.paciente, tipo:p.tipo, dataExame:p.dataExame||'',
+          obs:'Importado pelo Admin', atendenteCad:usuario, cadastradoEm:new Date().toISOString()
+        });
+        ok++;
+      }
+      document.getElementById('adminImportBar').style.width='100%';
+      document.getElementById('adminImportDoneText').textContent = ok.toLocaleString('pt-BR')+' exames importados de '+res.abas+' abas!';
+      if (done) done.style.display='block';
+      if (prog) { setTimeout(function(){prog.style.display='none';}, 2000); }
+      toast('✅ '+ok.toLocaleString('pt-BR')+' exames importados!', 'success');
+    } catch(e) {
+      toast('Erro: '+e.message, 'error');
+      if (prog) prog.style.display='none';
+    }
+    if (btn) { btn.disabled=false; btn.innerHTML='<i class="fas fa-cloud-arrow-down"></i> Importar'; }
+  };
+
+  window.adminImportarTodos = async function() {
+    var keys = Object.keys(_pcLinks);
+    if (!keys.length) { toast('Nenhuma planilha vinculada','error'); return; }
+    var btn  = document.getElementById('adminBtnTodos');
+    var prog = document.getElementById('adminImportProgress');
+    var bar  = document.getElementById('adminImportBar');
+    var msg  = document.getElementById('adminImportMsg');
+    var done = document.getElementById('adminImportDone');
+
+    // Primeiro busca tudo para mostrar total
+    if (btn) { btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Coletando dados...'; }
+    if (prog) prog.style.display='block';
+    if (done) done.style.display='none';
+    if (bar)  bar.style.width='0%';
+
+    var todosList = [];
+    for (var ki=0; ki<keys.length; ki++) {
+      var key = keys[ki];
+      var tipo = PC_TIPOS.find(function(t){return t.key===key;})||{label:key};
+      if (msg) msg.textContent = 'Lendo '+tipo.label+' ('+(ki+1)+'/'+keys.length+')...';
+      if (bar) bar.style.width = Math.round((ki/keys.length)*40)+'%';
+      try {
+        var res = await baixarEProcessarPlanilha(key, _pcLinks[key]);
+        todosList = todosList.concat(res.regs);
+        if (msg) msg.textContent = 'Lendo '+tipo.label+' — '+res.regs.length+' pendentes em '+res.abas+' abas';
+      } catch(e) {
+        toast('Erro em '+tipo.label+': '+e.message, 'error');
+      }
+    }
+
+    // De-duplicar
+    var seen = new Set();
+    todosList = todosList.filter(function(p){ var k=p.paciente+'|'+p.tipo; if(seen.has(k)) return false; seen.add(k); return true; });
+
+    if (!todosList.length) {
+      toast('Nenhum exame pendente encontrado nas planilhas', 'error');
+      if (prog) prog.style.display='none';
+      if (btn)  { btn.disabled=false; btn.innerHTML='<i class="fas fa-cloud-arrow-down"></i> Importar Todas e Atualizar Gaveta'; }
+      return;
+    }
+
+    var totalAtual = 0;
+    try {
+      var snap = await window._fbGet('exames/pendentes');
+      totalAtual = snap&&snap.val() ? Object.keys(snap.val()).length : 0;
+    } catch(e){}
+
+    var limpar = false;
+    if (totalAtual > 0) {
+      limpar = confirm('A gaveta tem '+totalAtual.toLocaleString('pt-BR')+' exames atuais.\nOK = LIMPAR e substituir pelos '+todosList.length.toLocaleString('pt-BR')+' novos.\nCancelar = ADICIONAR sem remover os existentes.');
+    }
+
+    if (msg) msg.textContent = (limpar?'Limpando gaveta e importando...':'Importando...')+' '+todosList.length.toLocaleString('pt-BR')+' exames';
+    if (bar) bar.style.width='45%';
+
+    if (limpar) {
+      try { await window._fbSet('exames/pendentes', null); } catch(e){}
+    }
+
+    var usuario = sessionStorage.getItem('usuario')||'Admin';
+    var ok=0, erros=0;
+    for (var pi=0; pi<todosList.length; pi++) {
+      var p = todosList[pi];
+      try {
+        await window._fbSet('exames/pendentes/'+Date.now()+'_'+Math.random().toString(36).slice(2), {
+          paciente:p.paciente, tipo:p.tipo, dataExame:p.dataExame||'',
+          obs:'Importado pelo Admin', atendenteCad:usuario, cadastradoEm:new Date().toISOString()
+        });
+        ok++;
+      } catch(e){ erros++; }
+      var pct = 45 + Math.round((pi/todosList.length)*55);
+      if (bar) bar.style.width = pct+'%';
+      if (pi%100===0 && msg) msg.textContent = ok.toLocaleString('pt-BR')+' de '+todosList.length.toLocaleString('pt-BR')+' salvos...';
+    }
+
+    if (bar) bar.style.width='100%';
+    document.getElementById('adminImportDoneText').textContent =
+      ok.toLocaleString('pt-BR')+' exames importados'+(erros?' ('+erros+' erros)':'')+'!';
+    if (done) done.style.display='block';
+    setTimeout(function(){ if(prog) prog.style.display='none'; }, 2500);
+    // Atualiza contagem
+    var el = document.getElementById('gavTotalCount');
+    if (el) el.textContent = ok.toLocaleString('pt-BR');
+    if (btn) { btn.disabled=false; btn.innerHTML='<i class="fas fa-cloud-arrow-down"></i> Importar Todas e Atualizar Gaveta'; }
+    toast('✅ '+ok.toLocaleString('pt-BR')+' exames na gaveta!', 'success');
+  };
+
+
+  // ── Gaveta de Exames ──
+  window.atualizarContGaveta = async function() {
+    const btn = document.getElementById('btnGavAtualizar');
+    if (btn) { btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>'; }
+    try {
+      const snap = await window._fbGet('exames/pendentes');
+      const data = snap && snap.val() ? snap.val() : {};
+      const itens = Object.values(data);
+      const tot = itens.length;
+      const el = document.getElementById('gavTotalCount');
+      if (el) el.textContent = tot;
+
+      const cats = {'Ecocardiograma':0,'EEG':0,'ENMG':0,'Potencial Evocado':0,
+                    'Teste Ergométrico':0,'Ultrassom':0,'Outros':0};
+      itens.forEach(function(item) {
+        const t = String(item.tipo||'');
+        if (t.startsWith('Ultrassom')) cats['Ultrassom']++;
+        else if (cats[t] !== undefined) cats[t]++;
+        else cats['Outros']++;
+      });
+      const catEl = document.getElementById('gavCatBreakdown');
+      if (catEl) {
+        catEl.innerHTML = Object.entries(cats).filter(function(e){ return e[1]>0; }).map(function(e){
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 10px;background:var(--gray-50);border-radius:8px;font-size:12px;">'
+            + '<span style="color:var(--gray-600);font-weight:600;">'+e[0]+'</span>'
+            + '<span style="font-weight:900;color:var(--navy);font-size:14px;">'+e[1]+'</span></div>';
+        }).join('');
+      }
+    } catch(e) {
+      const el = document.getElementById('gavTotalCount'); if (el) el.textContent = '—';
+    }
+    if (btn) { btn.disabled=false; btn.innerHTML='<i class="fas fa-rotate-right"></i> Atualizar contagem'; }
+  };
+
+  window.limparGaveta = async function() {
+    const total = parseInt((document.getElementById('gavTotalCount').textContent||'0').replace(/\D/g,'')) || 0;
+    if (!confirm(`Isso vai APAGAR ${total.toLocaleString('pt-BR')} exames pendentes da gaveta. O histórico de retiradas não será afetado. Confirma?`)) return;
+
+    const btn  = document.getElementById('btnLimparGaveta');
+    const prog = document.getElementById('gavProgressWrap');
+    const bar  = document.getElementById('gavProgressBar');
+    const msg  = document.getElementById('gavProgressMsg');
+    const done = document.getElementById('gavDoneMsg');
+    const txt  = document.getElementById('gavDoneText');
+    if (btn) { btn.disabled=true; btn.style.opacity='.5'; }
+    if (prog) prog.style.display='block';
+    if (done) done.style.display='none';
+
+    try {
+      const snap = await window._fbGet('exames/pendentes');
+      const dados = (snap && snap.val()) ? snap.val() : {};
+      const ids   = Object.keys(dados);
+      if (!ids.length) {
+        if (txt) txt.textContent = 'Gaveta já estava vazia!';
+        if (done) done.style.display='block';
+        if (prog) prog.style.display='none';
+        if (btn) { btn.disabled=false; btn.style.opacity='1'; }
+        return;
+      }
+
+      const LOTE = 100;
+      let removidos = 0;
+      for (let i = 0; i < ids.length; i += LOTE) {
+        const lote = ids.slice(i, i + LOTE);
+        await Promise.all(lote.map(id => window._fbRemoveItem('exames/pendentes/' + id)));
+        removidos += lote.length;
+        const pct = Math.round(removidos / ids.length * 100);
+        if (bar)  bar.style.width = pct + '%';
+        if (msg)  msg.textContent = `Removendo... ${removidos.toLocaleString('pt-BR')} de ${ids.length.toLocaleString('pt-BR')} (${pct}%)`;
+      }
+
+      document.getElementById('gavTotalCount').textContent = '0';
+      if (txt)  txt.textContent = `${removidos.toLocaleString('pt-BR')} exames removidos com sucesso!`;
+      if (done) done.style.display='block';
+      if (prog) prog.style.display='none';
+    } catch(e) {
+      alert('Erro ao limpar: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled=false; btn.style.opacity='1'; }
+    }
+  };
+
+  // ── Tabs ──
+  function tab(t) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    // Ao abrir Config, carrega contagem da gaveta automaticamente
+    if (t === 'config') {
+      if (typeof window.atualizarContGaveta === 'function')   setTimeout(window.atualizarContGaveta, 200);
+      if (typeof window.carregarPlanilhasLinks === 'function') setTimeout(window.carregarPlanilhasLinks, 100);
+      if (typeof window.carregarAliases === 'function')        setTimeout(window.carregarAliases, 150);
+    }
+    const idx = ['usuarios','atendentes','clinica','profissionais','colaboradores','logs','config'].indexOf(t);
+    if (idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+    const pane = document.getElementById('pane' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (pane) pane.classList.add('active');
+    if (t === 'logs') carregarLogs();
+    if (t === 'colaboradores') carregarColabAdmin();
+  }
+
+  // ── Dados em memória ──
+  let usuarios = {}, atendentes = {}, profissionais = {}, clinicaData = {};
+  let novoLogoDataUrl = null;
+  let editandoUserId = null, editandoAteKey = null, editandoProfKey = null;
+
+  // ── Modal Usuário ──
+  function abrirModalUser(uid) {
+    editandoUserId = uid || null;
+    document.getElementById('modalUserTitle').textContent = uid ? 'Editar Usuário' : 'Novo Usuário';
+    document.getElementById('btnSalvarUser').innerHTML = uid ? '<i class="fas fa-floppy-disk"></i> Atualizar' : '<i class="fas fa-floppy-disk"></i> Criar Usuário';
+    ['uNome','uEmail','uSenha'].forEach(id => document.getElementById(id).value = '');
+    ['pOrc','pExames','pCrono','pCaixa','pFin','pFech','pAdmin'].forEach(id => document.getElementById(id).checked = false);
+    if (uid && usuarios[uid]) {
+      const u = usuarios[uid];
+      document.getElementById('uNome').value  = u.nomeCompleto || '';
+      document.getElementById('uEmail').value = u.email || '';
+      const p = u.perms || {};
+      document.getElementById('pOrc').checked    = !!p.orcamento;
+      document.getElementById('pExames').checked = !!p.exames;
+      document.getElementById('pCrono').checked  = !!p.cronograma;
+      document.getElementById('pCaixa').checked  = !!p.caixa;
+      document.getElementById('pFin').checked    = !!p.financeiro;
+      document.getElementById('pFech').checked   = !!p.fechamento;
+      document.getElementById('pAdmin').checked  = !!p.admin;
+    }
+    document.getElementById('modalUser').classList.add('open');
+  }
+  function fecharModalUser() { document.getElementById('modalUser').classList.remove('open'); }
+
+  async function salvarUsuario() {
+    const nome  = document.getElementById('uNome').value.trim();
+    const email = document.getElementById('uEmail').value.trim();
+    const senha = document.getElementById('uSenha').value;
+    if (!nome)  { toast('Informe o nome', 'error'); return; }
+    if (!email) { toast('Informe o e-mail', 'error'); return; }
+    if (!editandoUserId && senha.length < 6) { toast('Senha deve ter mínimo 6 caracteres', 'error'); return; }
+    const perms = {
+      orcamento:  document.getElementById('pOrc').checked,
+      exames:     document.getElementById('pExames').checked,
+      cronograma: document.getElementById('pCrono').checked,
+      caixa:      document.getElementById('pCaixa').checked,
+      financeiro: document.getElementById('pFin').checked,
+      fechamento: document.getElementById('pFech').checked,
+      admin:      document.getElementById('pAdmin').checked,
+    };
+    const btn = document.getElementById('btnSalvarUser');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    try {
+      if (editandoUserId) {
+        // Atualizar apenas nome, email e permissões no DB (senha não pode ser alterada aqui)
+        await window._fbSet('admin/usuarios/' + editandoUserId, { nomeCompleto: nome, email, perms });
+        toast('Usuário atualizado!', 'success');
+      } else {
+        // Cria conta no Firebase Auth via instância auxiliar e salva as permissões no DB
+        const uid = await window._criarUsuarioFirebase(email, senha);
+        await window._fbSet('admin/usuarios/' + uid, { nomeCompleto: nome, email, perms, criadoEm: new Date().toISOString() });
+        toast(`Conta criada para ${nome}!`, 'success');
+      }
+      fecharModalUser();
+      carregarUsuarios();
+    } catch(e) {
+      const msg = e.code === 'auth/email-already-in-use' ? 'Este e-mail já possui uma conta.'
+                : e.code === 'auth/invalid-email'        ? 'E-mail inválido.'
+                : e.code === 'auth/weak-password'        ? 'Senha fraca — use pelo menos 6 caracteres.'
+                : 'Erro: ' + e.message;
+      toast(msg, 'error');
+    }
+    btn.disabled = false; btn.innerHTML = editandoUserId ? '<i class="fas fa-floppy-disk"></i> Atualizar' : '<i class="fas fa-floppy-disk"></i> Criar Usuário';
+  }
+
+  function renderUsuarios() {
+    const el = document.getElementById('listaUsuarios');
+    const keys = Object.keys(usuarios);
+    if (!keys.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>Nenhum usuário cadastrado.</p></div>'; return; }
+    el.innerHTML = keys.map(uid => {
+      const u = usuarios[uid];
+      const p = u.perms || {};
+      const inicial = (u.nomeCompleto || u.email || '?')[0].toUpperCase();
+      const tags = [];
+      if (p.admin)      tags.push('<span class="perm-tag admin">Admin</span>');
+      if (p.financeiro) tags.push('<span class="perm-tag">Financeiro</span>');
+      if (p.fechamento) tags.push('<span class="perm-tag">Fechamento</span>');
+      if (p.exames)     tags.push('<span class="perm-tag">Exames</span>');
+      if (p.cronograma) tags.push('<span class="perm-tag">Cronograma</span>');
+      if (p.orcamento)  tags.push('<span class="perm-tag">Orçamentos</span>');
+      return '<div class="user-row">' +
+        '<div class="user-avatar">' + esc(inicial) + '</div>' +
+        '<div class="user-info">' +
+          '<div class="user-name">' + esc(u.nomeCompleto || '—') + '</div>' +
+          '<div class="user-email">' + esc(u.email || uid) + '</div>' +
+          '<div class="user-perms">' + (tags.length ? tags.join('') : '<span style="font-size:10px;color:var(--gray-400);">Sem permissões</span>') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<button class="btn-s" style="padding:6px 10px;" onclick="abrirModalUser(\'' + uid + '\')"><i class="fas fa-pen"></i></button>' +
+          '<button class="btn-r" style="padding:6px 10px;" onclick="excluirUsuario(\'' + uid + '\')"><i class="fas fa-trash"></i></button>' +
+        '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  async function excluirUsuario(uid) {
+    if (!confirm('Remover permissões deste usuário? (A conta Firebase não será excluída)')) return;
+    try { await window._fbRemove('admin/usuarios/' + uid); toast('Usuário removido', 'success'); carregarUsuarios(); }
+    catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function carregarUsuarios() {
+    try {
+      const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'admin/usuarios'));
+      usuarios = snap.exists() ? snap.val() : {};
+      renderUsuarios();
+    } catch(e) { document.getElementById('listaUsuarios').innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>Erro ao carregar usuários.</p></div>'; }
+  }
+
+  // ── Modal Atendente ──
+  function abrirModalAte(key) {
+    editandoAteKey = key || null;
+    document.getElementById('modalAteTitle').textContent = key ? 'Editar Atendente' : 'Novo Atendente';
+    ['aNome','aApelido','aCargo'].forEach(id => document.getElementById(id).value = '');
+    if (key && atendentes[key]) {
+      const a = atendentes[key];
+      document.getElementById('aNome').value    = a.nome || '';
+      document.getElementById('aApelido').value = a.apelido || '';
+      document.getElementById('aCargo').value   = a.cargo || '';
+    }
+    document.getElementById('modalAte').classList.add('open');
+  }
+  function fecharModalAte() { document.getElementById('modalAte').classList.remove('open'); }
+
+  async function salvarAtendente() {
+    const nome    = document.getElementById('aNome').value.trim();
+    const apelido = document.getElementById('aApelido').value.trim();
+    const cargo   = document.getElementById('aCargo').value.trim();
+    if (!nome) { toast('Informe o nome', 'error'); return; }
+    try {
+      const key = editandoAteKey || ('ate_' + Date.now());
+      await window._fbSet('admin/atendentes/' + key, { nome, apelido: apelido || nome, cargo, atualizadoEm: new Date().toISOString() });
+      toast('Atendente salvo!', 'success');
+      fecharModalAte(); carregarAtendentes();
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  function renderAtendentes() {
+    const el = document.getElementById('listaAtendentes');
+    const keys = Object.keys(atendentes);
+    if (!keys.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-id-badge"></i><p>Nenhum atendente cadastrado.</p></div>'; return; }
+    el.innerHTML = keys.map(k => {
+      const a = atendentes[k];
+      return '<div class="user-row">' +
+        '<div class="user-avatar" style="background:#1d4ed8;font-size:12px;">' + esc((a.apelido || a.nome || '?')[0].toUpperCase()) + '</div>' +
+        '<div class="user-info">' +
+          '<div class="user-name">' + esc(a.nome || '—') + '</div>' +
+          '<div class="user-email">' + esc(a.cargo || '') + (a.apelido && a.apelido !== a.nome ? ' · ' + esc(a.apelido) : '') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<button class="btn-s" style="padding:6px 10px;" onclick="abrirModalAte(\'' + k + '\')"><i class="fas fa-pen"></i></button>' +
+          '<button class="btn-r" style="padding:6px 10px;" onclick="excluirAtendente(\'' + k + '\')"><i class="fas fa-trash"></i></button>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  async function excluirAtendente(key) {
+    if (!confirm('Remover este atendente?')) return;
+    try { await window._fbRemove('admin/atendentes/' + key); toast('Removido!', 'success'); carregarAtendentes(); }
+    catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function carregarAtendentes() {
+    try {
+      const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'admin/atendentes'));
+      atendentes = snap.exists() ? snap.val() : {};
+      renderAtendentes();
+    } catch(e) {}
+  }
+
+  // ── Clínica ──
+  async function carregarClinica() {
+    try {
+      const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'admin/clinica'));
+      clinicaData = snap.exists() ? snap.val() : {};
+      document.getElementById('cNome').value = clinicaData.nome || '';
+      document.getElementById('cTel').value  = clinicaData.telefone || '';
+      document.getElementById('cEnd').value  = clinicaData.endereco || '';
+      document.getElementById('cCnpj').value = clinicaData.cnpj || '';
+    } catch(e) {}
+    try {
+      const snap2 = await window.__fb.get(window.__fb.ref(window.__fb.db, 'admin/logo'));
+      if (snap2.exists() && snap2.val().dataUrl) {
+        document.getElementById('logoPreviewAdmin').src = snap2.val().dataUrl;
+        sessionStorage.setItem('logoDataUrl', snap2.val().dataUrl);
+      }
+    } catch(e) {}
+  }
+
+  async function salvarClinica() {
+    try {
+      await window._fbSet('admin/clinica', {
+        nome:     document.getElementById('cNome').value.trim(),
+        telefone: document.getElementById('cTel').value.trim(),
+        endereco: document.getElementById('cEnd').value.trim(),
+        cnpj:     document.getElementById('cCnpj').value.trim(),
+        atualizadoEm: new Date().toISOString()
+      });
+      toast('Dados da clínica salvos!', 'success');
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  function processarLogo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 500_000) { toast('Imagem muito grande. Use no máximo 500 KB.', 'error'); event.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      novoLogoDataUrl = e.target.result;
+      document.getElementById('logoPreviewAdmin').src = novoLogoDataUrl;
+      document.getElementById('btnSalvarLogo').disabled = false;
+      document.getElementById('logoStatus').textContent = 'Imagem selecionada. Clique em "Enviar logo" para salvar.';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Cabeçalho do Caixa ──
+  let novaCaixaHeaderDataUrl = null;
+
+  function previewCaixaHeader(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 500_000) { toast('Imagem muito grande. Use no máximo 500 KB.', 'error'); event.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      novaCaixaHeaderDataUrl = e.target.result;
+      document.getElementById('caixaHeaderPreview').src = novaCaixaHeaderDataUrl;
+      document.getElementById('caixaHeaderPreview').style.display = 'block';
+      document.getElementById('caixaHeaderPlaceholder').style.display = 'none';
+      document.getElementById('btnSalvarCaixaHeader').disabled = false;
+      document.getElementById('caixaHeaderStatus').textContent = 'Imagem selecionada. Clique em "Salvar" para confirmar.';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function salvarCaixaHeader() {
+    if (!novaCaixaHeaderDataUrl) { toast('Selecione uma imagem primeiro', 'error'); return; }
+    const btn = document.getElementById('btnSalvarCaixaHeader');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    try {
+      await window._fbSet('admin/caixaHeader', { dataUrl: novaCaixaHeaderDataUrl, atualizadoEm: new Date().toISOString() });
+      sessionStorage.setItem('caixaHeaderImg', novaCaixaHeaderDataUrl);
+      toast('Imagem do cabeçalho do caixa salva!', 'success');
+      document.getElementById('caixaHeaderStatus').textContent = 'Imagem salva no Firebase!';
+      novaCaixaHeaderDataUrl = null;
+    } catch(e) { toast('Erro ao salvar: ' + e.message, 'error'); }
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Salvar';
+  }
+
+  async function removerCaixaHeader() {
+    if (!confirm('Remover a imagem do cabeçalho do caixa?')) return;
+    try {
+      await window._fbRemove('admin/caixaHeader');
+      sessionStorage.removeItem('caixaHeaderImg');
+      document.getElementById('caixaHeaderPreview').src = '';
+      document.getElementById('caixaHeaderPreview').style.display = 'none';
+      document.getElementById('caixaHeaderPlaceholder').style.display = 'block';
+      document.getElementById('btnSalvarCaixaHeader').disabled = true;
+      document.getElementById('caixaHeaderStatus').textContent = '';
+      novaCaixaHeaderDataUrl = null;
+      toast('Imagem removida!', 'success');
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function salvarLogo() {
+    if (!novoLogoDataUrl) { toast('Selecione uma imagem primeiro', 'error'); return; }
+    const btn = document.getElementById('btnSalvarLogo');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+    try {
+      const ver = new Date().toISOString();
+      await window._fbSet('admin/logo', { dataUrl: novoLogoDataUrl, versao: ver, atualizadoEm: ver });
+      sessionStorage.setItem('logoDataUrl', novoLogoDataUrl);
+      sessionStorage.setItem('logoVersao', ver);
+      toast('Logo atualizado com sucesso!', 'success');
+      document.getElementById('logoStatus').textContent = 'Logo salvo no Firebase!';
+      novoLogoDataUrl = null;
+    } catch(e) { toast('Erro ao salvar logo: ' + e.message, 'error'); }
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Enviar logo';
+  }
+
+  // ── Profissionais ──
+  function abrirModalProf(key) {
+    editandoProfKey = key || null;
+    document.getElementById('modalProfTitle').textContent = key ? 'Editar Profissional' : 'Novo Profissional';
+    ['prNome','prEsp','prCrm','prDoc','prEmail'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('prRegime').value = 'pj-presumido';
+    if (key && profissionais[key]) {
+      const p = profissionais[key];
+      document.getElementById('prNome').value   = p.nome || '';
+      document.getElementById('prEsp').value    = p.especialidade || '';
+      document.getElementById('prCrm').value    = p.crm || '';
+      document.getElementById('prDoc').value    = p.documento || '';
+      document.getElementById('prEmail').value  = p.email || '';
+      document.getElementById('prRegime').value = p.regime || 'pj-presumido';
+    }
+    document.getElementById('modalProf').classList.add('open');
+  }
+  function fecharModalProf() { document.getElementById('modalProf').classList.remove('open'); }
+
+  async function salvarProfissional() {
+    const nome = document.getElementById('prNome').value.trim();
+    if (!nome) { toast('Informe o nome', 'error'); return; }
+    try {
+      const key = editandoProfKey || ('prof_' + Date.now());
+      await window._fbSet('admin/profissionais/' + key, {
+        nome,
+        especialidade: document.getElementById('prEsp').value.trim(),
+        crm:           document.getElementById('prCrm').value.trim(),
+        documento:     document.getElementById('prDoc').value.trim(),
+        email:         document.getElementById('prEmail').value.trim(),
+        regime:        document.getElementById('prRegime').value,
+        atualizadoEm:  new Date().toISOString()
+      });
+      toast('Profissional salvo!', 'success');
+      fecharModalProf(); carregarProfissionais();
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  let profCache = [];
+  function renderProfissionais(lista) {
+    const el = document.getElementById('listaProfissionais');
+    if (!lista.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-user-doctor"></i><p>Nenhum profissional cadastrado.</p></div>'; return; }
+    el.innerHTML = lista.map(({key, p}) =>
+      '<div class="user-row">' +
+      '<div class="user-avatar" style="background:#15803d;font-size:12px;">' + esc((p.nome || '?')[0].toUpperCase()) + '</div>' +
+      '<div class="user-info">' +
+        '<div class="user-name">' + esc(p.nome || '—') + '</div>' +
+        '<div class="user-email">' + esc(p.especialidade || '') + (p.crm ? ' · CRM ' + esc(p.crm) : '') + ' · ' + (p.regime === 'funcionario' ? 'CLT' : 'PJ') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;">' +
+        '<button class="btn-s" style="padding:6px 10px;" onclick="abrirModalProf(\'' + key + '\')"><i class="fas fa-pen"></i></button>' +
+        '<button class="btn-r" style="padding:6px 10px;" onclick="excluirProfissional(\'' + key + '\')"><i class="fas fa-trash"></i></button>' +
+      '</div></div>'
+    ).join('');
+  }
+
+  function filtrarProfissionais() {
+    const q = (document.getElementById('buscaProf').value || '').toLowerCase();
+    const filtrado = profCache.filter(({p}) => (p.nome || '').toLowerCase().includes(q) || (p.especialidade || '').toLowerCase().includes(q));
+    renderProfissionais(filtrado);
+  }
+
+  async function excluirProfissional(key) {
+    if (!confirm('Remover este profissional?')) return;
+    try { await window._fbRemove('admin/profissionais/' + key); toast('Removido!', 'success'); carregarProfissionais(); }
+    catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function carregarProfissionais() {
+    try {
+      const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'admin/profissionais'));
+      profissionais = snap.exists() ? snap.val() : {};
+      profCache = Object.entries(profissionais).map(([key, p]) => ({key, p}));
+      profCache.sort((a,b) => (a.p.nome||'').localeCompare(b.p.nome||''));
+      filtrarProfissionais();
+    } catch(e) {}
+  }
+
+  // ── Colaboradores (importação XLSX) ──
+  let _colabXlsxData = [];
+
+  function parseColabXlsx(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    document.getElementById('colabXlsxStatus').textContent = 'Lendo planilha...';
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb  = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (rows.length < 2) { toast('Planilha vazia ou sem dados', 'error'); return; }
+        // Detectar colunas pelo cabeçalho
+        const header = rows[0].map(h => String(h||'').toLowerCase().trim());
+        const idx = {
+          nome:  header.findIndex(h => h.includes('nome')),
+          cargo: header.findIndex(h => h.includes('cargo') || h.includes('função') || h.includes('funcao')),
+          cpf:   header.findIndex(h => h.includes('cpf')),
+          banco: header.findIndex(h => h.includes('banco') || h.includes('ag') || h.includes('conta')),
+          pix:   header.findIndex(h => h.includes('pix') || h.includes('chave'))
+        };
+        if (idx.nome < 0) { toast('Coluna "Nome" não encontrada', 'error'); return; }
+        _colabXlsxData = rows.slice(1)
+          .filter(r => r[idx.nome] && String(r[idx.nome]).trim())
+          .map(r => ({
+            nome:  String(r[idx.nome]||'').trim(),
+            cargo: idx.cargo >= 0 ? String(r[idx.cargo]||'').trim() : '',
+            cpf:   idx.cpf   >= 0 ? String(r[idx.cpf]  ||'').trim() : '',
+            banco: idx.banco >= 0 ? String(r[idx.banco] ||'').trim() : '',
+            pix:   idx.pix   >= 0 ? String(r[idx.pix]  ||'').trim() : ''
+          }));
+        if (!_colabXlsxData.length) { toast('Nenhum colaborador encontrado', 'error'); return; }
+        // Renderiza preview
+        document.getElementById('colabXlsxCount').textContent = `${_colabXlsxData.length} colaborador(es) encontrado(s)`;
+        const tHead = `<thead><tr style="background:var(--navy);color:white;">
+          ${['Nome','Cargo','CPF','Banco','PIX'].map(c=>`<th style="padding:7px 10px;text-align:left;font-size:11px;">${c}</th>`).join('')}
+        </tr></thead>`;
+        const tBody = '<tbody>' + _colabXlsxData.map((c,i) =>
+          `<tr style="background:${i%2?'white':'var(--gray-50)'};">
+            <td style="padding:6px 10px;">${esc(c.nome)}</td>
+            <td style="padding:6px 10px;">${esc(c.cargo)}</td>
+            <td style="padding:6px 10px;">${esc(c.cpf)}</td>
+            <td style="padding:6px 10px;">${esc(c.banco)}</td>
+            <td style="padding:6px 10px;">${esc(c.pix)}</td>
+          </tr>`).join('') + '</tbody>';
+        document.getElementById('colabXlsxTable').innerHTML = tHead + tBody;
+        document.getElementById('colabXlsxPreview').style.display = 'block';
+        document.getElementById('colabXlsxStatus').textContent = '';
+      } catch(err) {
+        toast('Erro ao ler planilha: ' + err.message, 'error');
+        document.getElementById('colabXlsxStatus').textContent = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    event.target.value = '';
+  }
+
+  function cancelarImportColab() {
+    _colabXlsxData = [];
+    document.getElementById('colabXlsxPreview').style.display = 'none';
+    document.getElementById('colabXlsxStatus').textContent = '';
+  }
+
+  async function importarColabs(substituir) {
+    if (!_colabXlsxData.length) return;
+    const fu = window.__fb;
+    try {
+      let base = {};
+      if (!substituir) {
+        // Carrega existentes para mesclar
+        const snap = await fu.get(fu.ref(fu.db, 'financeiro/colaboradores'));
+        base = snap.exists() ? snap.val() : {};
+      }
+      _colabXlsxData.forEach(c => {
+        const key = 'colab_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+        base[key] = { nome: c.nome, cargo: c.cargo, cpf: c.cpf, banco: c.banco, pix: c.pix, atualizadoEm: new Date().toISOString() };
+      });
+      await fu.get(fu.ref(fu.db, 'financeiro/colaboradores')); // ensure path exists
+      const { set, ref: r } = window.__fbModules || {};
+      await window._fbSet('financeiro/colaboradores', base);
+      toast(`${_colabXlsxData.length} colaboradores importados!`, 'success');
+      cancelarImportColab();
+      carregarColabAdmin();
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function carregarColabAdmin() {
+    const el = document.getElementById('colabAdminLista');
+    const cnt = document.getElementById('colabAdminCount');
+    el.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div>';
+    try {
+      const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'financeiro/colaboradores'));
+      const data = snap.exists() ? snap.val() : {};
+      const lista = Object.entries(data);
+      cnt.textContent = lista.length + ' cadastrado(s)';
+      if (!lista.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>Nenhum colaborador cadastrado.</p></div>'; return; }
+      el.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:var(--navy);color:white;">
+          ${['Nome','Cargo','CPF','Banco','PIX','Ações'].map(c=>`<th style="padding:7px 10px;text-align:left;">${c}</th>`).join('')}
+        </tr></thead>
+        <tbody>${lista.map(([k,c],i)=>`<tr style="background:${i%2?'white':'var(--gray-50)'};">
+          <td style="padding:6px 10px;font-weight:600;">${esc(c.nome||'—')}</td>
+          <td style="padding:6px 10px;">${esc(c.cargo||'—')}</td>
+          <td style="padding:6px 10px;">${esc(c.cpf||'—')}</td>
+          <td style="padding:6px 10px;">${esc(c.banco||'—')}</td>
+          <td style="padding:6px 10px;">${esc(c.pix||'—')}</td>
+          <td style="padding:6px 10px;"><button onclick="removerColabAdmin('${k}')" style="background:var(--red);color:white;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;"><i class="fas fa-trash"></i></button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    } catch(e) { el.innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>Erro ao carregar</p></div>'; }
+  }
+
+  async function removerColabAdmin(key) {
+    if (!confirm('Remover este colaborador?')) return;
+    try {
+      await window._fbRemove('financeiro/colaboradores/' + key);
+      toast('Removido!', 'success');
+      carregarColabAdmin();
+    } catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  // ── Logs ──
+  async function carregarLogs() {
+    const el = document.getElementById('listaLogs');
+    el.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div>';
+    try {
+      const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'admin_logs'));
+      if (!snap.exists()) { el.innerHTML = '<div class="empty-state"><i class="fas fa-list-ul"></i><p>Sem logs registrados.</p></div>'; return; }
+      const logs = snap.val();
+      const lista = Object.entries(logs).map(([k,v]) => ({key:k,...v})).sort((a,b) => b.key.localeCompare(a.key)).slice(0, 80);
+      if (!lista.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-list-ul"></i><p>Sem logs.</p></div>'; return; }
+      el.innerHTML = '<div>' + lista.map(l => {
+        const ts = l.ts ? new Date(l.ts).toLocaleString('pt-BR') : new Date(parseInt(l.key)).toLocaleString('pt-BR');
+        const icoCls = l.tipo === 'error' ? 'var(--red)' : l.tipo === 'success' ? 'var(--green)' : 'var(--navy)';
+        return '<div class="log-row">' +
+          '<div class="log-icon" style="background:' + icoCls + '22;color:' + icoCls + ';"><i class="fas fa-circle-dot" style="font-size:10px;"></i></div>' +
+          '<div class="log-info"><div class="log-msg">' + esc(l.msg || '—') + '</div><div class="log-ts">' + ts + '</div></div>' +
+          '</div>';
+      }).join('') + '</div>';
+    } catch(e) { el.innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>Erro ao carregar logs.</p></div>'; }
+  }
+
+  async function limparLogs() {
+    if (!confirm('Apagar todos os logs de acesso? Esta ação não pode ser desfeita.')) return;
+    try { await window._fbRemove('admin_logs'); toast('Logs apagados', 'success'); carregarLogs(); }
+    catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function limparNotas() {
+    if (!confirm('Apagar todas as notas de operação? Esta ação não pode ser desfeita.')) return;
+    try { await window._fbRemove('operacao/notas'); toast('Notas apagadas', 'success'); }
+    catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+  </script>
+
+  <script type="module">
+    import { initializeApp, deleteApp }  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const app  = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getDatabase(app);
+    window.initFirebaseUtils(db, ref, get);
+    window._fbGet        = (path)       => get(ref(db, path));
+    window._fbRemoveItem = (path)       => remove(ref(db, path));
+
+    // Helpers globais para operações de escrita/remoção
+    window._fbSet    = (path, data)  => set(ref(db, path), data);
+    window._fbRemove = (path)        => remove(ref(db, path));
+
+    // Cria conta Firebase Auth sem deslogar o admin (usa segunda instância temporária)
+    window._criarUsuarioFirebase = async function(email, senha) {
+      let appAux = null;
+      try {
+        appAux = initializeApp(window.FIREBASE_CONFIG, 'aux_create_' + Date.now());
+        const authAux = getAuth(appAux);
+        const cred = await createUserWithEmailAndPassword(authAux, email, senha);
+        const uid = cred.user.uid;
+        await signOut(authAux);
+        return uid;
+      } finally {
+        if (appAux) deleteApp(appAux).catch(() => {});
+      }
+    };
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) { irPara('../login.html'); return; }
+
+      // Verificar se é admin
+      try {
+        const snap = await get(ref(db, `admin/usuarios/${user.uid}`));
+        const perms = snap.exists() ? (snap.val().perms || {}) : {};
+        if (!perms.admin) {
+          irPara('../login.html'); return;
+        }
+      } catch(e) {
+        irPara('../login.html'); return;
+      }
+
+      carregarLogoGlobal(['#headerLogo']);
+      document.getElementById('sUserInfo').textContent = user.email || '—';
+
+      // Carregar imagem do cabeçalho do caixa (se existir)
+      get(ref(db, 'admin/caixaHeader')).then(snap => {
+        if (snap.exists() && snap.val().dataUrl) {
+          const url = snap.val().dataUrl;
+          document.getElementById('caixaHeaderPreview').src = url;
+          document.getElementById('caixaHeaderPreview').style.display = 'block';
+          document.getElementById('caixaHeaderPlaceholder').style.display = 'none';
+        }
+      }).catch(() => {});
+
+      // Carregar URL da planilha de NF (se existir)
+      get(ref(db, 'admin/configCaixa/planilhaUrl')).then(snap => {
+        if (snap.val()) document.getElementById('planilhaNfUrl').value = snap.val();
+      }).catch(() => {});
+
+      // Carregar dados de todas as abas
+      carregarUsuarios();
+      carregarAtendentes();
+      carregarClinica();
+      carregarProfissionais();
+
+      // Funções — Planilha de Notas Fiscais
+      window.salvarPlanilhaNf = async function() {
+        const url = document.getElementById('planilhaNfUrl').value.trim();
+        if (!url) { toast('Cole a URL da planilha', 'error'); return; }
+        try {
+          await window._fbSet('admin/configCaixa/planilhaUrl', url);
+          toast('URL da planilha salva!', 'success');
+          document.getElementById('planilhaNfStatus').textContent = '✅ URL salva com sucesso.';
+          document.getElementById('planilhaNfStatus').style.color = 'var(--green)';
+        } catch(e) { toast('Erro ao salvar URL: ' + e.message, 'error'); }
+      };
+      // Converte pubhtml → pub?output=csv (idêntico ao caixa.html)
+      function normalizeSheetUrl(url) {
+        if (!url) return url;
+        url = url.trim();
+        if (url.includes('output=csv')) return url;
+        if (url.includes('pubhtml')) {
+          const gid = (url.match(/[?&]gid=(\d+)/) || [])[1];
+          const base = url.replace(/pubhtml.*$/, 'pub?output=csv');
+          return gid ? base + '&gid=' + gid : base;
+        }
+        if (/\/pub(\?|$)/.test(url)) return url + (url.includes('?') ? '&' : '?') + 'output=csv';
+        return url;
+      }
+      window.testarPlanilhaNf = async function() {
+        const url = document.getElementById('planilhaNfUrl').value.trim();
+        if (!url) { toast('Cole a URL da planilha primeiro', 'error'); return; }
+        const status = document.getElementById('planilhaNfStatus');
+        status.textContent = 'Testando conexão...';
+        status.style.color = 'var(--gray-400)';
+        try {
+          const csvUrl = normalizeSheetUrl(url);
+          const r = await fetch(csvUrl);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const txt = await r.text();
+          const linhas = txt.trim().split('\n');
+          const registros = Math.max(0, linhas.length - 1);
+          const header = linhas[0].split(',').map(h => h.replace(/"/g,'').trim());
+          status.textContent = '✅ ' + registros + ' registro(s) · Colunas: ' + header.join(' | ');
+          status.style.color = 'var(--green)';
+        } catch(e) {
+          status.textContent = '❌ Falha ao acessar — verifique se a planilha foi publicada corretamente';
+          status.style.color = 'var(--red)';
+        }
+      };
+
+      // Log de acesso
+      set(ref(db, 'admin_logs/' + Date.now()), {
+        tipo: 'info',
+        msg:  (user.email || user.uid) + ' acessou o Painel Admin',
+        ts:   new Date().toISOString()
+      }).catch(()=>{});
+    });
+  </script>
+</body>
+</html>
+
