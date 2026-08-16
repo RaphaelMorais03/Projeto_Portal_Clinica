@@ -258,7 +258,8 @@
         <div id="reciboManualFields" style="display:none;">
           <div style="margin-bottom:14px;">
             <label class="f-label">Descrição do recibo</label>
-            <input class="f-input" id="rDesc" placeholder="Ex: Reembolso de despesas — Maio/2026">
+            <textarea class="f-input" id="rDesc" rows="3" placeholder="Ex: Reembolso de despesas — Maio/2026" style="resize:vertical;"></textarea>
+            <button type="button" onclick="geminiCompletar('rDesc','recibo manual',{nome:document.getElementById('reciboNomeColab').textContent,valor:document.getElementById('rValorManual').value})" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a73e8,#7c3aed);color:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✨ Completar com IA</button>
           </div>
           <div style="margin-bottom:14px;">
             <label class="f-label">Valor (R$)</label>
@@ -828,11 +829,53 @@
     window._fbSet    = (path, data) => set(ref(db, path), data);
     window._fbRemove = (path)       => remove(ref(db, path));
 
+    window.geminiCompletar = async function(campoId, tipo, ctx) {
+      if (!window._geminiKey) { alert('IA não configurada. Verifique a chave Gemini no Firebase.'); return; }
+      const campo = document.getElementById(campoId);
+      const textoAtual = campo.value.trim();
+      const btn = event.target.closest('button');
+      const textoOriginal = btn.innerHTML;
+      btn.innerHTML = '⏳ Gerando...';
+      btn.disabled = true;
+
+      const partes = [];
+      if (ctx.nome)  partes.push('Colaborador: ' + ctx.nome);
+      if (ctx.valor) partes.push('Valor: R$ ' + ctx.valor);
+      const contexto = partes.join(' | ');
+
+      const prompt = `Você é um assistente especializado em redigir descrições formais de recibos para uma clínica médica brasileira. Elabore uma descrição profissional, objetiva e em português formal para um recibo de ${tipo}. Máximo 2 frases. Retorne APENAS a descrição, sem explicações ou aspas.
+
+${contexto ? 'Contexto: ' + contexto : ''}
+${textoAtual ? 'Início fornecido pelo usuário: ' + textoAtual : ''}`;
+
+      try {
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + window._geminiKey, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 120, temperature: 0.3 } })
+        });
+        const data = await res.json();
+        const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (texto) campo.value = texto;
+        else alert('Não foi possível gerar a descrição. Tente novamente.');
+      } catch(e) {
+        alert('Erro ao conectar com a IA. Verifique sua conexão.');
+      } finally {
+        btn.innerHTML = textoOriginal;
+        btn.disabled = false;
+      }
+    };
+
     onAuthStateChanged(auth, user => {
       if (!user) { irPara('../login.html'); return; }
       carregarLogoGlobal(['#headerLogo']).then(() => {
         window.LOGO_FIN = sessionStorage.getItem('logoDataUrl') || '';
       });
+
+      // Chave Gemini para IA de descrições
+      get(ref(db, 'admin/config/geminiKey')).then(snap => {
+        if (snap.val()) window._geminiKey = snap.val();
+      }).catch(()=>{});
 
       // Colaboradores
       onValue(ref(db, 'financeiro/colaboradores'), snap => {
