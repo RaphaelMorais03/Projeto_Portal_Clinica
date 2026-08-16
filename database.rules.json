@@ -9,7 +9,7 @@
     },
     "admin": {
       ".read": "auth != null",
-      ".write": "auth != null"
+      ".write": "auth != null && root.child('admin/usuarios/' + auth.uid + '/perms/admin').val() === true"
     },
     "operacao": {
       "$uid": {
