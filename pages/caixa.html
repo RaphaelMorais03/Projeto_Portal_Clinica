@@ -1,0 +1,1374 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caixa — Amor Saúde Pirituba</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <style>
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--shadow:0 4px 20px rgba(10,31,68,.1);}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
+    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
+    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .header-right{display:flex;align-items:center;gap:10px;}
+    .date-badge{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--gray-600);}
+    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .back-btn:hover{background:var(--red-h);}
+    .content{max-width:1100px;margin:0 auto;padding:24px 24px 60px;}
+    .panel{background:white;border:1px solid var(--gray-200);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
+    .panel-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+    .panel-title i{color:var(--red);}
+    .user-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);border-radius:16px;padding:20px 24px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(10,31,68,.25);}
+    .user-banner-info{display:flex;flex-direction:column;gap:4px;}
+    .user-banner-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;}
+    .user-banner-name{font-size:22px;font-weight:900;color:white;letter-spacing:-.3px;}
+    .user-banner-date{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;}
+    .user-banner-icon{width:56px;height:56px;background:rgba(255,255,255,.12);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;}
+    .caixa-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+    .caixa-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+    .caixa-c{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;padding:14px;}
+    .caixa-c.sobra{border-color:#fde68a;background:#fffbeb;}
+    .caixa-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gray-400);margin-bottom:5px;}
+    .caixa-c.sobra .caixa-lbl{color:var(--amber);}
+    .caixa-inp{width:100%;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:15px;font-weight:800;color:var(--navy);background:white;outline:none;transition:border-color .2s;}
+    .caixa-inp:focus{border-color:var(--navy);}
+    .saldo-bar{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--navy);border-radius:12px;color:white;margin-bottom:16px;}
+    .f-input,.f-select{padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:14px;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color .2s;width:100%;}
+    .f-input:focus,.f-select:focus{border-color:var(--navy);background:white;}
+    .f-label{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:5px;}
+    .btn-p{padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s,transform .15s;}
+    .btn-p:hover{background:var(--navy-mid);transform:translateY(-1px);}
+    .btn-s{padding:9px 14px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+    .btn-s:hover{background:var(--gray-200);}
+    .btn-teal{padding:9px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-teal:hover{background:var(--teal-h);}
+    .btn-r{padding:9px 18px;background:var(--red);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-r:hover{background:var(--red-h);}
+    .preview-screen{display:none;flex-direction:column;height:100vh;background:#e5e7eb;position:fixed;inset:0;z-index:400;}
+    .preview-screen.open{display:flex;}
+    .preview-bar{background:white;border-bottom:2px solid var(--gray-200);padding:12px 22px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .preview-bar-title{font-size:14px;font-weight:800;color:var(--navy);margin-right:auto;}
+    .preview-wrap{flex:1;overflow-y:auto;padding:24px;}
+    .print-doc{width:210mm;min-height:297mm;padding:1.5cm;background:white;margin:0 auto;box-shadow:0 10px 40px rgba(0,0,0,.15);font-family:system-ui,-apple-system,sans-serif;}
+    .info-box{background:#eff6ff;border:1px solid #c7d2fe;border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;color:#3730a3;line-height:1.6;}
+    .vale-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--gray-100);}
+    .vale-item:last-child{border-bottom:none;}
+    @media(max-width:900px){.caixa-nums{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:768px){.caixa-grid{grid-template-columns:1fr;}.content{padding:14px 14px 60px;}.print-doc{width:100%;}.user-banner{flex-direction:column;align-items:flex-start;gap:12px;}}
+    @media print{.preview-bar{display:none!important;}.preview-wrap{padding:0!important;}.print-doc{box-shadow:none!important;margin:0!important;width:100%!important;}}
+
+    /* ABAS CAIXA */
+    .nav-tabs{display:flex;border-bottom:2px solid var(--gray-200);background:white;padding:0 24px;}
+    .nav-tab{padding:12px 20px;border:none;border-bottom:3px solid transparent;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px;}
+    .nav-tab:hover{color:var(--navy);}
+    .nav-tab.active{color:var(--navy);border-bottom-color:var(--navy);}
+    .tab-pane{display:none;}
+    .tab-pane.active{display:block;}
+    /* RECIBOS */
+    .recibo-sec{background:white;border:1.5px solid var(--gray-200);border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .recibo-sec-title{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
+    .dif-badge{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin:12px 0;}
+    .aviso-box{background:#fef3c7;border-left:4px solid #b45309;padding:10px 14px;font-size:12px;color:#92400e;border-radius:0 8px 8px 0;margin-bottom:14px;line-height:1.5;}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+
+  <!-- TELA PRINCIPAL -->
+  <div id="telaMain">
+    <div class="s-header">
+      <div class="s-logo">
+        <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
+        <div><div class="s-logo-name">Amor Saúde</div><div class="s-logo-sub">Caixa · Pirituba</div></div>
+      </div>
+      <div class="header-right">
+        <div class="date-badge" id="dateBadge">—</div>
+        <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+      </div>
+    </div>
+
+    <!-- ABAS -->
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="navCaixa" onclick="cxTab('caixa',this)"><i class="fas fa-cash-register"></i> Caixa</button>
+      <button class="nav-tab" id="navRecibos" onclick="cxTab('recibos',this)"><i class="fas fa-file-invoice"></i> Recibos</button>
+    </div>
+    <div class="tab-pane active" id="tabCaixa">
+    <div class="content">
+      <div class="user-banner">
+        <div class="user-banner-info">
+          <div class="user-banner-label">Responsável pelo caixa</div>
+          <div class="user-banner-name" id="nomeUsuario">—</div>
+          <div class="user-banner-date" id="dataHoje">—</div>
+        </div>
+        <div class="user-banner-icon"><i class="fas fa-cash-register"></i></div>
+      </div>
+
+      <div class="caixa-grid">
+        <!-- Controle de Caixa -->
+        <div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-coins"></i> Controle de Caixa</div>
+            </div>
+            <div class="caixa-nums">
+              <div class="caixa-c"><div class="caixa-lbl">Fundo de Caixa</div><input class="caixa-inp" id="cFundo" placeholder="0,00" oninput="mascaraMoeda(this);salvarCx()"></div>
+              <div class="caixa-c"><div class="caixa-lbl">Entradas</div><input class="caixa-inp" id="cEntradas" placeholder="0,00" oninput="mascaraMoeda(this);salvarCx()"></div>
+              <div class="caixa-c"><div class="caixa-lbl">Saídas</div><input class="caixa-inp" id="cSaidas" placeholder="0,00" oninput="mascaraMoeda(this);salvarCx()"></div>
+              <div class="caixa-c sobra"><div class="caixa-lbl">Sobra / Troco pendente</div><input class="caixa-inp" id="cSobra" placeholder="0,00" oninput="mascaraMoeda(this);salvarCx()" style="border-color:#fde68a;"></div>
+            </div>
+            <div class="saldo-bar">
+              <span style="font-size:13px;font-weight:700;opacity:.6;">Saldo Atual</span>
+              <span style="font-size:22px;font-weight:900;letter-spacing:-1px;" id="cSaldo">R$ 0,00</span>
+            </div>
+
+            <div class="panel-title" style="margin-bottom:12px;"><i class="fas fa-receipt"></i> Registro de Troco / Vale</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div><label class="f-label">Paciente</label><input class="f-input" id="vPac" placeholder="Nome" style="margin-top:4px;"></div>
+              <div><label class="f-label">CPF</label><input class="f-input" id="vCpf" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14" style="margin-top:4px;"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div><label class="f-label">Especialidade / Médico</label><input class="f-input" id="vEsp" placeholder="Ex: Cardiologia — Dr. Juan" style="margin-top:4px;"></div>
+              <div><label class="f-label">Valor do Troco</label><input class="f-input" id="vVal" placeholder="0,00" oninput="mascaraMoeda(this)" style="margin-top:4px;"></div>
+            </div>
+            <button class="btn-p" onclick="addVale()" style="margin-bottom:16px;"><i class="fas fa-plus"></i> Registrar Troco</button>
+            <div id="valeList"></div>
+          </div>
+        </div>
+
+        <!-- Gerar Relatório -->
+        <div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-file-lines"></i> Relatório de Caixa</div>
+            </div>
+            <div class="info-box">
+              <i class="fas fa-info-circle"></i> No AMEI: <strong>Caixa → Detalhes → Ctrl+A → Ctrl+C</strong> → cole abaixo e clique em Gerar.
+            </div>
+            <label class="f-label" style="margin-bottom:6px;">Cole os dados do caixa (AMEI)</label>
+            <textarea id="cxPaste" style="width:100%;height:280px;padding:14px;border:1.5px solid var(--gray-200);border-radius:12px;font-family:monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .2s;" placeholder="Cole aqui os dados copiados do sistema AMEI..." onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
+            <div style="margin-top:14px;">
+              <button class="btn-r" id="btnGerar" onclick="gerarRelatorio()" style="width:100%;justify-content:center;padding:14px;font-size:15px;"><i class="fas fa-chart-bar"></i> Gerar Relatório</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    </div><!-- /tabCaixa -->
+
+    <!-- ABA RECIBOS -->
+    <div class="tab-pane" id="tabRecibos">
+      <div style="padding:24px;max-width:760px;margin:0 auto;">
+
+        <!-- AVISO GERAL -->
+        <div style="background:#fff1f2;border:1.5px solid #fecaca;border-radius:12px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:flex-start;gap:10px;">
+          <i class="fas fa-circle-exclamation" style="color:#C62828;font-size:16px;margin-top:1px;flex-shrink:0;"></i>
+          <div style="font-size:12px;color:#7f1d1d;line-height:1.6;">
+            <strong>Todos os recibos só serão aceitos mediante o cumprimento das orientações abaixo.</strong><br>
+            O não cumprimento pode resultar em desconto do colaborador em caso de não comprovação e descumprimento das instruções.
+          </div>
+        </div>
+
+        <!-- RECIBO RESSARCIMENTO -->
+        <div class="recibo-sec">
+          <div class="recibo-sec-title"><i class="fas fa-file-circle-xmark" style="color:#C62828;"></i> Recibo Ressarcimento</div>
+          <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-500);margin-bottom:8px;">Quando usar</div>
+            <p style="font-size:13px;color:var(--gray-600);line-height:1.6;margin-bottom:10px;">Quando estamos estornando algum valor para o paciente.</p>
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-500);margin-bottom:6px;">Documentos obrigatórios</div>
+            <ul style="font-size:12px;color:var(--gray-600);line-height:1.9;padding-left:16px;margin:0;">
+              <li>Cópia do Documento do paciente (RG ou CPF)</li>
+              <li>Recibo de pagamento</li>
+              <li>Assinatura do paciente e da liderança no recibo</li>
+            </ul>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+            <div style="grid-column:1/-1;"><label class="f-label">Nome do paciente</label><input class="f-input" id="rss-nome" type="text" placeholder="Nome completo do paciente"></div>
+            <div><label class="f-label">CPF</label><input class="f-input" id="rss-cpf" type="text" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14"></div>
+            <div><label class="f-label">Valor (R$)</label><input class="f-input" id="rss-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Motivo / Descrição detalhada</label><textarea class="f-input" id="rss-motivo" rows="3" placeholder="Descreva o motivo do ressarcimento..." style="resize:vertical;"></textarea></div>
+          </div>
+          <button onclick="imprimirRessarc()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#C62828;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Ressarcimento</button>
+        </div>
+
+        <!-- RECIBO ERRO DE SISTEMA -->
+        <div class="recibo-sec">
+          <div class="recibo-sec-title"><i class="fas fa-triangle-exclamation" style="color:#b45309;"></i> Recibo Erro de Sistema</div>
+          <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-500);margin-bottom:8px;">Quando usar</div>
+            <p style="font-size:13px;color:var(--gray-600);line-height:1.6;margin-bottom:10px;">Quando recebemos um valor em dinheiro e precisamos transferir para o caixa da liderança, pois o sistema não permite registrar corretamente.</p>
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-500);margin-bottom:6px;">Documentos obrigatórios</div>
+            <ul style="font-size:12px;color:var(--gray-600);line-height:1.9;padding-left:16px;margin:0;">
+              <li>Cópia do Documento do paciente (RG ou CPF)</li>
+              <li>Recibo de pagamento</li>
+              <li>Assinatura do paciente e da liderança</li>
+            </ul>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+            <div style="grid-column:1/-1;"><label class="f-label">Nome do paciente</label><input class="f-input" id="es-paciente" type="text" placeholder="Nome completo do paciente"></div>
+            <div><label class="f-label">CPF</label><input class="f-input" id="es-cpf" type="text" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14"></div>
+            <div><label class="f-label">Valor a transferir (R$)</label><input class="f-input" id="es-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Descrição / Motivo</label><textarea class="f-input" id="es-obs" rows="3" placeholder="Ex: recibo de erro para liberar mapa..." style="resize:vertical;"></textarea></div>
+          </div>
+          <button onclick="imprimirErroSistema()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#b45309;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Erro de Sistema</button>
+        </div>
+
+        <!-- RECIBO BONIFICAÇÃO -->
+        <div class="recibo-sec">
+          <div class="recibo-sec-title"><i class="fas fa-hand-holding-heart" style="color:#15803d;"></i> Recibo Bonificação</div>
+          <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-500);margin-bottom:8px;">Quando usar</div>
+            <p style="font-size:13px;color:var(--gray-600);line-height:1.6;margin-bottom:10px;">Quando houve algum problema com receita, atestado ou relatório e, por autorização da liderança e do profissional médico, é necessário bonificar a consulta ao paciente para corrigir um erro da parte da unidade.</p>
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-500);margin-bottom:6px;">Documentos obrigatórios</div>
+            <ul style="font-size:12px;color:var(--gray-600);line-height:1.9;padding-left:16px;margin:0;">
+              <li>Documento do paciente (RG ou CPF)</li>
+              <li>Recibo de pagamento da consulta anterior que ocasionou a falha/erro</li>
+              <li>Assinatura do paciente e da liderança</li>
+            </ul>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+            <div style="grid-column:1/-1;"><label class="f-label">Nome do paciente</label><input class="f-input" id="bon-nome" type="text" placeholder="Nome completo do paciente"></div>
+            <div><label class="f-label">CPF</label><input class="f-input" id="bon-cpf" type="text" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14"></div>
+            <div><label class="f-label">Valor bonificado (R$)</label><input class="f-input" id="bon-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
+            <div><label class="f-label">Profissional / Médico autorizador</label><input class="f-input" id="bon-medico" type="text" placeholder="Nome do médico responsável"></div>
+            <div><label class="f-label">Liderança autorizadora</label><input class="f-input" id="bon-lider" type="text" placeholder="Nome da liderança"></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Descrição do problema / erro</label><textarea class="f-input" id="bon-motivo" rows="3" placeholder="Descreva o problema que gerou a necessidade de bonificação..." style="resize:vertical;"></textarea></div>
+          </div>
+          <button onclick="imprimirBonificacao()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#15803d;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Bonificação</button>
+        </div>
+
+      </div>
+    </div><!-- /tabRecibos -->
+
+  <!-- TELA DE PREVIEW DO RELATÓRIO -->
+  <div class="preview-screen" id="telaPreview">
+    <div class="preview-bar">
+      <button class="btn-s" onclick="voltarMain()"><i class="fas fa-arrow-left"></i> Voltar</button>
+      <div class="preview-bar-title">Relatório de Caixa</div>
+      <button class="btn-teal" onclick="imprimirRelatorio()"><i class="fas fa-print"></i> Imprimir</button>
+      <button class="btn-s" onclick="limparRelatorio()"><i class="fas fa-trash"></i> Limpar</button>
+    </div>
+    <div class="preview-wrap">
+      <div class="print-doc" id="relatorioDoc"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ── HELPERS ── */
+    function pv(v) { return parseFloat((v||'0').replace(/\./g,'').replace(',','.')) || 0; }
+    function fm(v) { return 'R$ ' + v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+    function normNome(s) {
+      return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+    }
+    function parseCsvLine(line) {
+      // Usado para dados tab-separados do AMEI — mantido separado
+      const result = [];
+      let i = 0, field = '';
+      while (i <= line.length) {
+        if (i === line.length) { result.push(field.trim()); break; }
+        const ch = line[i];
+        if (ch === '"') {
+          i++;
+          while (i < line.length) {
+            if (line[i] === '"' && line[i+1] === '"') { field += '"'; i += 2; }
+            else if (line[i] === '"') { i++; break; }
+            else { field += line[i++]; }
+          }
+          while (i < line.length && line[i] !== ',') i++;
+        } else if (ch === ',') {
+          result.push(field.trim()); field = ''; i++;
+        } else {
+          field += ch; i++;
+        }
+      }
+      return result;
+    }
+
+    // Parser de CSV completo (RFC 4180) — respeita campos multi-linha entre aspas
+    function parseCsv(txt) {
+      const rows = [];
+      let i = 0, field = '', row = [], inQ = false;
+      const n = txt.length;
+      while (i <= n) {
+        if (i === n) {
+          row.push(field.trim());
+          if (row.some(f => f !== '')) rows.push(row);
+          break;
+        }
+        const ch = txt[i];
+        if (inQ) {
+          if (ch === '"') {
+            if (txt[i+1] === '"') { field += '"'; i += 2; } // "" → "
+            else { inQ = false; i++; }                       // fecha aspas
+          } else { field += ch; i++; }                       // newline dentro de aspas = parte do campo
+        } else {
+          if      (ch === '"')  { inQ = true; i++; }
+          else if (ch === ',')  { row.push(field.trim()); field = ''; i++; }
+          else if (ch === '\r') { i++; }
+          else if (ch === '\n') {
+            row.push(field.trim()); field = '';
+            if (row.some(f => f !== '')) rows.push(row);
+            row = []; i++;
+          } else { field += ch; i++; }
+        }
+      }
+      return rows;
+    }
+
+    /* ── INIT ── */
+    const DIAS  = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+    const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const nowD  = new Date();
+    window.TK_FB = nowD.getFullYear() + '-' + String(nowD.getMonth()+1).padStart(2,'0') + '-' + String(nowD.getDate()).padStart(2,'0');
+
+    window.caixa      = {fundo:0, entradas:0, saidas:0, sobra:0};
+    window.vales      = [];
+    window._planilhaNfUrl = null;
+
+    function init() {
+      const ds = DIAS[nowD.getDay()] + ', ' + nowD.getDate() + ' de ' + MESES[nowD.getMonth()] + ' de ' + nowD.getFullYear();
+      document.getElementById('dateBadge').textContent = DIAS[nowD.getDay()] + ', ' + nowD.getDate() + '/' + String(nowD.getMonth()+1).padStart(2,'0');
+      document.getElementById('dataHoje').textContent  = ds;
+      document.getElementById('nomeUsuario').textContent = sessionStorage.getItem('usuario') || '—';
+      renderCaixa();
+      renderVales();
+    }
+
+    /* ── CAIXA ── */
+    window.salvarCx = function() {
+      window.caixa.fundo    = pv(document.getElementById('cFundo').value);
+      window.caixa.entradas = pv(document.getElementById('cEntradas').value);
+      window.caixa.saidas   = pv(document.getElementById('cSaidas').value);
+      window.caixa.sobra    = pv(document.getElementById('cSobra').value);
+      if (window.fbSet) window.fbSet('operacao/' + (window.USER_UID||'_') + '/caixa/' + window.TK_FB, window.caixa);
+      updSaldo();
+    };
+    window.updSaldo = function() {
+      document.getElementById('cSaldo').textContent = fm(window.caixa.entradas - window.caixa.saidas);
+    };
+    window.renderCaixa = function() {
+      const fmtV = v => v ? v.toFixed(2).replace('.',',') : '';
+      document.getElementById('cFundo').value    = fmtV(window.caixa.fundo);
+      document.getElementById('cEntradas').value = fmtV(window.caixa.entradas);
+      document.getElementById('cSaidas').value   = fmtV(window.caixa.saidas);
+      document.getElementById('cSobra').value    = fmtV(window.caixa.sobra);
+      updSaldo();
+    };
+
+    /* ── VALES ── */
+    window.addVale = function() {
+      const p = document.getElementById('vPac').value.trim();
+      if (!p) { toast('Informe o paciente', 'error'); return; }
+      window.vales.push({
+        id: Date.now()+'', pac: p,
+        cpf: document.getElementById('vCpf').value,
+        esp: document.getElementById('vEsp').value,
+        val: document.getElementById('vVal').value,
+        hora: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+      });
+      if (window.fbSet) window.fbSet('operacao/' + (window.USER_UID||'_') + '/vales/' + window.TK_FB, window.vales);
+      ['vPac','vCpf','vEsp','vVal'].forEach(x => document.getElementById(x).value = '');
+      renderVales();
+      toast('Troco registrado!', 'success');
+    };
+    window.delVale = function(id) {
+      window.vales = window.vales.filter(v => v.id !== id);
+      if (window.fbSet) window.fbSet('operacao/' + (window.USER_UID||'_') + '/vales/' + window.TK_FB, window.vales);
+      renderVales();
+    };
+    window.renderVales = function() {
+      const el = document.getElementById('valeList');
+      if (!window.vales.length) {
+        el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--gray-400);font-size:12px;">Sem trocos registrados hoje.</div>';
+        return;
+      }
+      el.innerHTML = '<div style="border:1.5px solid var(--gray-200);border-radius:11px;overflow:hidden;">' +
+        window.vales.map(v =>
+          '<div class="vale-item">' +
+          '<div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--navy);">' + esc(v.pac) + '</div>' +
+          '<div style="font-size:11px;color:var(--gray-400);">' + (v.cpf ? esc(v.cpf) + ' · ' : '') + esc(v.esp||'—') + ' · ' + v.hora + '</div></div>' +
+          '<div style="font-size:14px;font-weight:800;color:var(--amber);">💸 ' + (v.val || '—') + '</div>' +
+          '<button onclick="delVale(\'' + v.id + '\')" style="width:26px;height:26px;background:rgba(198,40,40,.08);border:none;border-radius:6px;cursor:pointer;color:var(--red);font-size:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-trash"></i></button>' +
+          '</div>').join('') + '</div>';
+    };
+
+    /* ── PARSE CAIXA ── */
+    function parseCaixa(txt) {
+      // Normaliza forma de pagamento via regex — captura qualquer variante
+      function normForma(raw) {
+        if (!raw) return 'Outros';
+        const r = raw.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+        if (/pix/.test(r))                          return 'PIX';
+        if (/dinheiro|especie|espécie/.test(r))     return 'Dinheiro';
+        if (/credit|crédito|credito/.test(r))       return 'Cartão de Crédito';
+        if (/debit|débito|debito/.test(r))          return 'Cartão de Débito';
+        return raw.trim() || 'Outros';
+      }
+      function parseBRL(s) {
+        if (!s) return 0;
+        // Remove prefixo R$, espaços, pontos de milhar → converte vírgula decimal
+        const clean = (s+'').trim().replace(/R\$\s*/gi,'').replace(/\s/g,'').replace(/\./g,'').replace(',','.');
+        return Math.abs(parseFloat(clean) || 0);
+      }
+      function fmtBRL(v) { return 'R$ ' + v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+
+      const lancamentos = [], transferencias = [], totForma = {};
+      let dinheiroEntregar = null;
+      const smD = txt.match(/Valor em dinheiro a entregar\s*:\s*(R\$\s*[\d.,]+)/i);
+      if (smD) dinheiroEntregar = smD[1].trim();
+
+      // Junta linhas de continuação do TE_CAIXA
+      const _linhasRaw = txt.split('\n');
+      const _linhas = [];
+      for (let _li = 0; _li < _linhasRaw.length; _li++) {
+        const _l = _linhasRaw[_li].trim();
+        if (!_l) continue;
+        if (/^\d{2}\/\d{2}\/\d{4}/.test(_l)) _linhas.push(_l);
+        else if (_linhas.length > 0) _linhas[_linhas.length-1] += ' ' + _l;
+      }
+      for (const linha of _linhas) {
+        const l = linha.trim();
+        if (!l || !/^\d{2}\/\d{2}\/\d{4}/.test(l)) continue;
+        const p = l.split(/\t|(?:  {2,})/); // tab OU 2+ espaços (caixinha)
+        if (p.length < 5) continue; // mínimo: data, desc, tipo, forma, valor
+
+        const dtHora   = (p[0]||'').trim();
+        const hora     = dtHora.length > 11 ? dtHora.slice(11,16) : dtHora;
+        const tipo     = (p[2]||'').trim().toLowerCase();
+        const formaR   = (p[3]||'').trim();
+        const origem   = (p[4]||'').trim().toUpperCase();
+        const paciente = (p[7]||'').trim();
+
+        // Valor: tenta p[8], depois última coluna que contenha número
+        let valor = parseBRL(p[8]);
+        if (valor === 0) valor = parseBRL(p[p.length - 1]);
+        if (valor === 0) continue;
+
+        if (/saldo inicial/i.test(origem)) continue;
+
+        const forma  = normForma(formaR);
+        const isRec  = tipo.startsWith('receit');
+        // Despesa: captura Despesa, Saída, Saida, Sangria, Retirada e similares
+        const isDesp = /^desp|^saíd|^said|^saida|^sangr|^retir/.test(tipo);
+        const isTE   = origem.includes('TE_CAIXA');
+        const isTS   = origem.includes('TS_CAIXA');
+
+        // Transferências internas de caixa (apenas se NÃO forem receita/despesa)
+        if ((isTE || isTS) && !isRec && !isDesp) {
+          transferencias.push({hora, tipo:isTE?'Entrada':'Saída', forma, valor, fmtValor:fmtBRL(valor)});
+        } else {
+          if (!totForma[forma]) totForma[forma] = {entrada:0, saida:0};
+          if (isRec)  totForma[forma].entrada += valor;
+          if (isDesp) totForma[forma].saida   += valor;
+          lancamentos.push({
+            dtHora, hora,
+            tipo:       isRec ? 'Receita' : (isDesp ? 'Despesa' : tipo),
+            forma,
+            descricao:  (p[1]||'').trim(),
+            lancadoPor: (p[6]||'').trim(),
+            paciente:   paciente || '—',
+            valor,
+            fmtValor:   fmtBRL(valor),
+            isDespesa:  isDesp,
+            isTroco:    false
+          });
+        }
+      }
+      function fmtBRL2(v) { return 'R$ ' + v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+      if (!lancamentos.length) {
+        console.error('[parseCaixa:ERROR] Nenhum lancamento extraido. Verifique o formato colado.',
+          '| linhas processadas:', _linhas.length,
+          '| exemplo linha 1:', JSON.stringify(_linhas[0] || ''));
+      } else {
+        console.info('[parseCaixa:INFO] OK |', lancamentos.length, 'lancamentos |',
+          Object.keys(totForma).length, 'formas de pagamento');
+      }
+      return {lancamentos, transferencias, totForma, dinheiroEntregar, fmtBRL:fmtBRL2};
+    }
+
+    /* ── PLANILHA NF (Google Sheets CSV) ── */
+    // Converte qualquer URL do Sheets publicado para versão CSV
+    function normalizeSheetUrl(url) {
+      if (!url) return url;
+      url = url.trim();
+      if (url.includes('output=csv')) return url;          // já está correto
+      // pubhtml → pub?output=csv  (preserva ?gid= se houver)
+      if (url.includes('pubhtml')) {
+        const gid = (url.match(/[?&]gid=(\d+)/) || [])[1];
+        const base = url.replace(/pubhtml.*$/, 'pub?output=csv');
+        return gid ? base + '&gid=' + gid : base;
+      }
+      // /pub sem output=csv
+      if (/\/pub(\?|$)/.test(url)) {
+        return url + (url.includes('?') ? '&' : '?') + 'output=csv';
+      }
+      return url;
+    }
+
+    // Converte YYYY-MM-DD → DD/MM/YYYY (nome das abas da planilha)
+    function tkParaNomeAba(tkFb) {
+      if (!tkFb || tkFb.length !== 10) return null;
+      const [y, m, d] = tkFb.split('-');
+      return d + '/' + m + '/' + y;
+    }
+
+    // fetch com timeout (ms) — aborta se demorar demais
+    function fetchComTimeout(url, ms) {
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
+      return Promise.race([fetch(url), timeout]);
+    }
+
+    // Retorna { mapa, erro, detalhes } para diagnóstico
+    // caixaDataStr: "DD/MM/YYYY" extraída dos lançamentos do AMEI (tem precedência sobre a data de hoje)
+    async function carregarNotasFiscais(atendenteFiltro, caixaDataStr) {
+      const vazio = (erro, detalhes) => ({ mapa: {}, erro, detalhes: detalhes || '' });
+      if (!window._planilhaNfUrl) return vazio('sem_url');
+      try {
+        const csvBase = normalizeSheetUrl(window._planilhaNfUrl).replace(/&sheet=[^&]*/,'');
+
+        // Usa a data dos lançamentos do AMEI; fallback para data de hoje
+        const nomeAba = caixaDataStr || tkParaNomeAba(window.TK_FB);
+        let csvUrl = csvBase;
+        let abaInfo = '';
+        if (nomeAba) {
+          // Monta variações do nome: "02/06/2026", "02/06", "2/6", etc.
+          const _p = nomeAba.split('/');
+          const _dd = _p[0]||'', _mm = _p[1]||'', _yyyy = _p[2]||'', _yy = (_p[2]||'').slice(2);
+          const variacoes = new Set([
+            nomeAba, _dd+'/'+_mm,
+            parseInt(_dd)+'/'+parseInt(_mm),
+            parseInt(_dd)+'/'+parseInt(_mm)+'/'+_yyyy,
+            _dd+'.'+_mm+'.'+_yyyy, _dd+'-'+_mm+'-'+_yyyy,
+            _dd+_mm+_yy, _dd+_mm+_yyyy,
+          ].filter(Boolean).map(v => v.toLowerCase()));
+
+          let htxt = null; // declarado fora do try para ser acessível depois
+          try {
+            const pubhtmlUrl = csvBase.replace(/pub\?output=csv.*$/, 'pubhtml');
+            const _cacheKey = 'nf_ph_' + pubhtmlUrl.slice(-20);
+            const _cached   = window[_cacheKey];
+            if (_cached && (Date.now() - _cached.ts) < 30 * 60 * 1000) {
+              htxt = _cached.html;
+              console.info('[NF:INFO] pubhtml do cache (' + Math.round((Date.now()-_cached.ts)/1000) + 's atrás)');
+            } else {
+              let rh = null;
+              for (let _t = 0; _t < 2 && !rh; _t++) {
+                try {
+                  const _r = await fetchComTimeout(pubhtmlUrl, 15000);
+                  if (_r && _r.ok) rh = _r;
+                  else console.warn('[NF:WARN] pubhtml HTTP', _r && _r.status, 'tentativa', _t+1);
+                } catch(e) {
+                  if (_t === 0) {
+                    console.warn('[NF:WARN] pubhtml timeout tentativa 1 — aguardando 500ms');
+                    await new Promise(r => setTimeout(r, 500));
+                  } else {
+                    console.error('[NF:ERROR] pubhtml falhou nas 2 tentativas:', e.message);
+                  }
+                }
+              }
+              if (rh) {
+                htxt = await rh.text();
+                window[_cacheKey] = { html: htxt, ts: Date.now() };
+                console.info('[NF:INFO] pubhtml carregado (' + htxt.length + ' chars) — cacheado');
+              } else {
+                console.error('[NF:ERROR] pubhtml indisponível | URL:', pubhtmlUrl);
+              }
+            }
+            if (htxt) {
+              const regexes = [
+                /items\.push\(\{name:\s*"((?:[^"\\]|\\.)*)",\s*pageUrl:\s*"([^"]+)"/g,
+                /"name"\s*:\s*"([^"]+)"[^}]{0,200}"pageUrl"\s*:\s*"([^"]+)"/g,
+              ];
+              let found = false;
+              for (const tabRe of regexes) {
+                if (found) break;
+                let m;
+                while ((m = tabRe.exec(htxt)) !== null) {
+                  const tabName = m[1].replace(/\\\//g, '/').trim();
+                  const gidM   = m[2].match(/gid=(-?\d+)/);
+                  if (gidM && variacoes.has(tabName.toLowerCase())) {
+                    csvUrl  = csvBase.replace(/&gid=\d+/, '') + '&gid=' + gidM[1];
+                    abaInfo = ' · aba ' + tabName + ' (gid:' + gidM[1] + ')';
+                    console.info('[NF:INFO] aba encontrada: ' + tabName + ' gid:' + gidM[1]);
+                    found = true; break;
+                  }
+                }
+              }
+              if (!found) {
+                const abasDisp = [];
+                const _lr = /items\.push\(\{name:\s*"((?:[^"\\]|\\.)*?)"/g; let _lm;
+                while ((_lm = _lr.exec(htxt)) !== null) abasDisp.push(_lm[1].replace(/\\\//g,'/'));
+                console.error('[NF:ERROR] aba nao encontrada | buscando:', nomeAba,
+                  '| abas no pubhtml:', JSON.stringify(abasDisp),
+                  '| variacoes testadas:', JSON.stringify([...variacoes]));
+              }
+            }
+          } catch(e) {
+            console.error('[NF:ERROR] excecao pubhtml:', e.message);
+          }
+
+          if (csvUrl === csvBase) {
+            console.error('[NF:ERROR] aba nao encontrada no pubhtml',
+              '| data buscada:', nomeAba,
+              '| pubhtml respondeu:', htxt ? 'sim (' + htxt.length + ' chars)' : 'nao');
+            abaInfo = ' · aba ' + nomeAba + ' nao encontrada';
+          }
+        }
+
+        let r;
+        try {
+          r = await fetchComTimeout(csvUrl, 5000);
+        } catch(e) {
+          return vazio('fetch_erro', e.message);
+        }
+        if (!r.ok) return vazio('http_erro', 'HTTP ' + r.status);
+        const txt = await r.text();
+
+        // Verifica se voltou HTML em vez de CSV (URL errada ainda)
+        if (txt.trim().startsWith('<')) return vazio('retornou_html', 'A URL retornou HTML — verifique se publicou como CSV');
+
+        // Usa parseCsv completo (RFC 4180) — suporta células com quebra de linha interna
+        const todasLinhas = parseCsv(txt);
+        if (todasLinhas.length < 2) return vazio('vazio', 'Planilha sem dados');
+
+        // Procura a linha de cabeçalho real (pode não ser a linha 0 se houver título)
+        let headerIdx = -1;
+        let rawHeader = [], header = [];
+        for (let i = 0; i < Math.min(10, todasLinhas.length); i++) {
+          rawHeader = todasLinhas[i];
+          header    = rawHeader.map(h => normNome(h).replace(/\s/g,''));
+          const temNome = header.some(h => h === 'nome' || h.includes('paciente'));
+          const temNf   = header.some(h => h.includes('nf') || h.includes('nota') || h.includes('numero'));
+          if (temNome && temNf) { headerIdx = i; break; }
+        }
+
+        if (headerIdx < 0) return vazio('col_header', 'Cabeçalho não encontrado nas 10 primeiras linhas. Verifique se a planilha tem colunas NOME e N° NOTA FISCAL');
+
+        const iNome  = header.findIndex(h => h === 'nome' || h.includes('paciente'));
+        const iNf    = header.findIndex(h => h.includes('nf') || h.includes('nota') || h.includes('numero'));
+        const iAtend = header.findIndex(h =>
+          h.includes('atendente') || h.includes('operador') ||
+          h.includes('colaborador') || h.includes('responsavel') ||
+          h.includes('emissor') || h.includes('usuario')
+        );
+
+        // Prepara filtro por colaborador (primeiro nome)
+        const fnFiltro = atendenteFiltro ? normNome(atendenteFiltro).split(' ')[0] : null;
+
+        // Monta mapa nome→nf
+        const mapaFiltrado = {};
+        const mapaTudo     = {};
+        for (let i = headerIdx + 1; i < todasLinhas.length; i++) {
+          const cols = todasLinhas[i];
+          const nomeRaw = (cols[iNome] || '').replace(/\*+$/,'').replace(/["*]/g,'').trim();
+          const nome = normNome(nomeRaw);
+          const nf   = (cols[iNf] || '').replace(/"/g,'').trim();
+          if (!nome || !nf) continue;
+          mapaTudo[nome] = mapaTudo[nome] ? mapaTudo[nome] + ' / ' + nf : nf;
+
+          if (iAtend >= 0 && fnFiltro) {
+            const nomeAtend = normNome(cols[iAtend] || '');
+            const fnAtend   = nomeAtend.split(' ')[0];
+            if (fnAtend && fnFiltro && !nomeAtend.includes(fnFiltro) && !fnFiltro.includes(fnAtend)) {
+              continue; // outro operador
+            }
+          }
+          mapaFiltrado[nome] = mapaFiltrado[nome] ? mapaFiltrado[nome] + ' / ' + nf : nf;
+        }
+
+        // Fallback: se o filtro zerou tudo (ex: admin testando), usa todas as NFs
+        const usouFiltro = iAtend >= 0 && fnFiltro && Object.keys(mapaTudo).length > 0;
+        const mapa = (usouFiltro && Object.keys(mapaFiltrado).length === 0) ? mapaTudo : mapaFiltrado;
+        const obs  = usouFiltro && Object.keys(mapaFiltrado).length === 0
+          ? Object.keys(mapa).length + ' NFs (exibindo todas — operador não encontrado na planilha)' + abaInfo
+          : Object.keys(mapa).length + ' NFs' + (usouFiltro ? ' deste operador' : '') + abaInfo;
+
+        return { mapa, erro: null, detalhes: obs };
+      } catch(e) {
+        return vazio('excecao', e.message);
+      }
+    }
+    const _STOPWORDS = new Set([
+      'de','da','do','dos','das','di','e','a','o','em','com','por','para',
+      'terceiro','espirito','santo','santa','nossa','senhora','divino','sagrado',
+      'silva','santos','oliveira','souza','sousa','pereira','ferreira','alves',
+      'lima','costa','gomes','martins','rodrigues','carvalho','araujo','melo',
+      'ribeiro','rocha','freitas','filho','filha','junior','neto','neta',
+      'nascimento','andrade','cunha','medeiros','batista','machado','nogueira',
+      'xavier','mendes','barros','lopes','campos','moreira','teixeira','moura',
+      'brito','monteiro','azevedo','ramos','pinto','nunes','fernandes','vieira',
+      'barbosa','cavalcante',
+    ]);
+    function _palavrasChave(nome) {
+      return nome.split(' ').filter(w => w.length >= 5 && !_STOPWORDS.has(w));
+    }
+
+    function buscarNf(paciente, mapa) {
+      if (!paciente || paciente === '—' || !Object.keys(mapa).length) return null;
+      const np = normNome((paciente||'').replace(/\*+$/,'').replace(/["*]/g,'').trim());
+
+      // 1. Match exato
+      if (mapa[np]) return mapa[np];
+
+      // 2. Substring — menor contido no maior (mín. 75% de cobertura e 10 chars)
+      for (const [k, v] of Object.entries(mapa)) {
+        const menor = np.length <= k.length ? np : k;
+        const maior = np.length <= k.length ? k  : np;
+        if (menor.length >= 10 && maior.includes(menor) && menor.length / maior.length >= 0.75) return v;
+      }
+
+      // 3. Palavras-chave em comum — cobertura relativa ao PACIENTE (evita falsos positivos)
+      const chavesPac = _palavrasChave(np);
+      if (chavesPac.length >= 1) {
+        for (const [k, v] of Object.entries(mapa)) {
+          const chavesNf = _palavrasChave(k);
+          if (!chavesNf.length) continue;
+          const comuns      = chavesPac.filter(w => chavesNf.includes(w));
+          const cobPac      = comuns.length / chavesPac.length;
+          const cobCruz     = comuns.length / chavesNf.length;
+          if (comuns.length >= 2 || (comuns.length >= 1 && cobPac === 1.0 && cobCruz === 1.0)) return v;
+        }
+      }
+
+      // Sem match — log detalhado para diagnóstico
+      if (Object.keys(mapa).length > 0) {
+        console.warn('[buscarNf:WARN] sem match',
+          '| paciente normalizado:', np,
+          '| chaves extraidas:', _palavrasChave(np),
+          '| total no mapa:', Object.keys(mapa).length,
+          '| primeiros do mapa:', JSON.stringify(Object.keys(mapa).slice(0,3)));
+      }
+      return null;
+    }
+
+    /* ── GERAR RELATÓRIO ── */
+    window.gerarRelatorio = function() {
+      const txt = document.getElementById('cxPaste').value.trim();
+      if (!txt) { toast('Cole os dados do caixa antes de gerar', 'error'); return; }
+
+      const btn = document.getElementById('btnGerar');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando…'; }
+      const _restoreBtn = () => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-chart-bar"></i> Gerar Relatório'; } };
+      try {
+      const d = parseCaixa(txt);
+      if (!d.lancamentos.length && !Object.keys(d.totForma).length) {
+        toast('Nenhum lançamento encontrado. Verifique os dados colados.', 'error'); _restoreBtn(); return;
+      }
+
+      // Data do AMEI (dd/mm/yyyy) — usada para buscar a aba correta da planilha de NF
+      const caixaDataAmei = (d.lancamentos[0] && d.lancamentos[0].dtHora) ? d.lancamentos[0].dtHora.slice(0,10) : null; // "dd/mm/yyyy"
+
+      // Salvar snapshot para o dashboard admin
+      // Usa a data do AMEI como chave (não a data de hoje), para relatórios retroativos
+      const snapData = caixaDataAmei
+        ? caixaDataAmei.split('/').reverse().join('-')   // dd/mm/yyyy → yyyy-mm-dd
+        : window.TK_FB;
+      if (window.fbSet && window.USER_UID) {
+        const snap = {
+          colaborador: sessionStorage.getItem('usuario') || '—',
+          uid:         window.USER_UID,
+          data:        snapData,
+          geradoEm:    new Date().toISOString(),
+          totForma:    d.totForma,
+          lancamentos: d.lancamentos.map(l => ({
+            hora: l.hora, tipo: l.tipo, forma: l.forma,
+            descricao: l.descricao, paciente: l.paciente,
+            valor: l.valor || 0, isDespesa: l.isDespesa
+          })),
+          dinheiroEntregar: d.dinheiroEntregar || null
+        };
+        window.fbSet('relatorios/' + window.USER_UID + '/' + snapData, snap)
+          .then(() => toast('Relatório salvo no dashboard ✓', 'success'))
+          .catch(e => {
+            console.error('[Firebase] Erro ao salvar relatório:', e);
+            toast('Relatório gerado, mas não foi salvo no dashboard — verifique as permissões do Firebase', 'error');
+          });
+      } else {
+        console.warn('[Firebase] fbSet ou USER_UID não disponível — snapshot não salvo');
+      }
+
+      // Coluna NF mostrada imediatamente se URL configurada; dados carregam em segundo plano
+      const temNf = !!window._planilhaNfUrl;
+
+      const aten       = sessionStorage.getItem('usuario') || 'Responsável';
+      const now        = new Date();
+      const ds         = DIAS[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()] + ' de ' + now.getFullYear();
+      const hr         = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      const _logoUrl   = sessionStorage.getItem('logoDataUrl') || '';
+      const logoEsq    = _logoUrl ? '<img src="' + _logoUrl + '" alt="Logo" style="height:50px;width:auto;object-fit:contain;">' : '<div style="font-size:18px;font-weight:900;color:#0A1F44;">Amor Saúde</div>';
+      const imgCentro  = sessionStorage.getItem('caixaHeaderImg') ? '<img src="' + sessionStorage.getItem('caixaHeaderImg') + '" alt="" style="max-height:64px;max-width:260px;width:auto;object-fit:contain;">' : '';
+      const clinicaNome = sessionStorage.getItem('clinicaNome') || 'Amor Saúde Pirituba';
+      const sobra      = (window.caixa && window.caixa.sobra) ? window.caixa.sobra : 0;
+
+      /* Cards de forma de pagamento — ordem fixa */
+      const CORES = {
+        'PIX':             {bg:'#f0fdf4',bord:'#bbf7d0',cor:'#15803d',icon:'⚡'},
+        'Cartão de Crédito':{bg:'#fff1f2',bord:'#fecaca',cor:'#991b1b',icon:'💳'},
+        'Cartão de Débito': {bg:'#eff6ff',bord:'#bfdbfe',cor:'#1d4ed8',icon:'💳'},
+        'Dinheiro':         {bg:'#fffbeb',bord:'#fde68a',cor:'#b45309',icon:'💵'}
+      };
+      const ORDEM = ['PIX','Cartão de Crédito','Cartão de Débito','Dinheiro'];
+
+      // Totais ordenados — inclui formas fora da lista ORDEM ao final
+      const formasSorted = [
+        ...ORDEM.filter(f => d.totForma[f]),
+        ...Object.keys(d.totForma).filter(f => !ORDEM.includes(f))
+      ];
+
+      let totalGeral = 0;
+      const cardsHtml = formasSorted.map(forma => {
+        const v   = d.totForma[forma];
+        const net = v.entrada - v.saida;
+        totalGeral += net;
+        const c = CORES[forma] || {bg:'#f9fafb',bord:'#e5e7eb',cor:'#374151',icon:'💰'};
+        return '<div style="border:2px solid ' + c.bord + ';background:' + c.bg + ';border-radius:14px;padding:14px 16px;">' +
+          '<div style="font-size:18px;margin-bottom:6px;">' + c.icon + '</div>' +
+          '<div style="font-size:11px;font-weight:800;color:' + c.cor + ';text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">' + esc(forma) + '</div>' +
+          '<div style="font-size:1.4rem;font-weight:900;color:' + c.cor + ';">' + d.fmtBRL(v.entrada) + '</div>' +
+          (v.saida > 0 ? '<div style="font-size:10px;color:#C62828;margin-top:3px;">− ' + d.fmtBRL(v.saida) + ' saídas</div>' : '') +
+          '</div>';
+      }).join('');
+
+      // Card de sobra/troco em aberto (âmbar)
+      const sobraCard = sobra > 0
+        ? '<div style="border:2px solid #fde68a;background:#fffbeb;border-radius:14px;padding:14px 16px;">' +
+          '<div style="font-size:18px;margin-bottom:6px;">💸</div>' +
+          '<div style="font-size:11px;font-weight:800;color:#b45309;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">TROCO EM ABERTO</div>' +
+          '<div style="font-size:1.4rem;font-weight:900;color:#b45309;">' + d.fmtBRL(sobra) + '</div>' +
+          '<div style="font-size:10px;color:#b45309;margin-top:3px;">A devolver ao paciente</div>' +
+          '</div>'
+        : '';
+
+      /* Total a entregar em dinheiro */
+      let totalEntregarStr = '';
+      if (d.dinheiroEntregar) {
+        totalEntregarStr = d.dinheiroEntregar;
+      } else {
+        const _din = d.totForma['Dinheiro'] || {entrada:0, saida:0};
+        const dinheiroLiq = (_din.entrada || 0) - (_din.saida || 0) - sobra;
+        totalEntregarStr = d.fmtBRL(Math.max(0, dinheiroLiq));
+      }
+      const sobraLinha = sobra > 0
+        ? '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:4px;">− ' + d.fmtBRL(sobra) + ' troco em aberto</div>'
+        : '';
+
+      /* Trocos/Vales → adicionar como linhas na tabela */
+      const valesLancamentos = window.vales.map(v => ({
+        dtHora:    v.hora, hora: v.hora, tipo: 'Troco',
+        forma:     'Dinheiro', descricao: 'Troco — ' + (v.esp || ''),
+        lancadoPor:'—', paciente: v.pac || '—',
+        fmtValor:  v.val || '—', isDespesa: false, isTroco: true
+      }));
+      const todosLancamentos = [...d.lancamentos, ...valesLancamentos];
+
+      /* Indicador NF — atualizado depois pelo loader assíncrono */
+      const nfIndicador = temNf
+        ? '<div id="nfIndicador" style="font-size:11px;color:#94a3b8;margin-top:6px;"><i class="fas fa-spinner fa-spin"></i> Carregando NFs…</div>'
+        : '';
+
+      /* Coluna NF no cabeçalho */
+      const thNf = temNf ? '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);text-align:center;">N° NF</th>' : '';
+
+      /* Linhas da tabela */
+      const rows = todosLancamentos.map((l, i) => {
+        const bg  = i%2===0?'#f9fafb':'#ffffff';
+        const cor = l.isDespesa ? '#C62828' : (l.isTroco ? '#b45309' : '#15803d');
+        const tipoBadge = l.isTroco
+          ? '<span style="background:#fef3c7;color:#b45309;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:800;">Troco</span>'
+          : (l.isDespesa
+              ? '<span style="background:#fee2e2;color:#C62828;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:800;">Despesa</span>'
+              : '<span style="background:#dcfce7;color:#15803d;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:800;">Receita</span>');
+        const nfCell = temNf
+          ? '<td id="nfc' + i + '" style="border:1px solid #e5e7eb;padding:5px 8px;font-size:10px;text-align:center;"><span style="color:#94a3b8;font-size:10px;">⋯</span></td>'
+          : '';
+        return '<tr style="background:' + bg + ';">' +
+          '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:10px;color:#9ca3af;white-space:nowrap;">' + esc(l.dtHora || l.hora) + '</td>' +
+          '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:10px;text-align:center;">' + tipoBadge + '</td>' +
+          '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:10px;font-weight:600;">' + esc(l.forma) + '</td>' +
+          '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:10px;">' + esc(l.descricao || '—') + '</td>' +
+          '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:10px;">' + esc(l.lancadoPor || '—') + '</td>' +
+          '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:11px;">' + esc(l.paciente) + '</td>' +
+          '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:11px;font-weight:800;color:' + cor + ';text-align:right;white-space:nowrap;">' +
+          (l.isDespesa ? '− ' : '') + l.fmtValor + '</td>' +
+          nfCell +
+          '</tr>';
+      }).join('');
+
+      document.getElementById('relatorioDoc').innerHTML =
+        /* Cabeçalho */
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">' +
+          '<div style="flex:1;">' + logoEsq + '<div style="font-size:11px;color:#555;margin-top:4px;">Pirituba · São Paulo</div></div>' +
+          '<div style="flex:1;text-align:center;">' + imgCentro + '</div>' +
+          '<div style="flex:1;text-align:right;"><div style="font-size:10px;color:#888;">Emitido em</div><div style="font-size:12px;font-weight:700;color:#374151;">' + ds + ' às ' + hr + '</div></div>' +
+        '</div>' +
+        /* Título + responsável */
+        '<div style="text-align:center;margin-bottom:1.5rem;">' +
+          '<div style="font-size:1.8rem;font-weight:900;color:#0A1F44;margin-bottom:.8rem;">RELATÓRIO DE CAIXA</div>' +
+          '<div style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.5rem;background:#61C1D0;border-radius:12px;border:3px solid #980000;color:white;font-size:.9rem;font-weight:800;">👤 ' + esc(aten.toUpperCase()) + '</div>' +
+          nfIndicador +
+        '</div>' +
+        /* Cards de totais */
+        '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:10px;">Total por forma de pagamento</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.3rem;">' + cardsHtml + sobraCard + '</div>' +
+        /* Card navy — Total a Entregar em Dinheiro */
+        '<div style="background:#0A1F44;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:8px;">' +
+          '<div>' +
+            '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;">💵 Total a Entregar em Dinheiro</div>' +
+            sobraLinha +
+          '</div>' +
+          '<div style="font-size:1.6rem;font-weight:900;color:white;">' + totalEntregarStr + '</div>' +
+        '</div>' +
+        /* Tabela de lançamentos */
+        '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:8px;">Lançamentos individuais</div>' +
+        '<table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;">' +
+          '<thead><tr style="background:#0A1F44;">' +
+            '<th style="border:1px solid #374151;padding:7px 8px;text-align:left;font-size:9px;color:rgba(255,255,255,.7);">Data/Hora</th>' +
+            '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">Tipo</th>' +
+            '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">Forma</th>' +
+            '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">Descrição</th>' +
+            '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">Lançado por</th>' +
+            '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">Paciente</th>' +
+            '<th style="border:1px solid #374151;padding:7px 8px;text-align:right;font-size:9px;color:rgba(255,255,255,.7);">Valor</th>' +
+            thNf +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        /* Rodapé */
+        '<div style="padding-top:.8rem;border-top:2px solid #61C1D0;display:flex;justify-content:space-between;align-items:center;">' +
+          '<div style="font-size:10px;color:#888;">' + ds + ' às ' + hr + '</div>' +
+          '<div style="font-size:10px;font-weight:800;color:#374151;text-align:center;">RESPONSÁVEL: ' + esc(aten.toUpperCase()) + '</div>' +
+          '<div style="font-size:10px;color:#888;text-align:right;">' + esc(clinicaNome) + '</div>' +
+        '</div>';
+
+      document.getElementById('telaPreview').classList.add('open');
+      _restoreBtn();
+
+      // Carrega NFs em segundo plano (máx ~9s) — não bloqueia a exibição do relatório
+      if (temNf) {
+        const _ind = () => document.getElementById('nfIndicador');
+        // Guarda referência local para o array — closure segura
+        const _lancamentos = todosLancamentos.slice();
+
+        carregarNotasFiscais(sessionStorage.getItem('usuario'), caixaDataAmei)
+          .then(nfResult => {
+            const mapa = nfResult.mapa;
+            const ind  = _ind();
+            if (!Object.keys(mapa).length) {
+              if (ind) ind.innerHTML = nfResult.erro && nfResult.erro !== 'sem_url'
+                ? '<span style="color:#b45309;">⚠️ ' + esc(nfResult.detalhes || nfResult.erro) + '</span>'
+                : '<span style="color:#94a3b8;font-size:11px;">NF não disponível para esta data</span>';
+              // Limpa ⋯ das células
+              _lancamentos.forEach((_, i) => {
+                const c = document.getElementById('nfc' + i);
+                if (c) c.innerHTML = '<span style="color:#9ca3af;font-size:10px;">—</span>';
+              });
+              return;
+            }
+            // Preenche cada célula NF
+            let encontradas = 0;
+            _lancamentos.forEach((l, i) => {
+              const cell = document.getElementById('nfc' + i);
+              if (!cell) return;
+              const nf = buscarNf(l.paciente, mapa);
+              if (nf) encontradas++;
+              cell.innerHTML = nf
+                ? '<span style="background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:5px;font-size:9px;font-weight:800;">' + esc(nf) + '</span>'
+                : '<span style="color:#9ca3af;font-size:10px;">—</span>';
+            });
+            // Atualiza indicador
+            if (ind) ind.innerHTML = '<span style="color:#15803d;"><i class="fas fa-check-circle"></i> ' + encontradas + ' NF(s) encontrada(s) — ' + esc(nfResult.detalhes) + '</span>';
+          })
+          .catch(e => {
+            const ind = _ind();
+            if (ind) ind.innerHTML = '<span style="color:#b45309;">⚠️ Planilha NF não respondeu a tempo</span>';
+            // Limpa ⋯
+            todosLancamentos.forEach((_, i) => {
+              const c = document.getElementById('nfc' + i);
+              if (c) c.innerHTML = '<span style="color:#9ca3af;font-size:10px;">—</span>';
+            });
+          });
+      }
+
+      } catch(err) {
+        console.error('[gerarRelatorio] erro:', err);
+        toast('Erro ao gerar relatório: ' + (err.message || err), 'error');
+        _restoreBtn();
+      }
+    };
+
+    window.voltarMain = function() { document.getElementById('telaPreview').classList.remove('open'); };
+    window.limparRelatorio = function() {
+      if (!confirm('Limpar o relatório e voltar?')) return;
+      document.getElementById('cxPaste').value = '';
+      document.getElementById('relatorioDoc').innerHTML = '';
+      document.getElementById('telaPreview').classList.remove('open');
+    };
+    window.imprimirRelatorio = function() {
+      const win = window.open('', '_blank');
+      if (!win) { toast('Permita pop-ups para imprimir', 'error'); return; }
+      const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}@page{size:A4;margin:1.5cm;}body{font-family:system-ui,-apple-system,sans-serif;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #d1d5db;padding:5px 7px;}</style></head><body><div style="padding:0;">' + document.getElementById('relatorioDoc').innerHTML + '</div><sc' + 'ript>window.onload=function(){setTimeout(function(){window.print();},300);}<' + '/script></body></html>';
+      win.document.write(html);
+      win.document.close();
+    };
+  </script>
+
+  <script type="module">
+    import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const _app  = initializeApp(window.FIREBASE_CONFIG);
+    const _auth = getAuth(_app);
+    const _db   = getDatabase(_app);
+    window.initFirebaseUtils(_db, ref, get);
+    window.fbSet = (path, data) => set(ref(_db, path), data);
+
+    const _unsubs = [];
+    window.addEventListener('beforeunload', () => _unsubs.forEach(fn => { try { fn(); } catch(e){} }));
+    const _on = (r, cb) => { const u = onValue(r, cb); _unsubs.push(u); return u; };
+
+    onAuthStateChanged(_auth, user => {
+      if (!user) { irPara('../login.html'); return; }
+
+      // Identificador único do usuário — separa dados de caixa por login
+      window.USER_UID = user.uid;
+
+      set(ref(_db, 'admin_logs/' + Date.now()), {
+        tipo:'info', msg:(user.email||user.uid)+' acessou o Caixa', ts:new Date().toISOString()
+      }).catch(()=>{});
+
+      carregarLogoGlobal(['#headerLogo']);
+
+      // Cabeçalho do caixa
+      get(ref(_db, 'admin/caixaHeader')).then(snap => {
+        const d = snap.val();
+        if (d && d.dataUrl) sessionStorage.setItem('caixaHeaderImg', d.dataUrl);
+      }).catch(()=>{});
+
+      // URL da planilha NF (Google Sheets publicado como CSV)
+      get(ref(_db, 'admin/configCaixa/planilhaUrl')).then(snap => {
+        if (snap.val()) window._planilhaNfUrl = snap.val();
+      }).catch(()=>{});
+
+      // Dados de caixa em tempo real — separado por usuário (user.uid / data)
+      _on(ref(_db, `operacao/${user.uid}/caixa/${window.TK_FB}`), snap => {
+        window.caixa = snap.val() || {fundo:0, entradas:0, saidas:0, sobra:0};
+        if (!window.caixa.sobra) window.caixa.sobra = 0;
+        if (typeof window.renderCaixa === 'function') window.renderCaixa();
+        if (typeof window.updSaldo    === 'function') window.updSaldo();
+      });
+
+      // Vales em tempo real — separado por usuário (user.uid / data)
+      _on(ref(_db, `operacao/${user.uid}/vales/${window.TK_FB}`), snap => {
+        window.vales = snap.val() || [];
+        if (typeof window.renderVales === 'function') window.renderVales();
+      });
+
+      init();
+    });
+  </script>
+</body>
+</html>
+<script>
+/* RECIBOS — script separado, não toca nos scripts existentes */
+window.cxTab = function(tab, btn) {
+  document.querySelectorAll('.nav-tab').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('active'); });
+  btn.classList.add('active');
+  var el = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  if (el) el.classList.add('active');
+};
+
+window.calcularDif = function() { /* não utilizado */ };
+
+function _rxExt(v) {
+  var n = parseFloat(String(v).replace(/\./g,'').replace(',','.')) || 0;
+  var i = Math.floor(n), c = Math.round((n - i) * 100);
+  var U=['','um','dois','tres','quatro','cinco','seis','sete','oito','nove'];
+  var E=['dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+  var D=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+  var C=['','cem','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+  function cv(x){if(!x)return'';if(x===100)return'cem';if(x<10)return U[x];if(x<20)return E[x-10];if(x<100){var d=Math.floor(x/10),u=x%10;return u?D[d]+' e '+U[u]:D[d];}if(x<1000){var cc=Math.floor(x/100),r=x%100;return(cc===1&&r)?'cento e '+cv(r):(r?C[cc]+' e '+cv(r):C[cc]);}if(x<1e6){var m=Math.floor(x/1000),r=x%1000;var mil=m===1?'mil':cv(m)+' mil';return r?mil+' e '+cv(r):mil;}return String(x);}
+  var pt = i===0?'zero reais':cv(i)+(i===1?' real':' reais');
+  return c ? pt+' e '+cv(c)+(c===1?' centavo':' centavos') : pt;
+}
+
+function _rxGet(id){ return (document.getElementById(id) ? document.getElementById(id).value : '').trim(); }
+function _rxPM(v){ return parseFloat((v||'0').replace(/\./g,'').replace(',','.')) || 0; }
+function _rxFM(n){ return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+var _MESES = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function _rxCSS(){
+  var logo = sessionStorage.getItem('logoDataUrl') || '';
+  return '@page{size:A4;margin:0.6cm 1cm}'
+   +'body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#000}'
+   +'.rp{border:1.5px solid #000;padding:0.45cm 0.6cm;}'
+   +'.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}'
+   +'.rl img{height:36px;width:auto;object-fit:contain;}'
+   +'.rt{font-size:13px;font-weight:bold;text-align:center;letter-spacing:.5px;flex:1;}'
+   +'.ri{font-size:10px;text-align:right;line-height:1.4;}'
+   +'.rd{border:none;border-top:1px solid #000;margin:5px 0;}'
+   +'.rc{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:11px;margin-bottom:8px;line-height:1.6;}'
+   +'.clb{font-weight:bold;color:#333;}'
+   +'.vb{border:2px solid #000;padding:5px 10px;margin:7px 0;display:flex;align-items:center;gap:10px;}'
+   +'.vr{font-size:16px;font-weight:bold;background:#1a1a1a;color:#fff;padding:3px 8px;}'
+   +'.vn{font-size:18px;font-weight:bold;}'
+   +'.ve{font-size:10px;color:#555;font-style:italic;}'
+   +'.ref{font-size:11px;margin:5px 0;line-height:1.5;}'
+   +'.as{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;gap:20px;}'
+   +'.al{border-top:1px solid #000;margin-bottom:3px;margin-top:18px;}'
+   +'.an{font-size:10px;font-weight:bold;white-space:nowrap;}'
+   +'.albl{font-size:9px;color:#555;}'
+   +'.db{font-size:11px;text-align:right;white-space:nowrap;}'
+   +'.dfbox{border:2px solid #15803d;border-radius:4px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;margin:8px 0;background:#f0fdf4;}'
+   +'.dfv{font-size:16px;font-weight:bold;color:#15803d;}'
+   +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
+}
+
+function _rxLogo(){
+  var logo = sessionStorage.getItem('logoDataUrl') || '';
+  var cNome = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MEDICA E ODONTOLOGICA LTDA';
+  return logo ? '<img src="'+logo+'" alt="Logo">' : '<span style="font-size:11px;font-weight:bold;">'+cNome+'</span>';
+}
+
+function _rxHeader(titulo){
+  var cNome = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MEDICA E ODONTOLOGICA LTDA';
+  var cCnpj = sessionStorage.getItem('clinicaCnpj') || '25.154.224/0001-89';
+  var cEnd  = sessionStorage.getItem('clinicaEnd')  || 'Av. Dr. Felipe Pinel, 367 - Pirituba/SP';
+  return '<div class="rh"><div class="rl">'+_rxLogo()+'</div>'
+    +'<div class="rt">'+titulo+'</div>'
+    +'<div class="ri"><strong>'+cNome+'</strong><br>CNPJ: '+cCnpj+'<br>'+cEnd+'</div></div><hr class="rd">';
+}
+
+function _rxPrint(html){
+  var w = window.open('','_blank');
+  if (!w) { mostrarNotificacao('Pop-up bloqueado'); return false; }
+  w.document.write(html);
+  w.document.close();
+  return true;
+}
+
+window.imprimirRessarc = function() {
+  var nome   = _rxGet('rss-nome');
+  var cpf    = _rxGet('rss-cpf');
+  var valor  = _rxGet('rss-valor');
+  var motivo = _rxGet('rss-motivo');
+  if (!nome)   { mostrarNotificacao('Informe o nome do paciente'); return; }
+  if (!valor)  { mostrarNotificacao('Informe o valor'); return; }
+  if (!motivo) { mostrarNotificacao('Informe o motivo'); return; }
+
+  var vN  = _rxPM(valor);
+  var ext = _rxExt(valor);
+  var now = new Date();
+  var colab = sessionStorage.getItem('usuario') || '';
+  var data = 'S\u00e3o Paulo, '+now.getDate()+' de '+_MESES[now.getMonth()]+' de '+now.getFullYear()+'.';
+  var logo = sessionStorage.getItem('logoDataUrl') || '';
+  var logoHtml = logo
+    ? '<img src="'+logo+'" alt="Logo" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 6pt;">'
+    : '<div style="font-size:20pt;font-weight:900;color:#C0392B;text-align:center;margin-bottom:6pt;">amor<span style="color:#1A5276;">sa\u00fade</span></div>';
+
+  var CSS = '@page{size:A4 portrait;margin:15mm}'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;background:#fff;width:100%;}'
+    +'.rp{border:1.5px solid #1a1a1a;border-radius:4pt;padding:24pt 28pt}'
+    +'.logo-area{text-align:center;margin-bottom:4pt}'
+    +'.empresa{text-align:center;font-size:9pt;color:#444;line-height:1.6;margin-bottom:10pt}'
+    +'.empresa strong{font-size:10pt;color:#1a1a1a}'
+    +'.divider{border:none;border-top:1.5pt solid #1a1a1a;margin:10pt 0}'
+    +'.titulo{font-size:14pt;font-weight:bold;letter-spacing:2pt;text-transform:uppercase;text-align:center;margin:10pt 0 18pt}'
+    +'.corpo{font-size:11pt;line-height:1.85;text-align:justify;margin-bottom:14pt}'
+    +'.ref-box{background:#f8f9fa;border-left:3pt solid #1a1a1a;padding:10pt 14pt;margin-bottom:16pt;border-radius:0 4pt 4pt 0}'
+    +'.ref-lbl{font-size:8pt;font-weight:bold;text-transform:uppercase;letter-spacing:.6pt;color:#666;margin-bottom:4pt}'
+    +'.ref-txt{font-size:10.5pt;line-height:1.75;color:#222}'
+    +'.data{text-align:right;font-size:11pt;margin-bottom:24pt}'
+    +'.assin{margin-bottom:14pt}'
+    +'.assin-linha{border-top:1pt solid #1a1a1a;margin-top:22pt;padding-top:3pt}'
+    +'.assin-lbl{font-size:9pt;color:#444}'
+    +'.aviso{margin-top:18pt;background:#fff8e1;border:1pt solid #f59e0b;border-radius:4pt;padding:7pt 10pt;font-size:8.5pt;color:#78350f;text-align:center;line-height:1.6}'
+    +'@media print{'
+    +'  @page{size:A4 portrait;margin:15mm}'
+    +'  body{zoom:70%;width:100%;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'}';
+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Recibo Ressarcimento</title>'
+    +'<style>'+CSS+'</style></head><body><div class="rp">'
+    +'<div class="logo-area">'+logoHtml+'</div>'
+    +'<div class="empresa"><strong>SIM CL\u00cdNICA M\u00c9DICA E ODONTOL\u00d3GICA LTDA</strong><br>'
+    +'CNPJ: 25.154.224/0001-89 &nbsp;|&nbsp; Av. Dr. Felipe Pinel, 367 \u2013 Pirituba, S\u00e3o Paulo/SP</div>'
+    +'<hr class="divider">'
+    +'<div class="titulo">RECIBO (RESSARCIMENTO)</div>'
+    +'<div class="corpo">Eu <strong>'+nome.toUpperCase()+'</strong>'
+    +(cpf?', portador(a) do CPF: <strong>'+cpf+'</strong>':'')+', afirmo ter solicitado da cl\u00ednica '
+    +'<strong>SIM CL\u00cdNICA M\u00c9DICA E ODONTOL\u00d3GICA LTDA \u2014 CNPJ: 25.154.224/001-89</strong> '
+    +'o ressarcimento no valor de <strong>R$ '+_rxFM(vN).replace('R$ ','')+' reais</strong> '
+    +'('+ext.charAt(0).toUpperCase()+ext.slice(1)+').</div>'
+    +'<div class="ref-box"><div class="ref-lbl">Referente</div><div class="ref-txt">'+motivo+'</div></div>'
+    +'<div class="data">'+data+'</div>'
+    +'<div class="assin"><div class="assin-linha"></div><div class="assin-lbl">Assinatura do respons\u00e1vel (Nome Completo): '+nome.toUpperCase()+'</div></div>'
+    +'<div class="assin"><div class="assin-linha"></div><div class="assin-lbl">Assinatura do colaborador'+(colab?' ('+colab+')':'')+':</div></div>'
+    +'<div class="assin"><div class="assin-linha"></div><div class="assin-lbl">Assinatura do supervisor / coordenador</div></div>'
+    +'<div class="aviso">&#9888;&#65039; Este recibo s\u00f3 ser\u00e1 aceito mediante apresenta\u00e7\u00e3o de: c\u00f3pia do documento do paciente + recibo de pagamento original.<br>'
+    +'O n\u00e3o cumprimento das orienta\u00e7\u00f5es pode resultar em desconto do colaborador.</div>'
+    +'</div>'
+    +'<'+'script>window.onload=function(){setTimeout(function(){window.print();},400);};<'+'/script>'
+    +'</body></html>';
+  _rxPrint(html);
+};
+
+window.imprimirErroSistema = function() {
+  var colabES = sessionStorage.getItem('usuario') || '';
+  var pac   = _rxGet('es-paciente');
+  var cpf   = _rxGet('es-cpf');
+  var valor = _rxGet('es-valor');
+  var obs   = _rxGet('es-obs');
+  if (!pac)   { mostrarNotificacao('Informe o nome do paciente'); return; }
+  if (!valor) { mostrarNotificacao('Informe o valor'); return; }
+  if (!obs)   { mostrarNotificacao('Informe a descri\u00e7\u00e3o'); return; }
+
+  var vN  = _rxPM(valor);
+  var ext = _rxExt(valor);
+  var now = new Date();
+  var data = 'S\u00e3o Paulo, '+now.getDate()+' de '+_MESES[now.getMonth()]+' de '+now.getFullYear()+'.';
+  var logo = sessionStorage.getItem('logoDataUrl') || '';
+  var logoHtml = logo
+    ? '<img src="'+logo+'" alt="Logo" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 6pt;">'
+    : '<div style="font-size:20pt;font-weight:900;color:#C0392B;text-align:center;margin-bottom:6pt;">amor<span style="color:#1A5276;">sa\u00fade</span></div>';
+
+  var CSS = '@page{size:A4 portrait;margin:15mm}'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;background:#fff;width:100%;}'
+    +'.rp{border:1.5px solid #1a1a1a;border-radius:4pt;padding:24pt 28pt}'
+    +'.logo-area{text-align:center;margin-bottom:4pt}'
+    +'.empresa{text-align:center;font-size:9pt;color:#444;line-height:1.6;margin-bottom:10pt}'
+    +'.empresa strong{font-size:10pt;color:#1a1a1a}'
+    +'.divider{border:none;border-top:1.5pt solid #1a1a1a;margin:10pt 0}'
+    +'.titulo{font-size:14pt;font-weight:bold;letter-spacing:2pt;text-transform:uppercase;text-align:center;margin:10pt 0 18pt}'
+    +'.corpo{font-size:11pt;line-height:1.85;text-align:justify;margin-bottom:14pt}'
+    +'.ref-box{background:#f8f9fa;border-left:3pt solid #1a1a1a;padding:10pt 14pt;margin-bottom:16pt;border-radius:0 4pt 4pt 0}'
+    +'.ref-lbl{font-size:8pt;font-weight:bold;text-transform:uppercase;letter-spacing:.6pt;color:#666;margin-bottom:4pt}'
+    +'.ref-txt{font-size:10.5pt;line-height:1.75;color:#222}'
+    +'.data{text-align:right;font-size:11pt;margin-bottom:24pt}'
+    +'.assin{margin-bottom:14pt}'
+    +'.assin-linha{border-top:1pt solid #1a1a1a;margin-top:22pt;padding-top:3pt}'
+    +'.assin-lbl{font-size:9pt;color:#444}'
+    +'.aviso{margin-top:18pt;background:#fff8e1;border:1pt solid #f59e0b;border-radius:4pt;padding:7pt 10pt;font-size:8.5pt;color:#78350f;text-align:center;line-height:1.6}'
+    +'@media print{'
+    +'  @page{size:A4 portrait;margin:15mm}'
+    +'  body{zoom:70%;width:100%;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'}';
+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Recibo Erro de Sistema</title>'
+    +'<style>'+CSS+'</style></head><body><div class="rp">'
+    +'<div class="logo-area">'+logoHtml+'</div>'
+    +'<div class="empresa"><strong>SIM CL\u00cdNICA M\u00c9DICA E ODONTOL\u00d3GICA LTDA</strong><br>'
+    +'CNPJ: 25.154.224/0001-89 &nbsp;|&nbsp; Av. Dr. Felipe Pinel, 367 \u2013 Pirituba, S\u00e3o Paulo/SP</div>'
+    +'<hr class="divider">'
+    +'<div class="titulo">RECIBO (ERRO DE SISTEMA)</div>'
+    +'<div class="corpo">Eu <strong>'+pac.toUpperCase()+'</strong>'
+    +(cpf?', portador(a) do CPF: <strong>'+cpf+'</strong>':'')+', afirmo ter encaminhado ao caixa da lideran\u00e7a o valor de '
+    +'<strong>R$ '+_rxFM(vN).replace('R$ ','')+' reais</strong> '
+    +'('+ext.charAt(0).toUpperCase()+ext.slice(1)+'), '
+    +'referente a diverg\u00eancia registrada no sistema da cl\u00ednica '
+    +'<strong>SIM CL\u00cdNICA M\u00c9DICA E ODONTOL\u00d3GICA LTDA \u2014 CNPJ: 25.154.224/001-89</strong>.</div>'
+    +'<div class="ref-box"><div class="ref-lbl">Descri\u00e7\u00e3o / Refer\u00eante</div><div class="ref-txt">'+obs+'</div></div>'
+    +'<div class="data">'+data+'</div>'
+    +'<div class="assin"><div class="assin-linha"></div><div class="assin-lbl">Assinatura do respons\u00e1vel (Nome Completo): '+pac.toUpperCase()+'</div></div>'
+    +'<div class="assin"><div class="assin-linha"></div><div class="assin-lbl">Assinatura do colaborador'+(colabES?' ('+colabES+')':'')+': _____________________</div></div>'
+    +'<div class="assin"><div class="assin-linha"></div><div class="assin-lbl">Assinatura do supervisor / coordenador</div></div>'
+    +'<div class="aviso">&#9888;&#65039; Este recibo s\u00f3 ser\u00e1 aceito mediante apresenta\u00e7\u00e3o de: c\u00f3pia do documento do paciente + recibo de pagamento original.<br>'
+    +'O n\u00e3o cumprimento das orienta\u00e7\u00f5es pode resultar em desconto do colaborador.</div>'
+    +'</div>'
+    +'<'+'script>window.onload=function(){setTimeout(function(){window.print();},300);};<'+'/script>'
+    +'</body></html>';
+  _rxPrint(html);
+};
+window.imprimirBonificacao = function() {
+  var nome   = _rxGet('bon-nome');
+  var cpf    = _rxGet('bon-cpf');
+  var valor  = _rxGet('bon-valor');
+  var medico = _rxGet('bon-medico');
+  var lider  = _rxGet('bon-lider');
+  var motivo = _rxGet('bon-motivo');
+  if (!nome)   { mostrarNotificacao('Informe o nome do paciente'); return; }
+  if (!valor)  { mostrarNotificacao('Informe o valor bonificado'); return; }
+  if (!medico) { mostrarNotificacao('Informe o profissional autorizador'); return; }
+  if (!lider)  { mostrarNotificacao('Informe a liderança autorizadora'); return; }
+  if (!motivo) { mostrarNotificacao('Descreva o problema/erro'); return; }
+
+  var vN  = _rxPM(valor);
+  var ext = _rxExt(valor);
+  var now = new Date();
+  var meses = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var data = 'Sao Paulo, '+now.getDate()+' de '+meses[now.getMonth()]+' de '+now.getFullYear();
+  var logo = sessionStorage.getItem('logoDataUrl') || '';
+  var cNome = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MEDICA E ODONTOLOGICA LTDA';
+  var cCnpj = sessionStorage.getItem('clinicaCnpj') || '25.154.224/0001-89';
+  var cEnd  = sessionStorage.getItem('clinicaEnd')  || 'Av. Dr. Felipe Pinel, 367 - Pirituba/SP';
+  var logoHTML = logo
+    ? '<img src="'+logo+'" alt="Logo" style="height:36px;width:auto;object-fit:contain;">'
+    : '<span style="font-size:11px;font-weight:bold;">'+cNome+'</span>';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo Bonificacao</title>'
+    +'<style>@page{size:A4;margin:0.6cm 1cm}'
+    +'body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#000}'
+    +'.rp{border:1.5px solid #000;padding:0.45cm 0.6cm;}'
+    +'.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}'
+    +'.rl img{height:36px;width:auto;object-fit:contain;}'
+    +'.rt{font-size:13px;font-weight:bold;text-align:center;letter-spacing:.5px;flex:1;}'
+    +'.ri{font-size:10px;text-align:right;line-height:1.4;}'
+    +'.rd{border:none;border-top:1px solid #000;margin:5px 0;}'
+    +'.rc{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:11px;margin-bottom:8px;line-height:1.6;}'
+    +'.clb{font-weight:bold;color:#333;}'
+    +'.vb{border:2px solid #000;padding:5px 10px;margin:7px 0;display:flex;align-items:center;gap:10px;}'
+    +'.vr{font-size:16px;font-weight:bold;background:#15803d;color:#fff;padding:3px 8px;}'
+    +'.vn{font-size:18px;font-weight:bold;}'
+    +'.ve{font-size:10px;color:#555;font-style:italic;}'
+    +'.ref{font-size:11px;margin:5px 0;line-height:1.5;border-left:3px solid #15803d;padding-left:8px;background:#f0fdf4;border-radius:0 4px 4px 0;}'
+    +'.auth{background:#fef9c3;border:1px solid #d97706;border-radius:4px;padding:6px 10px;font-size:10px;margin:6px 0;}'
+    +'.auth strong{color:#92400e;}'
+    +'.as{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;gap:20px;}'
+    +'.al{border-top:1px solid #000;margin-bottom:3px;margin-top:18px;}'
+    +'.an{font-size:10px;font-weight:bold;}'
+    +'.albl{font-size:9px;color:#555;}'
+    +'.db{font-size:11px;text-align:right;white-space:nowrap;}'
+    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'
+    +'</style></head><body><div class="rp">'
+    +'<div class="rh"><div class="rl">'+logoHTML+'</div>'
+    +'<div class="rt">RECIBO BONIFICACAO</div>'
+    +'<div class="ri"><strong>'+cNome+'</strong><br>CNPJ: '+cCnpj+'<br>'+cEnd+'</div></div>'
+    +'<hr class="rd">'
+    +'<div class="rc">'
+    +'<div><span class="clb">Paciente:</span> '+nome.toUpperCase()+'</div>'
+    +(cpf?'<div><span class="clb">CPF:</span> '+cpf+'</div>':'<div></div>')
+    +'</div>'
+    +'<div class="vb"><div class="vr">R$</div>'
+    +'<div><div class="vn">'+_rxFM(vN).replace('R$ ','')+'</div>'
+    +'<div class="ve">'+ext.charAt(0).toUpperCase()+ext.slice(1)+'</div></div></div>'
+    +'<div class="ref"><strong>Motivo da bonificacao:</strong> '+motivo+'</div>'
+    +'<div class="auth"><strong>Autorizacao:</strong> Dr./Dra. '+medico+' &nbsp;|&nbsp; <strong>Lideranca:</strong> '+lider+'</div>'
+    +'<div class="as"><div style="flex:1"><div class="al"></div><div class="an">'+nome.toUpperCase()+'</div>'
+    +'<div class="albl">Assinatura do paciente</div></div>'
+    +'<div class="db">'+data+'</div></div>'
+    +'<div><div class="al"></div><div class="albl">Assinatura da lideranca ('+lider+')</div></div>'
+    +'</div>'
+    +'<'+'script>window.onload=function(){setTimeout(function(){window.print();},400);};<'+'/script>'
+    +'</body></html>';
+  _rxPrint(html);
+};
+
+</script>
+<!-- VERSION: v2.1 | caixa.html | 17/07/2026 | feat: recibo ressarcimento com texto formal de documento -->
+

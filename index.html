@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Amor Saúde</title>
+  <script>
+    // Redireciona para login.html preservando o base path (funciona em GitHub Pages e domínio próprio)
+    (function() {
+      var href = window.location.href.split('?')[0].split('#')[0];
+      var base = href.substring(0, href.lastIndexOf('/') + 1);
+      window.location.replace(base + 'login.html');
+    })();
+  </script>
+  <style>
+    body { margin: 0; background: #0A1F44; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; }
+    p { color: rgba(255,255,255,.5); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <p>Redirecionando…</p>
+</body>
+</html>

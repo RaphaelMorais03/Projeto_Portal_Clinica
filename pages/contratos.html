@@ -1,0 +1,720 @@
+﻿<!-- VERSION: v1.2 | contratos.html | 03/08/2026 | fix: logo real na guia de encaminhamento -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contratos — Portal Clínica</title>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy:#0A1F44; --navy-mid:#122b5e;
+      --red:#C62828;  --red-h:#ad1f1f;
+      --teal:#61C1D0;
+      --green:#15803d;
+      --amber:#b45309;
+      --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0;
+      --gray-300:#cbd5e1; --gray-400:#94a3b8; --gray-500:#64748b;
+      --gray-600:#475569; --gray-800:#1e293b;
+      --r:10px; --rl:14px;
+      --shadow:0 4px 12px rgba(0,0,0,.08);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    /* HEADER */
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-icon{width:38px;height:38px;border-radius:8px;overflow:hidden;flex-shrink:0;}
+    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
+    .s-logo-name{font-size:15px;font-weight:800;color:var(--navy);}
+    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .header-right{display:flex;align-items:center;gap:10px;}
+    .user-pill{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:7px;}
+    .user-dot{width:24px;height:24px;border-radius:50%;background:var(--navy);color:white;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .btn-header{background:none;border:1.5px solid var(--gray-200);color:var(--gray-500);border-radius:8px;padding:5px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;text-decoration:none;}
+    .btn-header:hover{border-color:var(--navy);color:var(--navy);}
+    /* LAYOUT */
+    .page-body{padding:24px 28px;}
+    /* TABS */
+    .tabs{display:flex;gap:4px;border-bottom:2px solid var(--gray-200);margin-bottom:24px;}
+    .tab-btn{padding:10px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px;font-family:inherit;}
+    .tab-btn:hover{color:var(--navy);}
+    .tab-btn.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:700;}
+    .tab-pane{display:none;}
+    .tab-pane.active{display:block;}
+    /* CARDS */
+    .card{background:white;border:1.5px solid var(--gray-200);border-radius:var(--rl);padding:20px;box-shadow:var(--shadow);margin-bottom:20px;}
+    .card-hdr{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);}
+    /* FORM */
+    .f-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);display:block;margin-bottom:5px;}
+    .f-input,.f-select{width:100%;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;color:var(--gray-800);background:white;transition:all .2s;}
+    .f-input:focus,.f-select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.07);}
+    .f-input::placeholder{color:var(--gray-400);}
+    .f-input.ok{border-color:var(--green);background:#f0fdf4;}
+    .field{margin-bottom:14px;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .grid3{display:grid;grid-template-columns:80px 1fr 100px;gap:14px;}
+    .span2{grid-column:1/-1;}
+    /* PROGRESS */
+    .prog-bar{height:4px;background:var(--gray-100);border-radius:4px;overflow:hidden;margin-top:12px;}
+    .prog-fill{height:100%;background:linear-gradient(90deg,var(--navy),var(--teal));border-radius:4px;transition:width .4s;}
+    .prog-lbl{font-size:11px;color:var(--gray-400);margin-top:4px;text-align:right;font-weight:500;}
+    /* TOGGLE SECTION */
+    .tog-wrap{background:var(--gray-50);border:1.5px dashed var(--gray-200);border-radius:var(--rl);overflow:hidden;margin-bottom:18px;}
+    .tog-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;}
+    .tog-hdr:hover{background:var(--gray-100);}
+    .tog-title{font-size:12px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px;}
+    .badge-opt{background:#fef3c7;color:#854d0e;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;text-transform:none;letter-spacing:0;}
+    .tog-arr{font-size:11px;color:var(--gray-400);transition:transform .2s;}
+    .tog-arr.open{transform:rotate(180deg);}
+    .tog-body{display:none;padding:4px 16px 16px;}
+    .tog-body.open{display:block;}
+    /* PREVIEW */
+    .preview-col{position:sticky;top:80px;}
+    .preview-card{background:white;border:1.5px solid var(--gray-200);border-radius:var(--rl);box-shadow:var(--shadow);overflow:hidden;}
+    .prev-hdr{background:var(--gray-50);border-bottom:1px solid var(--gray-200);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+    .prev-ttl{font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
+    .prev-status{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);transition:all .3s;}
+    .prev-status.ok{background:#dcfce7;color:#15803d;}
+    .prev-status.warn{background:#fef3c7;color:#92400e;}
+    .prev-body{padding:16px;max-height:520px;overflow-y:auto;}
+    .prev-text{font-family:'Times New Roman',serif;font-size:11.5px;line-height:1.75;color:var(--gray-800);white-space:pre-wrap;}
+    .blank{background:#fef9c3;color:#92400e;border-bottom:1px dashed #d97706;padding:0 2px;}
+    .prev-acts{padding:12px 16px;border-top:1px solid var(--gray-200);display:flex;gap:8px;}
+    /* LAYOUT DOIS COLS */
+    .two-col{display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start;}
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:var(--r);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;border:none;font-family:inherit;white-space:nowrap;}
+    .btn-primary{background:var(--navy);color:white;}
+    .btn-primary:hover{background:var(--navy-mid);}
+    .btn-red{background:var(--red);color:white;}
+    .btn-red:hover{background:var(--red-h);}
+    .btn-outline{background:white;color:var(--gray-600);border:1.5px solid var(--gray-200);}
+    .btn-outline:hover{border-color:var(--navy);color:var(--navy);}
+    .btn-green{background:var(--green);color:white;}
+    .btn-green:hover{background:#166534;}
+    .btn-row{display:flex;gap:10px;padding-top:14px;border-top:1px solid var(--gray-100);margin-top:14px;flex-wrap:wrap;}
+    /* TOAST */
+    .toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:white;padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:600;opacity:0;transform:translateX(100%);transition:all .3s;z-index:2000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+    .toast.show{opacity:1;transform:translateX(0);}
+    .toast.success{background:var(--green);}
+    /* SEC LABEL */
+    .sec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
+    .sec-dot{width:6px;height:6px;border-radius:50%;background:var(--navy);flex-shrink:0;}
+    /* GUIA ENCAMINHAMENTO */
+    .proc-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;align-items:center;}
+    .btn-add-proc{background:none;border:1.5px dashed var(--gray-300);border-radius:var(--r);padding:8px;width:100%;font-family:inherit;font-size:12px;font-weight:600;color:var(--gray-400);cursor:pointer;transition:all .15s;}
+    .btn-add-proc:hover{border-color:var(--navy);color:var(--navy);}
+    .btn-rm{background:none;border:none;color:var(--gray-300);cursor:pointer;padding:4px;font-size:14px;transition:color .15s;}
+    .btn-rm:hover{color:var(--red);}
+    @media(max-width:900px){.two-col{grid-template-columns:1fr;}.preview-col{position:static;}.grid2{grid-template-columns:1fr;}.grid3{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+  <header class="s-header">
+    <div class="s-logo">
+      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo"></div>
+      <div><div class="s-logo-name">Contratos</div><div class="s-logo-sub">Geração de documentos</div></div>
+    </div>
+    <div class="header-right">
+      <div class="user-pill"><div class="user-dot" id="userAvatar">--</div><span id="userName"></span></div>
+      <a href="../login.html" class="btn-header"><i class="fas fa-home"></i> Portal</a>
+      <button class="btn-header" id="btnSair"><i class="fas fa-right-from-bracket"></i> Sair</button>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="neuro"><i class="fas fa-brain"></i> Contrato Neuropsicologia</button>
+      <button class="tab-btn" data-tab="guia"><i class="fas fa-file-medical"></i> Guia de Encaminhamento</button>
+    </div>
+
+    <!-- ═══ ABA: CONTRATO NEUROPSICOLOGIA ═══ -->
+    <div class="tab-pane active" id="pane-neuro">
+      <div class="two-col">
+        <div>
+          <!-- IMPORTAR AMEI -->
+          <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px;">
+            <div style="background:linear-gradient(135deg,#145A32,#1E8449);padding:14px 18px;color:white;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;" onclick="toggleAmei()">
+              <div>
+                <div style="font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;"><i class="fas fa-bolt"></i> Importar dados do sistema Amei</div>
+                <div style="font-size:12px;opacity:.8;margin-top:2px;">Cole os dados do cadastro e preencha automaticamente</div>
+              </div>
+              <span id="amei-arr" style="font-size:12px;transition:transform .2s;">▼</span>
+            </div>
+            <div id="amei-body" style="display:none;padding:16px;">
+              <textarea id="amei-txt" class="f-input" style="height:130px;resize:vertical;font-family:monospace;font-size:12px;" placeholder="Cole aqui os dados copiados do Amei (Dados gerais, Dados de Contato, Endereço...)"></textarea>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <button class="btn btn-green" onclick="importarAmei()"><i class="fas fa-magic"></i> Preencher automaticamente</button>
+                <button class="btn btn-outline" onclick="document.getElementById('amei-txt').value='';toast('Área limpa')">✕ Limpar</button>
+              </div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:8px;">Os campos identificados ficam em verde. Revise antes de gerar.</div>
+            </div>
+          </div>
+
+          <!-- FORMULÁRIO -->
+          <div class="card">
+            <div class="card-hdr"><i class="fas fa-file-contract" style="color:var(--navy);"></i> Dados do Contrato</div>
+
+            <div class="sec-lbl"><span class="sec-dot"></span>Paciente avaliado</div>
+            <div class="field">
+              <label class="f-label">Nome completo do paciente</label>
+              <input type="text" class="f-input" id="paciente" placeholder="Nome da criança ou adolescente" oninput="atualizar()">
+            </div>
+
+            <div class="sec-lbl" style="margin-top:18px;"><span class="sec-dot" style="background:var(--teal);"></span>Dados do contratante</div>
+            <div class="grid2">
+              <div class="field span2"><label class="f-label">Nome completo</label><input type="text" class="f-input" id="nome" placeholder="Nome completo" oninput="atualizar()"></div>
+              <div class="field"><label class="f-label">Nacionalidade</label><input type="text" class="f-input" id="nac" placeholder="brasileiro(a)" oninput="atualizar()"></div>
+              <div class="field"><label class="f-label">Estado civil</label>
+                <select class="f-select" id="ec" onchange="atualizar()">
+                  <option value="">Selecione...</option>
+                  <option>solteiro(a)</option><option>casado(a)</option><option>divorciado(a)</option><option>viúvo(a)</option><option>união estável</option>
+                </select>
+              </div>
+              <div class="field"><label class="f-label">RG</label><input type="text" class="f-input" id="rg" placeholder="00.000.000-0" oninput="atualizar()"></div>
+              <div class="field"><label class="f-label">Órgão emissor</label><input type="text" class="f-input" id="orgao" placeholder="SSP/SP" oninput="atualizar()"></div>
+              <div class="field span2"><label class="f-label">CPF</label><input type="text" class="f-input" id="cpf" placeholder="000.000.000-00" oninput="atualizar()"></div>
+              <div class="field span2"><label class="f-label">Endereço completo</label><input type="text" class="f-input" id="end" placeholder="Rua, número, bairro, cidade, estado, CEP" oninput="atualizar()"></div>
+            </div>
+
+            <!-- Representante legal -->
+            <div class="tog-wrap" style="margin-top:4px;">
+              <div class="tog-hdr" onclick="toggleRep()">
+                <div class="tog-title"><span class="sec-dot"></span>Representante legal <span class="badge-opt">Opcional — apenas se menor de idade</span></div>
+                <span class="tog-arr" id="rep-arr">▼</span>
+              </div>
+              <div class="tog-body" id="rep-body">
+                <div class="grid2" style="margin-top:4px;">
+                  <div class="field span2"><label class="f-label">Nome completo</label><input type="text" class="f-input" id="rep_nome" placeholder="Nome completo" oninput="atualizar()"></div>
+                  <div class="field"><label class="f-label">Nacionalidade</label><input type="text" class="f-input" id="rep_nac" placeholder="brasileiro(a)" oninput="atualizar()"></div>
+                  <div class="field"><label class="f-label">Estado civil</label>
+                    <select class="f-select" id="rep_ec" onchange="atualizar()"><option value="">Selecione...</option><option>solteiro(a)</option><option>casado(a)</option><option>divorciado(a)</option><option>viúvo(a)</option><option>união estável</option></select>
+                  </div>
+                  <div class="field"><label class="f-label">RG</label><input type="text" class="f-input" id="rep_rg" placeholder="00.000.000-0" oninput="atualizar()"></div>
+                  <div class="field"><label class="f-label">Órgão emissor</label><input type="text" class="f-input" id="rep_orgao" placeholder="SSP/SP" oninput="atualizar()"></div>
+                  <div class="field"><label class="f-label">CPF</label><input type="text" class="f-input" id="rep_cpf" placeholder="000.000.000-00" oninput="atualizar()"></div>
+                  <div class="field span2"><label class="f-label">Endereço</label><input type="text" class="f-input" id="rep_end" placeholder="Rua, número, bairro, cidade, estado, CEP" oninput="atualizar()"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sec-lbl" style="margin-top:4px;"><span class="sec-dot" style="background:var(--teal);"></span>Data do contrato</div>
+            <div class="grid3">
+              <div class="field"><label class="f-label">Dia</label><input type="text" class="f-input" id="dia" placeholder="13" maxlength="2" oninput="atualizar()"></div>
+              <div class="field"><label class="f-label">Mês</label>
+                <select class="f-select" id="mes" onchange="atualizar()"><option value="">Selecione...</option><option>janeiro</option><option>fevereiro</option><option>março</option><option>abril</option><option>maio</option><option>junho</option><option>julho</option><option>agosto</option><option>setembro</option><option>outubro</option><option>novembro</option><option>dezembro</option></select>
+              </div>
+              <div class="field"><label class="f-label">Ano</label><input type="text" class="f-input" id="ano" placeholder="2026" maxlength="4" oninput="atualizar()"></div>
+            </div>
+
+            <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+            <div class="prog-lbl" id="prog-lbl">Preencha os campos acima</div>
+
+            <div class="btn-row">
+              <button class="btn btn-outline" onclick="limpar()"><i class="fas fa-rotate-left"></i> Limpar</button>
+              <button class="btn btn-outline" onclick="copiarNeuro()"><i class="fas fa-copy"></i> Copiar</button>
+              <button class="btn btn-red" style="flex:2" onclick="imprimirNeuro()"><i class="fas fa-print"></i> Gerar e Imprimir Contrato</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVIEW -->
+        <div class="preview-col">
+          <div class="preview-card">
+            <div class="prev-hdr">
+              <div class="prev-ttl"><i class="fas fa-eye"></i> Pré-visualização</div>
+              <div class="prev-status" id="neuro-status">Aguardando</div>
+            </div>
+            <div class="prev-body"><div class="prev-text" id="prev-neuro"></div></div>
+            <div class="prev-acts">
+              <button class="btn btn-outline" onclick="copiarNeuro()" style="flex:1;height:36px;font-size:12px;"><i class="fas fa-copy"></i> Copiar</button>
+              <button class="btn btn-red" onclick="imprimirNeuro()" style="flex:2;height:36px;font-size:12px;"><i class="fas fa-print"></i> Gerar e Imprimir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ABA: GUIA DE ENCAMINHAMENTO ═══ -->
+    <div class="tab-pane" id="pane-guia">
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <div class="card-hdr"><i class="fas fa-file-medical" style="color:var(--teal);"></i> Guia de Encaminhamento Manual</div>
+
+            <div class="sec-lbl"><span class="sec-dot"></span>Dados do paciente</div>
+            <div class="grid2">
+              <div class="field span2"><label class="f-label">Nome completo do paciente</label><input type="text" class="f-input" id="g-paciente" placeholder="Nome completo" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">CPF</label><input type="text" class="f-input" id="g-cpf" placeholder="000.000.000-00" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">Data de nascimento</label><input type="date" class="f-input" id="g-nasc" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">Telefone</label><input type="text" class="f-input" id="g-tel" placeholder="(11) 99999-9999" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">Nº Proposta / Prontuário</label><input type="text" class="f-input" id="g-proposta" placeholder="Ex: 135B6898" oninput="atualizarGuia()"></div>
+            </div>
+
+            <div class="sec-lbl" style="margin-top:4px;"><span class="sec-dot" style="background:var(--teal);"></span>Solicitante</div>
+            <div class="grid2">
+              <div class="field"><label class="f-label">Nome do solicitante</label><input type="text" class="f-input" id="g-solic" placeholder="Nome do médico/profissional" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">CRM / CRP / Registro</label><input type="text" class="f-input" id="g-crm" placeholder="Ex: CRM 108670" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">Parceria / Convênio</label><input type="text" class="f-input" id="g-parceria" placeholder="Ex: Cartão de Todos" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">Proposta garantida por</label><input type="text" class="f-input" id="g-garantida" placeholder="Ex: Raphael Morais da Silva" oninput="atualizarGuia()"></div>
+            </div>
+
+            <div class="sec-lbl" style="margin-top:4px;"><span class="sec-dot" style="background:var(--amber);"></span>Procedimentos</div>
+            <div id="procs-container"></div>
+            <button class="btn-add-proc" onclick="addProc()"><i class="fas fa-plus"></i> Adicionar procedimento</button>
+
+            <div class="sec-lbl" style="margin-top:18px;"><span class="sec-dot" style="background:var(--green);"></span>Clínica executante</div>
+            <div class="grid2">
+              <div class="field span2"><label class="f-label">Razão social</label><input type="text" class="f-input" id="g-exec-nome" placeholder="Ex: Instituto Hermes Pardini S/A" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">CNPJ</label><input type="text" class="f-input" id="g-exec-cnpj" placeholder="00.000.000/0000-00" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">Telefone</label><input type="text" class="f-input" id="g-exec-tel" placeholder="(00) 0000-0000" oninput="atualizarGuia()"></div>
+              <div class="field span2"><label class="f-label">Endereço</label><input type="text" class="f-input" id="g-exec-end" placeholder="Rua, número, cidade" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">E-mail</label><input type="text" class="f-input" id="g-exec-email" placeholder="laboratorio@email.com" oninput="atualizarGuia()"></div>
+            </div>
+
+            <div class="sec-lbl" style="margin-top:4px;"><span class="sec-dot" style="background:var(--green);"></span>Pagamento</div>
+            <div class="grid2">
+              <div class="field"><label class="f-label">Data do pagamento</label><input type="date" class="f-input" id="g-data-pag" oninput="atualizarGuia()"></div>
+              <div class="field"><label class="f-label">Forma de pagamento</label>
+                <select class="f-select" id="g-forma" onchange="atualizarGuia()">
+                  <option value="">Selecione...</option>
+                  <option>Dinheiro</option><option>PIX</option><option>Cartão de Débito</option><option>Cartão de Crédito</option><option>Convênio</option>
+                </select>
+              </div>
+              <div class="field"><label class="f-label">Status da clínica</label>
+                <select class="f-select" id="g-status" onchange="atualizarGuia()">
+                  <option value="">Selecione...</option>
+                  <option>Pago</option><option>Pendente</option><option>Gratuito</option>
+                </select>
+              </div>
+              <div class="field"><label class="f-label">Valor a pagar no fornecedor</label><input type="text" class="f-input" id="g-valor" placeholder="R$ 0,00" oninput="atualizarGuia()"></div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn btn-outline" onclick="limparGuia()"><i class="fas fa-rotate-left"></i> Limpar</button>
+              <button class="btn btn-primary" style="flex:2" onclick="imprimirGuia()"><i class="fas fa-print"></i> Imprimir Guia</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVIEW GUIA -->
+        <div class="preview-col">
+          <div class="preview-card">
+            <div class="prev-hdr">
+              <div class="prev-ttl"><i class="fas fa-eye"></i> Pré-visualização</div>
+              <div class="prev-status" id="guia-status">Aguardando</div>
+            </div>
+            <div class="prev-body" style="max-height:600px;"><div id="prev-guia" style="font-size:11px;line-height:1.6;color:var(--gray-800);"></div></div>
+            <div class="prev-acts">
+              <button class="btn btn-primary" onclick="imprimirGuia()" style="flex:1;height:36px;font-size:12px;"><i class="fas fa-print"></i> Imprimir Guia</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+    import { getDatabase, ref, push } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js';
+
+    const app  = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getDatabase(app);
+
+    function iniciais(u){const n=u.displayName||u.email||'';return n.split(/[\s@]/).filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'??';}
+
+    onAuthStateChanged(auth, user => {
+      if (!user) { window.location.replace('login.html'); return; }
+      document.getElementById('userAvatar').textContent = iniciais(user);
+      document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
+    });
+    document.getElementById('btnSair').addEventListener('click', () =>
+      signOut(auth).then(() => window.location.replace('login.html'))
+    );
+
+    // Salvar contrato no Firebase para dashboard
+    window._salvarContrato = async function(dados) {
+      try {
+        await push(ref(db, 'contratos'), {
+          ...dados,
+          criadoEm: new Date().toISOString(),
+          usuario: document.getElementById('userName').textContent || '—'
+        });
+      } catch(e) { console.warn('Erro ao salvar contrato:', e); }
+    };
+  </script>
+
+  <script>
+    // ═══════════════════════════════════════
+    // ABAS
+    // ═══════════════════════════════════════
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('pane-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ═══════════════════════════════════════
+    // TOAST
+    // ═══════════════════════════════════════
+    function toast(msg, tipo, ms=2800) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (tipo === 'success' ? ' success' : '');
+      setTimeout(() => el.classList.remove('show'), ms);
+    }
+
+    // ═══════════════════════════════════════
+    // CONTRATO NEUROPSICOLOGIA
+    // ═══════════════════════════════════════
+    const OBRIG = ['paciente','nome','nac','ec','rg','orgao','cpf','end','dia','mes','ano'];
+    const AMEI_LABELS = ['Tipo de Paciente','Prioridade','Origem','CPF','Nome','Sobrenome','Nome Social','Sexo','Gênero','Data de Nascimento','RG','Nacionalidade','Naturalidade','Etnia','Cartão Nacional de Saúde (CNS)','Profissão','Estado Civil','Nome Completo da Mãe','Restrições Tratamento Médico','Dados gerais','Dados de Contato','E-mail','Código DDI','Contato principal','Contato secundário','Endereço','Residência fixa no Brasil','Endereço provisório','Não possui','CEP','Número','Complemento','Cidade','Bairro','Estado'];
+    const AMEI_SET = new Set(AMEI_LABELS.map(l=>l.toLowerCase().trim()));
+
+    function g(id){return(document.getElementById(id)?.value||'').trim();}
+    function f(v,ph){return v||ph;}
+    function H(val,ph){return val?val:`<span class="blank">${ph}</span>`;}
+
+    function toggleAmei(){
+      const b=document.getElementById('amei-body');
+      const a=document.getElementById('amei-arr');
+      const open = b.style.display==='none';
+      b.style.display = open?'block':'none';
+      a.style.transform = open?'rotate(180deg)':'rotate(0deg)';
+    }
+    function toggleRep(){
+      const b=document.getElementById('rep-body');
+      const a=document.getElementById('rep-arr');
+      const o=b.classList.toggle('open');
+      a.classList.toggle('open',o);
+    }
+
+    function parseAmei(txt){
+      const lines=txt.split('\n').map(l=>l.trim()).filter(l=>l);
+      const m={};
+      for(let i=0;i<lines.length;i++){
+        const lk=lines[i].toLowerCase().trim();
+        if(AMEI_SET.has(lk)){const nx=lines[i+1];if(nx&&!AMEI_SET.has(nx.toLowerCase().trim())){m[lk]=nx.trim();i++;}else m[lk]='';}
+      }
+      return m;
+    }
+
+    function importarAmei(){
+      const txt=document.getElementById('amei-txt').value;
+      if(!txt.trim()){toast('Cole os dados antes de importar');return;}
+      const d=parseAmei(txt);
+      const EC={'solteiro':'solteiro(a)','solteira':'solteiro(a)','casado':'casado(a)','casada':'casado(a)','divorciado':'divorciado(a)','divorciada':'divorciado(a)','viúvo':'viúvo(a)','viúva':'viúvo(a)','união estável':'união estável'};
+      const nome=[d['nome']||'',d['sobrenome']||''].filter(Boolean).join(' ');
+      const rua=d['endereço']||'',num=d['número']||'',comp=d['complemento']||'',bairro=d['bairro']||'',cidade=d['cidade']||'',estado=d['estado']||'',cep=d['cep']||'';
+      let endM='';
+      if(rua)endM+=rua;if(num)endM+=', '+num;if(comp)endM+=', '+comp;
+      if(bairro)endM+=' - '+bairro;if(cidade)endM+=', '+cidade;if(estado)endM+=' - '+estado;if(cep)endM+=', CEP '+cep;
+      let n=0;
+      function set(id,val){const el=document.getElementById(id);if(!el||!val)return;el.value=val;el.classList.add('ok');n++;}
+      function setEc(id,raw){const el=document.getElementById(id);if(!el||!raw)return;const v=EC[raw.toLowerCase()]||raw;for(const o of el.options){if(o.value.toLowerCase()===v.toLowerCase()){el.value=o.value;n++;break;}}}
+      set('nome',nome);set('cpf',d['cpf']||'');set('rg',d['rg']||'');set('nac',d['nacionalidade']||'');setEc('ec',d['estado civil']||'');set('end',endM.replace(/^,\s*/,''));
+      const mae=d['nome completo da mãe']||'';
+      if(mae){document.getElementById('rep-body').classList.add('open');document.getElementById('rep-arr').classList.add('open');set('rep_nome',mae);}
+      atualizar();
+      toast('✓ '+n+' campo(s) preenchido(s)','success');
+    }
+
+    function gerarHTML(print){
+      const B=t=>print?`<strong>${t}</strong>`:t;
+      const nome=g('nome'),nac=g('nac'),ec=g('ec'),rg=g('rg'),orgao=g('orgao'),cpf=g('cpf'),end=g('end');
+      const paciente=g('paciente'),dia=g('dia'),mes=g('mes'),ano=g('ano'),repNome=g('rep_nome');
+      const ct=`${print?nome:H(nome,'_____________________')}, ${print?nac:H(nac,'(nacionalidade)')}, ${print?ec:H(ec,'(estado civil)')}, portador(a) da cédula de identidade RG nº ${print?rg:H(rg,'_______________')}, emitida pelo órgão ${print?orgao:H(orgao,'_____')}, inscrito(a) no CPF/MF sob o nº ${print?cpf:H(cpf,'_________________')}, residente e domiciliado(a) na ${print?end:H(end,'_______________ (rua, número, bairro, cidade, estado, CEP)')}, doravante denominado(a) ${B('CONTRATANTE')}, e ambos conjuntamente ${B('PARTES')}.`;
+      const rep=repNome?`Quando o paciente for menor de idade, o(a) CONTRATANTE neste ato é representado(a) pelo(a) responsável legal: ${repNome}, ${f(g('rep_nac'),'(nacionalidade)')}, ${f(g('rep_ec'),'(estado civil)')}, portador(a) da cédula de identidade nº ${f(g('rep_rg'),'_____________')}, emitida pelo órgão ${f(g('rep_orgao'),'_____')}, inscrito(a) no CPF/MF sob o nº ${f(g('rep_cpf'),'___________________')}, residente e domiciliado(a) na ${f(g('rep_end'),'_______________________________________________ (rua, número, bairro, cidade, estado, CEP)')}.`:`Quando o paciente for menor de idade, o(a) CONTRATANTE neste ato é representado(a) pelo(a) responsável legal: _______________________________________, (nacionalidade), (estado civil), portador(a) da cédula de identidade nº _____________, emitida pelo órgão _______, inscrito(a) no CPF/MF sob o nº _____________________, residente e domiciliado(a) na _______________________________________________ (rua, número, bairro, cidade, estado, CEP).`;
+
+      if(!print){
+        return `${B('CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE AVALIAÇÃO NEUROPSICOLÓGICA INFANTIL')}\n\n\nClínica Amor Saúde Pirituba, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${B('25.154.224/0001-89')}, com sede no endereço Av. Dr. Felipe Pinel, 367 - Pirituba, São Paulo - SP, CEP 02939-000, tendo como profissional responsável pela execução dos serviços a Dra. ${B('Lauriana Garcia Pinto')}, psicóloga e neuropsicóloga (CRP 06/144291), portadora da cédula de identidade RG: MG 18.647.115 e CPF: 119.494.756-54, doravante denominada ${B('CONTRATADA')}, e\n\n${ct}\n\n${rep}\n\nPelo presente instrumento particular de contrato de prestação de serviço, fica acordado o que segue, mediante as cláusulas e condições que mutuamente as partes, ${B('CONTRATANTE')} e ${B('CONTRATADA')}, aceitam e outorgam entre si, a saber:\n\n\n${B('CLÁUSULA PRIMEIRA:')}\nO presente contrato tem como função regular a prestação de serviço de avaliação neuropsicológica individual ao(à) cliente ${H(paciente,'______________________________________')}.\n\n${B('CLÁUSULA SEGUNDA:')}\nFica definido que a Avaliação Neuropsicológica é um serviço oferecido pela Neuropsicologia, sendo definida como um processo técnico e científico em que se obtêm informações a partir de instrumentos, técnicas e métodos específicos, nas quais são realizadas interpretações das informações obtidas, sempre relacionando-as com o Sistema Nervoso Central. A Avaliação Neuropsicológica apresenta seis objetivos principais: pesquisa, resposta a solicitação forense, diagnóstico, cuidado com o paciente, identificação das necessidades e eficácia do tratamento. A importância da Avaliação Neuropsicológica reside no fato de se procurar identificar precocemente a presença de alguma disfunção, a fim de reabilitar a criança ou adolescente para que tenha qualidade de vida e inclusão social adequada.\n\n${B('CLÁUSULA TERCEIRA:')}\nFica estabelecido o mínimo de uma sessão por semana, com tempo de atendimento de 50 (cinquenta) minutos e número total de sessões variando entre 04 e 08, conforme necessário. As sessões serão distribuídas na seguinte ordem: a primeira sessão inicial de entrevista com os pais/responsável ou paciente caso maior de 18 anos para preenchimento da anamnese, demais consultas com o paciente para aplicação de testes padronizados, e a última consulta para devolutiva do Laudo Psicológico de Avaliação Neuropsicológica com os pais/paciente.\n\n   3.1 As sessões serão realizadas presencialmente no endereço ${B('Av. Dr. Felipe Pinel, 367 - Pirituba, São Paulo - SP, CEP 02939-000.')}\n\n${B('CLÁUSULA QUARTA:')}\nOs honorários a serem pagos à ${B('CLÍNICA AMOR SAÚDE PIRITUBA')} ficam estabelecidos no valor de ${B('R$ 1.800,00 (mil e oitocentos reais)')} no pagamento por Cartão de Todos ou ${B('R$ 2.300,00 (dois mil e trezentos reais)')} no pagamento Particular, por Avaliação Neuropsicológica, independentemente da quantidade de sessões, podendo ser pagos das seguintes formas: pagamento à vista por cartão de débito, transferência, PIX ou dinheiro; ou pagamento por cartão de crédito em até ${B('4 a 5 vezes com/sem juros.')}\n\n${B('CLÁUSULA QUINTA:')}\nO trabalho, quando desenvolvido com menor de idade, será realizado mediante consentimento dos pais ou representante legal, sendo comunicado a estes, através de relatório, apenas o estritamente essencial para a promoção de medidas em benefício da saúde e bem-estar do cliente, conforme normas previstas no Art. 8° e Art. 6° do Código de Ética Profissional vigente.\n\n   5.1 É proibida a gravação ou filmagem das sessões presenciais sem autorização expressa e escrita das partes.\n\n${B('CLÁUSULA SEXTA – Das obrigações do(a) CONTRATANTE:')}\n   I.   Garantir a presença do cliente nos dias e horários acordados e confirmados;\n   II.  Disponibilizar ao profissional todas as informações necessárias à execução do trabalho;\n   III. Disponibilizar o contato da escola e demais profissionais envolvidos;\n   IV.  Efetivar o pagamento nos valores acordados no ato da contratação;\n   V.   Na impossibilidade de comparecer à sessão, desmarcar com antecedência mínima de 24 horas. Ausências sem aviso não serão reagendadas.\n\n   6.1 O atraso superior a 20 minutos desobrigará a CONTRATADA de aguardar o CONTRATANTE, sendo a sessão considerada como realizada.\n\n${B('CLÁUSULA SÉTIMA:')}\nO não comparecimento a 02 (duas) sessões consecutivas, sem justificativa, desobrigará a CONTRATADA a manter o horário previamente acordado, ficando o cliente sujeito a outros horários, quando disponíveis.\n\n${B('CLÁUSULA OITAVA – Das obrigações da CONTRATADA:')}\n   I.   Marcar na agenda, previamente, as sessões e avisar aos responsáveis (CONTRATANTE) através da secretária;\n   II.  Confirmar as sessões com o CONTRATANTE, com um dia de antecedência;\n   III. Prestar serviço neuropsicológico de qualidade, em condições de trabalho dignas e apropriadas;\n   IV.  Realizar encaminhamentos a outros profissionais quando necessário;\n   V.   Cumprir com os dias e horários de sessão acordados;\n   VI.  Prestar esclarecimentos sobre o trabalho, sempre que solicitado;\n   VII. Zelar pelo bem-estar do cliente durante todo o processo de avaliação;\n   VIII.Manter completo e absoluto sigilo sobre as informações coletadas.\n\n${B('CLÁUSULA NONA:')}\nO Laudo Psicológico de Avaliação Neuropsicológica será entregue aos responsáveis no máximo após 15 (quinze) dias úteis da última sessão realizada com a criança ou adolescente.\n\n${B('CLÁUSULA DÉCIMA:')}\nCaso o(a) CONTRATANTE desista do processo da Avaliação Neuropsicológica, o valor cobrado não será ressarcido.\n\n${B('CLÁUSULA DÉCIMA PRIMEIRA:')}\nO presente contrato dar-se-á por rescindido automaticamente, sem interpelação das partes, quando solvidas todas as obrigações previstas nas cláusulas descritas neste instrumento.\n\n\n                    São Paulo, ${H(dia,'___')} de ${H(mes,'_________________')} de ${H(ano,'_____')}\n\n\n\n${B('CONTRATANTE(S):')}  _______________________________________________________________\n\n\n\n${B('CONTRATADA')} (Clínica Amor Saúde Pirituba): _______________________________________________\n\n\n\n${B('Profissional Responsável')} (Dra. Lauriana Garcia Pinto – CRP 06/144291): ___________________`;
+      }
+
+      // VERSÃO IMPRESSÃO
+      const P=(txt,cls='')=>`<p class="${cls}">${txt}</p>`;
+      const CL=(titulo,corpo,sub='')=>`<p class="clausula-titulo"><strong>${titulo}</strong></p><p class="clausula-texto">${corpo}</p>${sub}`;
+      return `${P(`Clínica Amor Saúde Pirituba, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº <strong>25.154.224/0001-89</strong>, com sede no endereço Av. Dr. Felipe Pinel, 367 - Pirituba, São Paulo - SP, CEP 02939-000, tendo como profissional responsável pela execução dos serviços a Dra. <strong>Lauriana Garcia Pinto</strong>, psicóloga e neuropsicóloga (CRP 06/144291), portadora da cédula de identidade RG: MG 18.647.115 e CPF: 119.494.756-54, doravante denominada <strong>CONTRATADA</strong>, e`)}${P(ct)}${P(rep)}${P(`Pelo presente instrumento particular de contrato de prestação de serviço, fica acordado o que segue, mediante as cláusulas e condições que mutuamente as partes, <strong>CONTRATANTE</strong> e <strong>CONTRATADA</strong>, aceitam e outorgam entre si, a saber:`)}${CL('CLÁUSULA PRIMEIRA:',`O presente contrato tem como função regular a prestação de serviço de avaliação neuropsicológica individual ao(à) cliente <strong>${paciente||'______________________________________'}</strong>.`)}${CL('CLÁUSULA SEGUNDA:','Fica definido que a Avaliação Neuropsicológica é um serviço oferecido pela Neuropsicologia, sendo definida como um processo técnico e científico em que se obtêm informações a partir de instrumentos, técnicas e métodos específicos, nas quais são realizadas interpretações das informações obtidas, sempre relacionando-as com o Sistema Nervoso Central. A Avaliação Neuropsicológica apresenta seis objetivos principais: pesquisa, resposta a solicitação forense, diagnóstico, cuidado com o paciente, identificação das necessidades e eficácia do tratamento. A importância da Avaliação Neuropsicológica reside no fato de se procurar identificar precocemente a presença de alguma disfunção, a fim de reabilitar a criança ou adolescente para que tenha qualidade de vida e inclusão social adequada.')}${CL('CLÁUSULA TERCEIRA:','Fica estabelecido o mínimo de uma sessão por semana, com tempo de atendimento de 50 (cinquenta) minutos e número total de sessões variando entre 04 e 08, conforme necessário. As sessões serão distribuídas na seguinte ordem: a primeira sessão inicial de entrevista com os pais/responsável ou paciente caso maior de 18 anos para preenchimento da anamnese, demais consultas com o paciente para aplicação de testes padronizados, e a última consulta para devolutiva do Laudo Psicológico de Avaliação Neuropsicológica com os pais/paciente.',`<p class="sub-clausula">3.1 As sessões serão realizadas presencialmente no endereço <strong>Av. Dr. Felipe Pinel, 367 - Pirituba, São Paulo - SP, CEP 02939-000.</strong></p>`)}${CL('CLÁUSULA QUARTA:',`Os honorários a serem pagos à <strong>CLÍNICA AMOR SAÚDE PIRITUBA</strong> ficam estabelecidos no valor de <strong>R$ 1.800,00 (mil e oitocentos reais)</strong> no pagamento por Cartão de Todos ou <strong>R$ 2.300,00 (dois mil e trezentos reais)</strong> no pagamento Particular, por Avaliação Neuropsicológica, independentemente da quantidade de sessões, podendo ser pagos das seguintes formas: pagamento à vista por cartão de débito, transferência, PIX ou dinheiro; ou pagamento por cartão de crédito em até <strong>4 a 5 vezes com/sem juros.</strong>`)}${CL('CLÁUSULA QUINTA:','O trabalho, quando desenvolvido com menor de idade, será realizado mediante consentimento dos pais ou representante legal, sendo comunicado a estes, através de relatório, apenas o estritamente essencial para a promoção de medidas em benefício da saúde e bem-estar do cliente, conforme normas previstas no Art. 8° e Art. 6° do Código de Ética Profissional vigente.',`<p class="sub-clausula">5.1 É proibida a gravação ou filmagem das sessões presenciais sem autorização expressa e escrita das partes.</p>`)}
+<p class="clausula-titulo"><strong>CLÁUSULA SEXTA – Das obrigações do(a) CONTRATANTE:</strong></p>
+<p class="inciso"><strong>I.</strong>&nbsp;&nbsp; Garantir a presença do cliente nos dias e horários acordados e confirmados;</p>
+<p class="inciso"><strong>II.</strong>&nbsp;&nbsp; Disponibilizar ao profissional todas as informações necessárias à execução do trabalho;</p>
+<p class="inciso"><strong>III.</strong> Disponibilizar o contato da escola e demais profissionais envolvidos;</p>
+<p class="inciso"><strong>IV.</strong> Efetivar o pagamento nos valores acordados no ato da contratação;</p>
+<p class="inciso"><strong>V.</strong>&nbsp;&nbsp; Na impossibilidade de comparecer à sessão, desmarcar com antecedência mínima de 24 horas. Ausências sem aviso não serão reagendadas.</p>
+<p class="sub-clausula">6.1 O atraso superior a 20 minutos desobrigará a CONTRATADA de aguardar o CONTRATANTE, sendo a sessão considerada como realizada.</p>
+${CL('CLÁUSULA SÉTIMA:','O não comparecimento a 02 (duas) sessões consecutivas, sem justificativa, desobrigará a CONTRATADA a manter o horário previamente acordado, ficando o cliente sujeito a outros horários, quando disponíveis.')}
+<p class="clausula-titulo"><strong>CLÁUSULA OITAVA – Das obrigações da CONTRATADA:</strong></p>
+<p class="inciso"><strong>I.</strong>&nbsp;&nbsp;&nbsp; Marcar na agenda, previamente, as sessões e avisar aos responsáveis (CONTRATANTE) através da secretária;</p>
+<p class="inciso"><strong>II.</strong>&nbsp;&nbsp; Confirmar as sessões com o CONTRATANTE, com um dia de antecedência;</p>
+<p class="inciso"><strong>III.</strong> Prestar serviço neuropsicológico de qualidade, em condições de trabalho dignas e apropriadas;</p>
+<p class="inciso"><strong>IV.</strong> Realizar encaminhamentos a outros profissionais quando necessário;</p>
+<p class="inciso"><strong>V.</strong>&nbsp;&nbsp; Cumprir com os dias e horários de sessão acordados;</p>
+<p class="inciso"><strong>VI.</strong> Prestar esclarecimentos sobre o trabalho, sempre que solicitado;</p>
+<p class="inciso"><strong>VII.</strong> Zelar pelo bem-estar do cliente durante todo o processo de avaliação;</p>
+<p class="inciso"><strong>VIII.</strong>Manter completo e absoluto sigilo sobre as informações coletadas.</p>
+${CL('CLÁUSULA NONA:','O Laudo Psicológico de Avaliação Neuropsicológica será entregue aos responsáveis no máximo após 15 (quinze) dias úteis da última sessão realizada com a criança ou adolescente.')}${CL('CLÁUSULA DÉCIMA:','Caso o(a) CONTRATANTE desista do processo da Avaliação Neuropsicológica, o valor cobrado não será ressarcido.')}${CL('CLÁUSULA DÉCIMA PRIMEIRA:','O presente contrato dar-se-á por rescindido automaticamente, sem interpelação das partes, quando solvidas todas as obrigações previstas nas cláusulas descritas neste instrumento.')}
+<p style="text-align:center;margin-top:18pt;">São Paulo, <strong>${dia||'___'}</strong> de <strong>${mes||'_________________'}</strong> de <strong>${ano||'_____'}</strong></p>
+<div style="margin-top:24pt;">
+  <div style="margin-bottom:20pt;"><div style="border-bottom:1pt solid #000;width:75%;margin-top:20pt;margin-bottom:3pt;"></div><div style="font-size:10pt;"><strong>CONTRATANTE(S)</strong></div></div>
+  <div style="margin-bottom:20pt;"><div style="border-bottom:1pt solid #000;width:75%;margin-top:20pt;margin-bottom:3pt;"></div><div style="font-size:10pt;"><strong>CONTRATADA</strong> — Clínica Amor Saúde Pirituba</div></div>
+  <div style="margin-bottom:20pt;"><div style="border-bottom:1pt solid #000;width:75%;margin-top:20pt;margin-bottom:3pt;"></div><div style="font-size:10pt;"><strong>Profissional Responsável</strong> — Dra. Lauriana Garcia Pinto · CRP 06/144291</div></div>
+</div>`;
+    }
+
+    function atualizar(){
+      const p=OBRIG.filter(id=>g(id)).length,t=OBRIG.length,pct=Math.round((p/t)*100);
+      document.getElementById('prog-fill').style.width=pct+'%';
+      document.getElementById('prog-lbl').textContent=p===t?'✓ Todos os campos preenchidos':`${p} de ${t} campos preenchidos`;
+      const sp=document.getElementById('neuro-status');
+      if(p===t){sp.textContent='Pronto';sp.className='prev-status ok';}
+      else if(p>0){sp.textContent=pct+'% completo';sp.className='prev-status warn';}
+      else{sp.textContent='Aguardando';sp.className='prev-status';}
+      document.getElementById('prev-neuro').innerHTML=gerarHTML(false);
+    }
+
+    function limpar(){
+      ['paciente','nome','nac','rg','orgao','cpf','end','dia','ano','rep_nome','rep_nac','rep_rg','rep_orgao','rep_cpf','rep_end'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('ok');}});
+      ['ec','mes','rep_ec'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+      atualizar();toast('Formulário limpo');
+    }
+
+    function copiarNeuro(){
+      const div=document.createElement('div');div.innerHTML=gerarHTML(false);
+      navigator.clipboard.writeText(div.innerText||div.textContent).then(()=>toast('Texto copiado!','success')).catch(()=>toast('Não foi possível copiar'));
+    }
+
+    async function imprimirNeuro(){
+      const htmlCorpo=gerarHTML(true);
+      const paciente=g('paciente'), nome=g('nome'), dia=g('dia'), mes=g('mes'), ano=g('ano');
+      const win=window.open('','_blank');
+      if(!win){toast('Pop-up bloqueado');return;}
+      const _logoNeuro = sessionStorage.getItem('logoDataUrl') || '';
+      const _logoNeuroHtml = _logoNeuro
+        ? `<img src="${_logoNeuro}" alt="Logo" style="height:50px;width:auto;object-fit:contain;">`
+        : `<div class="cab-icone">♥</div><div><div class="cab-nome">Amor Saúde Pirituba</div><div class="cab-sub">Neuropsicologia Infantil</div></div>`;
+      win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato — Amor Saúde Pirituba</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@page{size:A4 portrait;margin-top:.5cm;margin-bottom:.5cm;margin-left:2.5cm;margin-right:2.25cm;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.0;color:#1a1a2e;background:#fff;}
+.cabecalho{display:flex;align-items:center;justify-content:space-between;padding-bottom:10pt;margin-bottom:14pt;border-bottom:2.5pt solid #C0392B;}
+.cab-logo{display:flex;align-items:center;gap:10pt;}
+.cab-icone{width:36pt;height:36pt;background:linear-gradient(135deg,#C0392B,#922B21);border-radius:8pt;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18pt;font-weight:700;}
+.cab-nome{font-size:13pt;font-weight:700;color:#1A5276;line-height:1.2;}
+.cab-sub{font-size:8pt;color:#9AA0A6;letter-spacing:.04em;text-transform:uppercase;}
+.cab-info{text-align:right;font-size:8pt;color:#5F6368;line-height:1.6;}
+.cab-info strong{color:#1A5276;font-weight:700;}
+.titulo-doc{font-size:14pt;font-weight:700;text-decoration:underline;text-align:center;color:#000;margin-bottom:14pt;line-height:1.2;}
+.corpo{font-size:12pt;line-height:1.0;color:#000;text-align:justify;}
+.corpo p{margin-bottom:6pt;text-align:justify;line-height:1.0;}
+.corpo .clausula-titulo{font-weight:700;margin-top:10pt;margin-bottom:2pt;}
+.corpo .clausula-texto{text-indent:2.25cm;}
+.corpo .sub-clausula{text-indent:2.25cm;}
+.corpo .inciso{margin-left:2.25cm;}
+strong{font-weight:700;}
+.rodape{margin-top:14pt;padding-top:8pt;border-top:1pt solid #E8EAED;font-size:8pt;color:#9AA0A6;text-align:center;line-height:1.4;}
+.rodape strong{color:#C0392B;font-weight:700;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+</style></head><body>
+<div class="cabecalho">
+  <div class="cab-logo">${_logoNeuroHtml}</div>
+  <div class="cab-info"><strong>CNPJ:</strong> 25.154.224/0001-89<br>Av. Dr. Felipe Pinel, 367 - Pirituba, SP<br>CEP 02939-000</div>
+</div>
+<div class="titulo-doc">CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE AVALIAÇÃO NEUROPSICOLÓGICA INFANTIL</div>
+<div class="corpo">${htmlCorpo}</div>
+<div class="rodape"><strong>Amor Saúde Pirituba</strong> · Av. Dr. Felipe Pinel, 367 · Pirituba, São Paulo - SP · CEP 02939-000</div>
+<`+'script>window.onload=()=>{setTimeout(()=>window.print(),400);}<'+`/script>
+</body></html>`);
+      win.document.close();
+      // Salvar no Firebase para o dashboard
+      if(window._salvarContrato) {
+        await window._salvarContrato({ tipo:'neuropsicologia', paciente, contratante: nome, data: `${dia}/${mes}/${ano}`, profissional:'Dra. Lauriana Garcia Pinto' });
+      }
+    }
+
+    atualizar();
+
+    // ═══════════════════════════════════════
+    // GUIA DE ENCAMINHAMENTO
+    // ═══════════════════════════════════════
+    let procs = [{ proc:'', exec:'' }];
+
+    function renderProcs(){
+      const c = document.getElementById('procs-container');
+      c.innerHTML = procs.map((p,i) => `
+        <div class="proc-row">
+          <input type="text" class="f-input" placeholder="Procedimento / Exame" value="${esc(p.proc)}" oninput="procs[${i}].proc=this.value;atualizarGuia()">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" class="f-input" placeholder="Clínica executante" value="${esc(p.exec)}" oninput="procs[${i}].exec=this.value;atualizarGuia()">
+            ${procs.length>1?`<button class="btn-rm" onclick="removeProc(${i})"><i class="fas fa-times"></i></button>`:''}
+          </div>
+        </div>`).join('');
+    }
+
+    function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+    function addProc(){ procs.push({proc:'',exec:''});renderProcs();atualizarGuia(); }
+    function removeProc(i){ procs.splice(i,1);renderProcs();atualizarGuia(); }
+
+    function calcIdade(nasc){
+      if(!nasc)return'';
+      const n=new Date(nasc),h=new Date();
+      let a=h.getFullYear()-n.getFullYear();
+      if(h.getMonth()<n.getMonth()||(h.getMonth()===n.getMonth()&&h.getDate()<n.getDate()))a--;
+      return a+' anos';
+    }
+    function fmtData(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}/${m}/${y}`;}
+
+    function atualizarGuia(){
+      const pac=document.getElementById('g-paciente')?.value?.trim()||'';
+      const sp=document.getElementById('guia-status');
+      if(pac){sp.textContent='Pronto';sp.className='prev-status ok';}
+      else{sp.textContent='Aguardando';sp.className='prev-status';}
+      const now=new Date();
+      const dtHora=`${fmtData(now.toISOString().slice(0,10))} ${now.toTimeString().slice(0,5)}`;
+      const nasc=document.getElementById('g-nasc')?.value||'';
+      const idade=calcIdade(nasc);
+      const procsHtml=procs.filter(p=>p.proc).map(p=>`
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:11px;">
+          <span>${esc(p.proc)}</span>
+          <span style="color:#555;">${esc(p.exec)}</span>
+        </div>`).join('');
+      document.getElementById('prev-guia').innerHTML=`
+        <div style="font-size:10px;color:#555;margin-bottom:6px;text-align:right;">${dtHora}</div>
+        <div style="font-weight:700;font-size:15px;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:8px;">Encaminhamento</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px;">${esc(document.getElementById('g-paciente')?.value||'')}${document.getElementById('g-cpf')?.value?` · CPF: ${esc(document.getElementById('g-cpf').value)}`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;margin-bottom:8px;">
+          <div><span style="color:#888;">Idade:</span> ${idade||'—'} ${nasc?`· ${fmtData(nasc)}`:''}</div>
+          <div><span style="color:#888;">Tel:</span> ${esc(document.getElementById('g-tel')?.value||'—')}</div>
+          <div><span style="color:#888;">Nº Proposta:</span> ${esc(document.getElementById('g-proposta')?.value||'—')}</div>
+          <div><span style="color:#888;">Proposta garantida por:</span> ${esc(document.getElementById('g-garantida')?.value||'—')}</div>
+          <div><span style="color:#888;">Solicitante:</span> ${esc(document.getElementById('g-solic')?.value||'—')} · ${esc(document.getElementById('g-crm')?.value||'')}</div>
+          <div><span style="color:#888;">Parceria:</span> ${esc(document.getElementById('g-parceria')?.value||'—')}</div>
+        </div>
+        <div style="font-weight:700;font-size:12px;margin-bottom:4px;border-bottom:1px solid #e2e8f0;padding-bottom:4px;">Procedimentos</div>
+        ${procsHtml||'<div style="font-size:11px;color:#aaa;padding:4px 0;">Nenhum procedimento adicionado</div>'}
+        ${document.getElementById('g-exec-nome')?.value?`
+        <div style="font-size:11px;margin-top:8px;padding:8px;background:#f8f9fa;border-radius:6px;">
+          <div style="font-weight:700;">${esc(document.getElementById('g-exec-nome').value)}</div>
+          ${document.getElementById('g-exec-cnpj')?.value?`<div>CNPJ: ${esc(document.getElementById('g-exec-cnpj').value)}</div>`:''}
+          ${document.getElementById('g-exec-end')?.value?`<div>${esc(document.getElementById('g-exec-end').value)}</div>`:''}
+          ${document.getElementById('g-exec-tel')?.value?`<div>Tel: ${esc(document.getElementById('g-exec-tel').value)}</div>`:''}
+          ${document.getElementById('g-exec-email')?.value?`<div>E-mail: ${esc(document.getElementById('g-exec-email').value)}</div>`:''}
+        </div>`:''
+        }
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;margin-top:8px;padding-top:8px;border-top:1px solid #e2e8f0;">
+          <div><span style="color:#888;">Data pgto:</span> ${fmtData(document.getElementById('g-data-pag')?.value)||'—'}</div>
+          <div><span style="color:#888;">Forma:</span> ${esc(document.getElementById('g-forma')?.value||'—')}</div>
+          <div><span style="color:#888;">Status:</span> ${esc(document.getElementById('g-status')?.value||'—')}</div>
+          <div><span style="color:#888;">Valor fornecedor:</span> ${esc(document.getElementById('g-valor')?.value||'R$ 0,00')}</div>
+        </div>`;
+    }
+
+    function limparGuia(){
+      ['g-paciente','g-cpf','g-nasc','g-tel','g-proposta','g-solic','g-crm','g-parceria','g-garantida','g-exec-nome','g-exec-cnpj','g-exec-tel','g-exec-end','g-exec-email','g-data-pag','g-valor'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      ['g-forma','g-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+      procs=[{proc:'',exec:''}];renderProcs();atualizarGuia();toast('Formulário limpo');
+    }
+
+    function imprimirGuia(){
+      const pac=document.getElementById('g-paciente')?.value?.trim()||'';
+      if(!pac){toast('Informe o nome do paciente');return;}
+      const now=new Date();
+      const dtHora=`${fmtData(now.toISOString().slice(0,10))} ${now.toTimeString().slice(0,5)}`;
+      const nasc=document.getElementById('g-nasc')?.value||'';
+      const procsRows=procs.filter(p=>p.proc).map(p=>`
+        <tr><td style="padding:6pt 4pt;border-bottom:0.5pt solid #E8EAED;">${esc(p.proc)}</td>
+            <td style="padding:6pt 4pt;border-bottom:0.5pt solid #E8EAED;text-align:right;color:#555;">${esc(p.exec)}</td></tr>`).join('');
+      const _logoGuia = sessionStorage.getItem('logoDataUrl') || '';
+      const _logoGuiaHtml = _logoGuia
+        ? `<img src="${_logoGuia}" alt="Logo" style="height:44pt;width:auto;object-fit:contain;">`
+        : `<div class="logo-icone">&#9829;</div>`;
+      const win=window.open('','_blank');
+      if(!win){toast('Pop-up bloqueado');return;}
+      win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Encaminhamento — ${esc(pac)}</title>
+<style>
+@page{size:A4;margin:1.5cm 1.5cm 1.5cm 1.5cm;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;font-size:10pt;color:#222;background:#fff;}
+.cabecalho{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12pt;padding-bottom:8pt;border-bottom:2pt solid #C0392B;}
+.logo-area{display:flex;gap:8pt;align-items:center;}
+.logo-icone{width:32pt;height:32pt;background:#C0392B;border-radius:6pt;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16pt;font-weight:700;}
+.logo-nome{font-size:11pt;font-weight:700;color:#1A5276;}
+.logo-sub{font-size:7pt;color:#9AA0A6;text-transform:uppercase;letter-spacing:.05em;}
+.cab-info{text-align:right;font-size:7pt;color:#555;line-height:1.6;}
+.titulo{font-size:18pt;font-weight:700;margin-bottom:2pt;}
+.data{font-size:8pt;color:#888;text-align:right;margin-bottom:8pt;}
+.paciente-nome{font-size:13pt;font-weight:700;margin-bottom:8pt;padding-bottom:6pt;border-bottom:1.5pt solid #C0392B;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4pt;margin-bottom:10pt;}
+.info-item{font-size:8pt;line-height:1.5;}
+.info-label{color:#888;font-size:7pt;}
+.section-title{font-size:10pt;font-weight:700;margin:10pt 0 4pt;border-bottom:1pt solid #e2e8f0;padding-bottom:3pt;}
+table{width:100%;border-collapse:collapse;}
+th{background:#f8f9fa;font-size:8pt;font-weight:700;padding:5pt 4pt;text-align:left;border-bottom:1pt solid #e2e8f0;}
+td{font-size:9pt;padding:5pt 4pt;}
+.exec-box{background:#f8f9fa;border-radius:4pt;padding:8pt;margin-top:8pt;font-size:8pt;line-height:1.6;}
+.exec-box strong{font-size:9pt;}
+.pag-grid{display:grid;grid-template-columns:1fr 1fr;gap:4pt;margin-top:10pt;padding-top:8pt;border-top:1pt solid #e2e8f0;font-size:8pt;}
+.pag-label{color:#888;font-size:7pt;display:block;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+</style></head><body>
+<div class="cabecalho">
+  <div class="logo-area">
+    ${_logoGuiaHtml}
+    <div><div class="logo-nome">AmorSaúde SP Pirituba</div><div class="logo-sub">CNPJ: 25.154.224/0001-89</div><div class="logo-sub">Endereço: Avenida Doutor Felipe Pinel, 367 - Pirituba - 02939-000 São Paulo - SP</div><div class="logo-sub">Atendimento: (11) 3976-5149 · E-mail: pirituba.sp@amorsaude.com</div></div>
+  </div>
+</div>
+<div class="data">${dtHora}</div>
+<div class="titulo">Encaminhamento</div>
+<div class="paciente-nome">${esc(pac)}${document.getElementById('g-cpf')?.value?` · CPF: ${esc(document.getElementById('g-cpf').value)}`:''}</div>
+<div class="grid2">
+  <div class="info-item"><span class="info-label">Idade</span><br>${calcIdade(nasc)||'—'}${nasc?` · ${fmtData(nasc)}`:''}</div>
+  <div class="info-item"><span class="info-label">Telefone</span><br>${esc(document.getElementById('g-tel')?.value||'—')}</div>
+  <div class="info-item"><span class="info-label">Nº Proposta</span><br>${esc(document.getElementById('g-proposta')?.value||'—')}</div>
+  <div class="info-item"><span class="info-label">Proposta garantida por</span><br>${esc(document.getElementById('g-garantida')?.value||'—')}</div>
+  <div class="info-item"><span class="info-label">Solicitante Interno - CRM</span><br>${esc(document.getElementById('g-solic')?.value||'—')} · ${esc(document.getElementById('g-crm')?.value||'')}</div>
+  <div class="info-item"><span class="info-label">Parceria</span><br>${esc(document.getElementById('g-parceria')?.value||'—')}</div>
+</div>
+<div class="section-title">Procedimentos</div>
+<table><thead><tr><th>Procedimento</th><th style="text-align:right;">Executante</th></tr></thead><tbody>${procsRows||'<tr><td colspan="2" style="color:#aaa;padding:6pt 4pt;">—</td></tr>'}</tbody></table>
+${document.getElementById('g-exec-nome')?.value?`
+<div class="exec-box">
+  <strong>${esc(document.getElementById('g-exec-nome').value)}</strong>${document.getElementById('g-exec-cnpj')?.value?` &nbsp;CNPJ: ${esc(document.getElementById('g-exec-cnpj').value)}`:''}
+  ${document.getElementById('g-exec-end')?.value?`<br>${esc(document.getElementById('g-exec-end').value)}`:''}
+  ${document.getElementById('g-exec-tel')?.value?`<br>Atendimento: ${esc(document.getElementById('g-exec-tel').value)}`:''}
+  ${document.getElementById('g-exec-email')?.value?`<br>E-mail: ${esc(document.getElementById('g-exec-email').value)}`:''}
+</div>`:''}
+<div class="pag-grid">
+  <div><span class="pag-label">Data(s) do Pagamento:</span>${fmtData(document.getElementById('g-data-pag')?.value)||'—'}</div>
+  <div><span class="pag-label">Forma(s) de Pagamento:</span>${esc(document.getElementById('g-forma')?.value||'—')}</div>
+  <div><span class="pag-label">Status Clínica:</span>${esc(document.getElementById('g-status')?.value||'—')}</div>
+  <div><span class="pag-label">Valor a pagar no fornecedor:</span>${esc(document.getElementById('g-valor')?.value||'R$ 0,00')}</div>
+</div>
+<`+'script>window.onload=()=>{setTimeout(()=>window.print(),400);}<'+`/script>
+</body></html>`);
+      win.document.close();
+    }
+
+    // Init
+    renderProcs();
+    atualizarGuia();
+  </script>
+<span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v1.1 · 14/07/2026</span>
+</body>
+</html>
+
