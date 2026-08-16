@@ -1195,17 +1195,17 @@ window.geminiCompletar = async function(campoId, tipo, ctx) {
   if (ctx.medico) partes.push('Médico autorizador: ' + ctx.medico);
   const contexto = partes.join(' | ');
 
-  const prompt = `Você é um assistente especializado em redigir descrições formais de recibos para uma clínica médica brasileira. Elabore uma descrição profissional, objetiva e em português formal para um recibo de ${tipo}. Máximo 2 frases. Retorne APENAS a descrição, sem explicações ou aspas.
+  const prompt = `Você auxilia o setor financeiro de uma clínica médica a registrar ocorrências de forma clara e objetiva. Reescreva o texto abaixo como uma descrição de recibo de ${tipo}: direta, sem jargão jurídico, com no máximo 2 frases, para que qualquer pessoa do financeiro entenda o que aconteceu e por quê. Retorne APENAS a descrição final, sem explicações ou aspas.
 
-${contexto ? 'Contexto: ' + contexto : ''}
-${textoAtual ? 'Início fornecido pelo usuário: ' + textoAtual : ''}`;
+${contexto ? 'Dados do recibo: ' + contexto : ''}
+Texto original: ${textoAtual || '(não informado)'}`;
 
   try {
     const key = window._geminiKey;
     const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + key, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 120, temperature: 0.3 } })
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 800, temperature: 0.3 } })
     });
     const data = await res.json();
     console.log('[Gemini]', res.status, JSON.stringify(data));
