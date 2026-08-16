@@ -829,13 +829,25 @@
     window._fbSet    = (path, data) => set(ref(db, path), data);
     window._fbRemove = (path)       => remove(ref(db, path));
 
+    function _geminiBar(pct, done) {
+      let b = document.getElementById('_gbar');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = '_gbar';
+        b.style.cssText = 'position:fixed;top:0;left:0;height:3px;width:0;z-index:99999;border-radius:0 2px 2px 0;background:linear-gradient(90deg,#6C63FF,#a78bfa);transition:width .25s ease,opacity .3s ease;pointer-events:none';
+        document.body.appendChild(b);
+      }
+      b.style.opacity = '1';
+      b.style.width = pct + '%';
+      if (done) setTimeout(() => { b.style.opacity = '0'; setTimeout(() => { b.style.width = '0'; b.style.opacity = '1'; }, 350); }, 400);
+    }
+
     window.geminiCompletar = async function(campoId, tipo, ctx) {
       if (!window._geminiKey) { alert('IA não configurada. Verifique a chave Gemini no Firebase.'); return; }
       const campo = document.getElementById(campoId);
       const textoAtual = campo.value.trim();
       const btn = event.target.closest('button');
       const textoOriginal = btn.innerHTML;
-      btn.innerHTML = '⏳ Gerando...';
       btn.disabled = true;
 
       const partes = [];
@@ -848,24 +860,37 @@
 ${contexto ? 'Dados do recibo: ' + contexto : ''}
 Texto original: ${textoAtual || '(não informado)'}`;
 
-      try {
-        const key = window._geminiKey;
-        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + key, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 800, temperature: 0.3 } })
-        });
-        const data = await res.json();
-        console.log('[Gemini]', res.status, JSON.stringify(data));
-        const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (texto) campo.value = texto;
-        else alert('Erro ' + res.status + ': ' + (data.error?.message || 'Tente novamente.'));
-      } catch(e) {
-        alert('Erro ao conectar com a IA. Verifique sua conexão.');
-      } finally {
-        btn.innerHTML = textoOriginal;
-        btn.disabled = false;
+      _geminiBar(10);
+      let prog = 10;
+      const tick = setInterval(() => { prog = Math.min(prog + (88 - prog) * 0.07, 88); _geminiBar(prog); }, 250);
+
+      const MAX = 3;
+      let res, data;
+      for (let t = 1; t <= MAX; t++) {
+        btn.innerHTML = t === 1 ? '⏳ Gerando...' : `⏳ Tentativa ${t}/${MAX}...`;
+        try {
+          res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + window._geminiKey, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 800, temperature: 0.3 } })
+          });
+          data = await res.json();
+          if (res.status === 503 && t < MAX) { await new Promise(r => setTimeout(r, 2000 * t)); continue; }
+          break;
+        } catch(e) {
+          if (t < MAX) { await new Promise(r => setTimeout(r, 2000 * t)); continue; }
+          clearInterval(tick); _geminiBar(100, true);
+          btn.innerHTML = textoOriginal; btn.disabled = false;
+          alert('Erro ao conectar com a IA. Verifique sua conexão.');
+          return;
+        }
       }
+
+      clearInterval(tick); _geminiBar(100, true);
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (texto) campo.value = texto;
+      else alert('Erro ' + res.status + ': ' + (data.error?.message || 'Tente novamente.'));
+      btn.innerHTML = textoOriginal; btn.disabled = false;
     };
 
     onAuthStateChanged(auth, user => {
