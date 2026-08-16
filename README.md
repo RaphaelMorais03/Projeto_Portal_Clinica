@@ -1,17 +1,15 @@
 <div align="center">
 
-  <img src="assets/favicon.png" alt="RCliniHub" width="80" />
+  <img src="assets/favicon.png" alt="Portal Clínica" width="80" />
 
-  # Portal Amor Saúde — Sistema de Gestão Clínica
+  # Portal de Gestão Clínica
 
-  Sistema web para gestão interna de clínicas: caixa, comissões, exames, NPS e orçamentos.
+  Sistema web interno para gestão de clínicas: caixa, comissões, exames, NPS e orçamentos.
 
-  [![Live Demo](https://img.shields.io/badge/🌐%20Demo-Ao%20Vivo-2ea44f?style=for-the-badge)](https://raphaelmorais03.github.io/Projeto_Portal_Clinica/)
   [![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/pt-BR/docs/Web/HTML)
   [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/pt-BR/docs/Web/CSS)
   [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
   [![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
-  [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=github&logoColor=white)](https://pages.github.com/)
 
 </div>
 
@@ -19,9 +17,9 @@
 
 ## Sobre o projeto
 
-O **Portal Amor Saúde** é um sistema de gestão interna desenvolvido para clínicas de saúde. Consolida em uma única plataforma o controle financeiro, agendamento, avaliação de pacientes e gestão de equipe — substituindo planilhas e processos manuais.
+Sistema de gestão interna desenvolvido para clínicas de saúde. Consolida em uma única plataforma o controle financeiro, agendamento, avaliação de pacientes e gestão de equipe — substituindo planilhas e processos manuais.
 
-> Sistema em produção, utilizado diariamente pela equipe da clínica.
+> Sistema de uso interno. O acesso é restrito a usuários autenticados.
 
 ---
 
@@ -83,28 +81,11 @@ Projeto_Portal_Clinica/
 
 ---
 
-## Como rodar localmente
-
-1. Clone o repositório:
-```bash
-git clone https://github.com/RaphaelMorais03/Projeto_Portal_Clinica.git
-cd Projeto_Portal_Clinica
-```
-
-2. Abra com um servidor local — recomendado: extensão **Live Server** no VS Code
-
-3. Acesse `http://localhost:5500`
-
-> **Atenção:** Abrir diretamente via `file://` causa erros de CORS com o Firebase. Use sempre um servidor local.
-
----
-
 ## Segurança
-
-A chave pública do Firebase em `js/firebase-config.js` é intencional — o SDK client-side exige exposição da configuração. A proteção real é feita via:
 
 - **Firebase Security Rules** — leitura/escrita exige autenticação
 - **Firebase App Check** — bloqueia requisições de origens não autorizadas
+- A chave pública do Firebase em `js/firebase-config.js` é intencional — o SDK client-side exige exposição da configuração
 
 ---
 
