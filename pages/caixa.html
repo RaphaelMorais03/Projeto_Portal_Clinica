@@ -1110,6 +1110,20 @@ function _rxExt(v) {
   return c ? pt+' e '+cv(c)+(c===1?' centavo':' centavos') : pt;
 }
 
+function mostrarNotificacao(msg) {
+  let n = document.getElementById('_notif');
+  if (!n) {
+    n = document.createElement('div');
+    n.id = '_notif';
+    n.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 22px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:opacity .3s';
+    document.body.appendChild(n);
+  }
+  n.textContent = msg;
+  n.style.opacity = '1';
+  clearTimeout(n._t);
+  n._t = setTimeout(() => { n.style.opacity = '0'; }, 3000);
+}
+
 function _rxGet(id){ return (document.getElementById(id) ? document.getElementById(id).value : '').trim(); }
 function _rxPM(v){ return parseFloat((v||'0').replace(/\./g,'').replace(',','.')) || 0; }
 function _rxFM(n){ return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -1188,16 +1202,9 @@ ${textoAtual ? 'Início fornecido pelo usuário: ' + textoAtual : ''}`;
 
   try {
     const key = window._geminiKey;
-    const isApiKey = key.startsWith('AIza');
-    const url = isApiKey
-      ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + key
-      : 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-    const headers = { 'Content-Type': 'application/json' };
-    if (!isApiKey) headers['Authorization'] = 'Bearer ' + key;
-    console.log('[Gemini] tipo de chave:', isApiKey ? 'API Key (AIza)' : 'Token/Outro (' + key.substring(0,6) + '...)');
-    const res = await fetch(url, {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 120, temperature: 0.3 } })
     });
     const data = await res.json();

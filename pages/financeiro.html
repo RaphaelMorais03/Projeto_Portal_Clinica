@@ -850,13 +850,11 @@ ${textoAtual ? 'Início fornecido pelo usuário: ' + textoAtual : ''}`;
 
       try {
         const key = window._geminiKey;
-        const isApiKey = key.startsWith('AIza');
-        const url = isApiKey
-          ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + key
-          : 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-        const headers = { 'Content-Type': 'application/json' };
-        if (!isApiKey) headers['Authorization'] = 'Bearer ' + key;
-        const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 120, temperature: 0.3 } }) });
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 120, temperature: 0.3 } })
+        });
         const data = await res.json();
         console.log('[Gemini]', res.status, JSON.stringify(data));
         const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
