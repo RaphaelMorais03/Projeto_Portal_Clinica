@@ -198,7 +198,7 @@
             <div style="grid-column:1/-1;"><label class="f-label">Nome do paciente</label><input class="f-input" id="rss-nome" type="text" placeholder="Nome completo do paciente"></div>
             <div><label class="f-label">CPF</label><input class="f-input" id="rss-cpf" type="text" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14"></div>
             <div><label class="f-label">Valor (R$)</label><input class="f-input" id="rss-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
-            <div style="grid-column:1/-1;"><label class="f-label">Motivo / Descrição detalhada</label><textarea class="f-input" id="rss-motivo" rows="3" placeholder="Descreva o motivo do ressarcimento..." style="resize:vertical;"></textarea></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Motivo / Descrição detalhada</label><textarea class="f-input" id="rss-motivo" rows="3" placeholder="Descreva o motivo do ressarcimento..." style="resize:vertical;"></textarea><button type="button" onclick="geminiCompletar('rss-motivo','ressarcimento',{nome:document.getElementById('rss-nome').value,valor:document.getElementById('rss-valor').value})" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a73e8,#7c3aed);color:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✨ Completar com IA</button></div>
           </div>
           <button onclick="imprimirRessarc()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#C62828;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Ressarcimento</button>
         </div>
@@ -220,7 +220,7 @@
             <div style="grid-column:1/-1;"><label class="f-label">Nome do paciente</label><input class="f-input" id="es-paciente" type="text" placeholder="Nome completo do paciente"></div>
             <div><label class="f-label">CPF</label><input class="f-input" id="es-cpf" type="text" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14"></div>
             <div><label class="f-label">Valor a transferir (R$)</label><input class="f-input" id="es-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
-            <div style="grid-column:1/-1;"><label class="f-label">Descrição / Motivo</label><textarea class="f-input" id="es-obs" rows="3" placeholder="Ex: recibo de erro para liberar mapa..." style="resize:vertical;"></textarea></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Descrição / Motivo</label><textarea class="f-input" id="es-obs" rows="3" placeholder="Ex: recibo de erro para liberar mapa..." style="resize:vertical;"></textarea><button type="button" onclick="geminiCompletar('es-obs','erro de sistema',{nome:document.getElementById('es-paciente').value,valor:document.getElementById('es-valor').value})" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a73e8,#7c3aed);color:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✨ Completar com IA</button></div>
           </div>
           <button onclick="imprimirErroSistema()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#b45309;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Erro de Sistema</button>
         </div>
@@ -244,7 +244,7 @@
             <div><label class="f-label">Valor bonificado (R$)</label><input class="f-input" id="bon-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
             <div><label class="f-label">Profissional / Médico autorizador</label><input class="f-input" id="bon-medico" type="text" placeholder="Nome do médico responsável"></div>
             <div><label class="f-label">Liderança autorizadora</label><input class="f-input" id="bon-lider" type="text" placeholder="Nome da liderança"></div>
-            <div style="grid-column:1/-1;"><label class="f-label">Descrição do problema / erro</label><textarea class="f-input" id="bon-motivo" rows="3" placeholder="Descreva o problema que gerou a necessidade de bonificação..." style="resize:vertical;"></textarea></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Descrição do problema / erro</label><textarea class="f-input" id="bon-motivo" rows="3" placeholder="Descreva o problema que gerou a necessidade de bonificação..." style="resize:vertical;"></textarea><button type="button" onclick="geminiCompletar('bon-motivo','bonificação',{nome:document.getElementById('bon-nome').value,valor:document.getElementById('bon-valor').value,medico:document.getElementById('bon-medico').value})" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a73e8,#7c3aed);color:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✨ Completar com IA</button></div>
           </div>
           <button onclick="imprimirBonificacao()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#15803d;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Bonificação</button>
         </div>
@@ -1062,6 +1062,11 @@
         if (snap.val()) window._planilhaNfUrl = snap.val();
       }).catch(()=>{});
 
+      // Chave Gemini para IA de descrições
+      get(ref(_db, 'admin/config/geminiKey')).then(snap => {
+        if (snap.val()) window._geminiKey = snap.val();
+      }).catch(()=>{});
+
       // Dados de caixa em tempo real — separado por usuário (user.uid / data)
       _on(ref(_db, `operacao/${user.uid}/caixa/${window.TK_FB}`), snap => {
         window.caixa = snap.val() || {fundo:0, entradas:0, saidas:0, sobra:0};
@@ -1160,6 +1165,44 @@ function _rxPrint(html){
   w.document.close();
   return true;
 }
+
+window.geminiCompletar = async function(campoId, tipo, ctx) {
+  if (!window._geminiKey) { alert('IA não configurada. Verifique a chave Gemini no Firebase.'); return; }
+  const campo = document.getElementById(campoId);
+  const textoAtual = campo.value.trim();
+  const btn = event.target.closest('button');
+  const textoOriginal = btn.innerHTML;
+  btn.innerHTML = '⏳ Gerando...';
+  btn.disabled = true;
+
+  const partes = [];
+  if (ctx.nome)   partes.push('Paciente: ' + ctx.nome);
+  if (ctx.valor)  partes.push('Valor: R$ ' + ctx.valor);
+  if (ctx.medico) partes.push('Médico autorizador: ' + ctx.medico);
+  const contexto = partes.join(' | ');
+
+  const prompt = `Você é um assistente especializado em redigir descrições formais de recibos para uma clínica médica brasileira. Elabore uma descrição profissional, objetiva e em português formal para um recibo de ${tipo}. Máximo 2 frases. Retorne APENAS a descrição, sem explicações ou aspas.
+
+${contexto ? 'Contexto: ' + contexto : ''}
+${textoAtual ? 'Início fornecido pelo usuário: ' + textoAtual : ''}`;
+
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + window._geminiKey, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 120, temperature: 0.3 } })
+    });
+    const data = await res.json();
+    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (texto) campo.value = texto;
+    else alert('Não foi possível gerar a descrição. Tente novamente.');
+  } catch(e) {
+    alert('Erro ao conectar com a IA. Verifique sua conexão.');
+  } finally {
+    btn.innerHTML = textoOriginal;
+    btn.disabled = false;
+  }
+};
 
 window.imprimirRessarc = function() {
   var nome   = _rxGet('rss-nome');
