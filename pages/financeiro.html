@@ -849,15 +849,19 @@ ${contexto ? 'Contexto: ' + contexto : ''}
 ${textoAtual ? 'Início fornecido pelo usuário: ' + textoAtual : ''}`;
 
       try {
-        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + window._geminiKey, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 120, temperature: 0.3 } })
-        });
+        const key = window._geminiKey;
+        const isApiKey = key.startsWith('AIza');
+        const url = isApiKey
+          ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + key
+          : 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        const headers = { 'Content-Type': 'application/json' };
+        if (!isApiKey) headers['Authorization'] = 'Bearer ' + key;
+        const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 120, temperature: 0.3 } }) });
         const data = await res.json();
+        console.log('[Gemini]', res.status, JSON.stringify(data));
         const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
         if (texto) campo.value = texto;
-        else alert('Não foi possível gerar a descrição. Tente novamente.');
+        else alert('Erro ' + res.status + ': ' + (data.error?.message || 'Tente novamente.'));
       } catch(e) {
         alert('Erro ao conectar com a IA. Verifique sua conexão.');
       } finally {
