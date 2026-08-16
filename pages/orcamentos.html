@@ -283,7 +283,7 @@
     <div class="header-right">
       <div class="user-pill"><div class="user-dot" id="userAvatar">--</div><span id="userName" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span></div>
       <button class="btn-sair" id="logoutBtn"><i class="fas fa-right-from-bracket"></i> Sair</button>
-      <button class="back-btn" onclick="window.location.replace('login.html')"><i class="fas fa-home"></i> Portal</button>
+      <button class="back-btn" onclick="window.location.replace('../login.html')"><i class="fas fa-home"></i> Portal</button>
     </div>
   </div>
 
@@ -716,7 +716,7 @@
 
     let currentUser = null;
     onAuthStateChanged(auth, user => {
-      if (!user) { window.location.replace('login.html'); return; }
+      if (!user) { window.location.replace('../login.html'); return; }
       currentUser = user;
       document.getElementById('userAvatar').textContent = initialsFor(user);
       document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
@@ -727,7 +727,7 @@
       loadExamsFromFirestore();
     });
     document.getElementById('logoutBtn').addEventListener('click', () =>
-      signOut(auth).then(() => window.location.replace('login.html'))
+      signOut(auth).then(() => window.location.replace('../login.html'))
     );
 
     let exams = [], filtered = [], cart = [];
@@ -1734,4 +1734,5 @@
 <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v2.6 · 30/07/2026</span>
 </body>
 </html>
+
 

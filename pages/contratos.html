@@ -335,12 +335,12 @@
     function iniciais(u){const n=u.displayName||u.email||'';return n.split(/[\s@]/).filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'??';}
 
     onAuthStateChanged(auth, user => {
-      if (!user) { window.location.replace('login.html'); return; }
+      if (!user) { window.location.replace('../login.html'); return; }
       document.getElementById('userAvatar').textContent = iniciais(user);
       document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
     });
     document.getElementById('btnSair').addEventListener('click', () =>
-      signOut(auth).then(() => window.location.replace('login.html'))
+      signOut(auth).then(() => window.location.replace('../login.html'))
     );
 
     // Salvar contrato no Firebase para dashboard
@@ -717,4 +717,5 @@ ${document.getElementById('g-exec-nome')?.value?`
 <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v1.1 · 14/07/2026</span>
 </body>
 </html>
+
 
