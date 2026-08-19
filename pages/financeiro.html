@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
@@ -79,13 +79,6 @@
     .modal-close:hover{background:var(--gray-200);}
     .modal-body{padding:22px;}
     @media(max-width:768px){.stats-bar,.form-grid{grid-template-columns:1fr;}.content{padding:14px 14px 60px;}}
-    .btn-bonif-fin{padding:7px 14px;border-radius:8px;border:1.5px solid var(--gray-200);background:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--navy);transition:all .15s;}
-    .btn-bonif-fin:hover{border-color:var(--navy);background:#eff6ff;}
-    .btn-bonif-fin.ativo{background:var(--navy);color:white;border-color:var(--navy);}
-    .serv-row{display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--gray-200);border-radius:8px;padding:7px 10px;}
-    .serv-row input{border:1.5px solid var(--gray-200);border-radius:7px;padding:6px 9px;font-family:inherit;font-size:12px;outline:none;}
-    .serv-row input:focus{border-color:var(--navy);}
-    .btn-rem-serv{background:#fee2e2;border:none;color:#dc2626;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;font-weight:900;flex-shrink:0;font-family:inherit;}
   </style>
 </head>
 <body>
@@ -135,39 +128,13 @@
         <div class="form-grid" style="margin-bottom:16px;">
           <div>
             <label class="f-label">Categoria</label>
-            <select class="f-select" id="loteCat" onchange="toggleCatExtras()">
+            <select class="f-select" id="loteCat">
               <option value="Salário">Salário</option>
               <option value="Vale-Transporte">Vale-Transporte</option>
-              <option value="Cesta Básica">Cesta Básica</option>
-              <option value="Adiantamento">Adiantamento de Salário</option>
               <option value="Bonificação">Bonificação</option>
-              <option value="Prestação de Serviço">Prestação de Serviço</option>
-              <option value="Limpeza de Manguitos">Limpeza de Manguitos</option>
+              <option value="Adiantamento">Adiantamento</option>
             </select>
           </div>
-          <!-- BONIFICAÇÃO -->
-          <div id="catBonifWrap" style="display:none;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-            <label class="f-label" style="margin-bottom:8px;display:block;">Referente a (selecione um ou mais)</label>
-            <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;" id="lBonifOpcoes">
-              <button class="btn-bonif-fin" data-val="avaliações" onclick="toggleBonifFin(this)">⭐ Avaliações</button>
-              <button class="btn-bonif-fin" data-val="comissão" onclick="toggleBonifFin(this)">💰 Comissão</button>
-              <button class="btn-bonif-fin" data-val="cirurgia" onclick="toggleBonifFin(this)">🏥 Cirurgia</button>
-              <button class="btn-bonif-fin" data-val="boleto" onclick="toggleBonifFin(this)">📄 Boleto</button>
-              <button class="btn-bonif-fin" data-val="plano odontológico" onclick="toggleBonifFin(this)">🦷 Plano Odontológico</button>
-            </div>
-            <div id="lBonifValores" style="display:flex;flex-direction:column;gap:7px;"></div>
-            <div id="lBonifTotal" style="display:none;margin-top:8px;padding:7px 12px;background:var(--navy);color:white;border-radius:7px;font-size:12px;font-weight:700;text-align:right;"></div>
-          </div>
-          <!-- PRESTAÇÃO DE SERVIÇO -->
-          <div id="catServWrap" style="display:none;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <label class="f-label">Serviços prestados</label>
-              <button onclick="addServicoFin()" style="padding:4px 12px;background:var(--navy);color:white;border:none;border-radius:7px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">+ Adicionar</button>
-            </div>
-            <div id="lServicos" style="display:flex;flex-direction:column;gap:7px;"></div>
-            <div id="lServTotal" style="display:none;margin-top:8px;padding:7px 12px;background:var(--navy);color:white;border-radius:7px;font-size:12px;font-weight:700;text-align:right;"></div>
-          </div>
-          <!-- PERÍODO -->
           <div style="display:flex;gap:8px;align-items:flex-end;">
             <div style="flex:1;">
               <label class="f-label">Período início</label>
@@ -258,8 +225,7 @@
         <div id="reciboManualFields" style="display:none;">
           <div style="margin-bottom:14px;">
             <label class="f-label">Descrição do recibo</label>
-            <textarea class="f-input" id="rDesc" rows="3" placeholder="Ex: Reembolso de despesas — Maio/2026" style="resize:vertical;"></textarea>
-            <button type="button" onclick="geminiCompletar('rDesc','recibo manual',{nome:document.getElementById('reciboNomeColab').textContent,valor:document.getElementById('rValorManual').value})" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a73e8,#7c3aed);color:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✨ Completar com IA</button>
+            <input class="f-input" id="rDesc" placeholder="Ex: Reembolso de despesas — Maio/2026">
           </div>
           <div style="margin-bottom:14px;">
             <label class="f-label">Valor (R$)</label>
@@ -312,6 +278,7 @@
     <div class="tabs">
       <button class="tab-btn active" onclick="tab('colaboradores')"><i class="fas fa-users"></i> Colaboradores</button>
       <button class="tab-btn" onclick="tab('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico</button>
+      <button class="tab-btn" onclick="tab('ponto')"><i class="fas fa-fingerprint"></i> Ponto</button>
     </div>
 
     <!-- ABA COLABORADORES -->
@@ -341,6 +308,58 @@
           </div>
         </div>
         <div id="listaHistorico"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div></div>
+      </div>
+    </div>
+    <!-- ABA PONTO -->
+    <div class="tab-pane" id="panePonto">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-fingerprint"></i> Relatório de Ponto — Secullum</div>
+        </div>
+        <div id="pontoUploadArea" style="text-align:center;padding:32px 24px;border:2px dashed #e2e8f0;border-radius:12px;margin-bottom:16px;cursor:pointer;" onclick="document.getElementById('pontoFileInput').click()">
+          <div style="font-size:32px;margin-bottom:8px;">📂</div>
+          <div style="font-size:14px;font-weight:700;color:#0A1F44;margin-bottom:4px;">Arraste ou clique para importar o Cartão Ponto do Secullum</div>
+          <div style="font-size:11px;color:#94a3b8;">Arquivo .xlsx exportado pelo sistema Secullum RH</div>
+          <input type="file" id="pontoFileInput" accept=".xlsx,.xls" style="display:none;" onchange="processarPonto(this)">
+        </div>
+        <div id="pontoFiltros" style="display:none;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <input id="pontoSearch" type="text" placeholder="🔍 Buscar colaborador..." oninput="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;flex:1;min-width:200px;">
+          <select id="pontoDepto" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos os departamentos</option></select>
+          <select id="pontoFiltroSaldo" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos</option><option value="positivo">✅ Saldo positivo</option><option value="negativo">⚠️ Saldo negativo</option><option value="problema">🔴 Com problemas</option></select>
+          <button onclick="exportarPontoCSV()" style="padding:8px 14px;background:#0A1F44;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-download"></i> Exportar CSV</button>
+        </div>
+        <div id="pontoResumoCards" style="display:none;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+          <div class="stat-card"><div class="stat-num" id="pSumColab">—</div><div class="stat-lbl">Colaboradores</div></div>
+          <div class="stat-card"><div class="stat-num" id="pSumPos" style="color:#16a34a">—</div><div class="stat-lbl">Saldo positivo</div></div>
+          <div class="stat-card"><div class="stat-num" id="pSumNeg" style="color:#dc2626">—</div><div class="stat-lbl">Saldo negativo</div></div>
+          <div class="stat-card"><div class="stat-num" id="pSumProb" style="color:#d97706">—</div><div class="stat-lbl">Com problemas</div></div>
+        </div>
+        <div id="pontoPeriodo" style="display:none;font-size:12px;color:#94a3b8;margin-bottom:10px;"></div>
+        <div id="pontoTabelaWrap" style="display:none;overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="background:#0A1F44;color:white;">
+              <th style="padding:10px 12px;text-align:left;font-size:11px;">COLABORADOR</th>
+              <th style="padding:10px 8px;text-align:left;font-size:11px;">DEPARTAMENTO</th>
+              <th style="padding:10px 8px;text-align:center;font-size:11px;">CARGA</th>
+              <th style="padding:10px 8px;text-align:center;font-size:11px;">TRABALHADO</th>
+              <th style="padding:10px 8px;text-align:center;font-size:11px;">SALDO</th>
+              <th style="padding:10px 8px;text-align:center;font-size:11px;">FALTAS</th>
+              <th style="padding:10px 8px;text-align:center;font-size:11px;">INCOMPLETAS</th>
+              <th style="padding:10px 8px;text-align:center;font-size:11px;">DETALHES</th>
+            </tr></thead>
+            <tbody id="pontoTbody"></tbody>
+          </table>
+        </div>
+        <div id="pontoLoading" style="display:none;text-align:center;padding:32px;color:#94a3b8;"><div style="font-size:24px;margin-bottom:8px;">⏳</div><div>Processando arquivo...</div></div>
+        <div id="pontoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center;">
+          <div style="background:white;border-radius:16px;padding:24px;max-width:720px;width:95%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <div id="pontoModalNome" style="font-size:15px;font-weight:800;color:#0A1F44;"></div>
+              <button onclick="fecharPontoModal()" style="background:#f1f5f9;border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;">×</button>
+            </div>
+            <div id="pontoModalBody"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -829,80 +848,11 @@
     window._fbSet    = (path, data) => set(ref(db, path), data);
     window._fbRemove = (path)       => remove(ref(db, path));
 
-    function _geminiBar(pct, done) {
-      let b = document.getElementById('_gbar');
-      if (!b) {
-        b = document.createElement('div');
-        b.id = '_gbar';
-        b.style.cssText = 'position:fixed;top:0;left:0;height:3px;width:0;z-index:99999;border-radius:0 2px 2px 0;background:linear-gradient(90deg,#6C63FF,#a78bfa);transition:width .25s ease,opacity .3s ease;pointer-events:none';
-        document.body.appendChild(b);
-      }
-      b.style.opacity = '1';
-      b.style.width = pct + '%';
-      if (done) setTimeout(() => { b.style.opacity = '0'; setTimeout(() => { b.style.width = '0'; b.style.opacity = '1'; }, 350); }, 400);
-    }
-
-    window.geminiCompletar = async function(campoId, tipo, ctx) {
-      if (!window._geminiKey) { alert('IA não configurada. Verifique a chave Gemini no Firebase.'); return; }
-      const campo = document.getElementById(campoId);
-      const textoAtual = campo.value.trim();
-      const btn = event.target.closest('button');
-      const textoOriginal = btn.innerHTML;
-      btn.disabled = true;
-
-      const partes = [];
-      if (ctx.nome)  partes.push('Colaborador: ' + ctx.nome);
-      if (ctx.valor) partes.push('Valor: R$ ' + ctx.valor);
-      const contexto = partes.join(' | ');
-
-      const prompt = `Você auxilia o setor financeiro de uma clínica médica a registrar ocorrências de forma clara e objetiva. Reescreva o texto abaixo como uma descrição de recibo de ${tipo}: direta, sem jargão jurídico, com no máximo 2 frases, para que qualquer pessoa do financeiro entenda o que aconteceu e por quê. Retorne APENAS a descrição final, sem explicações ou aspas.
-
-${contexto ? 'Dados do recibo: ' + contexto : ''}
-Texto original: ${textoAtual || '(não informado)'}`;
-
-      _geminiBar(10);
-      let prog = 10;
-      const tick = setInterval(() => { prog = Math.min(prog + (88 - prog) * 0.07, 88); _geminiBar(prog); }, 250);
-
-      const MAX = 3;
-      let res, data;
-      for (let t = 1; t <= MAX; t++) {
-        btn.innerHTML = t === 1 ? '⏳ Gerando...' : `⏳ Tentativa ${t}/${MAX}...`;
-        try {
-          res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + window._geminiKey, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 800, temperature: 0.3 } })
-          });
-          data = await res.json();
-          if (res.status === 503 && t < MAX) { await new Promise(r => setTimeout(r, 2000 * t)); continue; }
-          break;
-        } catch(e) {
-          if (t < MAX) { await new Promise(r => setTimeout(r, 2000 * t)); continue; }
-          clearInterval(tick); _geminiBar(100, true);
-          btn.innerHTML = textoOriginal; btn.disabled = false;
-          alert('Erro ao conectar com a IA. Verifique sua conexão.');
-          return;
-        }
-      }
-
-      clearInterval(tick); _geminiBar(100, true);
-      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (texto) campo.value = texto;
-      else alert('Erro ' + res.status + ': ' + (data.error?.message || 'Tente novamente.'));
-      btn.innerHTML = textoOriginal; btn.disabled = false;
-    };
-
     onAuthStateChanged(auth, user => {
       if (!user) { irPara('../login.html'); return; }
       carregarLogoGlobal(['#headerLogo']).then(() => {
         window.LOGO_FIN = sessionStorage.getItem('logoDataUrl') || '';
       });
-
-      // Chave Gemini para IA de descrições
-      get(ref(db, 'admin/config/geminiKey')).then(snap => {
-        if (snap.val()) window._geminiKey = snap.val();
-      }).catch(()=>{});
 
       // Colaboradores
       onValue(ref(db, 'financeiro/colaboradores'), snap => {
@@ -930,240 +880,204 @@ Texto original: ${textoAtual || '(não informado)'}`;
 </body>
 </html>
 <script>
-/* === ADDON FINANCEIRO: novos tipos de pagamento, bonificação multi-select, prestação de serviço === */
+/* ═══ ADDON FINANCEIRO: ABA PONTO — Parser Secullum v1.0 · 18/08/2026 ═══ */
 
-/* ── buildReciboBlock: layout idêntico ao recibos_offline ── */
-window.buildReciboBlock = function(colab, dados, logoSrc, clinicaNome, clinicaCnpj) {
-  var now = new Date();
-  var MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  var dataAuto = 'São Paulo, '+now.getDate()+' de '+MESES[now.getMonth()]+' de '+now.getFullYear()+'.';
-  var valorF  = fmtMoeda(dados.valor);
-  var extenso = valorExtenso(dados.valor);
-  var cpfFmt  = formatCPF((colab.cpf||'').replace(/\D/g,'')) || (colab.cpf||'');
-  var cat     = (dados.categoria||'pagamento').trim();
-  var catN    = cat.toLowerCase();
-  var titulo='RECIBO DE PAGAMENTO', lblTipo=cat, prep='referente ao período de';
-  if (catN.indexOf('vale')>=0&&catN.indexOf('trans')>=0){titulo='RECIBO DE VALE-TRANSPORTE';lblTipo='vale-transporte';prep='para utilização no período de';}
-  else if(catN.indexOf('cesta')>=0){titulo='RECIBO DE CESTA BÁSICA';lblTipo='cesta básica';prep='referente ao período de';}
-  else if(catN.indexOf('salário')>=0||catN.indexOf('salario')>=0){titulo='RECIBO DE SALÁRIO';lblTipo='salário';prep='referente à competência';}
-  else if(catN.indexOf('adiant')>=0){titulo='RECIBO DE ADIANTAMENTO';lblTipo='adiantamento de salário';prep='referente ao período de';}
-  else if(catN.indexOf('bonific')>=0){titulo='RECIBO DE BONIFICAÇÃO';lblTipo='bonificação';prep='referente a';}
-  else if(catN.indexOf('presta')>=0||catN.indexOf('serviço')>=0||catN.indexOf('servico')>=0){titulo='RECIBO DE PRESTAÇÃO DE SERVIÇO';lblTipo='prestação de serviço';prep='referente a';}
-  else if(catN.indexOf('manguito')>=0){titulo='RECIBO — LIMPEZA DE MANGUITOS';lblTipo='limpeza de manguitos';prep='referente ao período de';}
-  var periodoTxt='';
-  if(dados.inicio&&dados.fim){periodoTxt=dados.inicio.split('-').reverse().join('/')+' a '+dados.fim.split('-').reverse().join('/');}
-  else if(dados.inicio){periodoTxt=dados.inicio.split('-').reverse().join('/');}
-  var itensExtras=dados.itensExtras||[];
-  var formaMap={pix:'PIX',dinheiro:'Dinheiro',transferencia:'Transferência'};
-  var formaSel=formaMap[dados.forma]||dados.forma||'';
-  var logoHtml=logoSrc?'<img src="'+logoSrc+'" alt="Logo" style="height:44px;width:auto;object-fit:contain;display:block;margin:0 auto;">':'';
-  var corpoPeriodo='.';
-  if(itensExtras.length){corpoPeriodo=' '+prep+': '+itensExtras.map(function(it){return '<strong>'+esc(it.label)+' — R$ '+fmtMoeda(it.valor)+'</strong>';}).join(', ')+'.';}
-  else if(periodoTxt){corpoPeriodo=' '+prep+' <strong>'+esc(periodoTxt)+'</strong>.';}
-  window._RECIBO_CSS_ADDON = '@page{size:A4 portrait;margin:17mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;zoom:85%}.pagina{display:flex;flex-direction:column;gap:5mm;min-height:263mm;page-break-after:always;break-after:page;}.pagina:last-child{page-break-after:auto;break-after:auto;}.rec{border:1.5px solid #1a1a1a;padding:14px 18px;flex:1;}.rec-titulo{font-size:14px;font-weight:800;text-align:center;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}.rec-empresa{font-size:10.5px;text-align:center;color:#444;margin-bottom:7px;}.rec-divider{border:none;border-top:1.5px solid #1a1a1a;margin:7px 0;}.rec-empregado{margin-bottom:7px;border-bottom:.5px solid #ccc;padding-bottom:6px;}.rec-lbl{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#666;display:block;}.rec-campo{font-size:12px;font-weight:600;}.rec-vbox{border:2px solid #1a1a1a;display:flex;align-items:center;gap:10px;padding:6px 12px;margin:7px 0;}.rec-rs{font-size:15px;font-weight:800;background:#1a1a1a;color:#fff;padding:4px 9px;}.rec-vnum{font-size:20px;font-weight:900;letter-spacing:-.3px;}.rec-vext{font-size:10.5px;color:#444;font-style:italic;margin-top:2px;}.rec-corpo{font-size:13px;line-height:2;margin:7px 0;text-align:justify;}.rec-data{font-size:11px;text-align:right;margin:7px 0;}.rec-assin-wrap{text-align:center;margin-top:10px;}.rec-assin-linha{border-bottom:1.5px solid #1a1a1a;height:30px;width:100%;max-width:420px;margin:0 auto 4px;}.rec-assin-nome{font-size:10.5px;font-weight:700;}.rec-assin-lbl{font-size:9.5px;color:#555;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
-  return '<div class="rec">'
-    +(logoHtml?'<div style="text-align:center;margin-bottom:5px;">'+logoHtml+'</div>':'<div style="height:44px;"></div>')
-    +'<div class="rec-titulo">'+titulo+'</div>'
-    +'<div class="rec-empresa"><strong>'+esc(clinicaNome)+'</strong>&nbsp;|&nbsp;CNPJ: '+esc(clinicaCnpj||'25.154.224/0001-89')+'</div>'
-    +'<hr class="rec-divider">'
-    +'<div class="rec-empregado">'
-    +'<span class="rec-lbl">Nome do Empregado</span>'
-    +'<span class="rec-campo">'+esc((colab.nome||'').toUpperCase())+(cpfFmt?' &nbsp;—&nbsp; CPF: '+esc(cpfFmt):'')+'</span>'
-    +'</div>'
-    +'<div class="rec-vbox"><span class="rec-rs">R$</span>'
-    +'<div><div class="rec-vnum">'+valorF+'</div>'
-    +'<div class="rec-vext">'+extenso.charAt(0).toUpperCase()+extenso.slice(1)+'</div></div></div>'
-    +'<div class="rec-corpo">Recebi da empresa <strong>'+esc(clinicaNome)+'</strong>'
-    +' o equivalente à <strong>R$ '+valorF+' ('+extenso+')</strong>'
-    +' de '+esc(lblTipo)+corpoPeriodo
-    +(formaSel?'<br><span class="rec-lbl">Forma de pagamento: </span>'+esc(formaSel):'')+'</div>'
-    +'<div class="rec-data">'+dataAuto+'</div>'
-    +'<div class="rec-assin-wrap">'
-    +'<div class="rec-assin-linha"></div>'
-    +'<div class="rec-assin-nome">'+esc((colab.nome||'').toUpperCase())+'</div>'
-    +'<div class="rec-assin-lbl">Assinatura do colaborador</div>'
-    +'</div>'
-    +'</div>';
+function carregarSheetJS(cb){if(window.XLSX){cb();return;}var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=cb;document.head.appendChild(s);}
+
+var _pontoData=[], _pontoFiltrado=[], _pontoPeriodo='';
+
+window.processarPonto=function(input){
+  var file=input.files[0]; if(!file)return;
+  document.getElementById('pontoUploadArea').style.display='none';
+  document.getElementById('pontoLoading').style.display='block';
+  document.getElementById('pontoFiltros').style.display='none';
+  document.getElementById('pontoResumoCards').style.display='none';
+  document.getElementById('pontoTabelaWrap').style.display='none';
+  carregarSheetJS(function(){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellText:true,cellDates:false});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false});
+        _pontoData=parsearSecullum(rows);
+        _pontoPeriodo=extrairPeriodo(rows);
+        renderizarPonto();
+      }catch(err){
+        document.getElementById('pontoLoading').style.display='none';
+        document.getElementById('pontoUploadArea').style.display='block';
+        alert('Erro ao processar: '+err.message);
+      }
+      input.value='';
+    };
+    reader.readAsArrayBuffer(file);
+  });
 };
 
-/* ── Substituir montarHtmlRecibo e imprimirLote ── */
-(function() {
-  var _orig_montar = window.montarHtmlRecibo;
-  window.montarHtmlRecibo = function(colab, dados, usuario) {
-    var clinicaNome = sessionStorage.getItem('clinicaNome')||'Amor Saúde Pirituba';
-    var clinicaCnpj = sessionStorage.getItem('clinicaCnpj')||'';
-    var logo = window.LOGO_FIN||sessionStorage.getItem('logoDataUrl')||'';
-    var CSS = window._RECIBO_CSS_ADDON || '';
-    var bloco = window.buildReciboBlock(colab, Object.assign({},dados,{usuario:usuario}), logo, clinicaNome, clinicaCnpj);
-    return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Recibo</title>'
-      +'<style>'+CSS+'</style></head><body>'+bloco
-      +'<'+'script>window.print();<'+'/script></body></html>';
+function extrairPeriodo(rows){
+  for(var i=0;i<Math.min(rows.length,10);i++){
+    if(!rows[i])continue;
+    for(var j=0;j<rows[i].length;j++){
+      var v=String(rows[i][j]||'');
+      if(v.includes('Período:'))return v.replace('Período:','').trim().replace('.','');
+    }
+  }
+  return '';
+}
+
+function parsearSecullum(rows){
+  var toMin=function(t){
+    if(!t)return null;
+    var s=String(t).trim();
+    if(!s||s.toUpperCase()==='FOLGA'||s==='-')return null;
+    var p=s.split(':'); if(p.length<2)return null;
+    var h=parseInt(p[0],10),m=parseInt(p[1],10);
+    if(isNaN(h)||isNaN(m))return null;
+    return h*60+m;
   };
+  var toHH=function(m){
+    if(m===null||m===undefined)return '--:--';
+    var sg=m<0?'-':''; m=Math.abs(m);
+    return sg+String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  };
+  var resultado=[],nomeRows=[];
+  for(var i=0;i<rows.length;i++){if(rows[i]&&rows[i][0]==='NOME:')nomeRows.push(i);}
+  nomeRows.forEach(function(nr,idx){
+    var nome=String((rows[nr+2]||[])[0]||'').trim(); if(!nome)return;
+    var funcao='',depto='';
+    for(var r=nr;r<nr+15;r++){if(rows[r]&&rows[r][0]==='FUNÇÃO:'){funcao=String((rows[r+2]||[])[0]||'').trim();depto=String((rows[r+2]||[])[11]||'').trim();break;}}
+    var totaisRow=-1,cargaTotal=0,cargaTotalStr='--:--';
+    for(var r=nr;r<nr+40;r++){if(rows[r]&&rows[r][0]==='TOTAIS'){totaisRow=r;cargaTotalStr=String(rows[r][18]||'00:00');cargaTotal=toMin(cargaTotalStr)||0;break;}}
+    if(totaisRow<0)return;
+    var endRow=nomeRows[idx+1]!==undefined?nomeRows[idx+1]:rows.length;
+    var dias=[],totalTrab=0,faltas=0,incompletas=0;
+    for(var r=totaisRow+1;r<endRow;r++){
+      var row=rows[r]; if(!row)continue;
+      var data=String(row[0]||'').trim();
+      if(!data||!data.includes('/')||!data.includes(' - '))continue;
+      var e1=row[4],s1=row[7],e2=row[13],s2=row[14],carga=row[18];
+      var e1s=String(e1||'').trim();
+      if(e1s.toUpperCase()==='FOLGA')continue;
+      if(!carga)continue;
+      var cargaMin=toMin(String(carga))||0;
+      var me1=toMin(e1s),ms1=toMin(String(s1||'').trim()),me2=toMin(String(e2||'').trim()),ms2=toMin(String(s2||'').trim());
+      var trabalhado=0,status='ok';
+      if(me1!==null&&ms1!==null)trabalhado+=ms1-me1;
+      if(me2!==null&&ms2!==null)trabalhado+=ms2-me2;
+      if(!e1&&!s1){faltas++;status='falta';}
+      else if((me1!==null&&ms1===null)||(me2!==null&&ms2===null)){incompletas++;status='incompleta';}
+      if(status==='ok')totalTrab+=trabalhado;
+      dias.push({data:data,e1:e1s||'—',s1:String(s1||'').trim()||'—',e2:String(e2||'').trim()||'—',s2:String(s2||'').trim()||'—',carga:String(carga),trabalhado:toHH(trabalhado),saldoDia:toHH(trabalhado-cargaMin),saldoMin:trabalhado-cargaMin,status:status});
+    }
+    resultado.push({nome:nome,depto:depto||'—',funcao:funcao||'—',carga:cargaTotalStr,trabalhado:toHH(totalTrab),saldo:toHH(totalTrab-cargaTotal),saldoMin:totalTrab-cargaTotal,faltas:faltas,incompletas:incompletas,dias:dias});
+  });
+  return resultado;
+}
+
+function renderizarPonto(){
+  document.getElementById('pontoLoading').style.display='none';
+  var deptos={};
+  _pontoData.forEach(function(f){if(f.depto!=='—')deptos[f.depto]=1;});
+  var sel=document.getElementById('pontoDepto');
+  sel.innerHTML='<option value="">Todos os departamentos</option>';
+  Object.keys(deptos).sort().forEach(function(d){sel.innerHTML+='<option value="'+d+'">'+d+'</option>';});
+  var pd=document.getElementById('pontoPeriodo');
+  if(_pontoPeriodo){pd.textContent='📅 Período: '+_pontoPeriodo;pd.style.display='block';}
+  document.getElementById('pontoFiltros').style.display='flex';
+  document.getElementById('pontoResumoCards').style.display='grid';
+  document.getElementById('pontoTabelaWrap').style.display='block';
+  filtrarPonto();
+}
+
+window.filtrarPonto=function(){
+  var busca=(document.getElementById('pontoSearch').value||'').toLowerCase();
+  var depto=document.getElementById('pontoDepto').value;
+  var saldo=document.getElementById('pontoFiltroSaldo').value;
+  _pontoFiltrado=_pontoData.filter(function(f){
+    if(busca&&!f.nome.toLowerCase().includes(busca))return false;
+    if(depto&&f.depto!==depto)return false;
+    if(saldo==='positivo'&&f.saldoMin<0)return false;
+    if(saldo==='negativo'&&f.saldoMin>=0)return false;
+    if(saldo==='problema'&&f.faltas===0&&f.incompletas===0)return false;
+    return true;
+  });
+  var pos=0,neg=0,prob=0;
+  _pontoData.forEach(function(f){if(f.saldoMin>0)pos++;if(f.saldoMin<0)neg++;if(f.faltas>0||f.incompletas>0)prob++;});
+  document.getElementById('pSumColab').textContent=_pontoData.length;
+  document.getElementById('pSumPos').textContent=pos;
+  document.getElementById('pSumNeg').textContent=neg;
+  document.getElementById('pSumProb').textContent=prob;
+  var tbody=document.getElementById('pontoTbody');
+  if(!_pontoFiltrado.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:#94a3b8;">Nenhum colaborador encontrado</td></tr>';return;}
+  tbody.innerHTML=_pontoFiltrado.map(function(f,i){
+    var sc=f.saldoMin>0?'#16a34a':f.saldoMin<0?'#dc2626':'#64748b';
+    var rbg=f.faltas>0||f.incompletas>0?'#fffbeb':(i%2===0?'#fff':'#f8fafc');
+    var si=f.saldoMin>0?'▲':f.saldoMin<0?'▼':'—';
+    return '<tr style="background:'+rbg+';border-bottom:1px solid #f1f5f9;">'
+      +'<td style="padding:10px 12px;font-weight:700;color:#0A1F44;">'+f.nome+'<div style="font-size:10px;color:#94a3b8;font-weight:400;">'+f.funcao+'</div></td>'
+      +'<td style="padding:10px 8px;font-size:11px;color:#94a3b8;">'+f.depto+'</td>'
+      +'<td style="padding:10px 8px;text-align:center;font-weight:600;">'+f.carga+'</td>'
+      +'<td style="padding:10px 8px;text-align:center;font-weight:600;">'+f.trabalhado+'</td>'
+      +'<td style="padding:10px 8px;text-align:center;font-weight:800;color:'+sc+';">'+si+' '+f.saldo+'</td>'
+      +'<td style="padding:10px 8px;text-align:center;">'+(f.faltas>0?'<span style="background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 8px;font-weight:700;">'+f.faltas+'</span>':'<span style="color:#86efac;">0</span>')+'</td>'
+      +'<td style="padding:10px 8px;text-align:center;">'+(f.incompletas>0?'<span style="background:#fef3c7;color:#d97706;border-radius:6px;padding:2px 8px;font-weight:700;">'+f.incompletas+'</span>':'<span style="color:#86efac;">0</span>')+'</td>'
+      +'<td style="padding:10px 8px;text-align:center;"><button onclick="abrirPontoModal('+i+')" style="padding:5px 12px;background:#0A1F44;color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;">Ver dias</button></td>'
+      +'</tr>';
+  }).join('');
+};
+
+window.abrirPontoModal=function(idx){
+  var f=_pontoFiltrado[idx]; if(!f)return;
+  document.getElementById('pontoModalNome').textContent=f.nome+' — '+f.depto;
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#f1f5f9;"><th style="padding:8px;text-align:left;">Data</th><th style="padding:8px;text-align:center;">E1</th><th style="padding:8px;text-align:center;">S1</th><th style="padding:8px;text-align:center;">E2</th><th style="padding:8px;text-align:center;">S2</th><th style="padding:8px;text-align:center;">Carga</th><th style="padding:8px;text-align:center;">Trabalhado</th><th style="padding:8px;text-align:center;">Saldo</th></tr></thead><tbody>';
+  f.dias.forEach(function(d){
+    var bg=d.status==='falta'?'#fee2e2':d.status==='incompleta'?'#fef3c7':'white';
+    var sc=d.saldoMin>0?'#16a34a':d.saldoMin<0?'#dc2626':'#64748b';
+    html+='<tr style="border-bottom:1px solid #f1f5f9;background:'+bg+';"><td style="padding:7px 8px;font-weight:600;">'+d.data+'</td><td style="padding:7px;text-align:center;">'+d.e1+'</td><td style="padding:7px;text-align:center;">'+d.s1+'</td><td style="padding:7px;text-align:center;">'+d.e2+'</td><td style="padding:7px;text-align:center;">'+d.s2+'</td><td style="padding:7px;text-align:center;">'+d.carga+'</td><td style="padding:7px;text-align:center;font-weight:600;">'+d.trabalhado+'</td><td style="padding:7px;text-align:center;font-weight:700;color:'+sc+';">'+d.saldoDia+'</td></tr>';
+  });
+  html+='<tr style="background:#0A1F44;color:white;font-weight:700;"><td colspan="5" style="padding:8px;">TOTAIS</td><td style="padding:8px;text-align:center;">'+f.carga+'</td><td style="padding:8px;text-align:center;">'+f.trabalhado+'</td><td style="padding:8px;text-align:center;color:'+(f.saldoMin>=0?'#86efac':'#fca5a5')+';">'+f.saldo+'</td></tr></tbody></table>';
+  document.getElementById('pontoModalBody').innerHTML=html;
+  var modal=document.getElementById('pontoModal');
+  modal.style.display='flex';
+};
+
+window.fecharPontoModal=function(){document.getElementById('pontoModal').style.display='none';};
+document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharPontoModal();});
+
+window.exportarPontoCSV=function(){
+  if(!_pontoFiltrado.length)return;
+  var linhas=['Nome,Departamento,Função,Carga Esperada,Horas Trabalhadas,Saldo,Faltas,Batidas Incompletas'];
+  _pontoFiltrado.forEach(function(f){linhas.push([f.nome,f.depto,f.funcao,f.carga,f.trabalhado,f.saldo,f.faltas,f.incompletas].join(','));});
+  if(_pontoPeriodo)linhas.push('','Período: '+_pontoPeriodo);
+  var blob=new Blob(['\uFEFF'+linhas.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='relatorio_ponto.csv';a.click();
+};
+
+// Drag & drop
+(function(){
+  var area=document.getElementById('pontoUploadArea');
+  if(!area)return;
+  area.addEventListener('dragover',function(e){e.preventDefault();area.style.borderColor='#0A1F44';});
+  area.addEventListener('dragleave',function(){area.style.borderColor='#e2e8f0';});
+  area.addEventListener('drop',function(e){e.preventDefault();area.style.borderColor='#e2e8f0';var f=e.dataTransfer.files[0];if(!f)return;processarPonto({files:[f],value:''});});
 })();
 
-/* ── Funções bonificação e serviço ── */
-function toggleCatExtras() {
-  var cat = (document.getElementById('loteCat')||{}).value||'';
-  var catN = cat.toLowerCase();
-  var bWrap=document.getElementById('catBonifWrap');
-  var sWrap=document.getElementById('catServWrap');
-  if(bWrap) bWrap.style.display=catN.indexOf('bonific')>=0?'block':'none';
-  if(sWrap) sWrap.style.display=(catN.indexOf('presta')>=0||catN.indexOf('servi')>=0)?'block':'none';
-  if(catN.indexOf('bonific')<0){
-    document.querySelectorAll('.btn-bonif-fin').forEach(function(b){b.classList.remove('ativo');});
-    var bv=document.getElementById('lBonifValores'); if(bv) bv.innerHTML='';
-    var bt=document.getElementById('lBonifTotal'); if(bt) bt.style.display='none';
-  }
-}
-
-function toggleBonifFin(btn) {
-  btn.classList.toggle('ativo');
-  atualizarValoresBonifFin();
-}
-
-function mascaraValorBonifFin(el) {
-  var v=el.value.replace(/\D/g,'');
-  if(!v){el.value='';atualizarTotalBonifFin();return;}
-  el.value=parseFloat((parseInt(v)/100).toFixed(2)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  atualizarTotalBonifFin();
-}
-
-function atualizarValoresBonifFin() {
-  var ativos=Array.from(document.querySelectorAll('.btn-bonif-fin.ativo'));
-  var wrap=document.getElementById('lBonifValores'); if(!wrap) return;
-  wrap.innerHTML=ativos.map(function(btn){
-    var id='lbv-'+btn.dataset.val.replace(/[^a-z]/gi,'');
-    var ex=document.getElementById(id); var val=ex?ex.value:'';
-    return '<div class="serv-row"><span style="font-size:12px;font-weight:700;color:var(--navy);flex:1;">'+btn.textContent.trim()+'</span>'
-      +'<span style="font-size:11px;font-weight:700;color:#555;">R$</span>'
-      +'<input id="'+id+'" type="text" value="'+val+'" oninput="mascaraValorBonifFin(this)" placeholder="0,00" style="width:110px;text-align:right;border:1.5px solid var(--gray-200);border-radius:7px;padding:6px 9px;font-family:inherit;font-size:12px;outline:none;"></div>';
-  }).join('');
-  atualizarTotalBonifFin();
-}
-
-function atualizarTotalBonifFin() {
-  var ativos=document.querySelectorAll('.btn-bonif-fin.ativo'); var total=0;
-  ativos.forEach(function(btn){var el=document.getElementById('lbv-'+btn.dataset.val.replace(/[^a-z]/gi,''));if(el)total+=parseFloat(String(el.value||0).replace(/\./g,'').replace(',','.'))||0;});
-  var div=document.getElementById('lBonifTotal'); if(!div) return;
-  if(ativos.length>1){div.style.display='block';div.textContent='Total: R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-  else{div.style.display='none';}
-}
-
-var _servCount=0;
-function addServicoFin(descDefault) {
-  _servCount++;
-  var id='serv-'+_servCount;
-  var wrap=document.getElementById('lServicos'); if(!wrap) return;
-  var div=document.createElement('div'); div.className='serv-row'; div.id=id;
-  div.innerHTML='<input type="text" placeholder="Descrição do serviço" value="'+(descDefault||'')+'" style="flex:1;border:1.5px solid var(--gray-200);border-radius:7px;padding:6px 9px;font-family:inherit;font-size:12px;outline:none;" class="serv-desc">'
-    +'<span style="font-size:11px;font-weight:700;color:#555;">R$</span>'
-    +'<input type="text" placeholder="0,00" style="width:110px;text-align:right;border:1.5px solid var(--gray-200);border-radius:7px;padding:6px 9px;font-family:inherit;font-size:12px;outline:none;" class="serv-val" oninput="mascaraServFin(this);calcServTotal();">'
-    +'<button class="btn-rem-serv" onclick="var e=document.getElementById(\''+id+'\');if(e)e.remove();calcServTotal();">×</button>';
-  wrap.appendChild(div); calcServTotal();
-}
-
-function mascaraServFin(el) {
-  var v=el.value.replace(/\D/g,''); if(!v){el.value='';return;}
-  el.value=parseFloat((parseInt(v)/100).toFixed(2)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-
-function calcServTotal() {
-  var total=0;
-  document.querySelectorAll('#lServicos .serv-val').forEach(function(el){total+=parseFloat(String(el.value||0).replace(/\./g,'').replace(',','.'))||0;});
-  var div=document.getElementById('lServTotal'); if(!div) return;
-  var rows=document.querySelectorAll('#lServicos .serv-row').length;
-  if(rows>1){div.style.display='block';div.textContent='Total: R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-  else{div.style.display='none';}
-}
-
-function preencherPeriodoAtual() {
-  var hoje=new Date(), y=hoje.getFullYear(), m=hoje.getMonth();
-  var d1=new Date(y,m,1).toISOString().slice(0,10);
-  var df=new Date(y,m+1,0).toISOString().slice(0,10);
-  var ini=document.getElementById('loteInicio'); if(ini) ini.value=d1;
-  var fim=document.getElementById('loteFim');    if(fim) fim.value=df;
-}
-
-/* ── Sobrescrever imprimirLote com suporte a extras ── */
-window.imprimirLote = function() {
-  var cat=document.getElementById('loteCat').value;
-  var inicio=document.getElementById('loteInicio').value;
-  var fim=document.getElementById('loteFim').value;
-  var usuario=sessionStorage.getItem('usuario')||'Financeiro';
-  var catN=cat.toLowerCase();
-
-  var itens=[];
-  document.querySelectorAll('.lote-check:checked').forEach(function(cb) {
-    var k=cb.dataset.key;
-    var valInput=document.querySelector('.lote-valor[data-key="'+k+'"]');
-    var valorStr=((valInput?valInput.value:'')||'').replace(/\./g,'').replace(',','.');
-    var valor=parseFloat(valorStr)||0; if(valor<=0) return;
-    var colab;
-    if(k.indexOf('base_')===0){
-      var idx=parseInt(k.replace('base_',''),10);
-      var raw=colabBaseRaw[idx];
-      colab={nome:raw.nome,cpf:formatCPF(raw.cpf),cargo:''};
-    } else { colab=colaboradores[k]; }
-    if(colab) itens.push({colab:colab,valor:valor});
-  });
-
-  if(!itens.length){toast('Selecione ao menos um colaborador com valor','error');return;}
-
-  var clinicaNome=sessionStorage.getItem('clinicaNome')||'Amor Saúde Pirituba';
-  var clinicaCnpj=sessionStorage.getItem('clinicaCnpj')||'';
-  var logo=window.LOGO_FIN||sessionStorage.getItem('logoDataUrl')||'';
-  var loteFrm=document.getElementById('loteForma')?document.getElementById('loteForma').value:'pix';
-
-  var itensExtras=[], valorExtrasTotal=0;
-  if(catN.indexOf('bonific')>=0){
-    document.querySelectorAll('.btn-bonif-fin.ativo').forEach(function(btn){
-      var el=document.getElementById('lbv-'+btn.dataset.val.replace(/[^a-z]/gi,''));
-      var v=parseFloat(String((el?el.value:0)||0).replace(/\./g,'').replace(',','.'))||0;
-      if(v>0){itensExtras.push({label:btn.dataset.val,valor:v});valorExtrasTotal+=v;}
-    });
-  } else if(catN.indexOf('presta')>=0||catN.indexOf('servi')>=0){
-    document.querySelectorAll('#lServicos .serv-row').forEach(function(row){
-      var d2=row.querySelector('.serv-desc')?row.querySelector('.serv-desc').value.trim():'';
-      var v=parseFloat(String((row.querySelector('.serv-val')?row.querySelector('.serv-val').value:0)||0).replace(/\./g,'').replace(',','.'))||0;
-      if(d2||v>0){itensExtras.push({label:d2||'Serviço',valor:v});valorExtrasTotal+=v;}
-    });
-  }
-
-  var LOTE_CSS = '@page{size:A4 portrait;margin:17mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;zoom:85%}.pagina{display:flex;flex-direction:column;gap:5mm;min-height:263mm;page-break-after:always;break-after:page;}.pagina:last-child{page-break-after:auto;break-after:auto;}.rec{border:1.5px solid #1a1a1a;padding:14px 18px;flex:1;}.rec-titulo{font-size:14px;font-weight:800;text-align:center;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}.rec-empresa{font-size:10.5px;text-align:center;color:#444;margin-bottom:7px;}.rec-divider{border:none;border-top:1.5px solid #1a1a1a;margin:7px 0;}.rec-empregado{margin-bottom:7px;border-bottom:.5px solid #ccc;padding-bottom:6px;}.rec-lbl{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#666;display:block;}.rec-campo{font-size:12px;font-weight:600;}.rec-vbox{border:2px solid #1a1a1a;display:flex;align-items:center;gap:10px;padding:6px 12px;margin:7px 0;}.rec-rs{font-size:15px;font-weight:800;background:#1a1a1a;color:#fff;padding:4px 9px;}.rec-vnum{font-size:20px;font-weight:900;letter-spacing:-.3px;}.rec-vext{font-size:10.5px;color:#444;font-style:italic;margin-top:2px;}.rec-corpo{font-size:13px;line-height:2;margin:7px 0;text-align:justify;}.rec-data{font-size:11px;text-align:right;margin:7px 0;}.rec-assin-wrap{text-align:center;margin-top:10px;}.rec-assin-linha{border-bottom:1.5px solid #1a1a1a;height:30px;width:100%;max-width:420px;margin:0 auto 4px;}.rec-assin-nome{font-size:10.5px;font-weight:700;}.rec-assin-lbl{font-size:9.5px;color:#555;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
-
-  var paginas=[];
-  for(var i=0;i<itens.length;i+=3) paginas.push(itens.slice(i,i+3));
-
-  var paginasHtml=paginas.map(function(grupo){
-    var celulas=grupo.map(function(it){
-      var valorItem=itensExtras.length&&valorExtrasTotal>0?valorExtrasTotal:it.valor;
-      var bloco=window.buildReciboBlock(it.colab,{valor:valorItem,categoria:cat,inicio:inicio,fim:fim,usuario:usuario,forma:loteFrm,itensExtras:itensExtras},logo,clinicaNome,clinicaCnpj);
-      return bloco;
-    }).join('');
-    var vazias=Array(3-grupo.length).fill('<div class="recibo-wrap"></div>').join('');
-    return '<div class="pagina">'+celulas+vazias+'</div>';
-  }).join('');
-
-  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Lote</title>'
-    +'<style>'+LOTE_CSS+'</style></head><body>'+paginasHtml
-    +'<'+'script>window.print();<'+'/script></body></html>';
-
-  var w=window.open('','_blank');
-  if(!w){toast('Pop-up bloqueado','error');return;}
-  w.document.write(html); w.document.close();
-  fecharModalLote();
-};
-
-/* ── Sobrescrever abrirModalLote com auto-período e extras ── */
-(function() {
-  var _orig = window.abrirModalLote;
-  window.abrirModalLote = function() {
-    if(_orig) _orig();
-    preencherPeriodoAtual();
-    toggleCatExtras();
-    if(!document.querySelector('.serv-row')) addServicoFin();
+// Incluir aba ponto na função tab() via override
+(function(){
+  var _orig=window.tab;
+  window.tab=function(t){
+    _orig(t);
+    // Adicionar suporte para 'ponto' que não estava na lista original
+    if(t==='ponto'){
+      document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+      document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
+      // O 3º botão é o Ponto (índice 2)
+      var btns=document.querySelectorAll('.tab-btn');
+      if(btns[2])btns[2].classList.add('active');
+      var pane=document.getElementById('panePonto');
+      if(pane)pane.classList.add('active');
+    }
   };
 })();
 </script>
-<!-- VERSION: v1.5 | financeiro.html | 07/08/2026 | fix: sintaxe corrigida, addon em script separado -->
-
+<!-- VERSION: v1.5 | financeiro.html | 18/08/2026 | feat: aba Ponto com parser Secullum automático -->
