@@ -326,7 +326,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-    import { getDatabase, ref, push } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js';
+    import { getDatabase, ref, push, get } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js';
 
     const app  = initializeApp(window.FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -334,8 +334,11 @@
 
     function iniciais(u){const n=u.displayName||u.email||'';return n.split(/[\s@]/).filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'??';}
 
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       if (!user) { window.location.replace('../login.html'); return; }
+      const snap  = await get(ref(db, 'admin/usuarios/' + user.uid));
+      const perms = (snap.exists() ? snap.val().perms : null) || {};
+      if (!perms.admin && !perms.contratos) { window.location.replace('../login.html'); return; }
       document.getElementById('userAvatar').textContent = iniciais(user);
       document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
     });

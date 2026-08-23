@@ -36,6 +36,10 @@
     "fechamento": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "clinica-pirituba": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }

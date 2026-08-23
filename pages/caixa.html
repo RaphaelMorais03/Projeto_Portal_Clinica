@@ -102,6 +102,7 @@
     <div class="nav-tabs">
       <button class="nav-tab active" id="navCaixa" onclick="cxTab('caixa',this)"><i class="fas fa-cash-register"></i> Caixa</button>
       <button class="nav-tab" id="navRecibos" onclick="cxTab('recibos',this)"><i class="fas fa-file-invoice"></i> Recibos</button>
+      <button class="nav-tab" id="navOdonto" onclick="cxTab('odonto',this)"><i class="fas fa-tooth"></i> Caixa Odonto</button>
     </div>
     <div class="tab-pane active" id="tabCaixa">
     <div class="content">
@@ -198,7 +199,7 @@
             <div style="grid-column:1/-1;"><label class="f-label">Nome do paciente</label><input class="f-input" id="rss-nome" type="text" placeholder="Nome completo do paciente"></div>
             <div><label class="f-label">CPF</label><input class="f-input" id="rss-cpf" type="text" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14"></div>
             <div><label class="f-label">Valor (R$)</label><input class="f-input" id="rss-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
-            <div style="grid-column:1/-1;"><label class="f-label">Motivo / Descrição detalhada</label><textarea class="f-input" id="rss-motivo" rows="3" placeholder="Descreva o motivo do ressarcimento..." style="resize:vertical;"></textarea><button type="button" onclick="geminiCompletar('rss-motivo','ressarcimento',{nome:document.getElementById('rss-nome').value,valor:document.getElementById('rss-valor').value})" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a73e8,#7c3aed);color:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✨ Completar com IA</button></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Motivo / Descrição detalhada</label><textarea class="f-input" id="rss-motivo" rows="3" placeholder="Descreva o motivo do ressarcimento..." style="resize:vertical;"></textarea></div>
           </div>
           <button onclick="imprimirRessarc()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#C62828;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Ressarcimento</button>
         </div>
@@ -220,7 +221,7 @@
             <div style="grid-column:1/-1;"><label class="f-label">Nome do paciente</label><input class="f-input" id="es-paciente" type="text" placeholder="Nome completo do paciente"></div>
             <div><label class="f-label">CPF</label><input class="f-input" id="es-cpf" type="text" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14"></div>
             <div><label class="f-label">Valor a transferir (R$)</label><input class="f-input" id="es-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
-            <div style="grid-column:1/-1;"><label class="f-label">Descrição / Motivo</label><textarea class="f-input" id="es-obs" rows="3" placeholder="Ex: recibo de erro para liberar mapa..." style="resize:vertical;"></textarea><button type="button" onclick="geminiCompletar('es-obs','erro de sistema',{nome:document.getElementById('es-paciente').value,valor:document.getElementById('es-valor').value})" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a73e8,#7c3aed);color:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✨ Completar com IA</button></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Descrição / Motivo</label><textarea class="f-input" id="es-obs" rows="3" placeholder="Ex: recibo de erro para liberar mapa..." style="resize:vertical;"></textarea></div>
           </div>
           <button onclick="imprimirErroSistema()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#b45309;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Erro de Sistema</button>
         </div>
@@ -244,13 +245,108 @@
             <div><label class="f-label">Valor bonificado (R$)</label><input class="f-input" id="bon-valor" type="text" placeholder="0,00" inputmode="numeric" oninput="mascaraMoeda(this)"></div>
             <div><label class="f-label">Profissional / Médico autorizador</label><input class="f-input" id="bon-medico" type="text" placeholder="Nome do médico responsável"></div>
             <div><label class="f-label">Liderança autorizadora</label><input class="f-input" id="bon-lider" type="text" placeholder="Nome da liderança"></div>
-            <div style="grid-column:1/-1;"><label class="f-label">Descrição do problema / erro</label><textarea class="f-input" id="bon-motivo" rows="3" placeholder="Descreva o problema que gerou a necessidade de bonificação..." style="resize:vertical;"></textarea><button type="button" onclick="geminiCompletar('bon-motivo','bonificação',{nome:document.getElementById('bon-nome').value,valor:document.getElementById('bon-valor').value,medico:document.getElementById('bon-medico').value})" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a73e8,#7c3aed);color:white;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✨ Completar com IA</button></div>
+            <div style="grid-column:1/-1;"><label class="f-label">Descrição do problema / erro</label><textarea class="f-input" id="bon-motivo" rows="3" placeholder="Descreva o problema que gerou a necessidade de bonificação..." style="resize:vertical;"></textarea></div>
           </div>
           <button onclick="imprimirBonificacao()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#15803d;color:white;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-print"></i> Gerar Recibo Bonificação</button>
         </div>
 
       </div>
     </div><!-- /tabRecibos -->
+
+    <!-- ===== CAIXA ODONTO ===== -->
+    <div class="tab-pane" id="tabOdonto">
+      <div class="content">
+
+        <!-- Sub-abas -->
+        <div class="nav-tabs" style="margin-bottom:0;border-bottom:2px solid var(--gray-200);">
+          <button class="nav-tab active" id="odNavLanc" onclick="odTab('lanc',this)"><i class="fas fa-plus-circle"></i> Lançamento</button>
+          <button class="nav-tab" id="odNavHist" onclick="odTab('hist',this)"><i class="fas fa-clock-rotate-left"></i> Histórico</button>
+        </div>
+
+        <!-- LANÇAMENTO -->
+        <div id="odPaneLanc">
+          <div class="user-banner" style="margin:16px 0;">
+            <div class="user-banner-info">
+              <div class="user-banner-label">Colaboradora</div>
+              <div class="user-banner-name" id="odColabNome">—</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <label class="f-label" style="margin:0;">Data do fechamento</label>
+              <input class="f-input" type="date" id="odData" style="width:175px;">
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom:16px;padding:14px 18px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <i class="fas fa-file-invoice" style="color:#0ea5e9;font-size:20px;"></i>
+              <div>
+                <label class="f-label" style="margin-bottom:4px;">Nº Nota Fiscal</label>
+                <input class="f-input" type="text" id="odNF" placeholder="Ex: 000125" maxlength="20" style="width:200px;border-color:#0ea5e9;background:#f0f9ff;">
+              </div>
+              <span style="font-size:11px;color:var(--gray-400);">Opcional</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;">
+            <div class="panel" style="text-align:center;padding:14px 8px;">
+              <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#0ea5e9;margin-bottom:6px;">PIX</div>
+              <div id="odTotPix" style="font-size:15px;font-weight:800;color:var(--navy);">R$ 0,00</div>
+            </div>
+            <div class="panel" style="text-align:center;padding:14px 8px;">
+              <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#7c3aed;margin-bottom:6px;">Débito</div>
+              <div id="odTotDeb" style="font-size:15px;font-weight:800;color:var(--navy);">R$ 0,00</div>
+            </div>
+            <div class="panel" style="text-align:center;padding:14px 8px;">
+              <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#d97706;margin-bottom:6px;">Crédito</div>
+              <div id="odTotCred" style="font-size:15px;font-weight:800;color:var(--navy);">R$ 0,00</div>
+            </div>
+            <div class="panel" style="text-align:center;padding:14px 8px;">
+              <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#16a34a;margin-bottom:6px;">Dinheiro</div>
+              <div id="odTotDin" style="font-size:15px;font-weight:800;color:var(--navy);">R$ 0,00</div>
+            </div>
+            <div class="panel" style="text-align:center;padding:14px 8px;background:var(--navy);">
+              <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.7);margin-bottom:6px;">Total Geral</div>
+              <div id="odTotGeral" style="font-size:18px;font-weight:900;color:#fff;">R$ 0,00</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header" style="margin-bottom:12px;">
+              <div class="panel-title"><i class="fas fa-user-injured"></i> Pacientes</div>
+            </div>
+            <div id="odPacientes"><div style="text-align:center;color:var(--gray-400);padding:20px;font-size:13px;">Nenhum paciente adicionado</div></div>
+            <button type="button" onclick="odAddPac()" style="width:100%;padding:12px;border:2px dashed var(--gray-300);background:transparent;border-radius:10px;color:var(--gray-500);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .2s;" onmouseover="this.style.borderColor='var(--navy)';this.style.color='var(--navy)'" onmouseout="this.style.borderColor='var(--gray-300)';this.style.color='var(--gray-500)'"><i class="fas fa-plus"></i> Adicionar Paciente</button>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:24px;">
+            <button class="btn-s" onclick="odLimpar()" style="flex:1;justify-content:center;"><i class="fas fa-trash-can"></i> Limpar</button>
+            <button class="btn-s" onclick="odImprimir()" style="flex:1;justify-content:center;"><i class="fas fa-print"></i> Imprimir</button>
+            <button class="btn-p" onclick="odSalvar()" style="flex:2;justify-content:center;"><i class="fas fa-floppy-disk"></i> Salvar Fechamento</button>
+          </div>
+        </div>
+
+        <!-- HISTÓRICO -->
+        <div id="odPaneHist" style="display:none;">
+          <div style="display:flex;align-items:center;gap:12px;margin:16px 0 20px;">
+            <label class="f-label" style="margin:0;white-space:nowrap;">Filtrar por mês:</label>
+            <input class="f-input" type="month" id="odFiltroMes" style="width:180px;" oninput="odCarregarHist()">
+          </div>
+          <div id="odHistorico"><div style="text-align:center;color:var(--gray-400);padding:40px;font-size:13px;">Selecione um mês para ver os fechamentos.</div></div>
+        </div>
+
+      </div>
+    </div><!-- /tabOdonto -->
+
+    <!-- Modal detalhes odonto -->
+    <div id="odModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:16px;padding:24px;max-width:640px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-weight:800;font-size:16px;color:var(--navy);">Detalhes do Fechamento</div>
+          <button onclick="document.getElementById('odModal').style.display='none'" style="border:none;background:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1;">&times;</button>
+        </div>
+        <div id="odModalBody"></div>
+      </div>
+    </div>
 
   <!-- TELA DE PREVIEW DO RELATÓRIO -->
   <div class="preview-screen" id="telaPreview">
@@ -1062,11 +1158,6 @@
         if (snap.val()) window._planilhaNfUrl = snap.val();
       }).catch(()=>{});
 
-      // Chave Gemini para IA de descrições
-      get(ref(_db, 'admin/config/geminiKey')).then(snap => {
-        if (snap.val()) window._geminiKey = snap.val();
-      }).catch(()=>{});
-
       // Dados de caixa em tempo real — separado por usuário (user.uid / data)
       _on(ref(_db, `operacao/${user.uid}/caixa/${window.TK_FB}`), snap => {
         window.caixa = snap.val() || {fundo:0, entradas:0, saidas:0, sobra:0};
@@ -1180,70 +1271,6 @@ function _rxPrint(html){
   return true;
 }
 
-function _geminiBar(pct, done) {
-  let b = document.getElementById('_gbar');
-  if (!b) {
-    b = document.createElement('div');
-    b.id = '_gbar';
-    b.style.cssText = 'position:fixed;top:0;left:0;height:3px;width:0;z-index:99999;border-radius:0 2px 2px 0;background:linear-gradient(90deg,#6C63FF,#a78bfa);transition:width .25s ease,opacity .3s ease;pointer-events:none';
-    document.body.appendChild(b);
-  }
-  b.style.opacity = '1';
-  b.style.width = pct + '%';
-  if (done) setTimeout(() => { b.style.opacity = '0'; setTimeout(() => { b.style.width = '0'; b.style.opacity = '1'; }, 350); }, 400);
-}
-
-window.geminiCompletar = async function(campoId, tipo, ctx) {
-  if (!window._geminiKey) { alert('IA não configurada. Verifique a chave Gemini no Firebase.'); return; }
-  const campo = document.getElementById(campoId);
-  const textoAtual = campo.value.trim();
-  const btn = event.target.closest('button');
-  const textoOriginal = btn.innerHTML;
-  btn.disabled = true;
-
-  const partes = [];
-  if (ctx.nome)   partes.push('Paciente: ' + ctx.nome);
-  if (ctx.valor)  partes.push('Valor: R$ ' + ctx.valor);
-  if (ctx.medico) partes.push('Médico autorizador: ' + ctx.medico);
-  const contexto = partes.join(' | ');
-
-  const prompt = `Você auxilia o setor financeiro de uma clínica médica a registrar ocorrências de forma clara e objetiva. Reescreva o texto abaixo como uma descrição de recibo de ${tipo}: direta, sem jargão jurídico, com no máximo 2 frases, para que qualquer pessoa do financeiro entenda o que aconteceu e por quê. Retorne APENAS a descrição final, sem explicações ou aspas.
-
-${contexto ? 'Dados do recibo: ' + contexto : ''}
-Texto original: ${textoAtual || '(não informado)'}`;
-
-  _geminiBar(10);
-  let prog = 10;
-  const tick = setInterval(() => { prog = Math.min(prog + (88 - prog) * 0.07, 88); _geminiBar(prog); }, 250);
-
-  const MAX = 3;
-  let res, data;
-  for (let t = 1; t <= MAX; t++) {
-    btn.innerHTML = t === 1 ? '⏳ Gerando...' : `⏳ Tentativa ${t}/${MAX}...`;
-    try {
-      res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + window._geminiKey, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 800, temperature: 0.3 } })
-      });
-      data = await res.json();
-      if (res.status === 503 && t < MAX) { await new Promise(r => setTimeout(r, 2000 * t)); continue; }
-      break;
-    } catch(e) {
-      if (t < MAX) { await new Promise(r => setTimeout(r, 2000 * t)); continue; }
-      clearInterval(tick); _geminiBar(100, true);
-      btn.innerHTML = textoOriginal; btn.disabled = false;
-      alert('Erro ao conectar com a IA. Verifique sua conexão.');
-      return;
-    }
-  }
-
-  clearInterval(tick); _geminiBar(100, true);
-  const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-  if (texto) campo.value = texto;
-  else alert('Erro ' + res.status + ': ' + (data.error?.message || 'Tente novamente.'));
-  btn.innerHTML = textoOriginal; btn.disabled = false;
-};
 
 window.imprimirRessarc = function() {
   var nome   = _rxGet('rss-nome');
@@ -1453,6 +1480,285 @@ window.imprimirBonificacao = function() {
   _rxPrint(html);
 };
 
+</script>
+<script>
+// ==================== CAIXA ODONTO ====================
+var _odPacs = [];
+var _odHistDados = {};
+
+(function odInit() {
+  var el = document.getElementById('odData');
+  if (el) el.value = new Date().toISOString().slice(0, 10);
+  var cn = document.getElementById('odColabNome');
+  if (cn) cn.textContent = sessionStorage.getItem('usuario') || '—';
+})();
+
+window.odTab = function(aba, btn) {
+  ['Lanc', 'Hist'].forEach(function(a) {
+    var p = document.getElementById('odPane' + a);
+    if (p) p.style.display = 'none';
+    var b = document.getElementById('odNav' + a);
+    if (b) b.classList.remove('active');
+  });
+  var pane = document.getElementById('odPane' + aba.charAt(0).toUpperCase() + aba.slice(1));
+  if (pane) pane.style.display = '';
+  if (btn) btn.classList.add('active');
+  if (aba === 'hist') odCarregarHist();
+};
+
+function _odFM(n) {
+  return 'R$ ' + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function _odPM(v) {
+  return parseFloat((v || '0').replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+window.odAddPac = function() {
+  _odPacs.push({ nome: '', cpf: '', valorStr: '', valor: 0, forma: '', parcelas: null });
+  odRender();
+};
+
+window.odRemPac = function(i) {
+  _odPacs.splice(i, 1);
+  odRender();
+};
+
+window.odSetForma = function(i, forma) {
+  _odPacs[i].forma = forma;
+  if (forma !== 'CREDITO') _odPacs[i].parcelas = null;
+  else if (!_odPacs[i].parcelas) _odPacs[i].parcelas = 2;
+  odRender();
+};
+
+function odRender() {
+  var el = document.getElementById('odPacientes');
+  if (!el) return;
+  if (!_odPacs.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:20px;font-size:13px;">Nenhum paciente adicionado</div>';
+    odTotais();
+    return;
+  }
+  var FORMAS = [['PIX','PIX','#0ea5e9'],['DEBITO','DÉBITO','#7c3aed'],['CREDITO','CRÉDITO','#d97706'],['DINHEIRO','DINHEIRO','#16a34a']];
+  var html = '';
+  _odPacs.forEach(function(p, i) {
+    var formasBtns = FORMAS.map(function(f) {
+      var key = f[0], lbl = f[1], cor = f[2];
+      var ativo = p.forma === key;
+      var sty = ativo
+        ? 'background:' + cor + ';color:#fff;border:2px solid ' + cor + ';'
+        : 'background:#fff;color:' + cor + ';border:2px solid ' + cor + ';';
+      return '<button type="button" onclick="odSetForma(' + i + ',\'' + key + '\')" style="' + sty + 'padding:5px 9px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s;">' + lbl + '</button>';
+    }).join('');
+    var parcelasHtml = '';
+    if (p.forma === 'CREDITO') {
+      parcelasHtml = '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;">'
+        + '<span style="font-size:11px;font-weight:800;color:#d97706;">Parcelas:</span>'
+        + '<input type="number" min="2" max="24" value="' + (p.parcelas || 2) + '" onchange="_odPacs[' + i + '].parcelas=Math.min(24,Math.max(2,parseInt(this.value)||2))" '
+        + 'style="width:60px;padding:5px 8px;border:2px solid #d97706;border-radius:7px;font-family:inherit;font-size:13px;text-align:center;background:#fffbeb;">'
+        + '<span style="font-size:12px;color:var(--gray-500);">x</span></div>';
+    }
+    html += '<div style="display:grid;grid-template-columns:1fr 150px 130px 36px;gap:10px;align-items:start;padding:12px 14px;border:1px solid var(--gray-200);border-radius:10px;margin-bottom:8px;">'
+      + '<div><label class="f-label">Nome do Paciente</label>'
+      + '<input class="f-input" type="text" placeholder="Nome completo" value="' + esc(p.nome || '') + '" oninput="_odPacs[' + i + '].nome=this.value" style="font-size:13px;"></div>'
+      + '<div><label class="f-label">CPF</label>'
+      + '<input class="f-input" type="text" placeholder="000.000.000-00" value="' + esc(p.cpf || '') + '" oninput="mascaraCPF(this);_odPacs[' + i + '].cpf=this.value;" maxlength="14" style="font-size:13px;"></div>'
+      + '<div><label class="f-label">Valor R$</label>'
+      + '<input class="f-input" type="text" placeholder="0,00" value="' + esc(p.valorStr || '') + '" oninput="mascaraMoeda(this);_odPacs[' + i + '].valorStr=this.value;_odPacs[' + i + '].valor=_odPM(this.value);odTotais();" inputmode="numeric" style="font-size:13px;"></div>'
+      + '<div style="padding-top:22px;"><button type="button" onclick="odRemPac(' + i + ')" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;cursor:pointer;font-size:16px;">&times;</button></div>'
+      + '<div style="grid-column:1/-1;">'
+      + '<label class="f-label" style="margin-bottom:6px;">Forma de Pagamento</label>'
+      + '<div style="display:flex;gap:7px;flex-wrap:wrap;">' + formasBtns + '</div>'
+      + parcelasHtml + '</div></div>';
+  });
+  el.innerHTML = html;
+  odTotais();
+}
+
+function odTotais() {
+  var t = { PIX: 0, DEBITO: 0, CREDITO: 0, DINHEIRO: 0 };
+  _odPacs.forEach(function(p) { if (p.forma && t[p.forma] !== undefined) t[p.forma] += (p.valor || 0); });
+  var geral = t.PIX + t.DEBITO + t.CREDITO + t.DINHEIRO;
+  var set = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = _odFM(v); };
+  set('odTotPix', t.PIX); set('odTotDeb', t.DEBITO); set('odTotCred', t.CREDITO); set('odTotDin', t.DINHEIRO); set('odTotGeral', geral);
+  return { pix: t.PIX, debito: t.DEBITO, credito: t.CREDITO, dinheiro: t.DINHEIRO, geral: geral };
+}
+
+function odValidar() {
+  var erros = [];
+  if (!(document.getElementById('odData') || {}).value) erros.push('Informe a data do fechamento.');
+  if (!_odPacs.length) erros.push('Adicione pelo menos um paciente.');
+  _odPacs.forEach(function(p, i) {
+    var n = i + 1;
+    if (!(p.nome || '').trim()) erros.push('Paciente ' + n + ': informe o nome.');
+    if ((p.cpf || '').replace(/\D/g, '').length !== 11) erros.push('Paciente ' + n + ': CPF deve ter 11 dígitos.');
+    if (!p.valor || p.valor <= 0) erros.push('Paciente ' + n + ': valor deve ser maior que zero.');
+    if (!p.forma) erros.push('Paciente ' + n + ': selecione a forma de pagamento.');
+    if (p.forma === 'CREDITO' && (p.parcelas < 2 || p.parcelas > 24)) erros.push('Paciente ' + n + ': parcelas entre 2 e 24.');
+  });
+  return erros;
+}
+
+window.odSalvar = async function() {
+  var erros = odValidar();
+  if (erros.length) { mostrarNotificacao(erros[0]); return; }
+  var data   = document.getElementById('odData').value;
+  var nf     = document.getElementById('odNF').value.trim();
+  var colab  = sessionStorage.getItem('usuario') || 'Colaborador';
+  var totais = odTotais();
+  var prim   = colab.split(' ')[0].replace(/[^a-zA-Z]/g, '') || 'USER';
+  var chave  = data + '_' + prim + '_' + Date.now();
+  var pts    = data.split('-');
+  var pacientes = _odPacs.map(function(p) {
+    return { nome: p.nome.trim(), cpf: p.cpf, valor: p.valor, forma: p.forma, parcelas: p.parcelas || null };
+  });
+  var dados = { data: pts[2]+'/'+pts[1]+'/'+pts[0], dataISO: data, colaborador: colab, notaFiscal: nf || null, emitidoEm: new Date().toISOString(), totais: totais, pacientes: pacientes };
+  try {
+    await window.fbSet('clinica-pirituba/caixa_odonto/' + chave, dados);
+    mostrarNotificacao('Fechamento salvo com sucesso!');
+    _odPacs = [];
+    document.getElementById('odNF').value = '';
+    document.getElementById('odData').value = new Date().toISOString().slice(0, 10);
+    odRender();
+  } catch(e) {
+    mostrarNotificacao('Erro ao salvar. Tente novamente.');
+    console.error('[CaixaOdonto] salvar:', e);
+  }
+};
+
+window.odLimpar = function() {
+  if (_odPacs.length && !confirm('Limpar todos os pacientes?')) return;
+  _odPacs = [];
+  document.getElementById('odNF').value = '';
+  document.getElementById('odData').value = new Date().toISOString().slice(0, 10);
+  odRender();
+};
+
+window.odImprimir = function() {
+  var erros = odValidar();
+  if (erros.length) { mostrarNotificacao(erros[0]); return; }
+  var colab  = sessionStorage.getItem('usuario') || '—';
+  var data   = document.getElementById('odData').value;
+  var nf     = document.getElementById('odNF').value.trim();
+  var totais = odTotais();
+  var logo   = sessionStorage.getItem('logoDataUrl') || '';
+  var logoH  = logo ? '<img src="' + logo + '" alt="Logo" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 8pt;">'
+                    : '<div style="font-size:18pt;font-weight:900;color:#0A1F44;text-align:center;margin-bottom:8pt;">CLÍNICA</div>';
+  var MESES  = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  var pts    = data.split('-');
+  var dataFmt = pts[2] + '/' + pts[1] + '/' + pts[0];
+  var dataExt = pts[2] + ' de ' + MESES[parseInt(pts[1], 10) - 1] + ' de ' + pts[0];
+  var FLABEL  = { PIX:'PIX', DEBITO:'DÉBITO', CREDITO:'CRÉDITO', DINHEIRO:'DINHEIRO' };
+  var pacHtml = _odPacs.map(function(p) {
+    var pl = FLABEL[p.forma] || p.forma;
+    var parc = (p.forma === 'CREDITO' && p.parcelas) ? ' ' + p.parcelas + 'x' : '';
+    return '<div style="border-top:1pt solid #ddd;padding:7pt 0;">'
+      + '<div style="display:flex;justify-content:space-between;"><span><strong>Nome:</strong> ' + esc(p.nome) + '</span><span><strong>CPF:</strong> ' + esc(p.cpf) + '</span></div>'
+      + '<div style="display:flex;justify-content:space-between;"><span><strong>Valor:</strong> ' + _odFM(p.valor) + '</span><span><strong>Forma:</strong> ' + pl + parc + '</span></div></div>';
+  }).join('');
+  var nfRow = nf ? '<div><strong>Nº Nota Fiscal:</strong> ' + esc(nf) + '</div>' : '';
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fechamento Odonto</title>'
+    + '<style>@page{size:A4 portrait;margin:15mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;background:#fff;zoom:70%;}'
+    + 'h1{font-size:14pt;text-align:center;margin-bottom:4pt;}.sub{font-size:9pt;text-align:center;color:#555;margin-bottom:12pt;}'
+    + '.sep{border:none;border-top:1.5pt solid #333;margin:10pt 0;}.totrow{display:flex;justify-content:space-around;margin:8pt 0;}'
+    + '.tot{text-align:center;}.tot-l{font-size:8pt;text-transform:uppercase;letter-spacing:.5px;color:#666;}.tot-v{font-size:11pt;font-weight:800;color:#0A1F44;}'
+    + '.tg{font-size:14pt;font-weight:900;text-align:center;margin:8pt 0;}.al{border-top:1pt solid #333;width:65%;margin:30pt auto 4pt;}.albl{text-align:center;font-size:9pt;}.alsub{text-align:center;font-size:8pt;color:#666;}</style></head><body>'
+    + logoH + '<h1>FECHAMENTO DE CAIXA — ODONTOLOGIA</h1>'
+    + '<div class="sub">SIM CLÍNICA MéDICA E ODONTOLÓGICA LTDA &nbsp;|&nbsp; CNPJ: 25.154.224/0001-89</div>'
+    + '<hr class="sep">'
+    + '<div style="margin-bottom:8pt;"><div><strong>Colaboradora:</strong> ' + esc(colab) + '</div><div><strong>Data:</strong> ' + dataFmt + '</div>' + nfRow + '</div>'
+    + '<hr class="sep">'
+    + '<div class="totrow">'
+    + '<div class="tot"><div class="tot-l" style="color:#0ea5e9;">PIX</div><div class="tot-v">' + _odFM(totais.pix) + '</div></div>'
+    + '<div class="tot"><div class="tot-l" style="color:#7c3aed;">Débito</div><div class="tot-v">' + _odFM(totais.debito) + '</div></div>'
+    + '<div class="tot"><div class="tot-l" style="color:#d97706;">Crédito</div><div class="tot-v">' + _odFM(totais.credito) + '</div></div>'
+    + '<div class="tot"><div class="tot-l" style="color:#16a34a;">Dinheiro</div><div class="tot-v">' + _odFM(totais.dinheiro) + '</div></div>'
+    + '</div><div class="tg">TOTAL GERAL: ' + _odFM(totais.geral) + '</div>'
+    + '<hr class="sep">'
+    + '<div style="font-size:11pt;font-weight:800;margin-bottom:4pt;">PACIENTES</div>' + pacHtml
+    + '<hr class="sep">'
+    + '<div style="font-size:10pt;color:#444;">São Paulo, ' + dataExt + '.</div>'
+    + '<div class="al"></div><div class="albl">' + esc(colab) + '</div><div class="alsub">Assinatura da colaboradora</div>'
+    + '<'+'script>window.onload=function(){setTimeout(function(){window.print();},400);};<'+'/script>'
+    + '</body></html>';
+  _rxPrint(html);
+};
+
+window.odCarregarHist = async function() {
+  var el = document.getElementById('odHistorico');
+  if (!el) return;
+  var mes = (document.getElementById('odFiltroMes') || {}).value || '';
+  if (!mes) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:40px;font-size:13px;">Selecione um mês para ver os fechamentos.</div>'; return; }
+  el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:30px;font-size:13px;">Carregando...</div>';
+  try {
+    var fb   = window.__fb;
+    var snap = await fb.get(fb.ref(fb.db, 'clinica-pirituba/caixa_odonto'));
+    if (!snap.exists()) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:40px;">Nenhum fechamento encontrado.</div>'; return; }
+    var dados  = snap.val();
+    var CMAP   = { pix:'#0ea5e9', debito:'#7c3aed', credito:'#d97706', dinheiro:'#16a34a' };
+    var CLABEL = { pix:'PIX', debito:'Débito', credito:'Crédito', dinheiro:'Dinheiro' };
+    var chaves = Object.keys(dados).filter(function(k){ return dados[k].dataISO && dados[k].dataISO.startsWith(mes); });
+    chaves.sort(function(a,b){ return b.localeCompare(a); });
+    if (!chaves.length) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:40px;">Nenhum fechamento em ' + mes + '.</div>'; return; }
+    var html = '';
+    chaves.forEach(function(k) {
+      var d = dados[k]; var t = d.totais || {};
+      var tags = ['pix','debito','credito','dinheiro'].filter(function(f){ return t[f] > 0; }).map(function(f){
+        return '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:'+CMAP[f]+'18;color:'+CMAP[f]+';border:1px solid '+CMAP[f]+'55;">'+CLABEL[f]+': '+_odFM(t[f])+'</span>';
+      }).join('');
+      var nfTag = d.notaFiscal ? ' <span style="font-size:11px;color:var(--gray-500);">· NF: '+esc(d.notaFiscal)+'</span>' : '';
+      var qp = (d.pacientes||[]).length;
+      html += '<div class="panel" style="margin-bottom:12px;padding:16px 20px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">'
+        + '<div>'
+        + '<div style="font-size:13px;font-weight:800;color:var(--navy);">'+esc(d.data||'')+' — '+esc(d.colaborador||'')+nfTag+'</div>'
+        + '<div style="font-size:11px;color:var(--gray-400);margin-top:2px;">'+qp+' paciente'+(qp!==1?'s':'')+'</div>'
+        + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'+tags+'</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">'
+        + '<div style="font-size:16px;font-weight:900;color:#16a34a;">'+_odFM(t.geral||0)+'</div>'
+        + '<button onclick="odVerDet(\''+k+'\')" style="padding:6px 14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">Ver detalhes</button>'
+        + '</div></div></div>';
+    });
+    el.innerHTML = html;
+    _odHistDados = dados;
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;color:#dc2626;padding:30px;">Erro ao carregar histórico.</div>';
+    console.error('[CaixaOdonto] hist:', e);
+  }
+};
+
+window.odVerDet = function(chave) {
+  var d = _odHistDados[chave];
+  if (!d) return;
+  var CMAP  = { PIX:'#0ea5e9', DEBITO:'#7c3aed', CREDITO:'#d97706', DINHEIRO:'#16a34a' };
+  var CLBL  = { PIX:'PIX', DEBITO:'Débito', CREDITO:'Crédito', DINHEIRO:'Dinheiro' };
+  var t     = d.totais || {};
+  var nfHtml = d.notaFiscal ? '<div style="margin-bottom:8px;"><strong>NF:</strong> '+esc(d.notaFiscal)+'</div>' : '';
+  var tags  = ['pix','debito','credito','dinheiro'].map(function(f){
+    var k = f.toUpperCase();
+    return '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:'+CMAP[k]+'18;color:'+CMAP[k]+';border:1px solid '+CMAP[k]+'55;">'+CLBL[k]+': '+_odFM(t[f]||0)+'</span>';
+  }).join('');
+  var pacHtml = (d.pacientes||[]).map(function(p,i){
+    var cor = CMAP[p.forma] || '#666';
+    var parc = (p.forma === 'CREDITO' && p.parcelas) ? ' '+p.parcelas+'x' : '';
+    var flbl = (CLBL[p.forma] || p.forma || '') + parc;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:8px;'+(i%2?'background:#f8fafc;':'')+'">'
+      + '<div><div style="font-size:13px;font-weight:700;color:var(--navy);">'+esc(p.nome)+'</div>'
+      + '<div style="font-size:11px;color:var(--gray-400);">CPF: '+esc(p.cpf)+'</div></div>'
+      + '<div style="text-align:right;">'
+      + '<div style="font-size:14px;font-weight:800;color:var(--navy);">'+_odFM(p.valor)+'</div>'
+      + '<div style="font-size:11px;font-weight:700;color:'+cor+';">'+flbl+'</div></div></div>';
+  }).join('');
+  document.getElementById('odModalBody').innerHTML = '<div style="margin-bottom:14px;">'
+    + '<div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">'+esc(d.data||'')+' — '+esc(d.colaborador||'')+'</div>'
+    + nfHtml
+    + '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">'+tags+'</div>'
+    + '<div style="font-size:17px;font-weight:900;color:#16a34a;">Total: '+_odFM(t.geral||0)+'</div>'
+    + '</div>'
+    + '<div style="border-top:1px solid var(--gray-200);padding-top:12px;">'+pacHtml+'</div>';
+  document.getElementById('odModal').style.display = 'flex';
+};
+// ==================== /CAIXA ODONTO ====================
 </script>
 <!-- VERSION: v2.1 | caixa.html | 17/07/2026 | feat: recibo ressarcimento com texto formal de documento -->
 

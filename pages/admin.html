@@ -146,6 +146,7 @@
             <label class="perm-check"><input type="checkbox" id="pCaixa"> <span class="perm-check-label">Caixa</span></label>
             <label class="perm-check"><input type="checkbox" id="pFin"> <span class="perm-check-label">Financeiro</span></label>
             <label class="perm-check"><input type="checkbox" id="pFech"> <span class="perm-check-label">Fechamento</span></label>
+            <label class="perm-check"><input type="checkbox" id="pContratos"> <span class="perm-check-label">Contratos</span></label>
             <label class="perm-check"><input type="checkbox" id="pAdmin"> <span class="perm-check-label" style="color:var(--amber);">⚡ Admin</span></label>
           </div>
         </div>
@@ -1279,7 +1280,7 @@
     document.getElementById('modalUserTitle').textContent = uid ? 'Editar Usuário' : 'Novo Usuário';
     document.getElementById('btnSalvarUser').innerHTML = uid ? '<i class="fas fa-floppy-disk"></i> Atualizar' : '<i class="fas fa-floppy-disk"></i> Criar Usuário';
     ['uNome','uEmail','uSenha'].forEach(id => document.getElementById(id).value = '');
-    ['pOrc','pExames','pCrono','pCaixa','pFin','pFech','pAdmin'].forEach(id => document.getElementById(id).checked = false);
+    ['pOrc','pExames','pCrono','pCaixa','pFin','pFech','pContratos','pAdmin'].forEach(id => document.getElementById(id).checked = false);
     if (uid && usuarios[uid]) {
       const u = usuarios[uid];
       document.getElementById('uNome').value  = u.nomeCompleto || '';
@@ -1290,8 +1291,9 @@
       document.getElementById('pCrono').checked  = !!p.cronograma;
       document.getElementById('pCaixa').checked  = !!p.caixa;
       document.getElementById('pFin').checked    = !!p.financeiro;
-      document.getElementById('pFech').checked   = !!p.fechamento;
-      document.getElementById('pAdmin').checked  = !!p.admin;
+      document.getElementById('pFech').checked      = !!p.fechamento;
+      document.getElementById('pContratos').checked = !!p.contratos;
+      document.getElementById('pAdmin').checked     = !!p.admin;
     }
     document.getElementById('modalUser').classList.add('open');
   }
@@ -1311,6 +1313,7 @@
       caixa:      document.getElementById('pCaixa').checked,
       financeiro: document.getElementById('pFin').checked,
       fechamento: document.getElementById('pFech').checked,
+      contratos:  document.getElementById('pContratos').checked,
       admin:      document.getElementById('pAdmin').checked,
     };
     const btn = document.getElementById('btnSalvarUser');
@@ -1353,6 +1356,7 @@
       if (p.exames)     tags.push('<span class="perm-tag">Exames</span>');
       if (p.cronograma) tags.push('<span class="perm-tag">Cronograma</span>');
       if (p.orcamento)  tags.push('<span class="perm-tag">Orçamentos</span>');
+      if (p.contratos)  tags.push('<span class="perm-tag">Contratos</span>');
       return '<div class="user-row">' +
         '<div class="user-avatar">' + esc(inicial) + '</div>' +
         '<div class="user-info">' +
