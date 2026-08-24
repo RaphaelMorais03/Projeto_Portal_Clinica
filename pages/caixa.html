@@ -1585,47 +1585,99 @@ window.odLimpar = function() {
 window.odImprimir = function() {
   var erros = odValidar();
   if (erros.length) { mostrarNotificacao(erros[0]); return; }
-  var colab  = sessionStorage.getItem('usuario') || '—';
-  var data   = document.getElementById('odData').value;
-  var totais = odTotais();
-  var logo   = sessionStorage.getItem('logoDataUrl') || '';
-  var logoH  = logo ? '<img src="' + logo + '" alt="Logo" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 8pt;">'
-                    : '<div style="font-size:18pt;font-weight:900;color:#0A1F44;text-align:center;margin-bottom:8pt;">CLÍNICA</div>';
-  var MESES  = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  var pts    = data.split('-');
+  var colab   = sessionStorage.getItem('usuario') || '—';
+  var data    = document.getElementById('odData').value;
+  var totais  = odTotais();
+  var logo    = sessionStorage.getItem('logoDataUrl') || '';
+  var cNome   = sessionStorage.getItem('clinicaNome') || 'SIM CLÍNICA MÉDICA E ODONTOLÓGICA LTDA';
+  var logoEsq = logo
+    ? '<img src="' + logo + '" alt="Logo" style="height:50px;width:auto;object-fit:contain;">'
+    : '<div style="font-size:16px;font-weight:900;color:#0A1F44;">' + cNome + '</div>';
+  var MESES_EXT = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  var DIAS_PT   = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  var now     = new Date();
+  var pts     = data.split('-');
   var dataFmt = pts[2] + '/' + pts[1] + '/' + pts[0];
-  var dataExt = pts[2] + ' de ' + MESES[parseInt(pts[1], 10) - 1] + ' de ' + pts[0];
-  var FLABEL  = { PIX:'PIX', DEBITO:'DÉBITO', CREDITO:'CRÉDITO', DINHEIRO:'DINHEIRO' };
-  var pacHtml = _odPacs.map(function(p) {
-    var pl = FLABEL[p.forma] || p.forma;
-    var parc = (p.forma === 'CREDITO' && p.parcelas) ? ' ' + p.parcelas + 'x' : '';
-    var nfP = (p.nf || '').trim() ? ' &nbsp;<small style="color:#0ea5e9;">NF: ' + esc(p.nf) + '</small>' : '';
-    return '<div style="border-top:1pt solid #ddd;padding:7pt 0;">'
-      + '<div style="display:flex;justify-content:space-between;"><span><strong>Nome:</strong> ' + esc(p.nome) + '</span><span><strong>CPF:</strong> ' + esc(p.cpf) + '</span></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span><strong>Valor:</strong> ' + _odFM(p.valor) + '</span><span><strong>Forma:</strong> ' + pl + parc + nfP + '</span></div></div>';
+  var diaSemana = DIAS_PT[new Date(data + 'T12:00:00').getDay()];
+  var dataExt = diaSemana + ', ' + parseInt(pts[2]) + ' de ' + MESES_EXT[parseInt(pts[1],10)-1] + ' de ' + pts[0];
+  var emitidoDs = DIAS_PT[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES_EXT[now.getMonth()] + ' de ' + now.getFullYear();
+  var hr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  var CORES = {
+    PIX:      { bg:'#f0fdf4', bord:'#bbf7d0', cor:'#15803d', icon:'⚡', lbl:'PIX' },
+    DEBITO:   { bg:'#eff6ff', bord:'#bfdbfe', cor:'#1d4ed8', icon:'💳', lbl:'Débito' },
+    CREDITO:  { bg:'#fff1f2', bord:'#fecaca', cor:'#991b1b', icon:'💳', lbl:'Crédito' },
+    DINHEIRO: { bg:'#fffbeb', bord:'#fde68a', cor:'#b45309', icon:'💵', lbl:'Dinheiro' }
+  };
+  var cardsHtml = ['PIX','DEBITO','CREDITO','DINHEIRO'].filter(function(k){ return (totais[k.toLowerCase()]||0) > 0; }).map(function(k) {
+    var v = totais[k.toLowerCase()] || 0;
+    var c = CORES[k];
+    return '<div style="border:2px solid ' + c.bord + ';background:' + c.bg + ';border-radius:14px;padding:14px 16px;">'
+      + '<div style="font-size:18px;margin-bottom:6px;">' + c.icon + '</div>'
+      + '<div style="font-size:11px;font-weight:800;color:' + c.cor + ';text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">' + c.lbl + '</div>'
+      + '<div style="font-size:1.4rem;font-weight:900;color:' + c.cor + ';">' + _odFM(v) + '</div>'
+      + '</div>';
   }).join('');
-  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fechamento Odonto</title>'
-    + '<style>@page{size:A4 portrait;margin:15mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;background:#fff;zoom:70%;}'
-    + 'h1{font-size:14pt;text-align:center;margin-bottom:4pt;}.sub{font-size:9pt;text-align:center;color:#555;margin-bottom:12pt;}'
-    + '.sep{border:none;border-top:1.5pt solid #333;margin:10pt 0;}.totrow{display:flex;justify-content:space-around;margin:8pt 0;}'
-    + '.tot{text-align:center;}.tot-l{font-size:8pt;text-transform:uppercase;letter-spacing:.5px;color:#666;}.tot-v{font-size:11pt;font-weight:800;color:#0A1F44;}'
-    + '.tg{font-size:14pt;font-weight:900;text-align:center;margin:8pt 0;}.al{border-top:1pt solid #333;width:65%;margin:30pt auto 4pt;}.albl{text-align:center;font-size:9pt;}.alsub{text-align:center;font-size:8pt;color:#666;}</style></head><body>'
-    + logoH + '<h1>FECHAMENTO DE CAIXA — ODONTOLOGIA</h1>'
-    + '<div class="sub">SIM CLÍNICA MéDICA E ODONTOLÓGICA LTDA &nbsp;|&nbsp; CNPJ: 25.154.224/0001-89</div>'
-    + '<hr class="sep">'
-    + '<div style="margin-bottom:8pt;"><div><strong>Colaborador:</strong> ' + esc(colab) + '</div><div><strong>Data:</strong> ' + dataFmt + '</div></div>'
-    + '<hr class="sep">'
-    + '<div class="totrow">'
-    + '<div class="tot"><div class="tot-l" style="color:#0ea5e9;">PIX</div><div class="tot-v">' + _odFM(totais.pix) + '</div></div>'
-    + '<div class="tot"><div class="tot-l" style="color:#7c3aed;">Débito</div><div class="tot-v">' + _odFM(totais.debito) + '</div></div>'
-    + '<div class="tot"><div class="tot-l" style="color:#d97706;">Crédito</div><div class="tot-v">' + _odFM(totais.credito) + '</div></div>'
-    + '<div class="tot"><div class="tot-l" style="color:#16a34a;">Dinheiro</div><div class="tot-v">' + _odFM(totais.dinheiro) + '</div></div>'
-    + '</div><div class="tg">TOTAL GERAL: ' + _odFM(totais.geral) + '</div>'
-    + '<hr class="sep">'
-    + '<div style="font-size:11pt;font-weight:800;margin-bottom:4pt;">PACIENTES</div>' + pacHtml
-    + '<hr class="sep">'
-    + '<div style="font-size:10pt;color:#444;">São Paulo, ' + dataExt + '.</div>'
-    + '<div class="al"></div><div class="albl">' + esc(colab) + '</div><div class="alsub">Assinatura do colaborador</div>'
+
+  var FLBL = { PIX:'PIX', DEBITO:'Débito', CREDITO:'Crédito', DINHEIRO:'Dinheiro' };
+  var rows = _odPacs.map(function(p, i) {
+    var bg   = i%2===0 ? '#f9fafb' : '#ffffff';
+    var fl   = FLBL[p.forma] || p.forma;
+    var parc = (p.forma === 'CREDITO' && p.parcelas) ? ' ' + p.parcelas + 'x' : '';
+    var nfCell = (p.nf||'').trim()
+      ? '<span style="background:#f0f9ff;color:#0ea5e9;padding:2px 6px;border-radius:5px;font-size:9px;font-weight:800;">' + esc(p.nf) + '</span>'
+      : '<span style="color:#9ca3af;font-size:10px;">—</span>';
+    return '<tr style="background:' + bg + ';">'
+      + '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:11px;font-weight:600;">' + esc(p.nome) + '</td>'
+      + '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:10px;color:#6b7280;">' + esc(p.cpf) + '</td>'
+      + '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:11px;font-weight:800;color:#15803d;text-align:right;">' + _odFM(p.valor) + '</td>'
+      + '<td style="border:1px solid #e5e7eb;padding:5px 8px;font-size:10px;text-align:center;">' + fl + parc + '</td>'
+      + '<td style="border:1px solid #e5e7eb;padding:5px 8px;text-align:center;">' + nfCell + '</td>'
+      + '</tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fechamento Caixa Odonto</title>'
+    + '<style>*{margin:0;padding:0;box-sizing:border-box;}@page{size:A4;margin:1.5cm;}body{font-family:system-ui,-apple-system,sans-serif;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style>'
+    + '</head><body><div style="padding:0;">'
+    /* Cabeçalho */
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">'
+    +   '<div style="flex:1;">' + logoEsq + '<div style="font-size:11px;color:#555;margin-top:4px;">Pirituba · São Paulo</div></div>'
+    +   '<div style="flex:1;text-align:center;font-size:10px;color:#888;">' + esc(cNome) + '</div>'
+    +   '<div style="flex:1;text-align:right;"><div style="font-size:10px;color:#888;">Emitido em</div><div style="font-size:12px;font-weight:700;color:#374151;">' + emitidoDs + ' às ' + hr + '</div></div>'
+    + '</div>'
+    /* Título + responsável */
+    + '<div style="text-align:center;margin-bottom:1.5rem;">'
+    +   '<div style="font-size:1.8rem;font-weight:900;color:#0A1F44;margin-bottom:.8rem;">FECHAMENTO CAIXA ODONTO</div>'
+    +   '<div style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.5rem;background:#61C1D0;border-radius:12px;border:3px solid #980000;color:white;font-size:.9rem;font-weight:800;">👤 ' + esc(colab.toUpperCase()) + '</div>'
+    +   '<div style="font-size:13px;color:#6b7280;margin-top:8px;">Data: <strong>' + dataFmt + '</strong> · ' + dataExt + '</div>'
+    + '</div>'
+    /* Cards de totais */
+    + '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:10px;">Total por forma de pagamento</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.3rem;">' + cardsHtml + '</div>'
+    /* Card navy — Total Geral */
+    + '<div style="background:#0A1F44;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:8px;">'
+    +   '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;">💵 Total Geral</div>'
+    +   '<div style="font-size:1.6rem;font-weight:900;color:white;">' + _odFM(totais.geral) + '</div>'
+    + '</div>'
+    /* Tabela de pacientes */
+    + '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:8px;">Pacientes</div>'
+    + '<table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;">'
+    +   '<thead><tr style="background:#0A1F44;">'
+    +     '<th style="border:1px solid #374151;padding:7px 8px;text-align:left;font-size:9px;color:rgba(255,255,255,.7);">Nome</th>'
+    +     '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">CPF</th>'
+    +     '<th style="border:1px solid #374151;padding:7px 8px;text-align:right;font-size:9px;color:rgba(255,255,255,.7);">Valor</th>'
+    +     '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);text-align:center;">Forma</th>'
+    +     '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);text-align:center;">NF#</th>'
+    +   '</tr></thead>'
+    +   '<tbody>' + rows + '</tbody>'
+    + '</table>'
+    /* Rodapé */
+    + '<div style="padding-top:.8rem;border-top:2px solid #61C1D0;display:flex;justify-content:space-between;align-items:center;">'
+    +   '<div style="font-size:10px;color:#888;">' + emitidoDs + ' às ' + hr + '</div>'
+    +   '<div style="font-size:10px;font-weight:800;color:#374151;text-align:center;">RESPONSÁVEL: ' + esc(colab.toUpperCase()) + '</div>'
+    +   '<div style="font-size:10px;color:#888;text-align:right;">' + esc(cNome) + '</div>'
+    + '</div>'
+    + '</div>'
     + '<'+'script>window.onload=function(){setTimeout(function(){window.print();},400);};<'+'/script>'
     + '</body></html>';
   _rxPrint(html);
