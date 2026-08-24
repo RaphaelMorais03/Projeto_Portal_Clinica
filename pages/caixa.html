@@ -257,33 +257,16 @@
     <div class="tab-pane" id="tabOdonto">
       <div class="content">
 
-        <!-- Sub-abas -->
-        <div class="nav-tabs" style="margin-bottom:0;border-bottom:2px solid var(--gray-200);">
-          <button class="nav-tab active" id="odNavLanc" onclick="odTab('lanc',this)"><i class="fas fa-plus-circle"></i> Lançamento</button>
-          <button class="nav-tab" id="odNavHist" onclick="odTab('hist',this)"><i class="fas fa-clock-rotate-left"></i> Histórico</button>
-        </div>
-
         <!-- LANÇAMENTO -->
         <div id="odPaneLanc">
           <div class="user-banner" style="margin:16px 0;">
             <div class="user-banner-info">
-              <div class="user-banner-label">Colaboradora</div>
+              <div class="user-banner-label">Colaborador</div>
               <div class="user-banner-name" id="odColabNome">—</div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;">
               <label class="f-label" style="margin:0;">Data do fechamento</label>
               <input class="f-input" type="date" id="odData" style="width:175px;">
-            </div>
-          </div>
-
-          <div class="panel" style="margin-bottom:16px;padding:14px 18px;">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <i class="fas fa-file-invoice" style="color:#0ea5e9;font-size:20px;"></i>
-              <div>
-                <label class="f-label" style="margin-bottom:4px;">Nº Nota Fiscal</label>
-                <input class="f-input" type="text" id="odNF" placeholder="Ex: 000125" maxlength="20" style="width:200px;border-color:#0ea5e9;background:#f0f9ff;">
-              </div>
-              <span style="font-size:11px;color:var(--gray-400);">Opcional</span>
             </div>
           </div>
 
@@ -325,28 +308,8 @@
           </div>
         </div>
 
-        <!-- HISTÓRICO -->
-        <div id="odPaneHist" style="display:none;">
-          <div style="display:flex;align-items:center;gap:12px;margin:16px 0 20px;">
-            <label class="f-label" style="margin:0;white-space:nowrap;">Filtrar por mês:</label>
-            <input class="f-input" type="month" id="odFiltroMes" style="width:180px;" oninput="odCarregarHist()">
-          </div>
-          <div id="odHistorico"><div style="text-align:center;color:var(--gray-400);padding:40px;font-size:13px;">Selecione um mês para ver os fechamentos.</div></div>
-        </div>
-
       </div>
     </div><!-- /tabOdonto -->
-
-    <!-- Modal detalhes odonto -->
-    <div id="odModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center;">
-      <div style="background:#fff;border-radius:16px;padding:24px;max-width:640px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div style="font-weight:800;font-size:16px;color:var(--navy);">Detalhes do Fechamento</div>
-          <button onclick="document.getElementById('odModal').style.display='none'" style="border:none;background:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1;">&times;</button>
-        </div>
-        <div id="odModalBody"></div>
-      </div>
-    </div>
 
   <!-- TELA DE PREVIEW DO RELATÓRIO -->
   <div class="preview-screen" id="telaPreview">
@@ -1484,7 +1447,6 @@ window.imprimirBonificacao = function() {
 <script>
 // ==================== CAIXA ODONTO ====================
 var _odPacs = [];
-var _odHistDados = {};
 
 (function odInit() {
   var el = document.getElementById('odData');
@@ -1493,18 +1455,6 @@ var _odHistDados = {};
   if (cn) cn.textContent = sessionStorage.getItem('usuario') || '—';
 })();
 
-window.odTab = function(aba, btn) {
-  ['Lanc', 'Hist'].forEach(function(a) {
-    var p = document.getElementById('odPane' + a);
-    if (p) p.style.display = 'none';
-    var b = document.getElementById('odNav' + a);
-    if (b) b.classList.remove('active');
-  });
-  var pane = document.getElementById('odPane' + aba.charAt(0).toUpperCase() + aba.slice(1));
-  if (pane) pane.style.display = '';
-  if (btn) btn.classList.add('active');
-  if (aba === 'hist') odCarregarHist();
-};
 
 function _odFM(n) {
   return 'R$ ' + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1514,7 +1464,7 @@ function _odPM(v) {
 }
 
 window.odAddPac = function() {
-  _odPacs.push({ nome: '', cpf: '', valorStr: '', valor: 0, forma: '', parcelas: null });
+  _odPacs.push({ nome: '', cpf: '', valorStr: '', valor: 0, forma: '', parcelas: null, nf: '' });
   odRender();
 };
 
@@ -1557,13 +1507,15 @@ function odRender() {
         + 'style="width:60px;padding:5px 8px;border:2px solid #d97706;border-radius:7px;font-family:inherit;font-size:13px;text-align:center;background:#fffbeb;">'
         + '<span style="font-size:12px;color:var(--gray-500);">x</span></div>';
     }
-    html += '<div style="display:grid;grid-template-columns:1fr 150px 130px 36px;gap:10px;align-items:start;padding:12px 14px;border:1px solid var(--gray-200);border-radius:10px;margin-bottom:8px;">'
+    html += '<div style="display:grid;grid-template-columns:1fr 150px 120px 100px 36px;gap:10px;align-items:start;padding:12px 14px;border:1px solid var(--gray-200);border-radius:10px;margin-bottom:8px;">'
       + '<div><label class="f-label">Nome do Paciente</label>'
       + '<input class="f-input" type="text" placeholder="Nome completo" value="' + esc(p.nome || '') + '" oninput="_odPacs[' + i + '].nome=this.value" style="font-size:13px;"></div>'
       + '<div><label class="f-label">CPF</label>'
       + '<input class="f-input" type="text" placeholder="000.000.000-00" value="' + esc(p.cpf || '') + '" oninput="mascaraCPF(this);_odPacs[' + i + '].cpf=this.value;" maxlength="14" style="font-size:13px;"></div>'
       + '<div><label class="f-label">Valor R$</label>'
       + '<input class="f-input" type="text" placeholder="0,00" value="' + esc(p.valorStr || '') + '" oninput="mascaraMoeda(this);_odPacs[' + i + '].valorStr=this.value;_odPacs[' + i + '].valor=_odPM(this.value);odTotais();" inputmode="numeric" style="font-size:13px;"></div>'
+      + '<div><label class="f-label" style="color:#0ea5e9;">NF#</label>'
+      + '<input class="f-input" type="text" placeholder="Nº NF" value="' + esc(p.nf || '') + '" oninput="_odPacs[' + i + '].nf=this.value" maxlength="20" style="font-size:13px;border-color:#0ea5e9;background:#f0f9ff;"></div>'
       + '<div style="padding-top:22px;"><button type="button" onclick="odRemPac(' + i + ')" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;cursor:pointer;font-size:16px;">&times;</button></div>'
       + '<div style="grid-column:1/-1;">'
       + '<label class="f-label" style="margin-bottom:6px;">Forma de Pagamento</label>'
@@ -1602,21 +1554,19 @@ window.odSalvar = async function() {
   var erros = odValidar();
   if (erros.length) { mostrarNotificacao(erros[0]); return; }
   var data   = document.getElementById('odData').value;
-  var nf     = document.getElementById('odNF').value.trim();
   var colab  = sessionStorage.getItem('usuario') || 'Colaborador';
   var totais = odTotais();
   var prim   = colab.split(' ')[0].replace(/[^a-zA-Z]/g, '') || 'USER';
   var chave  = data + '_' + prim + '_' + Date.now();
   var pts    = data.split('-');
   var pacientes = _odPacs.map(function(p) {
-    return { nome: p.nome.trim(), cpf: p.cpf, valor: p.valor, forma: p.forma, parcelas: p.parcelas || null };
+    return { nome: p.nome.trim(), cpf: p.cpf, valor: p.valor, forma: p.forma, parcelas: p.parcelas || null, notaFiscal: (p.nf || '').trim() || null };
   });
-  var dados = { data: pts[2]+'/'+pts[1]+'/'+pts[0], dataISO: data, colaborador: colab, notaFiscal: nf || null, emitidoEm: new Date().toISOString(), totais: totais, pacientes: pacientes };
+  var dados = { data: pts[2]+'/'+pts[1]+'/'+pts[0], dataISO: data, colaborador: colab, emitidoEm: new Date().toISOString(), totais: totais, pacientes: pacientes };
   try {
     await window.fbSet('clinica-pirituba/caixa_odonto/' + chave, dados);
     mostrarNotificacao('Fechamento salvo com sucesso!');
     _odPacs = [];
-    document.getElementById('odNF').value = '';
     document.getElementById('odData').value = new Date().toISOString().slice(0, 10);
     odRender();
   } catch(e) {
@@ -1628,7 +1578,6 @@ window.odSalvar = async function() {
 window.odLimpar = function() {
   if (_odPacs.length && !confirm('Limpar todos os pacientes?')) return;
   _odPacs = [];
-  document.getElementById('odNF').value = '';
   document.getElementById('odData').value = new Date().toISOString().slice(0, 10);
   odRender();
 };
@@ -1638,7 +1587,6 @@ window.odImprimir = function() {
   if (erros.length) { mostrarNotificacao(erros[0]); return; }
   var colab  = sessionStorage.getItem('usuario') || '—';
   var data   = document.getElementById('odData').value;
-  var nf     = document.getElementById('odNF').value.trim();
   var totais = odTotais();
   var logo   = sessionStorage.getItem('logoDataUrl') || '';
   var logoH  = logo ? '<img src="' + logo + '" alt="Logo" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 8pt;">'
@@ -1651,11 +1599,11 @@ window.odImprimir = function() {
   var pacHtml = _odPacs.map(function(p) {
     var pl = FLABEL[p.forma] || p.forma;
     var parc = (p.forma === 'CREDITO' && p.parcelas) ? ' ' + p.parcelas + 'x' : '';
+    var nfP = (p.nf || '').trim() ? ' &nbsp;<small style="color:#0ea5e9;">NF: ' + esc(p.nf) + '</small>' : '';
     return '<div style="border-top:1pt solid #ddd;padding:7pt 0;">'
       + '<div style="display:flex;justify-content:space-between;"><span><strong>Nome:</strong> ' + esc(p.nome) + '</span><span><strong>CPF:</strong> ' + esc(p.cpf) + '</span></div>'
-      + '<div style="display:flex;justify-content:space-between;"><span><strong>Valor:</strong> ' + _odFM(p.valor) + '</span><span><strong>Forma:</strong> ' + pl + parc + '</span></div></div>';
+      + '<div style="display:flex;justify-content:space-between;"><span><strong>Valor:</strong> ' + _odFM(p.valor) + '</span><span><strong>Forma:</strong> ' + pl + parc + nfP + '</span></div></div>';
   }).join('');
-  var nfRow = nf ? '<div><strong>Nº Nota Fiscal:</strong> ' + esc(nf) + '</div>' : '';
   var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fechamento Odonto</title>'
     + '<style>@page{size:A4 portrait;margin:15mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;background:#fff;zoom:70%;}'
     + 'h1{font-size:14pt;text-align:center;margin-bottom:4pt;}.sub{font-size:9pt;text-align:center;color:#555;margin-bottom:12pt;}'
@@ -1665,7 +1613,7 @@ window.odImprimir = function() {
     + logoH + '<h1>FECHAMENTO DE CAIXA — ODONTOLOGIA</h1>'
     + '<div class="sub">SIM CLÍNICA MéDICA E ODONTOLÓGICA LTDA &nbsp;|&nbsp; CNPJ: 25.154.224/0001-89</div>'
     + '<hr class="sep">'
-    + '<div style="margin-bottom:8pt;"><div><strong>Colaboradora:</strong> ' + esc(colab) + '</div><div><strong>Data:</strong> ' + dataFmt + '</div>' + nfRow + '</div>'
+    + '<div style="margin-bottom:8pt;"><div><strong>Colaborador:</strong> ' + esc(colab) + '</div><div><strong>Data:</strong> ' + dataFmt + '</div></div>'
     + '<hr class="sep">'
     + '<div class="totrow">'
     + '<div class="tot"><div class="tot-l" style="color:#0ea5e9;">PIX</div><div class="tot-v">' + _odFM(totais.pix) + '</div></div>'
@@ -1677,87 +1625,12 @@ window.odImprimir = function() {
     + '<div style="font-size:11pt;font-weight:800;margin-bottom:4pt;">PACIENTES</div>' + pacHtml
     + '<hr class="sep">'
     + '<div style="font-size:10pt;color:#444;">São Paulo, ' + dataExt + '.</div>'
-    + '<div class="al"></div><div class="albl">' + esc(colab) + '</div><div class="alsub">Assinatura da colaboradora</div>'
+    + '<div class="al"></div><div class="albl">' + esc(colab) + '</div><div class="alsub">Assinatura do colaborador</div>'
     + '<'+'script>window.onload=function(){setTimeout(function(){window.print();},400);};<'+'/script>'
     + '</body></html>';
   _rxPrint(html);
 };
 
-window.odCarregarHist = async function() {
-  var el = document.getElementById('odHistorico');
-  if (!el) return;
-  var mes = (document.getElementById('odFiltroMes') || {}).value || '';
-  if (!mes) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:40px;font-size:13px;">Selecione um mês para ver os fechamentos.</div>'; return; }
-  el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:30px;font-size:13px;">Carregando...</div>';
-  try {
-    var fb   = window.__fb;
-    var snap = await fb.get(fb.ref(fb.db, 'clinica-pirituba/caixa_odonto'));
-    if (!snap.exists()) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:40px;">Nenhum fechamento encontrado.</div>'; return; }
-    var dados  = snap.val();
-    var CMAP   = { pix:'#0ea5e9', debito:'#7c3aed', credito:'#d97706', dinheiro:'#16a34a' };
-    var CLABEL = { pix:'PIX', debito:'Débito', credito:'Crédito', dinheiro:'Dinheiro' };
-    var chaves = Object.keys(dados).filter(function(k){ return dados[k].dataISO && dados[k].dataISO.startsWith(mes); });
-    chaves.sort(function(a,b){ return b.localeCompare(a); });
-    if (!chaves.length) { el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:40px;">Nenhum fechamento em ' + mes + '.</div>'; return; }
-    var html = '';
-    chaves.forEach(function(k) {
-      var d = dados[k]; var t = d.totais || {};
-      var tags = ['pix','debito','credito','dinheiro'].filter(function(f){ return t[f] > 0; }).map(function(f){
-        return '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:'+CMAP[f]+'18;color:'+CMAP[f]+';border:1px solid '+CMAP[f]+'55;">'+CLABEL[f]+': '+_odFM(t[f])+'</span>';
-      }).join('');
-      var nfTag = d.notaFiscal ? ' <span style="font-size:11px;color:var(--gray-500);">· NF: '+esc(d.notaFiscal)+'</span>' : '';
-      var qp = (d.pacientes||[]).length;
-      html += '<div class="panel" style="margin-bottom:12px;padding:16px 20px;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">'
-        + '<div>'
-        + '<div style="font-size:13px;font-weight:800;color:var(--navy);">'+esc(d.data||'')+' — '+esc(d.colaborador||'')+nfTag+'</div>'
-        + '<div style="font-size:11px;color:var(--gray-400);margin-top:2px;">'+qp+' paciente'+(qp!==1?'s':'')+'</div>'
-        + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'+tags+'</div>'
-        + '</div>'
-        + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">'
-        + '<div style="font-size:16px;font-weight:900;color:#16a34a;">'+_odFM(t.geral||0)+'</div>'
-        + '<button onclick="odVerDet(\''+k+'\')" style="padding:6px 14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">Ver detalhes</button>'
-        + '</div></div></div>';
-    });
-    el.innerHTML = html;
-    _odHistDados = dados;
-  } catch(e) {
-    el.innerHTML = '<div style="text-align:center;color:#dc2626;padding:30px;">Erro ao carregar histórico.</div>';
-    console.error('[CaixaOdonto] hist:', e);
-  }
-};
-
-window.odVerDet = function(chave) {
-  var d = _odHistDados[chave];
-  if (!d) return;
-  var CMAP  = { PIX:'#0ea5e9', DEBITO:'#7c3aed', CREDITO:'#d97706', DINHEIRO:'#16a34a' };
-  var CLBL  = { PIX:'PIX', DEBITO:'Débito', CREDITO:'Crédito', DINHEIRO:'Dinheiro' };
-  var t     = d.totais || {};
-  var nfHtml = d.notaFiscal ? '<div style="margin-bottom:8px;"><strong>NF:</strong> '+esc(d.notaFiscal)+'</div>' : '';
-  var tags  = ['pix','debito','credito','dinheiro'].map(function(f){
-    var k = f.toUpperCase();
-    return '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:'+CMAP[k]+'18;color:'+CMAP[k]+';border:1px solid '+CMAP[k]+'55;">'+CLBL[k]+': '+_odFM(t[f]||0)+'</span>';
-  }).join('');
-  var pacHtml = (d.pacientes||[]).map(function(p,i){
-    var cor = CMAP[p.forma] || '#666';
-    var parc = (p.forma === 'CREDITO' && p.parcelas) ? ' '+p.parcelas+'x' : '';
-    var flbl = (CLBL[p.forma] || p.forma || '') + parc;
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:8px;'+(i%2?'background:#f8fafc;':'')+'">'
-      + '<div><div style="font-size:13px;font-weight:700;color:var(--navy);">'+esc(p.nome)+'</div>'
-      + '<div style="font-size:11px;color:var(--gray-400);">CPF: '+esc(p.cpf)+'</div></div>'
-      + '<div style="text-align:right;">'
-      + '<div style="font-size:14px;font-weight:800;color:var(--navy);">'+_odFM(p.valor)+'</div>'
-      + '<div style="font-size:11px;font-weight:700;color:'+cor+';">'+flbl+'</div></div></div>';
-  }).join('');
-  document.getElementById('odModalBody').innerHTML = '<div style="margin-bottom:14px;">'
-    + '<div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">'+esc(d.data||'')+' — '+esc(d.colaborador||'')+'</div>'
-    + nfHtml
-    + '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">'+tags+'</div>'
-    + '<div style="font-size:17px;font-weight:900;color:#16a34a;">Total: '+_odFM(t.geral||0)+'</div>'
-    + '</div>'
-    + '<div style="border-top:1px solid var(--gray-200);padding-top:12px;">'+pacHtml+'</div>';
-  document.getElementById('odModal').style.display = 'flex';
-};
 // ==================== /CAIXA ODONTO ====================
 </script>
 <!-- VERSION: v2.1 | caixa.html | 17/07/2026 | feat: recibo ressarcimento com texto formal de documento -->

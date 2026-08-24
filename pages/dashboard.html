@@ -402,6 +402,7 @@
         <button class="main-tab" id="mainTabFech" onclick="switchMainTab('fech')"><i class="fas fa-file-invoice-dollar"></i> Fechamentos</button>
         <button class="main-tab" id="mainTabVisao" onclick="switchMainTab('visao')"><i class="fas fa-gauge-high"></i> Visão Geral</button>
         <button class="main-tab" id="mainTabContratos" onclick="switchMainTab('contratos')"><i class="fas fa-file-contract"></i> Contratos</button>
+        <button class="main-tab" id="mainTabOdonto" onclick="switchMainTab('odonto')"><i class="fas fa-tooth"></i> Caixa Odonto</button>
       </div>
       <button class="btn-lancamento" id="btnLancProd" onclick="abrirLancamento()"><i class="fas fa-plus"></i> Lançamento Manual</button>
     </div>
@@ -513,7 +514,30 @@
       </div>
     </div><!-- /viewContratos -->
 
+    <!-- PAINEL CAIXA ODONTO — Histórico -->
+    <div class="view-panel" id="viewOdonto">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:800;color:var(--navy);"><i class="fas fa-tooth"></i> Histórico Caixa Odonto</span>
+        <input type="month" class="f-select" id="dshOdFiltroMes" style="width:180px;" oninput="dshOdCarregarHist()">
+        <button onclick="dshOdCarregarHist()" style="padding:7px 14px;background:white;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;color:var(--gray-600);cursor:pointer;display:flex;align-items:center;gap:6px;"><i class="fas fa-rotate-right"></i> Atualizar</button>
+      </div>
+      <div id="dshOdHistorico">
+        <div class="empty"><i class="fas fa-tooth"></i><p>Selecione um mês</p><small>Os fechamentos de caixa odonto aparecerão aqui</small></div>
+      </div>
+    </div><!-- /viewOdonto -->
+
   </div><!-- /content -->
+
+  <!-- Modal detalhes odonto (dashboard) -->
+  <div id="dshOdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:24px;max-width:640px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-weight:800;font-size:16px;color:var(--navy);">Detalhes do Fechamento — Odonto</div>
+        <button onclick="document.getElementById('dshOdModal').style.display='none'" style="border:none;background:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1;">&times;</button>
+      </div>
+      <div id="dshOdModalBody"></div>
+    </div>
+  </div>
 
   <script>
     /* ══════════════════════════════════════
@@ -887,7 +911,7 @@
     var _cxEditUID = null, _cxEditDT = null;
 
     window.switchMainTab = function(tab) {
-      var tabs = ['prod','caixa','fech','visao','contratos'];
+      var tabs = ['prod','caixa','fech','visao','contratos','odonto'];
       tabs.forEach(function(t) {
         var vp = document.getElementById('view' + t.charAt(0).toUpperCase() + t.slice(1));
         var mt = document.getElementById('mainTab' + t.charAt(0).toUpperCase() + t.slice(1));
@@ -903,6 +927,7 @@
       if (tab === 'fech')  { preencherMesFech();  renderFechTab(); }
       if (tab === 'visao') { preencherMesVisao(); renderVisao(); }
       if (tab === 'contratos') { preencherMesContratos(); renderContratos(); }
+      if (tab === 'odonto')    { dshOdPreencherMes(); }
     };
 
 
@@ -991,6 +1016,93 @@
         area.innerHTML = '<div class="loading">Erro ao carregar contratos.</div>';
         console.error('[contratos]', e);
       }
+    };
+
+    // ── Caixa Odonto — Histórico ──
+    var _dshOdDados = {};
+
+    function dshOdPreencherMes() {
+      var inp = document.getElementById('dshOdFiltroMes');
+      if (!inp || inp.value) return;
+      var now = new Date();
+      inp.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+      dshOdCarregarHist();
+    }
+
+    function _dshOdFM(n) {
+      return 'R$ ' + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    window.dshOdCarregarHist = async function() {
+      var el = document.getElementById('dshOdHistorico');
+      if (!el) return;
+      var mes = (document.getElementById('dshOdFiltroMes') || {}).value || '';
+      if (!mes) { el.innerHTML = '<div class="empty"><i class="fas fa-tooth"></i><p>Selecione um mês</p></div>'; return; }
+      el.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+      try {
+        var fb   = window.__fb;
+        var snap = await fb.get(fb.ref(fb.db, 'clinica-pirituba/caixa_odonto'));
+        if (!snap.exists()) { el.innerHTML = '<div class="empty"><i class="fas fa-tooth"></i><p>Nenhum fechamento encontrado.</p></div>'; return; }
+        var dados  = snap.val();
+        var CMAP   = { pix:'#0ea5e9', debito:'#7c3aed', credito:'#d97706', dinheiro:'#16a34a' };
+        var CLABEL = { pix:'PIX', debito:'Débito', credito:'Crédito', dinheiro:'Dinheiro' };
+        var chaves = Object.keys(dados).filter(function(k){ return dados[k].dataISO && dados[k].dataISO.startsWith(mes); });
+        chaves.sort(function(a, b){ return b.localeCompare(a); });
+        if (!chaves.length) { el.innerHTML = '<div class="empty"><i class="fas fa-tooth"></i><p>Nenhum fechamento em ' + mes + '.</p></div>'; return; }
+        var html = '';
+        chaves.forEach(function(k) {
+          var d = dados[k]; var t = d.totais || {};
+          var tags = ['pix','debito','credito','dinheiro'].filter(function(f){ return t[f] > 0; }).map(function(f){
+            return '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:' + CMAP[f] + '18;color:' + CMAP[f] + ';border:1px solid ' + CMAP[f] + '55;">' + CLABEL[f] + ': ' + _dshOdFM(t[f]) + '</span>';
+          }).join('');
+          var qp = (d.pacientes||[]).length;
+          html += '<div class="caixa-card" style="margin-bottom:12px;">'
+            + '<div class="caixa-card-header">'
+            + '<div><div class="caixa-collab">' + esc(d.data||'') + ' — ' + esc(d.colaborador||'') + '</div>'
+            + '<div class="caixa-date">' + qp + ' paciente' + (qp !== 1 ? 's' : '') + '</div>'
+            + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' + tags + '</div></div>'
+            + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">'
+            + '<div style="font-size:16px;font-weight:900;color:#16a34a;">' + _dshOdFM(t.geral||0) + '</div>'
+            + '<button onclick="dshOdVerDet(\'' + k + '\')" style="padding:6px 14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">Ver detalhes</button>'
+            + '</div></div></div>';
+        });
+        el.innerHTML = html;
+        _dshOdDados = dados;
+      } catch(e) {
+        el.innerHTML = '<div class="loading" style="color:#dc2626;">Erro ao carregar histórico.</div>';
+        console.error('[DshOdonto] hist:', e);
+      }
+    };
+
+    window.dshOdVerDet = function(chave) {
+      var d = _dshOdDados[chave];
+      if (!d) return;
+      var CMAP = { PIX:'#0ea5e9', DEBITO:'#7c3aed', CREDITO:'#d97706', DINHEIRO:'#16a34a' };
+      var CLBL = { PIX:'PIX', DEBITO:'Débito', CREDITO:'Crédito', DINHEIRO:'Dinheiro' };
+      var t = d.totais || {};
+      var tags = ['pix','debito','credito','dinheiro'].map(function(f){
+        var k = f.toUpperCase();
+        return '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:' + CMAP[k] + '18;color:' + CMAP[k] + ';border:1px solid ' + CMAP[k] + '55;">' + CLBL[k] + ': ' + _dshOdFM(t[f]||0) + '</span>';
+      }).join('');
+      var pacHtml = (d.pacientes||[]).map(function(p, i){
+        var cor  = CMAP[p.forma] || '#666';
+        var parc = (p.forma === 'CREDITO' && p.parcelas) ? ' ' + p.parcelas + 'x' : '';
+        var flbl = (CLBL[p.forma] || p.forma || '') + parc;
+        var nfP  = p.notaFiscal ? '<div style="font-size:11px;color:#0ea5e9;">NF: ' + esc(p.notaFiscal) + '</div>' : '';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:8px;' + (i%2 ? 'background:#f8fafc;' : '') + '">'
+          + '<div><div style="font-size:13px;font-weight:700;color:var(--navy);">' + esc(p.nome) + '</div>'
+          + '<div style="font-size:11px;color:var(--gray-400);">CPF: ' + esc(p.cpf) + '</div>' + nfP + '</div>'
+          + '<div style="text-align:right;">'
+          + '<div style="font-size:14px;font-weight:800;color:var(--navy);">' + _dshOdFM(p.valor) + '</div>'
+          + '<div style="font-size:11px;font-weight:700;color:' + cor + ';">' + flbl + '</div></div></div>';
+      }).join('');
+      document.getElementById('dshOdModalBody').innerHTML = '<div style="margin-bottom:14px;">'
+        + '<div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">' + esc(d.data||'') + ' — ' + esc(d.colaborador||'') + '</div>'
+        + '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">' + tags + '</div>'
+        + '<div style="font-size:17px;font-weight:900;color:#16a34a;">Total: ' + _dshOdFM(t.geral||0) + '</div>'
+        + '</div>'
+        + '<div style="border-top:1px solid var(--gray-200);padding-top:12px;">' + pacHtml + '</div>';
+      document.getElementById('dshOdModal').style.display = 'flex';
     };
 
     // ── Preencher select de meses da Visão Geral ──
