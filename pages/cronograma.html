@@ -989,10 +989,22 @@
     window.addEventListener('beforeunload', () => _unsubs.forEach(fn => { try { fn(); } catch(e){} }));
     const _on = (r, cb) => { const u = onValue(r, cb); _unsubs.push(u); return u; };
 
-    onAuthStateChanged(_auth, user => {
+    onAuthStateChanged(_auth, async user => {
       if (user) {
         set(ref(_db, 'admin_logs/' + Date.now()), { tipo:'info', msg:(user.email||user.uid)+' acessou o Cronograma', ts:new Date().toISOString() }).catch(()=>{});
-carregarLogoGlobal(['#headerLogo']);
+        carregarLogoGlobal(['#headerLogo']);
+        if (!sessionStorage.getItem('usuario')) {
+          try {
+            const snap = await get(ref(_db, 'admin/usuarios/' + user.uid));
+            const dados = snap.exists() ? snap.val() : null;
+            const nome = (dados && dados.nomeCompleto) ? dados.nomeCompleto : (user.email || user.uid).split('@')[0];
+            sessionStorage.setItem('usuario',      nome);
+            sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
+            sessionStorage.setItem('uid',          user.uid);
+            sessionStorage.setItem('email',        user.email || '');
+            sessionStorage.setItem('perms',        JSON.stringify((dados && dados.perms) || {}));
+          } catch(e) { console.warn('[cronograma] Não foi possível carregar nome:', e); }
+        }
       }
 
       // 1. Agenda semanal

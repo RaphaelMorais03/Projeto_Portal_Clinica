@@ -1506,9 +1506,18 @@
       if (!user) { irPara('../login.html'); return; }
       try {
         const snap  = await get(ref(_db, 'admin/usuarios/' + user.uid));
-        const perms = (snap.val() || {}).perms || {};
+        const dados = snap.exists() ? snap.val() : null;
+        const perms = (dados && dados.perms) || {};
         if (!perms.admin && !perms.nps && user.email !== 'raphael@amorsaude.com') {
           irPara('../login.html'); return;
+        }
+        if (!sessionStorage.getItem('usuario')) {
+          const nome = (dados && dados.nomeCompleto) ? dados.nomeCompleto : (user.email || user.uid).split('@')[0];
+          sessionStorage.setItem('usuario',      nome);
+          sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
+          sessionStorage.setItem('uid',          user.uid);
+          sessionStorage.setItem('email',        user.email || '');
+          sessionStorage.setItem('perms',        JSON.stringify(perms));
         }
       } catch(e) {
         if (user.email !== 'raphael@amorsaude.com') { irPara('../login.html'); return; }

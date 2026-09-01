@@ -848,8 +848,20 @@
     window._fbSet    = (path, data) => set(ref(db, path), data);
     window._fbRemove = (path)       => remove(ref(db, path));
 
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       if (!user) { irPara('../login.html'); return; }
+      if (!sessionStorage.getItem('usuario')) {
+        try {
+          const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
+          const dados = snap.exists() ? snap.val() : null;
+          const nome = (dados && dados.nomeCompleto) ? dados.nomeCompleto : (user.email || user.uid).split('@')[0];
+          sessionStorage.setItem('usuario',      nome);
+          sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
+          sessionStorage.setItem('uid',          user.uid);
+          sessionStorage.setItem('email',        user.email || '');
+          sessionStorage.setItem('perms',        JSON.stringify((dados && dados.perms) || {}));
+        } catch(e) { console.warn('[financeiro] Não foi possível carregar nome:', e); }
+      }
       carregarLogoGlobal(['#headerLogo']).then(() => {
         window.LOGO_FIN = sessionStorage.getItem('logoDataUrl') || '';
       });

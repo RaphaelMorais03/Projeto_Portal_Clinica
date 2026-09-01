@@ -357,11 +357,24 @@
 
     let examesPendentes = {}, examesRetirados = {};
 
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       const grid = document.getElementById('gavetaGrid');
       if (!user) {
         if (grid) grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-lock"></i><p>Sessão expirada. <a href="login.html">Fazer login</a></p></div>';
         return;
+      }
+
+      if (!sessionStorage.getItem('usuario')) {
+        try {
+          const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
+          const dados = snap.exists() ? snap.val() : null;
+          const nome = (dados && dados.nomeCompleto) ? dados.nomeCompleto : (user.email || user.uid).split('@')[0];
+          sessionStorage.setItem('usuario',      nome);
+          sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
+          sessionStorage.setItem('uid',          user.uid);
+          sessionStorage.setItem('email',        user.email || '');
+          sessionStorage.setItem('perms',        JSON.stringify((dados && dados.perms) || {}));
+        } catch(e) { console.warn('[exames] Não foi possível carregar nome:', e); }
       }
 
       // Preenche atendente com usuário logado (via sessionStorage)
