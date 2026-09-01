@@ -325,15 +325,15 @@
         <div id="pontoFiltros" style="display:none;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
           <input id="pontoSearch" type="text" placeholder="🔍 Buscar colaborador..." oninput="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;flex:1;min-width:200px;">
           <select id="pontoDepto" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos os departamentos</option></select>
-          <select id="pontoFiltroSaldo" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos</option><option value="positivo">✅ Saldo positivo</option><option value="negativo">⚠️ Saldo negativo</option><option value="problema">🔴 Com problemas</option></select>
+          <select id="pontoFiltroSaldo" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos os colaboradores</option><option value="problema">🔴 Com problemas</option></select>
           <button onclick="exportarPontoCSV()" style="padding:8px 14px;background:#0A1F44;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-download"></i> Exportar CSV</button>
           <button onclick="salvarPonto()" style="padding:8px 14px;background:#15803d;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-floppy-disk"></i> Salvar</button>
         </div>
-        <div id="pontoResumoCards" style="display:none;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
-          <div class="stat-card"><div class="stat-num" id="pSumColab">—</div><div class="stat-lbl">Colaboradores</div></div>
-          <div class="stat-card"><div class="stat-num" id="pSumPos" style="color:#16a34a">—</div><div class="stat-lbl">Saldo positivo</div></div>
-          <div class="stat-card"><div class="stat-num" id="pSumNeg" style="color:#dc2626">—</div><div class="stat-lbl">Saldo negativo</div></div>
-          <div class="stat-card"><div class="stat-num" id="pSumProb" style="color:#d97706">—</div><div class="stat-lbl">Com problemas</div></div>
+        <div id="pontoResumoCards" style="display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+          <div class="stat-card"><div class="stat-icon" style="background:#eff6ff;color:#1d4ed8;font-size:18px;"><i class="fas fa-users"></i></div><div><div class="stat-num" id="pSumColab">—</div><div class="stat-lbl">Colaboradores</div></div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;color:#d97706;font-size:18px;"><i class="fas fa-triangle-exclamation"></i></div><div><div class="stat-num" id="pSumProb" style="color:#d97706">—</div><div class="stat-lbl">Com problemas</div></div></div>
+          <div class="stat-card" style="grid-column:span 2;"><div class="stat-icon" style="background:#dcfce7;color:#16a34a;font-size:18px;"><i class="fas fa-clock"></i></div><div><div class="stat-lbl" style="margin-bottom:2px;">Período</div><div id="pSumPos" style="font-size:13px;font-weight:700;color:#0A1F44;">—</div></div></div>
+          <div id="pSumNeg" style="display:none;"></div>
         </div>
         <div id="pontoPeriodo" style="display:none;font-size:12px;color:#94a3b8;margin-bottom:10px;"></div>
         <div id="pontoTabelaWrap" style="display:none;overflow-x:auto;">
@@ -341,9 +341,7 @@
             <thead><tr style="background:#0A1F44;color:white;">
               <th style="padding:10px 12px;text-align:left;font-size:11px;">COLABORADOR</th>
               <th style="padding:10px 8px;text-align:left;font-size:11px;">DEPARTAMENTO</th>
-              <th style="padding:10px 8px;text-align:center;font-size:11px;">CARGA</th>
-              <th style="padding:10px 8px;text-align:center;font-size:11px;">TRABALHADO</th>
-              <th style="padding:10px 8px;text-align:center;font-size:11px;">SALDO</th>
+              <th style="padding:10px 8px;text-align:center;font-size:11px;">TOTAL TRABALHADO</th>
               <th style="padding:10px 8px;text-align:center;font-size:11px;">FALTAS</th>
               <th style="padding:10px 8px;text-align:center;font-size:11px;">INCOMPLETAS</th>
               <th style="padding:10px 8px;text-align:center;font-size:11px;">DETALHES</th>
@@ -942,49 +940,49 @@ function parsearSecullum(rows){
   var toMin=function(t){
     if(!t)return null;
     var s=String(t).trim();
-    if(!s||s.toUpperCase()==='FOLGA'||s==='-')return null;
+    if(!s||s.toUpperCase()==='FOLGA'||s==='-'||s==='—')return null;
     var p=s.split(':'); if(p.length<2)return null;
     var h=parseInt(p[0],10),m=parseInt(p[1],10);
     if(isNaN(h)||isNaN(m))return null;
     return h*60+m;
   };
-  var toHH=function(m){
-    if(m===null||m===undefined)return '--:--';
-    var sg=m<0?'-':''; m=Math.abs(m);
-    return sg+String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  var fmtMin=function(m){
+    if(m===null||m===undefined||m===0)return '0min';
+    var abs=Math.abs(m);
+    var h=Math.floor(abs/60),min=abs%60;
+    var str=h>0?(h+'h'+(min>0?' '+min+'min':'')):(min+'min');
+    return m<0?'−'+str:str;
   };
   var resultado=[],nomeRows=[];
   for(var i=0;i<rows.length;i++){if(rows[i]&&rows[i][0]==='NOME:')nomeRows.push(i);}
   nomeRows.forEach(function(nr,idx){
     var nome=String((rows[nr+2]||[])[0]||'').trim(); if(!nome)return;
     var funcao='',depto='';
-    for(var r=nr;r<nr+15;r++){if(rows[r]&&rows[r][0]==='FUNÇÃO:'){funcao=String((rows[r+2]||[])[0]||'').trim();depto=String((rows[r+2]||[])[11]||'').trim();break;}}
-    var totaisRow=-1,cargaTotal=0,cargaTotalStr='--:--';
-    for(var r=nr;r<nr+40;r++){if(rows[r]&&rows[r][0]==='TOTAIS'){totaisRow=r;cargaTotalStr=String(rows[r][18]||'00:00');cargaTotal=toMin(cargaTotalStr)||0;break;}}
+    for(var r=nr;r<nr+15;r++){if(rows[r]&&(rows[r][0]==='FUNÇÃO:'||String(rows[r][0]||'').includes('FUN'))){funcao=String((rows[r+2]||[])[0]||'').trim();depto=String((rows[r+2]||[])[11]||'').trim();break;}}
+    var totaisRow=-1;
+    for(var r=nr;r<nr+40;r++){if(rows[r]&&rows[r][0]==='TOTAIS'){totaisRow=r;break;}}
     if(totaisRow<0)return;
     var endRow=nomeRows[idx+1]!==undefined?nomeRows[idx+1]:rows.length;
-    var dias=[],totalTrab=0,faltas=0,incompletas=0;
+    var dias=[],totalTrabMin=0,faltas=0,incompletas=0;
     for(var r=totaisRow+1;r<endRow;r++){
       var row=rows[r]; if(!row)continue;
       var data=String(row[0]||'').trim();
       if(!data||!data.includes('/')||!data.includes(' - '))continue;
-      var e1=row[4],s1=row[7],e2=row[13],s2=row[14],carga=row[18];
+      var e1=row[4],s1=row[7],s2=row[14];
       var e1s=String(e1||'').trim();
       if(e1s.toUpperCase()==='FOLGA')continue;
-      if(!carga)continue;
-      var cargaMin=toMin(String(carga))||0;
-      var me1=toMin(e1s),ms1=toMin(String(s1||'').trim()),me2=toMin(String(e2||'').trim()),ms2=toMin(String(s2||'').trim());
-      // Cálculo: apenas Entrada1 até Saída2 (ignora almoço S1/E2)
-      // Se houver S2, usa S2-E1; senão usa S1-E1 (dia sem intervalo ou turno único)
-      var trabalhado=0,status='ok';
-      var saídaFinal=ms2!==null?ms2:(ms1!==null?ms1:null);
-      if(me1!==null&&saídaFinal!==null)trabalhado=saídaFinal-me1;
-      if(!e1&&!s1&&!s2){faltas++;status='falta';}
-      else if(me1!==null&&saídaFinal===null){incompletas++;status='incompleta';}
-      if(status==='ok')totalTrab+=trabalhado;
-      dias.push({data:data,e1:e1s||'—',s1:String(s1||'').trim()||'—',e2:String(e2||'').trim()||'—',s2:String(s2||'').trim()||'—',carga:String(carga),trabalhado:toHH(trabalhado),saldoDia:toHH(trabalhado-cargaMin),saldoMin:trabalhado-cargaMin,status:status});
+      var me1=toMin(e1s);
+      var ms2=toMin(String(s2||'').trim());
+      var ms1=toMin(String(s1||'').trim());
+      var saida=ms2!==null?ms2:(ms1!==null?ms1:null);
+      var trabMin=0,status='ok';
+      if(me1!==null&&saida!==null){trabMin=saida-me1;}
+      if(me1===null&&saida===null){faltas++;status='falta';}
+      else if(me1!==null&&saida===null){incompletas++;status='incompleta';}
+      if(status==='ok')totalTrabMin+=trabMin;
+      dias.push({data:data,e1:e1s||'—',s2:String(s2||'').trim()||'—',trabMin:trabMin,trabFmt:fmtMin(trabMin),status:status});
     }
-    resultado.push({nome:nome,depto:depto||'—',funcao:funcao||'—',carga:cargaTotalStr,trabalhado:toHH(totalTrab),saldo:toHH(totalTrab-cargaTotal),saldoMin:totalTrab-cargaTotal,faltas:faltas,incompletas:incompletas,dias:dias});
+    resultado.push({nome:nome,depto:depto||'—',funcao:funcao||'—',totalTrabMin:totalTrabMin,totalTrabFmt:fmtMin(totalTrabMin),faltas:faltas,incompletas:incompletas,dias:dias});
   });
   return resultado;
 }
@@ -997,7 +995,7 @@ function renderizarPonto(){
   sel.innerHTML='<option value="">Todos os departamentos</option>';
   Object.keys(deptos).sort().forEach(function(d){sel.innerHTML+='<option value="'+d+'">'+d+'</option>';});
   var pd=document.getElementById('pontoPeriodo');
-  if(_pontoPeriodo){pd.textContent='📅 Período: '+_pontoPeriodo;pd.style.display='block';}
+  if(_pontoPeriodo){pd.textContent='📅 Período: '+_pontoPeriodo;pd.style.display='block';var pSumPos=document.getElementById('pSumPos');if(pSumPos)pSumPos.textContent=_pontoPeriodo;}
   document.getElementById('pontoFiltros').style.display='flex';
   document.getElementById('pontoResumoCards').style.display='grid';
   document.getElementById('pontoTabelaWrap').style.display='block';
@@ -1007,33 +1005,31 @@ function renderizarPonto(){
 window.filtrarPonto=function(){
   var busca=(document.getElementById('pontoSearch').value||'').toLowerCase();
   var depto=document.getElementById('pontoDepto').value;
-  var saldo=document.getElementById('pontoFiltroSaldo').value;
+  var filtro=document.getElementById('pontoFiltroSaldo').value;
   _pontoFiltrado=_pontoData.filter(function(f){
     if(busca&&!f.nome.toLowerCase().includes(busca))return false;
     if(depto&&f.depto!==depto)return false;
-    if(saldo==='positivo'&&f.saldoMin<0)return false;
-    if(saldo==='negativo'&&f.saldoMin>=0)return false;
-    if(saldo==='problema'&&f.faltas===0&&f.incompletas===0)return false;
+    if(filtro==='problema'&&f.faltas===0&&f.incompletas===0)return false;
     return true;
   });
-  var pos=0,neg=0,prob=0;
-  _pontoData.forEach(function(f){if(f.saldoMin>0)pos++;if(f.saldoMin<0)neg++;if(f.faltas>0||f.incompletas>0)prob++;});
+  var prob=0;
+  _pontoData.forEach(function(f){if(f.faltas>0||f.incompletas>0)prob++;});
   document.getElementById('pSumColab').textContent=_pontoData.length;
-  document.getElementById('pSumPos').textContent=pos;
-  document.getElementById('pSumNeg').textContent=neg;
+  document.getElementById('pSumPos').textContent='—';
+  document.getElementById('pSumNeg').textContent='—';
   document.getElementById('pSumProb').textContent=prob;
   var tbody=document.getElementById('pontoTbody');
-  if(!_pontoFiltrado.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:#94a3b8;">Nenhum colaborador encontrado</td></tr>';return;}
+  if(!_pontoFiltrado.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">Nenhum colaborador encontrado</td></tr>';return;}
   tbody.innerHTML=_pontoFiltrado.map(function(f,i){
-    var sc=f.saldoMin>0?'#16a34a':f.saldoMin<0?'#dc2626':'#64748b';
     var rbg=f.faltas>0||f.incompletas>0?'#fffbeb':(i%2===0?'#fff':'#f8fafc');
-    var si=f.saldoMin>0?'▲':f.saldoMin<0?'▼':'—';
+    var horas=f.totalTrabMin;
+    var hVal=Math.floor(horas/60),mVal=horas%60;
+    // Badge de horas: destaca quando >= 8h no total
+    var horasBadge='<span style="font-size:15px;font-weight:900;color:#0A1F44;">'+hVal+'<span style="font-size:11px;font-weight:600;color:#475569;">h</span>'+(mVal>0?' <span style="font-size:13px;font-weight:700;color:#334155;">'+mVal+'<span style="font-size:10px;color:#64748b;">min</span></span>':'')+'</span>';
     return '<tr style="background:'+rbg+';border-bottom:1px solid #f1f5f9;">'
       +'<td style="padding:10px 12px;font-weight:700;color:#0A1F44;">'+f.nome+'<div style="font-size:10px;color:#94a3b8;font-weight:400;">'+f.funcao+'</div></td>'
       +'<td style="padding:10px 8px;font-size:11px;color:#94a3b8;">'+f.depto+'</td>'
-      +'<td style="padding:10px 8px;text-align:center;font-weight:600;">'+f.carga+'</td>'
-      +'<td style="padding:10px 8px;text-align:center;font-weight:600;">'+f.trabalhado+'</td>'
-      +'<td style="padding:10px 8px;text-align:center;font-weight:800;color:'+sc+';">'+si+' '+f.saldo+'</td>'
+      +'<td style="padding:10px 12px;text-align:center;">'+horasBadge+'</td>'
       +'<td style="padding:10px 8px;text-align:center;">'+(f.faltas>0?'<span style="background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 8px;font-weight:700;">'+f.faltas+'</span>':'<span style="color:#86efac;">0</span>')+'</td>'
       +'<td style="padding:10px 8px;text-align:center;">'+(f.incompletas>0?'<span style="background:#fef3c7;color:#d97706;border-radius:6px;padding:2px 8px;font-weight:700;">'+f.incompletas+'</span>':'<span style="color:#86efac;">0</span>')+'</td>'
       +'<td style="padding:10px 8px;text-align:center;"><button onclick="abrirPontoModal('+i+')" style="padding:5px 12px;background:#0A1F44;color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;">Ver dias</button></td>'
@@ -1044,13 +1040,33 @@ window.filtrarPonto=function(){
 window.abrirPontoModal=function(idx){
   var f=_pontoFiltrado[idx]; if(!f)return;
   document.getElementById('pontoModalNome').textContent=f.nome+' — '+f.depto;
-  var html='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#f1f5f9;"><th style="padding:8px;text-align:left;">Data</th><th style="padding:8px;text-align:center;">E1</th><th style="padding:8px;text-align:center;">S1</th><th style="padding:8px;text-align:center;">E2</th><th style="padding:8px;text-align:center;">S2</th><th style="padding:8px;text-align:center;">Carga</th><th style="padding:8px;text-align:center;">Trabalhado</th><th style="padding:8px;text-align:center;">Saldo</th></tr></thead><tbody>';
+  var totalH=Math.floor(f.totalTrabMin/60),totalM=f.totalTrabMin%60;
+  var totalLabel=totalH+'h'+(totalM>0?' '+totalM+'min':'');
+  var html='<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    +'<thead><tr style="background:#0A1F44;color:white;">'
+    +'<th style="padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.5px;">DATA</th>'
+    +'<th style="padding:9px 10px;text-align:center;font-size:11px;">ENTRADA</th>'
+    +'<th style="padding:9px 10px;text-align:center;font-size:11px;">SAÍDA</th>'
+    +'<th style="padding:9px 10px;text-align:center;font-size:11px;">TRABALHADO</th>'
+    +'<th style="padding:9px 10px;text-align:center;font-size:11px;">STATUS</th>'
+    +'</tr></thead><tbody>';
   f.dias.forEach(function(d){
     var bg=d.status==='falta'?'#fee2e2':d.status==='incompleta'?'#fef3c7':'white';
-    var sc=d.saldoMin>0?'#16a34a':d.saldoMin<0?'#dc2626':'#64748b';
-    html+='<tr style="border-bottom:1px solid #f1f5f9;background:'+bg+';"><td style="padding:7px 8px;font-weight:600;">'+d.data+'</td><td style="padding:7px;text-align:center;">'+d.e1+'</td><td style="padding:7px;text-align:center;">'+d.s1+'</td><td style="padding:7px;text-align:center;">'+d.e2+'</td><td style="padding:7px;text-align:center;">'+d.s2+'</td><td style="padding:7px;text-align:center;">'+d.carga+'</td><td style="padding:7px;text-align:center;font-weight:600;">'+d.trabalhado+'</td><td style="padding:7px;text-align:center;font-weight:700;color:'+sc+';">'+d.saldoDia+'</td></tr>';
+    var h=Math.floor(d.trabMin/60),m=d.trabMin%60;
+    var trabLabel=d.status==='falta'?'—':('<strong style="font-size:14px;color:#0A1F44;">'+h+'</strong><span style="font-size:11px;color:#64748b;">h</span>'+(m>0?' <strong style="font-size:13px;color:#334155;">'+m+'</strong><span style="font-size:10px;color:#94a3b8;">min</span>':''));
+    var statusBadge=d.status==='falta'?'<span style="background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;">FALTA</span>':d.status==='incompleta'?'<span style="background:#fef3c7;color:#d97706;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;">INCOMPLETO</span>':'<span style="background:#dcfce7;color:#16a34a;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;">OK</span>';
+    html+='<tr style="border-bottom:1px solid #f1f5f9;background:'+bg+';">'
+      +'<td style="padding:8px 10px;font-weight:600;color:#334155;">'+d.data+'</td>'
+      +'<td style="padding:8px;text-align:center;font-weight:700;color:#0A1F44;font-size:13px;">'+d.e1+'</td>'
+      +'<td style="padding:8px;text-align:center;font-weight:700;color:#0A1F44;font-size:13px;">'+d.s2+'</td>'
+      +'<td style="padding:8px;text-align:center;">'+trabLabel+'</td>'
+      +'<td style="padding:8px;text-align:center;">'+statusBadge+'</td>'
+      +'</tr>';
   });
-  html+='<tr style="background:#0A1F44;color:white;font-weight:700;"><td colspan="5" style="padding:8px;">TOTAIS</td><td style="padding:8px;text-align:center;">'+f.carga+'</td><td style="padding:8px;text-align:center;">'+f.trabalhado+'</td><td style="padding:8px;text-align:center;color:'+(f.saldoMin>=0?'#86efac':'#fca5a5')+';">'+f.saldo+'</td></tr></tbody></table>';
+  html+='<tr style="background:#0A1F44;color:white;font-weight:700;">'
+    +'<td colspan="3" style="padding:10px 10px;font-size:12px;letter-spacing:.5px;">TOTAL DO PERÍODO</td>'
+    +'<td style="padding:10px;text-align:center;font-size:16px;font-weight:900;color:#86efac;">'+totalLabel+'</td>'
+    +'<td></td></tr></tbody></table>';
   document.getElementById('pontoModalBody').innerHTML=html;
   var modal=document.getElementById('pontoModal');
   modal.style.display='flex';
@@ -1087,8 +1103,8 @@ window.salvarPonto=function(){
 
 window.exportarPontoCSV=function(){
   if(!_pontoFiltrado.length)return;
-  var linhas=['Nome,Departamento,Função,Carga Esperada,Horas Trabalhadas,Saldo,Faltas,Batidas Incompletas'];
-  _pontoFiltrado.forEach(function(f){linhas.push([f.nome,f.depto,f.funcao,f.carga,f.trabalhado,f.saldo,f.faltas,f.incompletas].join(','));});
+  var linhas=['Nome,Departamento,Função,Total Trabalhado,Faltas,Batidas Incompletas'];
+  _pontoFiltrado.forEach(function(f){linhas.push([f.nome,f.depto,f.funcao,f.totalTrabFmt,f.faltas,f.incompletas].join(','));});
   if(_pontoPeriodo)linhas.push('','Período: '+_pontoPeriodo);
   var blob=new Blob(['\uFEFF'+linhas.join('\n')],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='relatorio_ponto.csv';a.click();
@@ -1121,4 +1137,4 @@ window.exportarPontoCSV=function(){
   };
 })();
 </script>
-<!-- VERSION: v1.6 | financeiro.html | 01/09/2026 | fix: cálculo ponto só E1→S2 (sem almoço) + botão Salvar ponto -->
+<!-- VERSION: v1.7 | financeiro.html | 01/09/2026 | fix: exibição Xh Ymin, sem carga/saldo, tabela limpa E1→S2 -->
