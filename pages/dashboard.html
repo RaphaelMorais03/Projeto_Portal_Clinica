@@ -693,7 +693,7 @@
       var sel = document.getElementById('fechMesSelect');
       if (!sel || sel.options.length > 1) return;
       var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-      var now = new Date(), opts = '<option value="">Todos os meses</option>';
+      var now = new Date(), opts = '';
       for (var i = 0; i < 6; i++) {
         var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         var val = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
@@ -776,6 +776,7 @@
         grupos[chave].liquido += (r.liquido || 0);
       });
 
+      ordemGrupos.sort(function(a, b) { return grupos[a].nome.localeCompare(grupos[b].nome, 'pt-BR'); });
       var out = '';
       ordemGrupos.forEach(function(chave) {
         var g = grupos[chave];
@@ -1065,6 +1066,14 @@
 
     // ── Caixa Odonto — Histórico ──
     var _dshOdDados = {};
+    window._dshOdGruposAbertos = {};
+    window.toggleDshOdGrupo = function(chave) {
+      window._dshOdGruposAbertos[chave] = !window._dshOdGruposAbertos[chave];
+      var el = document.getElementById('dshOdGrupo-' + chave);
+      var ic = document.getElementById('dshOdGrupoIcon-' + chave);
+      if (el) el.style.display = window._dshOdGruposAbertos[chave] ? '' : 'none';
+      if (ic) ic.className = 'fas ' + (window._dshOdGruposAbertos[chave] ? 'fa-folder-open' : 'fa-folder');
+    };
 
     function dshOdPreencherMes() {
       var inp = document.getElementById('dshOdFiltroMes');
@@ -1092,24 +1101,52 @@
         var CMAP   = { pix:'#0ea5e9', debito:'#7c3aed', credito:'#d97706', dinheiro:'#16a34a' };
         var CLABEL = { pix:'PIX', debito:'Débito', credito:'Crédito', dinheiro:'Dinheiro' };
         var chaves = Object.keys(dados).filter(function(k){ return dados[k].dataISO && dados[k].dataISO.startsWith(mes); });
-        chaves.sort(function(a, b){ return b.localeCompare(a); });
         if (!chaves.length) { el.innerHTML = '<div class="empty"><i class="fas fa-tooth"></i><p>Nenhum fechamento em ' + mes + '.</p></div>'; return; }
-        var html = '';
+
+        // Agrupar por colaborador, ordem alfabética
+        var grupos = {}, ordemGrupos = [];
         chaves.forEach(function(k) {
-          var d = dados[k]; var t = d.totais || {};
-          var tags = ['pix','debito','credito','dinheiro'].filter(function(f){ return t[f] > 0; }).map(function(f){
-            return '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:' + CMAP[f] + '18;color:' + CMAP[f] + ';border:1px solid ' + CMAP[f] + '55;">' + CLABEL[f] + ': ' + _dshOdFM(t[f]) + '</span>';
-          }).join('');
-          var qp = (d.pacientes||[]).length;
-          html += '<div class="caixa-card" style="margin-bottom:12px;">'
-            + '<div class="caixa-card-header">'
-            + '<div><div class="caixa-collab">' + esc(d.data||'') + ' — ' + esc(d.colaborador||'') + '</div>'
-            + '<div class="caixa-date">' + qp + ' paciente' + (qp !== 1 ? 's' : '') + '</div>'
-            + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' + tags + '</div></div>'
-            + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">'
-            + '<div style="font-size:16px;font-weight:900;color:#16a34a;">' + _dshOdFM(t.geral||0) + '</div>'
-            + '<button onclick="dshOdVerDet(\'' + k + '\')" style="padding:6px 14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">Ver detalhes</button>'
-            + '</div></div></div>';
+          var d = dados[k];
+          var nomeColab = d.colaborador || 'Sem colaborador';
+          var cg = nomeColab.toLowerCase().replace(/[^a-z0-9]/gi, '_');
+          if (!grupos[cg]) { grupos[cg] = { nome: nomeColab, itens: [], geral: 0 }; ordemGrupos.push(cg); }
+          grupos[cg].itens.push({ key: k, data: d });
+          grupos[cg].geral += (d.totais && d.totais.geral) || 0;
+        });
+        ordemGrupos.sort(function(a, b) { return grupos[a].nome.localeCompare(grupos[b].nome, 'pt-BR'); });
+
+        var html = '';
+        ordemGrupos.forEach(function(cg) {
+          var g = grupos[cg];
+          g.itens.sort(function(a, b) { return (b.data.dataISO||'') < (a.data.dataISO||'') ? -1 : 1; });
+          var aberto = !!window._dshOdGruposAbertos[cg];
+          var initGrp = g.nome.split(' ').filter(Boolean).map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+          html += '<div style="margin-bottom:12px;background:white;border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);">';
+          html += '<button onclick="toggleDshOdGrupo(\'' + cg + '\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--navy);border:none;cursor:pointer;text-align:left;">';
+          html += '<i class="fas ' + (aberto?'fa-folder-open':'fa-folder') + '" id="dshOdGrupoIcon-' + cg + '" style="color:rgba(255,255,255,.6);font-size:14px;"></i>';
+          html += '<div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;">' + esc(initGrp) + '</div>';
+          html += '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:800;color:white;">' + esc(g.nome) + '</div>';
+          html += '<div style="font-size:11px;color:rgba(255,255,255,.5);">' + g.itens.length + ' fechamento(s)</div></div>';
+          html += '<div style="text-align:right;"><div style="font-size:15px;font-weight:900;color:white;">' + _dshOdFM(g.geral) + '</div><div style="font-size:10px;color:rgba(255,255,255,.5);">total geral</div></div>';
+          html += '</button>';
+          html += '<div id="dshOdGrupo-' + cg + '" style="' + (aberto?'':'display:none;') + 'padding:14px;">';
+          g.itens.forEach(function(item) {
+            var k = item.key, d = item.data, t = d.totais || {};
+            var tags = ['pix','debito','credito','dinheiro'].filter(function(f){ return t[f] > 0; }).map(function(f){
+              return '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:' + CMAP[f] + '18;color:' + CMAP[f] + ';border:1px solid ' + CMAP[f] + '55;">' + CLABEL[f] + ': ' + _dshOdFM(t[f]) + '</span>';
+            }).join('');
+            var qp = (d.pacientes||[]).length;
+            html += '<div class="caixa-card" style="margin-bottom:10px;">'
+              + '<div class="caixa-card-header">'
+              + '<div><div class="caixa-date">' + esc(d.data||'') + '</div>'
+              + '<div class="caixa-date">' + qp + ' paciente' + (qp!==1?'s':'') + '</div>'
+              + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' + tags + '</div></div>'
+              + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">'
+              + '<div style="font-size:16px;font-weight:900;color:#16a34a;">' + _dshOdFM(t.geral||0) + '</div>'
+              + '<button onclick="dshOdVerDet(\'' + k + '\')" style="padding:6px 14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">Ver detalhes</button>'
+              + '</div></div></div>';
+          });
+          html += '</div></div>';
         });
         el.innerHTML = html;
         _dshOdDados = dados;
@@ -1336,6 +1373,15 @@
     };
 
 
+    window._cxGruposAbertos = {};
+    window.toggleCxGrupo = function(chave) {
+      window._cxGruposAbertos[chave] = !window._cxGruposAbertos[chave];
+      var el = document.getElementById('cxGrupo-' + chave);
+      var ic = document.getElementById('cxGrupoIcon-' + chave);
+      if (el) el.style.display = window._cxGruposAbertos[chave] ? '' : 'none';
+      if (ic) ic.className = 'fas ' + (window._cxGruposAbertos[chave] ? 'fa-folder-open' : 'fa-folder');
+    };
+
     function preencherMesCaixa() {
       var sel = document.getElementById('cxMesSelect');
       if (!sel || sel.options.length > 1) return;
@@ -1354,62 +1400,83 @@
       if (!container) return;
       var mes = (document.getElementById('cxMesSelect') || {}).value || '';
       var busca = ((document.getElementById('cxSearchInput') || {}).value || '').toLowerCase().trim();
-      var linhas = [];
+      var grupos = {}, ordemGrupos = [];
       for (var uid in _dados) {
         for (var dt in _dados[uid]) {
           if (mes && !dt.startsWith(mes)) continue;
           var snap = _dados[uid][dt];
           if (busca && !(snap.colaborador||'').toLowerCase().includes(busca)) continue;
-          linhas.push({uid:uid, dt:dt, snap:snap});
+          var nomeColab = snap.colaborador || uid;
+          var chave = nomeColab.toLowerCase().replace(/[^a-z0-9]/gi, '_');
+          if (!grupos[chave]) { grupos[chave] = { nome: nomeColab, itens: [] }; ordemGrupos.push(chave); }
+          grupos[chave].itens.push({ uid: uid, dt: dt, snap: snap });
         }
       }
-      linhas.sort(function(a,b){ return b.dt < a.dt ? -1 : b.dt > a.dt ? 1 : 0; });
-      if (!linhas.length) {
+      ordemGrupos.sort(function(a, b) { return grupos[a].nome.localeCompare(grupos[b].nome, 'pt-BR'); });
+      if (!ordemGrupos.length) {
         container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);"><i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:10px;"></i>Nenhum registro encontrado.</div>';
         return;
       }
       var out = '';
-      linhas.forEach(function(item) {
-        var snap=item.snap, uid=item.uid, dt=item.dt, tf=snap.totForma||{};
-        var pix=0,deb=0,cred=0,din=0,desp=0;
-        for (var f in tf) {
-          var nm=(f||'').toLowerCase();
-          if (nm.includes('pix'))    pix +=(tf[f].entrada||0);
-          else if (nm.includes('éb')||nm.includes('eb')) deb+=(tf[f].entrada||0);
-          else if (nm.includes('éd')||nm.includes('ed')) cred+=(tf[f].entrada||0);
-          else if (nm.includes('din')) din+=(tf[f].entrada||0);
-          desp+=(tf[f].saida||0);
-        }
-        var total=pix+deb+din-desp;
-        var initials=(snap.colaborador||'?').split(' ').filter(Boolean).map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
-        var cardId = 'cx-' + uid + '-' + dt;
-        out += '<div class="caixa-card" id="' + cardId + '">' +
-          '<div class="caixa-card-header">' +
-            '<div style="display:flex;align-items:center;gap:10px;">' +
-              '<div style="width:38px;height:38px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">' + esc(initials) + '</div>' +
-              '<div><div class="caixa-collab">' + esc(snap.colaborador||uid) + '</div>' +
-              '<div class="caixa-date"><i class="fas fa-calendar" style="font-size:9px;"></i> ' + fmtData(dt) + (snap.manualAdmin?' <span class="badge-manual">Manual</span>':'') + '</div></div>' +
+      ordemGrupos.forEach(function(chave) {
+        var g = grupos[chave];
+        g.itens.sort(function(a, b) { return b.dt < a.dt ? -1 : b.dt > a.dt ? 1 : 0; });
+        var totalGrupo = 0;
+        g.itens.forEach(function(item) {
+          var tf = item.snap.totForma || {};
+          var d = 0;
+          for (var f in tf) { var nm=(f||'').toLowerCase(); if (!nm.includes('din')) d += (tf[f].entrada||0); else d += (tf[f].entrada||0); d -= (tf[f].saida||0); }
+          totalGrupo += d;
+        });
+        var aberto = !!window._cxGruposAbertos[chave];
+        var initGrp = g.nome.split(' ').filter(Boolean).map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+        out += '<div style="margin-bottom:12px;background:white;border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);">';
+        out += '<button onclick="toggleCxGrupo(\'' + chave + '\')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--navy);border:none;cursor:pointer;text-align:left;">';
+        out += '<i class="fas ' + (aberto?'fa-folder-open':'fa-folder') + '" id="cxGrupoIcon-' + chave + '" style="color:rgba(255,255,255,.6);font-size:14px;"></i>';
+        out += '<div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;">' + esc(initGrp) + '</div>';
+        out += '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:800;color:white;">' + esc(g.nome) + '</div>';
+        out += '<div style="font-size:11px;color:rgba(255,255,255,.5);">' + g.itens.length + ' fechamento(s)</div></div>';
+        out += '<div style="text-align:right;"><div style="font-size:15px;font-weight:900;color:white;">' + fmtBRL(totalGrupo) + '</div><div style="font-size:10px;color:rgba(255,255,255,.5);">total</div></div>';
+        out += '</button>';
+        out += '<div id="cxGrupo-' + chave + '" style="' + (aberto?'':'display:none;') + 'padding:14px;">';
+        g.itens.forEach(function(item) {
+          var snap=item.snap, uid=item.uid, dt=item.dt, tf=snap.totForma||{};
+          var pix=0,deb=0,cred=0,din=0,desp=0;
+          for (var f in tf) {
+            var nm=(f||'').toLowerCase();
+            if (nm.includes('pix'))    pix +=(tf[f].entrada||0);
+            else if (nm.includes('éb')||nm.includes('eb')) deb+=(tf[f].entrada||0);
+            else if (nm.includes('éd')||nm.includes('ed')) cred+=(tf[f].entrada||0);
+            else if (nm.includes('din')) din+=(tf[f].entrada||0);
+            desp+=(tf[f].saida||0);
+          }
+          var total=pix+deb+cred+din-desp;
+          var cardId = 'cx-' + uid + '-' + dt;
+          out += '<div class="caixa-card" id="' + cardId + '" style="margin-bottom:10px;">' +
+            '<div class="caixa-card-header">' +
+              '<div><div class="caixa-date"><i class="fas fa-calendar" style="font-size:9px;"></i> ' + fmtData(dt) + (snap.manualAdmin?' <span class="badge-manual">Manual</span>':'') + '</div></div>' +
+              '<div style="display:flex;align-items:center;gap:10px;">' +
+                '<div style="text-align:right;"><div style="font-size:11px;color:var(--gray-400);margin-bottom:2px;">Total à vista</div>' +
+                '<div style="font-size:18px;font-weight:900;color:var(--green);">' + fmtBRL(total) + '</div></div>' +
+                '<button class="cx-collapse-btn" onclick="toggleCaixaCard(\'' + cardId + '\')" title="Recolher"><i class="fas fa-chevron-up"></i></button>' +
+              '</div>' +
             '</div>' +
-            '<div style="display:flex;align-items:center;gap:10px;">' +
-              '<div style="text-align:right;"><div style="font-size:11px;color:var(--gray-400);margin-bottom:2px;">Total à vista</div>' +
-              '<div style="font-size:18px;font-weight:900;color:var(--green);">' + fmtBRL(total) + '</div></div>' +
-              '<button class="cx-collapse-btn" onclick="toggleCaixaCard(\'' + cardId + '\')" title="Recolher"><i class="fas fa-chevron-up"></i></button>' +
+            '<div class="caixa-body">' +
+            '<div class="caixa-vals">' +
+              '<div class="caixa-val-item"><div class="caixa-val-lbl">PIX</div><div class="caixa-val-num">' + fmtBRL(pix) + '</div></div>' +
+              '<div class="caixa-val-item"><div class="caixa-val-lbl">Débito</div><div class="caixa-val-num">' + fmtBRL(deb) + '</div></div>' +
+              '<div class="caixa-val-item"><div class="caixa-val-lbl">Crédito</div><div class="caixa-val-num">' + fmtBRL(cred) + '</div></div>' +
+              '<div class="caixa-val-item"><div class="caixa-val-lbl">Dinheiro</div><div class="caixa-val-num">' + fmtBRL(din) + '</div></div>' +
             '</div>' +
-          '</div>' +
-          '<div class="caixa-body">' +
-          '<div class="caixa-vals">' +
-            '<div class="caixa-val-item"><div class="caixa-val-lbl">PIX</div><div class="caixa-val-num">' + fmtBRL(pix) + '</div></div>' +
-            '<div class="caixa-val-item"><div class="caixa-val-lbl">Débito</div><div class="caixa-val-num">' + fmtBRL(deb) + '</div></div>' +
-            '<div class="caixa-val-item"><div class="caixa-val-lbl">Crédito</div><div class="caixa-val-num">' + fmtBRL(cred) + '</div></div>' +
-            '<div class="caixa-val-item"><div class="caixa-val-lbl">Dinheiro</div><div class="caixa-val-num">' + fmtBRL(din) + '</div></div>' +
-          '</div>' +
-          (desp>0?'<div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:8px;"><i class="fas fa-arrow-down"></i> Despesas: '+fmtBRL(desp)+'</div>':'') +
-          '<div class="caixa-actions">' +
-            '<button class="btn-sec" style="font-size:12px;padding:7px 14px;" onclick="gerarReciboCaixa(\'' + uid + '\',\'' + dt + '\')"><i class="fas fa-receipt"></i> Recibo</button>' +
-            '<button class="btn-p" style="font-size:12px;padding:7px 14px;" onclick="abrirEditCaixa(\'' + uid + '\',\'' + dt + '\')"><i class="fas fa-edit"></i> Editar</button>' +
-          '</div>' +
-          '</div>' +
-        '</div>';
+            (desp>0?'<div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:8px;"><i class="fas fa-arrow-down"></i> Despesas: '+fmtBRL(desp)+'</div>':'') +
+            '<div class="caixa-actions">' +
+              '<button class="btn-sec" style="font-size:12px;padding:7px 14px;" onclick="gerarReciboCaixa(\'' + uid + '\',\'' + dt + '\')"><i class="fas fa-receipt"></i> Recibo</button>' +
+              '<button class="btn-p" style="font-size:12px;padding:7px 14px;" onclick="abrirEditCaixa(\'' + uid + '\',\'' + dt + '\')"><i class="fas fa-edit"></i> Editar</button>' +
+            '</div>' +
+            '</div>' +
+          '</div>';
+        });
+        out += '</div></div>';
       });
       container.innerHTML = out;
     };
