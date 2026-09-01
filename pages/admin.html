@@ -137,6 +137,18 @@
           <label class="f-label">Senha (mín. 6 caracteres)</label>
           <input class="f-input" id="uSenha" type="password" placeholder="••••••••">
         </div>
+        <div style="margin-bottom:14px;">
+          <label class="f-label">Departamento</label>
+          <select class="f-select" id="uDepto">
+            <option value="">— Sem departamento —</option>
+            <option value="Medicina">Medicina</option>
+            <option value="Odontologia">Odontologia</option>
+            <option value="Recepção">Recepção</option>
+            <option value="Financeiro">Financeiro</option>
+            <option value="Call Center">Call Center</option>
+            <option value="Administrativo">Administrativo</option>
+          </select>
+        </div>
         <div style="margin-bottom:16px;">
           <label class="f-label">Permissões</label>
           <div class="perms-grid">
@@ -1281,10 +1293,12 @@
     document.getElementById('btnSalvarUser').innerHTML = uid ? '<i class="fas fa-floppy-disk"></i> Atualizar' : '<i class="fas fa-floppy-disk"></i> Criar Usuário';
     ['uNome','uEmail','uSenha'].forEach(id => document.getElementById(id).value = '');
     ['pOrc','pExames','pCrono','pCaixa','pFin','pFech','pContratos','pAdmin'].forEach(id => document.getElementById(id).checked = false);
+    document.getElementById('uDepto').value = '';
     if (uid && usuarios[uid]) {
       const u = usuarios[uid];
       document.getElementById('uNome').value  = u.nomeCompleto || '';
       document.getElementById('uEmail').value = u.email || '';
+      document.getElementById('uDepto').value = u.departamento || '';
       const p = u.perms || {};
       document.getElementById('pOrc').checked    = !!p.orcamento;
       document.getElementById('pExames').checked = !!p.exames;
@@ -1300,9 +1314,10 @@
   function fecharModalUser() { document.getElementById('modalUser').classList.remove('open'); }
 
   async function salvarUsuario() {
-    const nome  = document.getElementById('uNome').value.trim();
-    const email = document.getElementById('uEmail').value.trim();
-    const senha = document.getElementById('uSenha').value;
+    const nome        = document.getElementById('uNome').value.trim();
+    const email       = document.getElementById('uEmail').value.trim();
+    const senha       = document.getElementById('uSenha').value;
+    const departamento = document.getElementById('uDepto').value.trim() || null;
     if (!nome)  { toast('Informe o nome', 'error'); return; }
     if (!email) { toast('Informe o e-mail', 'error'); return; }
     if (!editandoUserId && senha.length < 6) { toast('Senha deve ter mínimo 6 caracteres', 'error'); return; }
@@ -1321,12 +1336,12 @@
     try {
       if (editandoUserId) {
         // Atualizar apenas nome, email e permissões no DB (senha não pode ser alterada aqui)
-        await window._fbSet('admin/usuarios/' + editandoUserId, { nomeCompleto: nome, email, perms });
+        await window._fbSet('admin/usuarios/' + editandoUserId, { nomeCompleto: nome, email, perms, departamento });
         toast('Usuário atualizado!', 'success');
       } else {
         // Cria conta no Firebase Auth via instância auxiliar e salva as permissões no DB
         const uid = await window._criarUsuarioFirebase(email, senha);
-        await window._fbSet('admin/usuarios/' + uid, { nomeCompleto: nome, email, perms, criadoEm: new Date().toISOString() });
+        await window._fbSet('admin/usuarios/' + uid, { nomeCompleto: nome, email, perms, departamento, criadoEm: new Date().toISOString() });
         toast(`Conta criada para ${nome}!`, 'success');
       }
       fecharModalUser();
@@ -1357,6 +1372,7 @@
       if (p.cronograma) tags.push('<span class="perm-tag">Cronograma</span>');
       if (p.orcamento)  tags.push('<span class="perm-tag">Orçamentos</span>');
       if (p.contratos)  tags.push('<span class="perm-tag">Contratos</span>');
+      if (u.departamento) tags.push('<span class="perm-tag" style="background:#f0fdfa;color:#0d9488;">' + esc(u.departamento) + '</span>');
       return '<div class="user-row">' +
         '<div class="user-avatar">' + esc(inicial) + '</div>' +
         '<div class="user-info">' +
