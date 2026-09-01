@@ -327,6 +327,7 @@
           <select id="pontoDepto" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos os departamentos</option></select>
           <select id="pontoFiltroSaldo" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos</option><option value="positivo">✅ Saldo positivo</option><option value="negativo">⚠️ Saldo negativo</option><option value="problema">🔴 Com problemas</option></select>
           <button onclick="exportarPontoCSV()" style="padding:8px 14px;background:#0A1F44;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-download"></i> Exportar CSV</button>
+          <button onclick="salvarPonto()" style="padding:8px 14px;background:#15803d;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-floppy-disk"></i> Salvar</button>
         </div>
         <div id="pontoResumoCards" style="display:none;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
           <div class="stat-card"><div class="stat-num" id="pSumColab">—</div><div class="stat-lbl">Colaboradores</div></div>
@@ -973,11 +974,13 @@ function parsearSecullum(rows){
       if(!carga)continue;
       var cargaMin=toMin(String(carga))||0;
       var me1=toMin(e1s),ms1=toMin(String(s1||'').trim()),me2=toMin(String(e2||'').trim()),ms2=toMin(String(s2||'').trim());
+      // Cálculo: apenas Entrada1 até Saída2 (ignora almoço S1/E2)
+      // Se houver S2, usa S2-E1; senão usa S1-E1 (dia sem intervalo ou turno único)
       var trabalhado=0,status='ok';
-      if(me1!==null&&ms1!==null)trabalhado+=ms1-me1;
-      if(me2!==null&&ms2!==null)trabalhado+=ms2-me2;
-      if(!e1&&!s1){faltas++;status='falta';}
-      else if((me1!==null&&ms1===null)||(me2!==null&&ms2===null)){incompletas++;status='incompleta';}
+      var saídaFinal=ms2!==null?ms2:(ms1!==null?ms1:null);
+      if(me1!==null&&saídaFinal!==null)trabalhado=saídaFinal-me1;
+      if(!e1&&!s1&&!s2){faltas++;status='falta';}
+      else if(me1!==null&&saídaFinal===null){incompletas++;status='incompleta';}
       if(status==='ok')totalTrab+=trabalhado;
       dias.push({data:data,e1:e1s||'—',s1:String(s1||'').trim()||'—',e2:String(e2||'').trim()||'—',s2:String(s2||'').trim()||'—',carga:String(carga),trabalhado:toHH(trabalhado),saldoDia:toHH(trabalhado-cargaMin),saldoMin:trabalhado-cargaMin,status:status});
     }
@@ -1056,6 +1059,32 @@ window.abrirPontoModal=function(idx){
 window.fecharPontoModal=function(){document.getElementById('pontoModal').style.display='none';};
 document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharPontoModal();});
 
+window.salvarPonto=function(){
+  if(!_pontoData.length){alert('Nenhum dado de ponto para salvar.');return;}
+  var chave='ponto_'+Date.now();
+  var payload={periodo:_pontoPeriodo,salvoEm:new Date().toISOString(),dados:_pontoData};
+  // Tenta salvar no Firebase se disponível
+  if(window._fbSet){
+    window._fbSet('financeiro/pontos/'+chave,payload)
+      .then(function(){
+        if(window.toast)toast('Ponto salvo com sucesso!','success');
+        else alert('Ponto salvo no Firebase!');
+      })
+      .catch(function(err){
+        // Fallback: salva no localStorage
+        try{localStorage.setItem(chave,JSON.stringify(payload));if(window.toast)toast('Ponto salvo localmente!','info');else alert('Salvo localmente!');}
+        catch(e){alert('Erro ao salvar: '+err.message);}
+      });
+  } else {
+    // Sem Firebase: salva no localStorage
+    try{
+      localStorage.setItem(chave,JSON.stringify(payload));
+      if(window.toast)toast('Ponto salvo localmente!','info');
+      else alert('Ponto salvo localmente (localStorage)!');
+    }catch(e){alert('Erro ao salvar: '+e.message);}
+  }
+};
+
 window.exportarPontoCSV=function(){
   if(!_pontoFiltrado.length)return;
   var linhas=['Nome,Departamento,Função,Carga Esperada,Horas Trabalhadas,Saldo,Faltas,Batidas Incompletas'];
@@ -1092,4 +1121,4 @@ window.exportarPontoCSV=function(){
   };
 })();
 </script>
-<!-- VERSION: v1.5 | financeiro.html | 18/08/2026 | feat: aba Ponto com parser Secullum automático -->
+<!-- VERSION: v1.6 | financeiro.html | 01/09/2026 | fix: cálculo ponto só E1→S2 (sem almoço) + botão Salvar ponto -->
