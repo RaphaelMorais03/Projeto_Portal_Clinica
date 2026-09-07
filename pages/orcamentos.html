@@ -1705,7 +1705,7 @@
     function parseWorkbook(wb){
       const result=[],skipNames=new Set(['amor cirugias','amor cirugias ','vf','vf ','marcus (urologista)','marcus (urologista) ']);
       const fornMap={
-        'EXAMES  AMOR SAUDE ':'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA','USG ':'USG (Equipe Interna)','IMADI-IMAGEM':'IMADI Imagem',
+        'EXAMES  CLINICA ':'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA','USG ':'USG (Equipe Interna)','IMADI-IMAGEM':'IMADI Imagem',
         'OFTALMO':'Oftalmologia','TC PREZECOR':'Prezecor (TC)','SCOPPETA':'Scoppeta',
         'PREZECOR 2.0':'Prezecor 2.0','DERMATOLOGIA':'Dermatologia',
         'MEDICOM 2.0':'Medicom 2.0','FARAGE - OCULTO':'Farage',
@@ -1718,7 +1718,7 @@
         // ── MUDANÇA 1: pular Laboratorial e Farage no import ──
         if(skipNames.has(lower)||lower.includes('desativada')||lower.includes('oculto')||lower.includes('laboratori')||lower.includes('exames laboratoriais'))continue;
         const ws=wb.Sheets[sheetName],rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});if(!rows||rows.length===0)continue;
-        const isAmor=sheetName.toUpperCase().includes('AMOR SAUDE');let currentCat=sheetName.trim();const fornecedor=fornMap[sheetName]||sheetName.trim();if(isAmor)currentCat='Geral';
+        const isAmor=sheetName.toUpperCase().includes('CLINICA');let currentCat=sheetName.trim();const fornecedor=fornMap[sheetName]||sheetName.trim();if(isAmor)currentCat='Geral';
         for(const row of rows){if(!row||row.length===0)continue;const nome=cleanStr(row[0]);if(!nome)continue;
           if(isAmor){const ct=parsePrice(row[2]),pt=parsePrice(row[3]);if(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(nome)&&ct==null&&pt==null){currentCat=nome.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').trim();continue;}if(!looksLikeExamName(nome)||(ct==null&&pt==null))continue;result.push({nome,categoria:currentCat,fornecedor,preco_ct:ct,preco_pt:pt,observacao:cleanStr(row[1]),preparo:'',caracteristica:'',beneficio:''});}
           else{const nums=row.map(parsePrice);const allNull=nums.slice(1).every(n=>n==null);if(allNull&&looksLikeExamName(nome)&&nome.length<50){if(/RAIO|DIAGN|EXAMES |PROCEDIMENT|RESSON|TOMOG|GINECO|BIOPSIA|GASTRO/i.test(nome)){currentCat=nome;continue;}}if(!looksLikeExamName(nome))continue;const prices=nums.slice(1).filter(n=>n!=null&&n>0);if(prices.length===0)continue;const preco_ct=prices[0],preco_pt=prices.length>=2?Math.max(...prices):null;let obs='';for(const c of row.slice(1).map(cleanStr)){if(c&&parsePrice(c)==null&&c.length>5){obs=c;break;}}result.push({nome,categoria:currentCat,fornecedor,preco_ct,preco_pt,observacao:obs,preparo:'',caracteristica:'',beneficio:''});}

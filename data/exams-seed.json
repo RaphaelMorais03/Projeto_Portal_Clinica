@@ -2,7 +2,7 @@
   {
     "nome": "Eletroneuromiografia Facial",
     "categoria": "Exame Neurologico",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 330.0,
     "preco_pt": 410.0,
     "observacao": "⚠️Permite avaliar a integridade dos músculos faciais e identificar a presença de distrofias musculares.",
@@ -14,7 +14,7 @@
   {
     "nome": "Eletroneuromiografia  Membros",
     "categoria": "Exame Neurologico",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 330.0,
     "preco_pt": 410.0,
     "observacao": "⚠️ Atenção: Orçamento deve ser feito com cuidado.Se for solicitado MSS E MII, cobrar o 4x o valor.",
@@ -26,7 +26,7 @@
   {
     "nome": "Eletroencefalo Com Fotoestimulo",
     "categoria": "Exame Neurologico",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 420.0,
     "preco_pt": 500.0,
     "observacao": "Sobre este exame",
@@ -38,7 +38,7 @@
   {
     "nome": "Potencial E Vocado Auditivo/ Visual",
     "categoria": "Exame Neurologico",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 310.0,
     "preco_pt": 370.0,
     "observacao": "⚠️ Atenção: Orçamento deve ser feito com cuidado.Se for solicitado bilateral, cobrar o dobro do valor.",
@@ -50,7 +50,7 @@
   {
     "nome": "Ecocardiograma",
     "categoria": "Exame Cardiológico",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 210.0,
     "preco_pt": 300.0,
     "observacao": "Sobre este exame",
@@ -62,7 +62,7 @@
   {
     "nome": "Teste Ergométrico",
     "categoria": "Exame Cardiológico",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 170.0,
     "preco_pt": 250.0,
     "observacao": "Sobre este exame",
@@ -74,7 +74,7 @@
   {
     "nome": "HOLTER 24 Horas e MAPA 24 Horas",
     "categoria": "Exame Cardiológico",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 100.0,
     "preco_pt": 195.0,
     "observacao": "Sobre este exame",
@@ -86,7 +86,7 @@
   {
     "nome": "Eletrocardiograma",
     "categoria": "Exame Cardiológico",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 50.0,
     "preco_pt": 80.0,
     "observacao": "⚠️ Atenção: Segunda a Sexta (07h até 15h)",
@@ -98,7 +98,7 @@
   {
     "nome": "Colocação De Diu",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 500.0,
     "preco_pt": 700.0,
     "observacao": "⚠️PROCEDIMENTO REALIZADO POR FÁBIO E LETICIA",
@@ -110,7 +110,7 @@
   {
     "nome": "Retirada De Diu",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 400.0,
     "preco_pt": 660.0,
     "observacao": "⚠️PROCEDIMENTO REALIZADO POR FÁBIO E LETICIA",
@@ -122,7 +122,7 @@
   {
     "nome": "Retirada De Cisto Vaginal",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 250.0,
     "preco_pt": 350.0,
     "observacao": "⚠️ Atenção: Orçamento deve ser feito com cuidado. realizado pela Leticia, acrescentar anatomopatológico.",
@@ -134,7 +134,7 @@
   {
     "nome": "Streptococcus Anal",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 70.0,
     "preco_pt": 150.0,
     "observacao": "⚠️SOMENTE LETICIA",
@@ -146,7 +146,7 @@
   {
     "nome": "Streptococcus Vaginal",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 70.0,
     "preco_pt": 150.0,
     "observacao": "⚠️SOMENTE LETICIA",
@@ -158,7 +158,7 @@
   {
     "nome": "Cauterização Colo De Utero",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 350.0,
     "preco_pt": 480.0,
     "observacao": "⚠️SOMENTE FÁBIO",
@@ -170,7 +170,7 @@
   {
     "nome": "Cauterização Quimica \"Ata\"",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 250.0,
     "preco_pt": 360.0,
     "observacao": "⚠️ Atenção: Orçamento deve ser feito com cuidado. realizado pela Leticia, somente de verruga",
@@ -182,7 +182,7 @@
   {
     "nome": "Implante De Implanon Ou Interino",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 450.0,
     "preco_pt": 600.0,
     "observacao": "⚠️ Atenção: Orçamento deve ser feito com cuidado. realizado pela Leticia",
@@ -194,7 +194,7 @@
   {
     "nome": "Retirada de implanon ou de sintese",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 350.0,
     "preco_pt": 500.0,
     "observacao": "⚠️ Atenção: Orçamento deve ser feito com cuidado. realizado pela Leticia",
@@ -206,7 +206,7 @@
   {
     "nome": "Cultura de secreção e Bacterioscopia",
     "categoria": "Procedimentos Ginecologicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 70.0,
     "preco_pt": 130.0,
     "observacao": "⚠️SOMENTE LETICIA",
@@ -218,7 +218,7 @@
   {
     "nome": "Infitração Ortopedica Ou Punção",
     "categoria": "Procedimentos Ortopédicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 250.0,
     "preco_pt": 370.0,
     "observacao": "⚠️Realizado por: André, Thales e Ronaldo, cobrar por cada",
@@ -230,7 +230,7 @@
   {
     "nome": "Infiltração C/ Acido Hialurônico",
     "categoria": "Procedimentos Ortopédicos",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 900.0,
     "preco_pt": 1100.0,
     "observacao": "⚠️Realizado por: André, Thales e Ronaldo, cobrar por cada",
@@ -242,7 +242,7 @@
   {
     "nome": "Nasofibrolaringoscopia",
     "categoria": "Procedimentos Otorrinolaringo",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 290.0,
     "preco_pt": 380.0,
     "observacao": "⚠️Requerido ter 7 anos, Realizado por: Larissa e Wania e Breno",
@@ -254,7 +254,7 @@
   {
     "nome": "Cauterização Nasal",
     "categoria": "Procedimentos Otorrinolaringo",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 350.0,
     "preco_pt": 490.0,
     "observacao": "⚠️Exame pouco solicitado, verificar repasse do médico.",
@@ -266,7 +266,7 @@
   {
     "nome": "Remoção De Corpo Estranho",
     "categoria": "Procedimentos Otorrinolaringo",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 140.0,
     "preco_pt": 210.0,
     "observacao": "⚠️Exame pouco solicitado, verificar repasse do médico.",
@@ -278,7 +278,7 @@
   {
     "nome": "Remoçao De Cerume",
     "categoria": "Procedimentos Otorrinolaringo",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 60.0,
     "preco_pt": 90.0,
     "observacao": "⚠️Cobrar por cada ouvido",
@@ -290,7 +290,7 @@
   {
     "nome": "Escleroterapia De Vasos",
     "categoria": "Procedimentos Vascular/Angiologista",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 180.0,
     "preco_pt": 280.0,
     "observacao": "⚠️SOMENTE RUBEN",
@@ -302,7 +302,7 @@
   {
     "nome": "Avaliação Função Muscular",
     "categoria": "Procedimentos Nutrição",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 80.0,
     "preco_pt": 100.0,
     "observacao": "⚠️SOMENTE CINTHYA",
@@ -314,7 +314,7 @@
   {
     "nome": "Bioimpedanciometria",
     "categoria": "Procedimentos Nutrição",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 80.0,
     "preco_pt": 100.0,
     "observacao": "⚠️SOMENTE CINTHYA",
@@ -326,7 +326,7 @@
   {
     "nome": "Fisoterapia Ortopedica",
     "categoria": "Procedimentos Fisioterapia",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 40.0,
     "preco_pt": 120.0,
     "observacao": "⚠️SOMENTE ERIKA",
@@ -338,7 +338,7 @@
   {
     "nome": "Fisoterapia Neurologica",
     "categoria": "Procedimentos Fisioterapia",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 48.0,
     "preco_pt": 156.0,
     "observacao": "⚠️SOMENTE ERIKA",
@@ -350,7 +350,7 @@
   {
     "nome": "Aplicação De B12",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 120.0,
     "preco_pt": 170.0,
     "observacao": "⚠️ Atenção: Segunda a Sexta (07h até 15h)",
@@ -362,7 +362,7 @@
   {
     "nome": "Aplicação Ata Ou Tca (Acido Tricloroacetic Tricloroace O)",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 140.0,
     "preco_pt": 190.0,
     "observacao": "Peeling Químico - Ácido Tricloroacético (ATA) - sessão - GO Código: 100",
@@ -374,7 +374,7 @@
   {
     "nome": "Cauterização Quimica  ( Por Grupo De Ate 5 Lesoes )",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 210.0,
     "preco_pt": 260.0,
     "observacao": "Código: 150",
@@ -386,7 +386,7 @@
   {
     "nome": "Curetagem Simples De Lesoes De Pele ( Por Grupo De  Ate 5 Lesões )",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 280.0,
     "preco_pt": 330.0,
     "observacao": "Código: 200",
@@ -398,7 +398,7 @@
   {
     "nome": "Peeling Quimico Tca Face/ Maos",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 308.0,
     "preco_pt": 358.0,
     "observacao": "Código: 220",
@@ -410,7 +410,7 @@
   {
     "nome": "Remoção De Cisto Sebaceo Ate 5Cm",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 350.0,
     "preco_pt": 400.0,
     "observacao": "Código: 250",
@@ -422,7 +422,7 @@
   {
     "nome": "Eletrocauterização De 1 A 5 Lesoes",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 450.0,
     "preco_pt": 500.0,
     "observacao": "Código: 300",
@@ -434,7 +434,7 @@
   {
     "nome": "Exerese Fuso Simples",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 490.0,
     "preco_pt": 540.0,
     "observacao": "Código: 350",
@@ -446,7 +446,7 @@
   {
     "nome": "Biopsia De Pele 2 Ou 3 Lesoes",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 560.0,
     "preco_pt": 610.0,
     "observacao": "Código: 400",
@@ -458,7 +458,7 @@
   {
     "nome": "Exerese De Lesão / Tumor De Pele E Mucosas",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 630.0,
     "preco_pt": 680.0,
     "observacao": "Código: 450",
@@ -470,7 +470,7 @@
   {
     "nome": "Eletrocoagulaçao",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 700.0,
     "preco_pt": 750.0,
     "observacao": "Código: 500",
@@ -482,7 +482,7 @@
   {
     "nome": "Toxina Butolinica (Botox) Face",
     "categoria": "Triagem",
-    "fornecedor": "Amor Saúde",
+    "fornecedor": "Clínica",
     "preco_ct": 112.0,
     "preco_pt": 117.0,
     "observacao": "Código: 800",
