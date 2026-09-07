@@ -4,7 +4,7 @@
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cronograma — Amor Saúde Pirituba</title>
+  <title>Cronograma</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="../js/firebase-config.js"></script>
@@ -258,7 +258,7 @@
   <div class="s-header">
     <div class="s-logo">
       <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
-      <div><div class="s-logo-name">Amor Saúde</div><div class="s-logo-sub">Cronograma · Pirituba</div></div>
+      <div><div class="s-logo-name">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div class="s-logo-sub">Cronograma · Pirituba</div></div>
     </div>
     <div class="header-right">
       <div class="date-badge" id="dateBadge">—</div>
@@ -933,7 +933,7 @@
     const agendados=currentPatients.filter(p=>!p.isLivre).length;
     const nomeUser=sessionStorage.getItem('usuario')||'RECEPÇÃO';
     const _logoUrlP=sessionStorage.getItem('logoDataUrl')||'';
-    const logoH=_logoUrlP?'<img src="'+_logoUrlP+'" alt="Logo" style="height:70px;width:auto;object-fit:contain;">':'<div class="print-logo-txt">Amor Saúde</div><div class="print-logo-sub">Pirituba · São Paulo</div>';
+    const logoH=_logoUrlP?'<img src="'+_logoUrlP+'" alt="Logo" style="height:70px;width:auto;object-fit:contain;">':'<div class="print-logo-txt">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div class="print-logo-sub">Pirituba · São Paulo</div>';
     const rows=currentPatients.map((p,i)=>{
       const bg=i%2===0?'#f5f5f5':'#ffffff';
       if(p.isLivre)return '<tr style="background:'+bg+'"><td class="td-time" style="background:'+bg+';border:2px solid #333;">'+p.time+'</td><td colspan="2" style="border:2px solid #333;background:repeating-linear-gradient(45deg,#f8f8f8,#f8f8f8 10px,#eee 10px,#eee 20px);text-align:center;font-weight:900;color:#555;"><span style="display:inline-block;padding:.5rem 2rem;background:white;border:2px dashed #999;border-radius:8px;">HORÁRIO LIVRE</span></td><td style="border:2px solid #333;background:repeating-linear-gradient(45deg,#f8f8f8,#f8f8f8 10px,#eee 10px,#eee 20px);text-align:center;"><span class="status-lv">LIVRE</span></td></tr>';

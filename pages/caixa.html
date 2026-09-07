@@ -4,7 +4,7 @@
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caixa — Amor Saúde Pirituba</title>
+  <title>Caixa</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="../js/firebase-config.js"></script>
@@ -90,7 +90,7 @@
     <div class="s-header">
       <div class="s-logo">
         <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
-        <div><div class="s-logo-name">Amor Saúde</div><div class="s-logo-sub">Caixa · Pirituba</div></div>
+        <div><div class="s-logo-name">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div class="s-logo-sub">Caixa · Pirituba</div></div>
       </div>
       <div class="header-right">
         <div class="date-badge" id="dateBadge">—</div>
@@ -866,9 +866,9 @@
       const ds         = DIAS[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()] + ' de ' + now.getFullYear();
       const hr         = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
       const _logoUrl   = sessionStorage.getItem('logoDataUrl') || '';
-      const logoEsq    = _logoUrl ? '<img src="' + _logoUrl + '" alt="Logo" style="height:50px;width:auto;object-fit:contain;">' : '<div style="font-size:18px;font-weight:900;color:#0A1F44;">Amor Saúde</div>';
+      const logoEsq    = _logoUrl ? '<img src="' + _logoUrl + '" alt="Logo" style="height:50px;width:auto;object-fit:contain;">' : '<div style="font-size:18px;font-weight:900;color:#0A1F44;">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>';
       const imgCentro  = sessionStorage.getItem('caixaHeaderImg') ? '<img src="' + sessionStorage.getItem('caixaHeaderImg') + '" alt="" style="max-height:64px;max-width:260px;width:auto;object-fit:contain;">' : '';
-      const clinicaNome = sessionStorage.getItem('clinicaNome') || 'Amor Saúde Pirituba';
+      const clinicaNome = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
       const sobra      = (window.caixa && window.caixa.sobra) ? window.caixa.sobra : 0;
 
       /* Cards de forma de pagamento — ordem fixa */

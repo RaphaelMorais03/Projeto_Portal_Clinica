@@ -5,7 +5,7 @@
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orçamentos — Amor Saúde Pirituba</title>
+  <title>Orçamentos</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="../js/firebase-config.js"></script>
@@ -278,7 +278,7 @@
   <div class="s-header">
     <div class="s-logo">
       <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo"></div>
-      <div><div class="s-logo-name">Amor Saúde</div><div class="s-logo-sub">Orçamentos · Pirituba</div></div>
+      <div><div class="s-logo-name">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div class="s-logo-sub">Orçamentos · Pirituba</div></div>
     </div>
     <div class="header-right">
       <div class="user-pill"><div class="user-dot" id="userAvatar">--</div><span id="userName" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span></div>
@@ -1054,7 +1054,7 @@
     }
 
     function buildPartnerMsg(e, opt) {
-      const clinica     = sessionStorage.getItem('clinicaNome') || 'Amor Saúde Pirituba';
+      const clinica     = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
       const nomeExib    = (opt ? opt.nomeExib || opt.nome : e.partnerNomeExib || e.partnerNome) || 'clínica parceira';
       const nomeFormal  = (opt ? opt.nomeFormal || opt.nome : e.partnerNomeFormal || e.partnerNome) || nomeExib;
       const tel         = opt ? (opt.tel||'') : (e.partnerTel||'');
@@ -1635,7 +1635,7 @@
       if(!cart.length)return;
       const total=cart.reduce((s,it)=>s+(it.preco||0),0);
       const ct=cart.filter(it=>it.tipo==='ct'), pt=cart.filter(it=>it.tipo==='pt');
-      const _clin=sessionStorage.getItem('clinicaNome')||'Amor Saúde Pirituba';
+      const _clin=sessionStorage.getItem('clinicaNome')||'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
       let msg=`🏥 *${_clin}*\n\nOlá! Preparamos com carinho o orçamento dos exames indicados para você 💙\n\n`;
       if(ct.length){msg+=`💳 *Cartão de Todos*\n`;ct.forEach(it=>{msg+=`• *${it.exam.nome}* — ${fmtBRL(it.preco)}\n`;});msg+=`\n`;}
       if(pt.length){msg+=`👛 *Particular*\n`;pt.forEach(it=>{msg+=`• *${it.exam.nome}* — ${fmtBRL(it.preco)}\n`;});msg+=`\n`;}
@@ -1660,7 +1660,7 @@
     document.getElementById('btnPdf').addEventListener('click',()=>{
       if(!cart.length)return;
       const {jsPDF}=window.jspdf, pdf=new jsPDF();
-      const clin=sessionStorage.getItem('clinicaNome')||'Amor Saúde Pirituba';
+      const clin=sessionStorage.getItem('clinicaNome')||'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
       let y=14;
       const logo=sessionStorage.getItem('logoDataUrl');
       if(logo){try{pdf.addImage(logo,'PNG',14,y,28,14);pdf.setFontSize(14);pdf.setFont('helvetica','bold');pdf.text(clin,46,y+6);pdf.setFontSize(9);pdf.setFont('helvetica','normal');pdf.text('ORÇAMENTO DE EXAMES',46,y+12);}catch(err){pdf.setFontSize(16);pdf.setFont('helvetica','bold');pdf.text('ORÇAMENTO — '+clin.toUpperCase(),105,y+8,{align:'center'});}}
@@ -1705,7 +1705,7 @@
     function parseWorkbook(wb){
       const result=[],skipNames=new Set(['amor cirugias','amor cirugias ','vf','vf ','marcus (urologista)','marcus (urologista) ']);
       const fornMap={
-        'EXAMES  AMOR SAUDE ':'Amor Saúde','USG ':'USG (Equipe Interna)','IMADI-IMAGEM':'IMADI Imagem',
+        'EXAMES  AMOR SAUDE ':'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA','USG ':'USG (Equipe Interna)','IMADI-IMAGEM':'IMADI Imagem',
         'OFTALMO':'Oftalmologia','TC PREZECOR':'Prezecor (TC)','SCOPPETA':'Scoppeta',
         'PREZECOR 2.0':'Prezecor 2.0','DERMATOLOGIA':'Dermatologia',
         'MEDICOM 2.0':'Medicom 2.0','FARAGE - OCULTO':'Farage',

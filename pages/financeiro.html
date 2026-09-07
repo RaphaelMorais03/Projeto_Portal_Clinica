@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Financeiro — Amor Saúde Pirituba</title>
+  <title>Financeiro</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="../js/firebase-config.js"></script>
@@ -261,7 +261,7 @@
   <div class="s-header">
     <div class="s-logo">
       <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
-      <div><div class="s-logo-name">Amor Saúde</div><div class="s-logo-sub">Financeiro · Pirituba</div></div>
+      <div><div class="s-logo-name">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div class="s-logo-sub">Financeiro · Pirituba</div></div>
     </div>
     <div class="header-right">
       <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
@@ -633,7 +633,7 @@
   `;
 
   function montarHtmlRecibo(c, dados, usuario) {
-    const clinicaNome = sessionStorage.getItem('clinicaNome') || 'Amor Saúde Pirituba';
+    const clinicaNome = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
     const clinicaCnpj = sessionStorage.getItem('clinicaCnpj') || '';
     const logo = LOGO_FIN || sessionStorage.getItem('logoDataUrl') || '';
     const bloco = buildReciboBlock(c, {...dados, usuario}, logo, clinicaNome, clinicaCnpj);
@@ -720,7 +720,7 @@
 
     if (!itens.length) { toast('Selecione ao menos um colaborador com valor', 'error'); return; }
 
-    const clinicaNome = sessionStorage.getItem('clinicaNome') || 'Amor Saúde Pirituba';
+    const clinicaNome = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
     const clinicaCnpj = sessionStorage.getItem('clinicaCnpj') || '';
     const logo = LOGO_FIN || sessionStorage.getItem('logoDataUrl') || '';
 

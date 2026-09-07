@@ -5,7 +5,7 @@
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard de Produção — Amor Saúde</title>
+  <title>Dashboard de Produção</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="../js/firebase-config.js"></script>
@@ -1548,7 +1548,7 @@
       var snap=(_dados[uid]||{})[dt];
       if (!snap) { toast('Registro não encontrado','error'); return; }
       var logoVal = sessionStorage.getItem('logoDataUrl') || '';
-      var logoHtmlCx = logoVal ? '<img src="' + logoVal + '" style="height:50px;width:auto;object-fit:contain;" alt="Logo">' : '<strong style="font-size:16px;color:#0A1F44;">Amor Saúde</strong>';
+      var logoHtmlCx = logoVal ? '<img src="' + logoVal + '" style="height:50px;width:auto;object-fit:contain;" alt="Logo">' : '<strong style="font-size:16px;color:#0A1F44;">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</strong>';
       var tf=snap.totForma||{}, pix=0,deb=0,cred=0,din=0,desp=0;
       for (var f in tf) {
         var nm=(f||'').toLowerCase();
@@ -1580,7 +1580,7 @@
         '.assin{display:flex;justify-content:space-between;margin-top:14mm;gap:20mm}'+
         '.assin-item{flex:1;text-align:center}.assin-item .linha{border-bottom:1px solid #000;height:14px;margin-bottom:4px}'+
         '.assin-item .lbl{font-size:10px;color:#64748b}</style></head><body>'+
-        '<div class="doc">'+'<div style="text-align:center;margin-bottom:6mm;">'+logoHtmlCx+'</div>'+'<h2>Recibo de Fechamento de Caixa</h2>'+'<div class="sub">Amor Saúde · Pirituba — Emitido em '+now.toLocaleString('pt-BR')+'</div>'+
+        '<div class="doc">'+'<div style="text-align:center;margin-bottom:6mm;">'+logoHtmlCx+'</div>'+'<h2>Recibo de Fechamento de Caixa</h2>'+'<div class="sub">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA · Pirituba — Emitido em '+now.toLocaleString('pt-BR')+'</div>'+
         '<div class="info">'+
           '<div><strong>Colaborador:</strong><br>'+(snap.colaborador||uid)+'</div>'+
           '<div><strong>Data do caixa:</strong><br>'+dtFmt+'</div>'+
@@ -2041,7 +2041,7 @@
       const BOM = '\uFEFF';
 
       const rows = [
-        ['Relatório de Comissões — Amor Saúde Pirituba'],
+        ['Relatório de Comissões — SIM CLINICA MÉDICA E ODONTOLOGICA LTDA'],
         ['Período: ' + mesLabel + '   |   Gerado em: ' + agora],
         ['Taxas aplicadas: À Vista ' + _rateAvista + '% | Crédito ' + _rateCredito + '%'],
         [],
@@ -3200,7 +3200,7 @@ window.exportarPDF = function(tituloParam, tabelaId) {
     container.innerHTML =
       (logo ? '<img src="'+logo+'" style="height:40px;margin-bottom:12px;display:block;">' : '')
       + '<div style="font-size:18px;font-weight:800;color:#0A1F44;margin-bottom:4px;">'+escFn(titulo)+'</div>'
-      + '<div style="font-size:11px;color:#888;margin-bottom:16px;">Gerado em '+data+' · Amor Saúde Pirituba</div>'
+      + '<div style="font-size:11px;color:#888;margin-bottom:16px;">Gerado em '+data+' · SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>'
       + tabelaEl.outerHTML;
 
     container.querySelectorAll('th').forEach(function(th){

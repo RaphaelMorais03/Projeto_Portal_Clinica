@@ -4,7 +4,7 @@
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NPS Atendimento — Amor Saúde</title>
+  <title>NPS Atendimento</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -1236,7 +1236,7 @@
 
       // Cabeçalho
       const linhas = [
-        ['Relatório NPS — Amor Saúde Pirituba'],
+        ['Relatório NPS — SIM CLINICA MÉDICA E ODONTOLOGICA LTDA'],
         ['Gerado em: ' + agora + (periodo ? '  |  Período: ' + periodo : '')],
         [],
         [
@@ -1681,7 +1681,7 @@
         const snap  = await get(ref(_db, 'admin/usuarios/' + user.uid));
         const dados = snap.exists() ? snap.val() : null;
         const perms = (dados && dados.perms) || {};
-        if (!perms.admin && !perms.nps && user.email !== 'raphael@amorsaude.com') {
+        if (!perms.admin && !perms.nps) {
           irPara('../login.html'); return;
         }
         if (!sessionStorage.getItem('usuario')) {
@@ -1693,7 +1693,7 @@
           sessionStorage.setItem('perms',        JSON.stringify(perms));
         }
       } catch(e) {
-        if (user.email !== 'raphael@amorsaude.com') { irPara('../login.html'); return; }
+        irPara('../login.html'); return;
       }
       carregarLogoGlobal(['#headerLogo']);
       // Carrega contador do histórico ao entrar

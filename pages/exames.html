@@ -4,7 +4,7 @@
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Retirada de Exames — Amor Saúde Pirituba</title>
+  <title>Retirada de Exames</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="../js/firebase-config.js"></script>
@@ -155,7 +155,7 @@
     <div class="s-logo">
       <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
       <div>
-        <div class="s-logo-name">Amor Saúde</div>
+        <div class="s-logo-name">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>
         <div class="s-logo-sub">Retirada de Exames · Pirituba</div>
       </div>
     </div>
@@ -944,7 +944,7 @@
       const logoUrl = sessionStorage.getItem('logoDataUrl') || '';
       const logoHtml = logoUrl
         ? `<img src="${logoUrl}" alt="Logo" style="height:50px;width:auto;object-fit:contain;">`
-        : '<div style="font-size:18px;font-weight:900;color:#0A1F44;">Amor Saúde</div>';
+        : '<div style="font-size:18px;font-weight:900;color:#0A1F44;">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>';
       const dataFmt = dataExame
         ? new Date(dataExame + 'T12:00:00').toLocaleDateString('pt-BR')
         : ds;
