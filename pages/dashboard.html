@@ -1576,7 +1576,7 @@
         '.sub{text-align:center;font-size:11px;color:#64748b;margin-bottom:8mm}'+
         '.info{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:8mm;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:10px}'+
         'table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #000;padding:7px 10px}'+
-        'th{background:#0A1F44;color:white;text-align:left}.total-row td{font-weight:800;font-size:14px;background:#f0fdf4}'+
+        'th{background:#f0f4f8;color:white;text-align:left}.total-row td{font-weight:800;font-size:14px;background:#f0fdf4}'+
         '.assin{display:flex;justify-content:space-between;margin-top:14mm;gap:20mm}'+
         '.assin-item{flex:1;text-align:center}.assin-item .linha{border-bottom:1px solid #000;height:14px;margin-bottom:4px}'+
         '.assin-item .lbl{font-size:10px;color:#64748b}</style></head><body>'+
@@ -3204,7 +3204,7 @@ window.exportarPDF = function(tituloParam, tabelaId) {
       + tabelaEl.outerHTML;
 
     container.querySelectorAll('th').forEach(function(th){
-      th.style.cssText = 'background:#0A1F44;color:white;padding:8px;font-size:10px;text-align:left;';
+      th.style.cssText = 'background:#f0f4f8;color:white;padding:8px;font-size:10px;text-align:left;';
     });
     container.querySelectorAll('td').forEach(function(td){
       td.style.cssText = 'padding:7px 8px;font-size:10px;border-bottom:1px solid #e2e8f0;';

@@ -326,7 +326,7 @@
           <input id="pontoSearch" type="text" placeholder="🔍 Buscar colaborador..." oninput="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;flex:1;min-width:200px;">
           <select id="pontoDepto" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos os departamentos</option></select>
           <select id="pontoFiltroSaldo" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos os colaboradores</option><option value="problema">🔴 Com problemas</option></select>
-          <button onclick="exportarPontoCSV()" style="padding:8px 14px;background:#0A1F44;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-download"></i> Exportar CSV</button>
+          <button onclick="exportarPontoCSV()" style="padding:8px 14px;background:#f0f4f8;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-download"></i> Exportar CSV</button>
           <button onclick="salvarPonto()" style="padding:8px 14px;background:#15803d;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-floppy-disk"></i> Salvar</button>
         </div>
         <div id="pontoResumoCards" style="display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
@@ -338,7 +338,7 @@
         <div id="pontoPeriodo" style="display:none;font-size:12px;color:#94a3b8;margin-bottom:10px;"></div>
         <div id="pontoTabelaWrap" style="display:none;overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr style="background:#0A1F44;color:white;">
+            <thead><tr style="background:#f0f4f8;color:white;">
               <th style="padding:10px 12px;text-align:left;font-size:11px;">COLABORADOR</th>
               <th style="padding:10px 8px;text-align:left;font-size:11px;">DEPARTAMENTO</th>
               <th style="padding:10px 8px;text-align:center;font-size:11px;">TOTAL TRABALHADO</th>
@@ -1032,7 +1032,7 @@ window.filtrarPonto=function(){
       +'<td style="padding:10px 12px;text-align:center;">'+horasBadge+'</td>'
       +'<td style="padding:10px 8px;text-align:center;">'+(f.faltas>0?'<span style="background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 8px;font-weight:700;">'+f.faltas+'</span>':'<span style="color:#86efac;">0</span>')+'</td>'
       +'<td style="padding:10px 8px;text-align:center;">'+(f.incompletas>0?'<span style="background:#fef3c7;color:#d97706;border-radius:6px;padding:2px 8px;font-weight:700;">'+f.incompletas+'</span>':'<span style="color:#86efac;">0</span>')+'</td>'
-      +'<td style="padding:10px 8px;text-align:center;"><button onclick="abrirPontoModal('+i+')" style="padding:5px 12px;background:#0A1F44;color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;">Ver dias</button></td>'
+      +'<td style="padding:10px 8px;text-align:center;"><button onclick="abrirPontoModal('+i+')" style="padding:5px 12px;background:#f0f4f8;color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;">Ver dias</button></td>'
       +'</tr>';
   }).join('');
 };
@@ -1043,7 +1043,7 @@ window.abrirPontoModal=function(idx){
   var totalH=Math.floor(f.totalTrabMin/60),totalM=f.totalTrabMin%60;
   var totalLabel=totalH+'h'+(totalM>0?' '+totalM+'min':'');
   var html='<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-    +'<thead><tr style="background:#0A1F44;color:white;">'
+    +'<thead><tr style="background:#f0f4f8;color:white;">'
     +'<th style="padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.5px;">DATA</th>'
     +'<th style="padding:9px 10px;text-align:center;font-size:11px;">ENTRADA</th>'
     +'<th style="padding:9px 10px;text-align:center;font-size:11px;">SAÍDA</th>'
@@ -1063,7 +1063,7 @@ window.abrirPontoModal=function(idx){
       +'<td style="padding:8px;text-align:center;">'+statusBadge+'</td>'
       +'</tr>';
   });
-  html+='<tr style="background:#0A1F44;color:white;font-weight:700;">'
+  html+='<tr style="background:#f0f4f8;color:white;font-weight:700;">'
     +'<td colspan="3" style="padding:10px 10px;font-size:12px;letter-spacing:.5px;">TOTAL DO PERÍODO</td>'
     +'<td style="padding:10px;text-align:center;font-size:16px;font-weight:900;color:#86efac;">'+totalLabel+'</td>'
     +'<td></td></tr></tbody></table>';
