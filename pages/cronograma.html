@@ -14,7 +14,7 @@
   <style>
     :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--shadow:0 4px 20px rgba(10,31,68,.1);}
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
     .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
     .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
     .s-logo{display:flex;align-items:center;gap:12px;}
@@ -146,6 +146,7 @@
     .toast.success{background:var(--green);}.toast.error{background:var(--red);}.toast.info{background:var(--navy);}
     @media print{body{background:white;}.red-bar,.s-header,.content,.modal-bg,.pdf-modal-wrap,.cx-modal-wrap,.toast-box{display:none!important;}.print-doc{box-shadow:none;margin:0;padding:2cm 1.5cm;width:100%;}table.print-tbl th{background:#4a4a4a!important;color:white!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}table.print-tbl tr:nth-child(even) td{background:#f5f5f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.status-ag,.status-en,.print-total,.print-date-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
     @media(max-width:768px){.stats-bar{grid-template-columns:1fr 1fr;}.week-grid{grid-template-columns:repeat(3,1fr);}.content{padding:14px 14px 60px;}.print-doc{width:100%;}}
+    .panel,.stat-card,.tabs,.week-item,.editor-sala-row{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
   </style>
 </head>
 <body>

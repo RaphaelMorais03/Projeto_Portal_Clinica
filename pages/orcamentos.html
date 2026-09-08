@@ -22,7 +22,7 @@
       --amber:#b45309;
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 
     .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
     .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
@@ -270,6 +270,7 @@
       body{overflow:auto;height:auto;}
       .layout{overflow:visible;}
     }
+    .card,.popt-pbox{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
   </style>
 </head>
 <body>

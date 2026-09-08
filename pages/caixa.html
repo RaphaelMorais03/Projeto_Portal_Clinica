@@ -12,7 +12,7 @@
   <style>
     :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--shadow:0 4px 20px rgba(10,31,68,.1);}
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
     .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
     .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
     .s-logo{display:flex;align-items:center;gap:12px;}
@@ -80,6 +80,7 @@
     .recibo-sec-title{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
     .dif-badge{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin:12px 0;}
     .aviso-box{background:#fef3c7;border-left:4px solid #b45309;padding:10px 14px;font-size:12px;color:#92400e;border-radius:0 8px 8px 0;margin-bottom:14px;line-height:1.5;}
+    .panel,.recibo-sec{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
   </style>
 </head>
 <body>
@@ -982,7 +983,7 @@
         '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:10px;">Total por forma de pagamento</div>' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.3rem;">' + cardsHtml + sobraCard + '</div>' +
         /* Card navy — Total a Entregar em Dinheiro */
-        '<div style="background:#f0f4f8;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:8px;">' +
+        '<div style="background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:8px;">' +
           '<div>' +
             '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;">💵 Total a Entregar em Dinheiro</div>' +
             sobraLinha +
@@ -992,7 +993,7 @@
         /* Tabela de lançamentos */
         '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:8px;">Lançamentos individuais</div>' +
         '<table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;">' +
-          '<thead><tr style="background:#f0f4f8;">' +
+          '<thead><tr style="background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;">' +
             '<th style="border:1px solid #374151;padding:7px 8px;text-align:left;font-size:9px;color:rgba(255,255,255,.7);">Data/Hora</th>' +
             '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">Tipo</th>' +
             '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">Forma</th>' +
@@ -1672,14 +1673,14 @@ window.odImprimir = function() {
     + '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:10px;">Total por forma de pagamento</div>'
     + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.3rem;">' + cardsHtml + '</div>'
     /* Card navy — Total Geral */
-    + '<div style="background:#f0f4f8;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:8px;">'
+    + '<div style="background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:8px;">'
     +   '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;">💵 Total Geral</div>'
     +   '<div style="font-size:1.6rem;font-weight:900;color:white;">' + _odFM(totais.geral) + '</div>'
     + '</div>'
     /* Tabela de pacientes */
     + '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:8px;">Pacientes</div>'
     + '<table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;">'
-    +   '<thead><tr style="background:#f0f4f8;">'
+    +   '<thead><tr style="background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;">'
     +     '<th style="border:1px solid #374151;padding:7px 8px;text-align:left;font-size:9px;color:rgba(255,255,255,.7);">Nome</th>'
     +     '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);">CPF</th>'
     +     '<th style="border:1px solid #374151;padding:7px 8px;text-align:right;font-size:9px;color:rgba(255,255,255,.7);">Valor</th>'

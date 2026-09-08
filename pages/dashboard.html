@@ -23,7 +23,7 @@
       --shadow:0 4px 20px rgba(10,31,68,.08);
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
     .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
     .s-header{background:var(--navy);border-bottom:2px solid rgba(255,255,255,.08);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 12px rgba(10,31,68,.3);}
     .s-logo{display:flex;align-items:center;gap:12px;}
@@ -220,6 +220,13 @@
     .mode-btn.active{background:var(--navy);color:white;}
     .amei-ok{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#15803d;display:none;}
     .amei-ok.show{display:block;}
+    /* glassmorphism nos cards */
+    .metric-card,.filters-bar,.table-card,.group-block,.fech-card,.caixa-card,.s-header{
+      background:rgba(255,255,255,0.82)!important;
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-color:rgba(255,255,255,0.5)!important;
+    }
   </style>
 </head>
 <body>
@@ -1576,7 +1583,7 @@
         '.sub{text-align:center;font-size:11px;color:#64748b;margin-bottom:8mm}'+
         '.info{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:8mm;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:10px}'+
         'table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #000;padding:7px 10px}'+
-        'th{background:#f0f4f8;color:white;text-align:left}.total-row td{font-weight:800;font-size:14px;background:#f0fdf4}'+
+        'th{background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;text-align:left}.total-row td{font-weight:800;font-size:14px;background:#f0fdf4}'+
         '.assin{display:flex;justify-content:space-between;margin-top:14mm;gap:20mm}'+
         '.assin-item{flex:1;text-align:center}.assin-item .linha{border-bottom:1px solid #000;height:14px;margin-bottom:4px}'+
         '.assin-item .lbl{font-size:10px;color:#64748b}</style></head><body>'+
@@ -3204,7 +3211,7 @@ window.exportarPDF = function(tituloParam, tabelaId) {
       + tabelaEl.outerHTML;
 
     container.querySelectorAll('th').forEach(function(th){
-      th.style.cssText = 'background:#f0f4f8;color:white;padding:8px;font-size:10px;text-align:left;';
+      th.style.cssText = 'background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;padding:8px;font-size:10px;text-align:left;';
     });
     container.querySelectorAll('td').forEach(function(td){
       td.style.cssText = 'padding:7px 8px;font-size:10px;border-bottom:1px solid #e2e8f0;';

@@ -15,7 +15,7 @@
     .red-bar{height:3px;background:#C62828;position:fixed;top:0;left:0;right:0;z-index:1000;}
     :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--green:#15803d;--success:#2ecc71;--danger:#C62828;--employee:#9b59b6;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--card-bg:#ffffff;--input-bg:#ffffff;--border:rgba(0,0,0,0.12);--shadow:0 4px 20px rgba(10,31,68,.1);--primary:#0A1F44;--primary-dark:#122b5e;}
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
     .hidden{display:none!important;}
     /* ── Header estilo caixa ── */
     .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
@@ -82,7 +82,7 @@
     .empty-state i{font-size:3rem;margin-bottom:20px;opacity:.3;}
     .toast-container{position:fixed;top:20px;right:20px;z-index:9999;}
     .toast{background:#333;color:#fff;padding:12px 20px;margin-bottom:10px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;animation:slideIn .3s ease;max-width:350px;}
-    .toast.success{background:var(--success);}.toast.error{background:var(--danger);}.toast.info{background:#f0f4f8;}
+    .toast.success{background:var(--success);}.toast.error{background:var(--danger);}.toast.info{background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;}
     @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
     .modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px;}
     .modal-content{background:var(--card-bg);padding:30px;border-radius:16px;max-width:400px;width:90%;text-align:center;color:var(--gray);box-shadow:var(--shadow);}
@@ -111,12 +111,13 @@
     .btn-modal-close{background:none;border:none;cursor:pointer;color:#94a3b8;font-size:18px;padding:2px 6px;border-radius:6px;transition:color .15s;}
     .btn-modal-close:hover{color:#C62828;}
     .prof-card-selected{background:rgba(10,31,68,.06);border:1.5px solid rgba(10,31,68,.18);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;}
-    .prof-card-avatar{width:42px;height:42px;border-radius:50%;background:#f0f4f8;color:white;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .prof-card-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .prof-card-info{flex:1;}
     .prof-card-nome{font-weight:700;color:#0A1F44;font-size:14px;}
     .prof-card-doc{font-size:12px;color:#64748b;margin-top:2px;}
     .prof-none{text-align:center;padding:22px;color:#94a3b8;font-size:13px;border:1.5px dashed #e2e8f0;border-radius:12px;}
     .prof-none i{display:block;font-size:28px;margin-bottom:8px;opacity:.4;}
+    .panel{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
   </style>
 </head>
 <body>
@@ -192,7 +193,7 @@
       <div class="user-banner-icon"><i class="fas fa-file-invoice-dollar"></i></div>
     </div>
     <header style="display:none;">
-      <div style="display:inline-flex;align-items:center;gap:12px;background:#f0f4f8;color:white;padding:10px 24px;border-radius:12px;margin-bottom:10px;">
+      <div style="display:inline-flex;align-items:center;gap:12px;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;padding:10px 24px;border-radius:12px;margin-bottom:10px;">
         <img src="../assets/favicon.png" alt="Logo" style="width:32px;height:32px;object-fit:contain;" id="logoHeader">
         <div>
           <div style="font-size:17px;font-weight:800;letter-spacing:-0.3px;">Fechamento Médico</div>

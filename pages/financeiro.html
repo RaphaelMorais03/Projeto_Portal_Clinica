@@ -12,7 +12,7 @@
   <style>
     :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-800:#1e293b;--green:#15803d;--green-bg:#dcfce7;--amber:#92400e;--amber-bg:#fef3c7;--shadow:0 4px 20px rgba(10,31,68,.1);}
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
     .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
     .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
     .s-logo{display:flex;align-items:center;gap:12px;}
@@ -79,6 +79,7 @@
     .modal-close:hover{background:var(--gray-200);}
     .modal-body{padding:22px;}
     @media(max-width:768px){.stats-bar,.form-grid{grid-template-columns:1fr;}.content{padding:14px 14px 60px;}}
+    .panel,.stat-card,.tabs{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
   </style>
 </head>
 <body>
@@ -326,7 +327,7 @@
           <input id="pontoSearch" type="text" placeholder="🔍 Buscar colaborador..." oninput="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;flex:1;min-width:200px;">
           <select id="pontoDepto" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos os departamentos</option></select>
           <select id="pontoFiltroSaldo" onchange="filtrarPonto()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:13px;outline:none;"><option value="">Todos os colaboradores</option><option value="problema">🔴 Com problemas</option></select>
-          <button onclick="exportarPontoCSV()" style="padding:8px 14px;background:#f0f4f8;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-download"></i> Exportar CSV</button>
+          <button onclick="exportarPontoCSV()" style="padding:8px 14px;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-download"></i> Exportar CSV</button>
           <button onclick="salvarPonto()" style="padding:8px 14px;background:#15803d;color:white;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-floppy-disk"></i> Salvar</button>
         </div>
         <div id="pontoResumoCards" style="display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
@@ -338,7 +339,7 @@
         <div id="pontoPeriodo" style="display:none;font-size:12px;color:#94a3b8;margin-bottom:10px;"></div>
         <div id="pontoTabelaWrap" style="display:none;overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr style="background:#f0f4f8;color:white;">
+            <thead><tr style="background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;">
               <th style="padding:10px 12px;text-align:left;font-size:11px;">COLABORADOR</th>
               <th style="padding:10px 8px;text-align:left;font-size:11px;">DEPARTAMENTO</th>
               <th style="padding:10px 8px;text-align:center;font-size:11px;">TOTAL TRABALHADO</th>
@@ -1032,7 +1033,7 @@ window.filtrarPonto=function(){
       +'<td style="padding:10px 12px;text-align:center;">'+horasBadge+'</td>'
       +'<td style="padding:10px 8px;text-align:center;">'+(f.faltas>0?'<span style="background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 8px;font-weight:700;">'+f.faltas+'</span>':'<span style="color:#86efac;">0</span>')+'</td>'
       +'<td style="padding:10px 8px;text-align:center;">'+(f.incompletas>0?'<span style="background:#fef3c7;color:#d97706;border-radius:6px;padding:2px 8px;font-weight:700;">'+f.incompletas+'</span>':'<span style="color:#86efac;">0</span>')+'</td>'
-      +'<td style="padding:10px 8px;text-align:center;"><button onclick="abrirPontoModal('+i+')" style="padding:5px 12px;background:#f0f4f8;color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;">Ver dias</button></td>'
+      +'<td style="padding:10px 8px;text-align:center;"><button onclick="abrirPontoModal('+i+')" style="padding:5px 12px;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;">Ver dias</button></td>'
       +'</tr>';
   }).join('');
 };
@@ -1043,7 +1044,7 @@ window.abrirPontoModal=function(idx){
   var totalH=Math.floor(f.totalTrabMin/60),totalM=f.totalTrabMin%60;
   var totalLabel=totalH+'h'+(totalM>0?' '+totalM+'min':'');
   var html='<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-    +'<thead><tr style="background:#f0f4f8;color:white;">'
+    +'<thead><tr style="background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;">'
     +'<th style="padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.5px;">DATA</th>'
     +'<th style="padding:9px 10px;text-align:center;font-size:11px;">ENTRADA</th>'
     +'<th style="padding:9px 10px;text-align:center;font-size:11px;">SAÍDA</th>'
@@ -1063,7 +1064,7 @@ window.abrirPontoModal=function(idx){
       +'<td style="padding:8px;text-align:center;">'+statusBadge+'</td>'
       +'</tr>';
   });
-  html+='<tr style="background:#f0f4f8;color:white;font-weight:700;">'
+  html+='<tr style="background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:white;font-weight:700;">'
     +'<td colspan="3" style="padding:10px 10px;font-size:12px;letter-spacing:.5px;">TOTAL DO PERÍODO</td>'
     +'<td style="padding:10px;text-align:center;font-size:16px;font-weight:900;color:#86efac;">'+totalLabel+'</td>'
     +'<td></td></tr></tbody></table>';
