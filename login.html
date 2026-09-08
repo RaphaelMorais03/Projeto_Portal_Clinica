@@ -15,28 +15,28 @@
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
     html,body{height:100%;font-family:'Inter',sans-serif;}
     #telaLogin{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;
-               background:linear-gradient(135deg,#C62828 0%,#ad1f1f 100%);}
+               background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;}
     .login-right{display:flex;align-items:center;justify-content:center;width:100%;}
-    .login-form-box{width:100%;max-width:440px;background:white;border-radius:18px;
-                    padding:2.5rem;box-shadow:0 10px 25px rgba(0,0,0,.25);border:1px solid rgba(0,0,0,.06);}
-    .lf-tag{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);margin-bottom:10px;}
-    .lf-title{font-size:28px;font-weight:900;color:var(--navy);letter-spacing:-.8px;margin-bottom:6px;}
-    .lf-sub{font-size:13px;color:var(--gray-400);margin-bottom:32px;}
+    .login-form-box{width:100%;max-width:440px;background:#202b54;border-radius:18px;
+                    padding:2.5rem;box-shadow:0 10px 25px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.05);}
+    .lf-tag{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#ffffff;margin-bottom:10px;}
+    .lf-title{font-size:28px;font-weight:900;color:#ffffff;letter-spacing:-.8px;margin-bottom:6px;}
+    .lf-sub{font-size:13px;color:#8496bf;margin-bottom:32px;}
     .lf-field{margin-bottom:1.25rem;}
-    .lf-field label{display:block;font-size:0.95rem;font-weight:600;color:var(--gray-500);margin-bottom:0.5rem;}
-    .lf-wrap{position:relative;display:flex;align-items:center;border:1px solid var(--gray-200);border-radius:10px;background:var(--gray-50);transition:border-color .2s,box-shadow .2s;}
-    .lf-wrap:focus-within{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.1);background:white;}
-    .lf-wrap.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(198,40,40,.1);}
-    .lf-ico{padding:0 14px;color:var(--gray-400);font-size:14px;flex-shrink:0;}
-    .lf-input{flex:1;padding:0.85rem 0;border:none;background:transparent;font-family:inherit;font-size:0.95rem;color:var(--gray-800);outline:none;}
-    .lf-input::placeholder{color:var(--gray-300);}
-    .eye-btn{padding:0 14px;background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:13px;transition:color .15s;}
-    .eye-btn:hover{color:var(--navy);}
-    .err-box{display:none;align-items:center;gap:9px;background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:11px 14px;margin-bottom:18px;font-size:13px;color:var(--red);font-weight:500;}
+    .lf-field label{display:block;font-size:0.95rem;font-weight:600;color:#a3c2e6;margin-bottom:0.5rem;}
+    .lf-wrap{position:relative;display:flex;align-items:center;border:1px solid #384b80;border-radius:10px;background:#293866;transition:border-color .2s,box-shadow .2s;}
+    .lf-wrap:focus-within{border-color:#00c9b7;box-shadow:0 0 0 3px rgba(0,201,183,.2);}
+    .lf-wrap.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(198,40,40,.2);}
+    .lf-ico{padding:0 14px;color:#a3c2e6;font-size:14px;flex-shrink:0;}
+    .lf-input{flex:1;padding:0.85rem 0;border:none;background:transparent;font-family:inherit;font-size:0.95rem;color:#ffffff;outline:none;}
+    .lf-input::placeholder{color:#8496bf;}
+    .eye-btn{padding:0 14px;background:none;border:none;cursor:pointer;color:#a3c2e6;font-size:13px;transition:color .15s;}
+    .eye-btn:hover{color:#ffffff;}
+    .err-box{display:none;align-items:center;gap:9px;background:rgba(198,40,40,.15);border:1px solid rgba(198,40,40,.4);border-radius:10px;padding:11px 14px;margin-bottom:18px;font-size:13px;color:#ff8a8a;font-weight:500;}
     .err-box.show{display:flex;animation:shake .38s ease;}
     @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
-    .btn-entrar{width:100%;padding:0.95rem;background:var(--navy);color:white;border:none;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:1rem;transition:background .2s,transform .1s;}
-    .btn-entrar:hover:not(:disabled){background:var(--navy-mid);transform:scale(.99);}
+    .btn-entrar{width:100%;padding:0.95rem;background:var(--red);color:white;border:none;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:1rem;transition:background .2s,transform .1s;}
+    .btn-entrar:hover:not(:disabled){background:var(--red-h);transform:scale(.99);}
     .btn-entrar:disabled{opacity:.6;cursor:not-allowed;}
     .b-spin{display:none;width:17px;height:17px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:rot .65s linear infinite;}
     @keyframes rot{to{transform:rotate(360deg)}}
@@ -134,7 +134,7 @@
     <div class="login-right">
       <div class="login-form-box">
         <div style="margin-bottom:32px;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:var(--navy);letter-spacing:-.5px;margin-bottom:4px;">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>
+          <div style="font-size:28px;font-weight:900;color:#ffffff;letter-spacing:-.5px;margin-bottom:4px;">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>
           <div class="lf-tag" style="margin-bottom:0;">Acesso ao sistema</div>
         </div>
         <h2 class="lf-title">Entrar no Portal</h2>
