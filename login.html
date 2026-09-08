@@ -67,20 +67,19 @@
     .p-user{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:6px;}
     .btn-sair{background:var(--red);color:white;border:none;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
     .btn-sair:hover{background:var(--red-h);}
-    .p-content{max-width:1000px;margin:0 auto;padding:48px 24px 60px;}
-    .p-greeting{margin-bottom:36px;}
-    .p-greeting-sub{font-size:13px;color:var(--gray-400);margin-bottom:6px;}
-    .p-greeting-title{font-size:30px;font-weight:900;color:var(--navy);letter-spacing:-.8px;}
-    .portal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
-    .portal-card{background:white;border:1.5px solid var(--gray-200);border-radius:20px;padding:28px 28px 24px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(10,31,68,.06);}
-    .portal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .25s;}
-    .portal-card:hover{border-color:var(--navy);transform:translateY(-3px);box-shadow:0 12px 32px rgba(10,31,68,.13);}
-    .portal-card:hover::before{transform:scaleX(1);}
-    .pc-icon{width:56px;height:56px;border-radius:16px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;flex-shrink:0;}
-    .pc-icon img{width:100%;height:100%;object-fit:contain;}
-    .pc-name{font-size:18px;font-weight:800;color:var(--navy);letter-spacing:-.3px;}
-    .pc-desc{font-size:13px;color:var(--gray-400);line-height:1.55;}
-    .pc-arrow{margin-top:auto;font-size:12px;font-weight:700;color:var(--red);display:flex;align-items:center;gap:5px;transition:gap .18s;}
+    #telaPortal{background:#161b36;}
+    .p-content{max-width:1100px;margin:0 auto;padding:3rem 1.5rem;}
+    .p-greeting{margin-bottom:2.5rem;}
+    .p-greeting-sub{font-size:0.95rem;font-weight:500;color:#8496bf;margin-bottom:0.25rem;display:block;}
+    .p-greeting-title{font-size:2.2rem;font-weight:800;color:#c73a4b;margin:0;letter-spacing:-.5px;}
+    .portal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;}
+    .portal-card{background:white;border-radius:16px;padding:1.75rem;cursor:pointer;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;gap:0;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);}
+    .portal-card:hover{transform:translateY(-3px);box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);}
+    .pc-icon{width:48px;height:48px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;margin-bottom:1rem;color:#94a3b8;}
+    .pc-icon i{color:#94a3b8;}
+    .pc-name{font-size:1.25rem;font-weight:700;color:#0f172a;margin:0 0 0.5rem 0;}
+    .pc-desc{font-size:0.95rem;color:#64748b;line-height:1.5;margin:0 0 1.5rem 0;flex-grow:1;}
+    .pc-arrow{margin-top:auto;font-size:0.95rem;font-weight:700;color:#c73a4b;display:flex;align-items:center;gap:5px;transition:gap .18s;}
     .portal-card:hover .pc-arrow{gap:9px;}
     .s-overlay{position:fixed;inset:0;background:var(--navy);display:none;align-items:center;justify-content:center;flex-direction:column;gap:13px;z-index:9999;}
     .s-overlay.show{display:flex;}
@@ -88,7 +87,7 @@
     .s-sys{font-size:12px;color:rgba(255,255,255,.35);letter-spacing:1.8px;text-transform:uppercase;animation:fu .3s .22s ease both;}
     @keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
     @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    @media(max-width:860px){.portal-grid{grid-template-columns:1fr;}.p-header{padding:0 20px;}}
+    @media(max-width:860px){.portal-grid{grid-template-columns:1fr;}.p-header{padding:0 20px;}.p-greeting-title{font-size:1.8rem;}}
 
     /* ── BOTÃO NOVIDADES ── */
     .novidades-fab{position:fixed;bottom:24px;right:24px;z-index:1000;}
@@ -186,55 +185,55 @@
       </div>
       <div class="portal-grid">
         <div class="portal-card" id="cardOrcamentos" style="display:none;" onclick="abrirSistema('pages/orcamentos.html','Sistema de Orçamentos')">
-          <div class="pc-icon" style="background:#f0f4f8;"><i class="fas fa-file-invoice-dollar" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-file-invoice-dollar"></i></div>
           <div><div class="pc-name">Orçamentos</div><div class="pc-desc">Consulte exames, valores, parceiros e preparos. Gere mensagens para WhatsApp.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
         <div class="portal-card" id="cardFechamento" style="display:none;" onclick="abrirSistema('pages/fechamento.html','Sistema de Fechamento')">
-          <div class="pc-icon" style="background:#065f46;"><i class="fas fa-receipt" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-receipt"></i></div>
           <div><div class="pc-name">Fechamento Médico</div><div class="pc-desc">Cálculo de repasse, impostos PJ e geração de recibo consolidado para impressão.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
         <div class="portal-card" id="cardFinanceiro" style="display:none;" onclick="abrirSistema('pages/financeiro.html','Sistema Financeiro')">
-          <div class="pc-icon" style="background:#92400e;"><i class="fas fa-coins" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-coins"></i></div>
           <div><div class="pc-name">Financeiro</div><div class="pc-desc">Geração de recibos em lote para colaboradores. Cadastro e controle de equipe.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
         <div class="portal-card" id="cardExames" style="display:none;" onclick="abrirSistema('pages/exames.html','Retirada de Exames')">
-          <div class="pc-icon" style="background:#1e3a5f;"><i class="fas fa-vials" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-vials"></i></div>
           <div><div class="pc-name">Retirada de Exames</div><div class="pc-desc">Gaveta digital de exames. Cadastre, dê baixa e consulte o histórico completo.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
         <div class="portal-card" id="cardCronograma" style="display:none;" onclick="abrirSistema('pages/cronograma.html','Cronograma')">
-          <div class="pc-icon" style="background:#1d4ed8;"><i class="fas fa-calendar-week" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-calendar-week"></i></div>
           <div><div class="pc-name">Cronograma</div><div class="pc-desc">Agenda diária por sala, checklist de abertura, notas e controle de caixa.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
         <div class="portal-card" id="cardCaixa" style="display:none;" onclick="abrirSistema('pages/caixa.html','Caixa')">
-          <div class="pc-icon" style="background:#065f46;"><i class="fas fa-cash-register" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-cash-register"></i></div>
           <div><div class="pc-name">Caixa</div><div class="pc-desc">Controle diário de caixa, vales e relatório de produção gerado pelo AMEI.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
-        <div class="portal-card" id="cardAdmin" style="display:none;border-color:#fde68a;background:#fffbeb;" onclick="abrirSistema('pages/admin.html','Painel Admin')">
-          <div class="pc-icon" style="background:#92400e;"><i class="fas fa-shield-halved" style="color:white;font-size:22px;"></i></div>
-          <div><div class="pc-name" style="color:#92400e;">Painel Admin</div><div class="pc-desc">Gerenciar usuários, clínica, atendentes e permissões de acesso.</div></div>
-          <div class="pc-arrow" style="color:#92400e;"><i class="fas fa-arrow-right"></i> Gerenciar</div>
+        <div class="portal-card" id="cardAdmin" style="display:none;" onclick="abrirSistema('pages/admin.html','Painel Admin')">
+          <div class="pc-icon"><i class="fas fa-shield-halved"></i></div>
+          <div><div class="pc-name">Painel Admin</div><div class="pc-desc">Gerenciar usuários, clínica, atendentes e permissões de acesso.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Gerenciar</div>
         </div>
         <div class="portal-card" id="cardDashboard" style="display:none;" onclick="abrirSistema('pages/dashboard.html','Dashboard de Produção')">
-          <div class="pc-icon" style="background:#6d28d9;"><i class="fas fa-chart-line" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-chart-line"></i></div>
           <div><div class="pc-name">Dashboard</div><div class="pc-desc">Produção, recebimentos e comissões de todos os colaboradores.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
         <div class="portal-card" id="cardNps" style="display:none;" onclick="abrirSistema('pages/nps.html','NPS Atendimento')">
-          <div class="pc-icon" style="background:#0891b2;"><i class="fas fa-star" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-star"></i></div>
           <div><div class="pc-name">NPS</div><div class="pc-desc">Pesquisa de satisfação e ranking do atendimento do call center.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
 
         <div class="portal-card" id="cardContratos" style="display:none;" onclick="abrirSistema('pages/contratos.html','Contratos')">
-          <div class="pc-icon" style="background:#f0f4f8;"><i class="fas fa-file-contract" style="color:white;font-size:22px;"></i></div>
+          <div class="pc-icon"><i class="fas fa-file-contract"></i></div>
           <div><div class="pc-name">Contratos</div><div class="pc-desc">Gerador de contrato de neuropsicologia e guia de encaminhamento manual.</div></div>
-          <div class="pc-arrow" style="color:#0A1F44;"><i class="fas fa-arrow-right"></i> Acessar</div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
 
       </div>
