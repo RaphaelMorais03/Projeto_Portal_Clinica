@@ -1,15 +1,15 @@
-﻿<!-- VERSION: v2.7 | orcamentos.html | 10/08/2026 | feat: preparos oficiais atualizados, estacionamento em todos -->
+<!-- VERSION: v2.7 | orcamentos.html | 10/08/2026 | feat: preparos oficiais atualizados, estacionamento em todos -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <link rel="icon" href="assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orçamentos</title>
+  <title>Orçamentos — Amor Saúde Pirituba</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="../js/firebase-config.js"></script>
-  <script src="../js/shared-utils.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/shared-utils.js"></script>
   <style>
     :root{
       --navy:#0A1F44; --navy-mid:#122b5e;
@@ -22,7 +22,7 @@
       --amber:#b45309;
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+    body{font-family:'Inter',sans-serif;background:#f0f4f8;color:var(--gray-800);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 
     .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
     .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
@@ -270,7 +270,6 @@
       body{overflow:auto;height:auto;}
       .layout{overflow:visible;}
     }
-    .card,.popt-pbox{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
   </style>
 </head>
 <body>
@@ -278,13 +277,13 @@
 
   <div class="s-header">
     <div class="s-logo">
-      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo"></div>
-      <div><div class="s-logo-name">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div class="s-logo-sub">Orçamentos · Pirituba</div></div>
+      <div class="s-logo-icon"><img src="assets/favicon.png" alt="Logo"></div>
+      <div><div class="s-logo-name">Amor Saúde</div><div class="s-logo-sub">Orçamentos · Pirituba</div></div>
     </div>
     <div class="header-right">
       <div class="user-pill"><div class="user-dot" id="userAvatar">--</div><span id="userName" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span></div>
       <button class="btn-sair" id="logoutBtn"><i class="fas fa-right-from-bracket"></i> Sair</button>
-      <button class="back-btn" onclick="window.location.replace('../login.html')"><i class="fas fa-home"></i> Portal</button>
+      <button class="back-btn" onclick="window.location.replace('login.html')"><i class="fas fa-home"></i> Portal</button>
     </div>
   </div>
 
@@ -717,7 +716,7 @@
 
     let currentUser = null;
     onAuthStateChanged(auth, user => {
-      if (!user) { window.location.replace('../login.html'); return; }
+      if (!user) { window.location.replace('login.html'); return; }
       currentUser = user;
       document.getElementById('userAvatar').textContent = initialsFor(user);
       document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
@@ -728,7 +727,7 @@
       loadExamsFromFirestore();
     });
     document.getElementById('logoutBtn').addEventListener('click', () =>
-      signOut(auth).then(() => window.location.replace('../login.html'))
+      signOut(auth).then(() => window.location.replace('login.html'))
     );
 
     let exams = [], filtered = [], cart = [];
@@ -1055,7 +1054,7 @@
     }
 
     function buildPartnerMsg(e, opt) {
-      const clinica     = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
+      const clinica     = 'AmorSaúde SP Pirituba';
       const nomeExib    = (opt ? opt.nomeExib || opt.nome : e.partnerNomeExib || e.partnerNome) || 'clínica parceira';
       const nomeFormal  = (opt ? opt.nomeFormal || opt.nome : e.partnerNomeFormal || e.partnerNome) || nomeExib;
       const tel         = opt ? (opt.tel||'') : (e.partnerTel||'');
@@ -1636,7 +1635,7 @@
       if(!cart.length)return;
       const total=cart.reduce((s,it)=>s+(it.preco||0),0);
       const ct=cart.filter(it=>it.tipo==='ct'), pt=cart.filter(it=>it.tipo==='pt');
-      const _clin=sessionStorage.getItem('clinicaNome')||'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
+      const _clin='AmorSaúde SP Pirituba';
       let msg=`🏥 *${_clin}*\n\nOlá! Preparamos com carinho o orçamento dos exames indicados para você 💙\n\n`;
       if(ct.length){msg+=`💳 *Cartão de Todos*\n`;ct.forEach(it=>{msg+=`• *${it.exam.nome}* — ${fmtBRL(it.preco)}\n`;});msg+=`\n`;}
       if(pt.length){msg+=`👛 *Particular*\n`;pt.forEach(it=>{msg+=`• *${it.exam.nome}* — ${fmtBRL(it.preco)}\n`;});msg+=`\n`;}
@@ -1661,7 +1660,7 @@
     document.getElementById('btnPdf').addEventListener('click',()=>{
       if(!cart.length)return;
       const {jsPDF}=window.jspdf, pdf=new jsPDF();
-      const clin=sessionStorage.getItem('clinicaNome')||'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
+      const clin='AmorSaúde SP Pirituba';
       let y=14;
       const logo=sessionStorage.getItem('logoDataUrl');
       if(logo){try{pdf.addImage(logo,'PNG',14,y,28,14);pdf.setFontSize(14);pdf.setFont('helvetica','bold');pdf.text(clin,46,y+6);pdf.setFontSize(9);pdf.setFont('helvetica','normal');pdf.text('ORÇAMENTO DE EXAMES',46,y+12);}catch(err){pdf.setFontSize(16);pdf.setFont('helvetica','bold');pdf.text('ORÇAMENTO — '+clin.toUpperCase(),105,y+8,{align:'center'});}}
@@ -1706,7 +1705,7 @@
     function parseWorkbook(wb){
       const result=[],skipNames=new Set(['amor cirugias','amor cirugias ','vf','vf ','marcus (urologista)','marcus (urologista) ']);
       const fornMap={
-        'EXAMES  CLINICA ':'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA','USG ':'USG (Equipe Interna)','IMADI-IMAGEM':'IMADI Imagem',
+        'EXAMES  AMOR SAUDE ':'Amor Saúde','USG ':'USG (Equipe Interna)','IMADI-IMAGEM':'IMADI Imagem',
         'OFTALMO':'Oftalmologia','TC PREZECOR':'Prezecor (TC)','SCOPPETA':'Scoppeta',
         'PREZECOR 2.0':'Prezecor 2.0','DERMATOLOGIA':'Dermatologia',
         'MEDICOM 2.0':'Medicom 2.0','FARAGE - OCULTO':'Farage',
@@ -1719,7 +1718,7 @@
         // ── MUDANÇA 1: pular Laboratorial e Farage no import ──
         if(skipNames.has(lower)||lower.includes('desativada')||lower.includes('oculto')||lower.includes('laboratori')||lower.includes('exames laboratoriais'))continue;
         const ws=wb.Sheets[sheetName],rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});if(!rows||rows.length===0)continue;
-        const isAmor=sheetName.toUpperCase().includes('CLINICA');let currentCat=sheetName.trim();const fornecedor=fornMap[sheetName]||sheetName.trim();if(isAmor)currentCat='Geral';
+        const isAmor=sheetName.toUpperCase().includes('AMOR SAUDE');let currentCat=sheetName.trim();const fornecedor=fornMap[sheetName]||sheetName.trim();if(isAmor)currentCat='Geral';
         for(const row of rows){if(!row||row.length===0)continue;const nome=cleanStr(row[0]);if(!nome)continue;
           if(isAmor){const ct=parsePrice(row[2]),pt=parsePrice(row[3]);if(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(nome)&&ct==null&&pt==null){currentCat=nome.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').trim();continue;}if(!looksLikeExamName(nome)||(ct==null&&pt==null))continue;result.push({nome,categoria:currentCat,fornecedor,preco_ct:ct,preco_pt:pt,observacao:cleanStr(row[1]),preparo:'',caracteristica:'',beneficio:''});}
           else{const nums=row.map(parsePrice);const allNull=nums.slice(1).every(n=>n==null);if(allNull&&looksLikeExamName(nome)&&nome.length<50){if(/RAIO|DIAGN|EXAMES |PROCEDIMENT|RESSON|TOMOG|GINECO|BIOPSIA|GASTRO/i.test(nome)){currentCat=nome;continue;}}if(!looksLikeExamName(nome))continue;const prices=nums.slice(1).filter(n=>n!=null&&n>0);if(prices.length===0)continue;const preco_ct=prices[0],preco_pt=prices.length>=2?Math.max(...prices):null;let obs='';for(const c of row.slice(1).map(cleanStr)){if(c&&parsePrice(c)==null&&c.length>5){obs=c;break;}}result.push({nome,categoria:currentCat,fornecedor,preco_ct,preco_pt,observacao:obs,preparo:'',caracteristica:'',beneficio:''});}
@@ -1735,5 +1734,3 @@
 <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v2.6 · 30/07/2026</span>
 </body>
 </html>
-
-
