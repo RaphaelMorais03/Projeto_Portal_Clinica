@@ -1,15 +1,15 @@
-<!-- VERSION: v2.7 | orcamentos.html | 10/08/2026 | feat: preparos oficiais atualizados, estacionamento em todos -->
+﻿<!-- VERSION: v2.7 | orcamentos.html | 10/08/2026 | feat: preparos oficiais atualizados, estacionamento em todos -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orçamentos — Amor Saúde Pirituba</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="js/firebase-config.js"></script>
-  <script src="js/shared-utils.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
   <style>
     :root{
       --navy:#0A1F44; --navy-mid:#122b5e;
@@ -277,13 +277,13 @@
 
   <div class="s-header">
     <div class="s-logo">
-      <div class="s-logo-icon"><img src="assets/favicon.png" alt="Logo"></div>
+      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo"></div>
       <div><div class="s-logo-name">Amor Saúde</div><div class="s-logo-sub">Orçamentos · Pirituba</div></div>
     </div>
     <div class="header-right">
       <div class="user-pill"><div class="user-dot" id="userAvatar">--</div><span id="userName" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span></div>
       <button class="btn-sair" id="logoutBtn"><i class="fas fa-right-from-bracket"></i> Sair</button>
-      <button class="back-btn" onclick="window.location.replace('login.html')"><i class="fas fa-home"></i> Portal</button>
+      <button class="back-btn" onclick="window.location.replace('../login.html')"><i class="fas fa-home"></i> Portal</button>
     </div>
   </div>
 
@@ -716,7 +716,7 @@
 
     let currentUser = null;
     onAuthStateChanged(auth, user => {
-      if (!user) { window.location.replace('login.html'); return; }
+      if (!user) { window.location.replace('../login.html'); return; }
       currentUser = user;
       document.getElementById('userAvatar').textContent = initialsFor(user);
       document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
@@ -727,7 +727,7 @@
       loadExamsFromFirestore();
     });
     document.getElementById('logoutBtn').addEventListener('click', () =>
-      signOut(auth).then(() => window.location.replace('login.html'))
+      signOut(auth).then(() => window.location.replace('../login.html'))
     );
 
     let exams = [], filtered = [], cart = [];
@@ -1054,7 +1054,7 @@
     }
 
     function buildPartnerMsg(e, opt) {
-      const clinica     = 'AmorSaúde SP Pirituba';
+      const clinica     = sessionStorage.getItem('clinicaNome') || 'Amor Saúde Pirituba';
       const nomeExib    = (opt ? opt.nomeExib || opt.nome : e.partnerNomeExib || e.partnerNome) || 'clínica parceira';
       const nomeFormal  = (opt ? opt.nomeFormal || opt.nome : e.partnerNomeFormal || e.partnerNome) || nomeExib;
       const tel         = opt ? (opt.tel||'') : (e.partnerTel||'');
@@ -1635,7 +1635,7 @@
       if(!cart.length)return;
       const total=cart.reduce((s,it)=>s+(it.preco||0),0);
       const ct=cart.filter(it=>it.tipo==='ct'), pt=cart.filter(it=>it.tipo==='pt');
-      const _clin='AmorSaúde SP Pirituba';
+      const _clin=sessionStorage.getItem('clinicaNome')||'Amor Saúde Pirituba';
       let msg=`🏥 *${_clin}*\n\nOlá! Preparamos com carinho o orçamento dos exames indicados para você 💙\n\n`;
       if(ct.length){msg+=`💳 *Cartão de Todos*\n`;ct.forEach(it=>{msg+=`• *${it.exam.nome}* — ${fmtBRL(it.preco)}\n`;});msg+=`\n`;}
       if(pt.length){msg+=`👛 *Particular*\n`;pt.forEach(it=>{msg+=`• *${it.exam.nome}* — ${fmtBRL(it.preco)}\n`;});msg+=`\n`;}
@@ -1660,7 +1660,7 @@
     document.getElementById('btnPdf').addEventListener('click',()=>{
       if(!cart.length)return;
       const {jsPDF}=window.jspdf, pdf=new jsPDF();
-      const clin='AmorSaúde SP Pirituba';
+      const clin=sessionStorage.getItem('clinicaNome')||'Amor Saúde Pirituba';
       let y=14;
       const logo=sessionStorage.getItem('logoDataUrl');
       if(logo){try{pdf.addImage(logo,'PNG',14,y,28,14);pdf.setFontSize(14);pdf.setFont('helvetica','bold');pdf.text(clin,46,y+6);pdf.setFontSize(9);pdf.setFont('helvetica','normal');pdf.text('ORÇAMENTO DE EXAMES',46,y+12);}catch(err){pdf.setFontSize(16);pdf.setFont('helvetica','bold');pdf.text('ORÇAMENTO — '+clin.toUpperCase(),105,y+8,{align:'center'});}}
@@ -1734,3 +1734,5 @@
 <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v2.6 · 30/07/2026</span>
 </body>
 </html>
+
+
