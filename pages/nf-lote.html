@@ -1636,15 +1636,29 @@ function parseCsvRFC4180(text){
   return rows.map(r => r.map(cleanCell));
 }
 
-// Data no formato do <input type="date"> (YYYY-MM-DD) → nome da aba "DD MM YYYY" (com espaço)
-function isoParaNomeAba(iso){
-  if(!iso || iso.length !== 10) return null;
+// Data no formato do <input type="date"> (YYYY-MM-DD) → variações do nome da aba
+function isoParaVariacoesAba(iso){
+  if(!iso || iso.length !== 10) return [];
   const [y,m,d] = iso.split('-');
-  return `${d} ${m} ${y}`;
+  const D = d, M = m, A = y;
+  const d1 = String(parseInt(d,10)), m1 = String(parseInt(m,10)); // sem zero à esquerda
+  return [
+    `${D} ${M} ${A}`,   // "14 09 2026" — padrão esperado
+    `${D}/${M}/${A}`,   // "14/09/2026"
+    `${D}-${M}-${A}`,   // "14-09-2026"
+    `${d1} ${m1} ${A}`, // "14 9 2026"  — sem zero
+    `${D} ${M} ${A.slice(2)}`, // "14 09 26" — ano curto
+    `${D}/${M}/${A.slice(2)}`, // "14/09/26"
+  ];
+}
+function isoParaNomeAba(iso){
+  const v = isoParaVariacoesAba(iso);
+  return v.length ? v[0] : null;
 }
 
 // Busca o gid da aba com esse nome dentro do pubhtml, monta a URL CSV daquela aba e devolve as linhas já lidas.
 async function buscarLinhasDoSheetPorData(dateIso){
+  const variacoes = new Set(isoParaVariacoesAba(dateIso).map(s => s.toLowerCase()));
   const nomeAba = isoParaNomeAba(dateIso);
   if(!nomeAba) throw new Error("Escolha uma data válida.");
 
@@ -1659,26 +1673,32 @@ async function buscarLinhasDoSheetPorData(dateIso){
     throw new Error(`Não consegui acessar a planilha (${e.message}). Confira sua conexão — se o erro persistir, pode ser bloqueio de rede/CORS ao abrir o arquivo direto (file://); tente rodar a partir de um servidor local ou do link publicado no Portal.`);
   }
 
-  // Mesma extração usada em pages/caixa.html: acha "name" + "pageUrl" (com o gid) de cada aba no pubhtml
-  const variacoes = new Set([nomeAba.toLowerCase()]);
+  // Extração robusta: 3 regexes cobrem variações do formato pubhtml do Google Sheets
+  const todasAbasEncontradas = [];
   let gid = null, achado = "";
   const regexes = [
     /items\.push\(\{name:\s*"((?:[^"\\]|\\.)*)",\s*pageUrl:\s*"([^"]+)"/g,
     /"name"\s*:\s*"([^"]+)"[^}]{0,200}"pageUrl"\s*:\s*"([^"]+)"/g,
+    /data-sheet-id="(\d+)"[^>]*>([^<]+)</g,
   ];
   for(const re of regexes){
     if(gid) break;
     let m;
+    re.lastIndex = 0;
     while((m = re.exec(htxt)) !== null){
       const tabName = m[1].replace(/\\\//g, '/').trim();
       const gidM = m[2].match(/gid=(-?\d+)/);
+      if(tabName) todasAbasEncontradas.push(tabName);
       if(gidM && variacoes.has(tabName.toLowerCase())){
         gid = gidM[1]; achado = tabName; break;
       }
     }
   }
   if(!gid){
-    throw new Error(`Não achei uma aba chamada "${nomeAba}" na planilha. Confira se essa data já tem uma aba criada no Google Sheets.`);
+    const lista = todasAbasEncontradas.length
+      ? `\n\nAbas encontradas na planilha: ${todasAbasEncontradas.slice(0,20).map(n => \`"${n}"\`).join(', ')}`
+      : "\n\n(Nenhuma aba encontrada no HTML — verifique se a planilha está publicada)";
+    throw new Error(`Não achei uma aba para ${nomeAba} na planilha.${lista}`);
   }
 
   const csvUrl = csvBase + "&gid=" + gid;
