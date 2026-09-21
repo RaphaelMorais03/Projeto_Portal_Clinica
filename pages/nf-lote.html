@@ -299,7 +299,7 @@ footer{color:var(--muted); font-size:0.78rem; text-align:center; margin-top:30px
         <div class="summary" id="summary"></div>
         <ul class="err-list" id="errList"></ul>
         <div class="row">
-          <button onclick="downloadXlsx()">⬇ Baixar planilha (.xlsx) e salvar no histórico</button>
+          <button onclick="downloadXlsx()">⬇ Baixar planilhas (.xlsx): Consultas + Exames + Incompletos</button>
           <button class="secondary" onclick="copyClean()">Copiar dados limpos</button>
           <button class="secondary" onclick="closeStep('ov-result'); openStep('ov-paste');">Começar novo lote</button>
         </div>
@@ -1173,15 +1173,10 @@ function processData(){
     if(cep && cep.length !== 8) rowWarnings.push(`CEP inválido ("${cep}" — precisa ter 8 dígitos)`);
     if(!rowMap["Logradouro"] && cep && cep.length===8) rowWarnings.push(`endereço do CEP ${cep} ainda não preenchido (use "Buscar CEP" se quiser completar)`);
 
-    // Tipo (Consulta/Exame) — prioridade:
-    // 1. Cruzamento com relatório Tableau (agendMatches)
-    // 2. Detecção automática por seção do Google Sheets (window.__sheetTipoByIdx)
-    // 3. Em branco → seleção manual na tabela
-    let tipo = wasCrossReferenced ? (agendMatches[idx]["__TIPO__"] || "") : "";
-    if(!tipo && window.__sheetTipoByIdx && window.__sheetTipoByIdx[idx]){
-      tipo = window.__sheetTipoByIdx[idx];
-    }
-    if(!tipo) rowWarnings.push(`tipo (Consulta/Exame) não identificado — selecione manualmente na tabela`);
+    // Tipo (Consulta/Exame) — vem SEMPRE da seção da planilha "NOTAS FISCAIS 3.0" (Google Sheets).
+    // O relatório de agendados só preenche dados do paciente (CEP, telefone, e-mail, etc.) — nunca o Tipo.
+    let tipo = (window.__sheetTipoByIdx && window.__sheetTipoByIdx[idx]) ? window.__sheetTipoByIdx[idx] : "";
+    if(!tipo) rowWarnings.push(`tipo (Consulta/Exame) não detectado — linha irá para o arquivo "Incompletos"`);
     if(!rowMap["Descrição do Procedimento"]){
       if(tipo === "Exame") rowMap["Descrição do Procedimento"] = "Ref a exames realizados.";
       else if(tipo === "Consulta") rowMap["Descrição do Procedimento"] = "Ref a consulta médica realizada.";
@@ -1270,8 +1265,8 @@ function renderResultTable(warnCount, warnMsgs, nfAlertMsgs){
     `<b>${currentRows.length}</b> linha(s) geradas — <b>${currentRows.length-withWarning-nfAlertCount}</b> ok` +
     (nfAlertCount ? `, <b style="color:var(--warn-text)">${nfAlertCount}</b> com NF já emitida (⚠ não emitir de novo)` : ``) +
     (withWarning ? `, <b style="color:var(--err)">${withWarning}</b> com alerta de formato` : ``) +
-    (semTipo ? `, <b style="color:var(--err)">${semTipo}</b> sem Tipo definido (selecione Consulta/Exame na coluna)` : ``) +
-    `. Os campos abaixo são <b>editáveis</b> — complete o que faltar (e-mail, telefone, número etc.) direto na tabela antes de baixar. A coluna <b>Tipo</b> decide se a linha vai pro arquivo de Consultas ou de Exames.`;
+    (semTipo ? `, <b style="color:var(--err)">${semTipo}</b> sem Tipo detectado → irão para <b>nf_lote_INCOMPLETOS.xlsx</b>` : ``) +
+    `. Os campos abaixo são <b>editáveis</b> — complete o que faltar (e-mail, telefone, número etc.) antes de baixar. Ao baixar, são gerados até 3 arquivos: <b>CONSULTAS</b>, <b>EXAMES</b> e <b>INCOMPLETOS</b> (linhas sem Tipo ou com dados faltando).`;
 
   document.getElementById('errList').innerHTML =
     (nfAlertMsgs||[]).map(m=>`<li style="color:var(--warn-text);">⚠ ${m}</li>`).join("") +
@@ -1304,25 +1299,34 @@ function downloadXlsx(){
   if(!currentRows.length){ alert("Gere a planilha primeiro."); return; }
   collectEditedRows();
 
-  const semTipo = currentRows.filter(r=>!r.tipo);
-  if(semTipo.length){
-    alert(`${semTipo.length} linha(s) ainda sem Tipo (Consulta/Exame) definido — selecione na coluna "Tipo" antes de baixar, pra elas entrarem no arquivo certo.`);
-    return;
-  }
+  // Separa em 3 grupos:
+  // • Consultas  — tipo definido como "Consulta"
+  // • Exames     — tipo definido como "Exame"
+  // • Incompletos — sem tipo OU com avisos de dados faltando (CEP, endereço, etc.)
+  const consultas   = currentRows.filter(r => r.tipo === "Consulta" && !r.hasWarning);
+  const exames      = currentRows.filter(r => r.tipo === "Exame"    && !r.hasWarning);
+  const incompletos = currentRows.filter(r => !r.tipo || r.hasWarning);
 
-  const consultas = currentRows.filter(r => r.tipo === "Consulta");
-  const exames = currentRows.filter(r => r.tipo === "Exame");
+  let baixados = [];
 
   if(consultas.length){
     XLSX.writeFile(buildWorkbookFor(consultas), "nf_lote_CONSULTAS.xlsx");
+    baixados.push(`${consultas.length} Consulta(s)`);
   }
   if(exames.length){
     XLSX.writeFile(buildWorkbookFor(exames), "nf_lote_EXAMES.xlsx");
+    baixados.push(`${exames.length} Exame(s)`);
   }
+  if(incompletos.length){
+    XLSX.writeFile(buildWorkbookFor(incompletos), "nf_lote_INCOMPLETOS.xlsx");
+    baixados.push(`${incompletos.length} Incompleto(s)`);
+  }
+
+  if(!baixados.length){ alert("Nenhuma linha para baixar."); return; }
 
   // Salva automaticamente no histórico
   const pickedDateIso = document.getElementById('dataConsulta').value || todayISO();
-  addEntry(pickedDateIso, currentRows.length, `Gerado pela ferramenta (${consultas.length} consulta(s), ${exames.length} exame(s))`);
+  addEntry(pickedDateIso, currentRows.length, `Gerado pela ferramenta (${baixados.join(", ")})`);
   document.getElementById('savedBanner').style.display = "block";
 }
 
