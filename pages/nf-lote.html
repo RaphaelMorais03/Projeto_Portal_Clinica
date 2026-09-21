@@ -1173,9 +1173,14 @@ function processData(){
     if(cep && cep.length !== 8) rowWarnings.push(`CEP inválido ("${cep}" — precisa ter 8 dígitos)`);
     if(!rowMap["Logradouro"] && cep && cep.length===8) rowWarnings.push(`endereço do CEP ${cep} ainda não preenchido (use "Buscar CEP" se quiser completar)`);
 
-    // Tipo (Consulta/Exame) — vem do cruzamento com o relatório do Tableau; se não achar, fica em branco
-    // pra você escolher manualmente na tela de resultado antes de baixar.
+    // Tipo (Consulta/Exame) — prioridade:
+    // 1. Cruzamento com relatório Tableau (agendMatches)
+    // 2. Detecção automática por seção do Google Sheets (window.__sheetTipoByIdx)
+    // 3. Em branco → seleção manual na tabela
     let tipo = wasCrossReferenced ? (agendMatches[idx]["__TIPO__"] || "") : "";
+    if(!tipo && window.__sheetTipoByIdx && window.__sheetTipoByIdx[idx]){
+      tipo = window.__sheetTipoByIdx[idx];
+    }
     if(!tipo) rowWarnings.push(`tipo (Consulta/Exame) não identificado — selecione manualmente na tabela`);
     if(!rowMap["Descrição do Procedimento"]){
       if(tipo === "Exame") rowMap["Descrição do Procedimento"] = "Ref a exames realizados.";
@@ -1716,6 +1721,79 @@ async function buscarLinhasDoSheetPorData(dateIso){
   return { linhas, nomeAbaEncontrada: achado };
 }
 
+// Analisa as linhas brutas do Google Sheets (já em array de arrays) e:
+// 1. Remove linhas de título, seção e notas sem CPF
+// 2. Mantém a linha de cabeçalho de colunas (NOME, CPF, VALOR…) e as linhas com CPF
+// 3. Detecta o Tipo (Consulta/Exame) a partir das linhas de cabeçalho de seção
+//    ("PÓS CONSULTA" → Consulta; "CONSULTA" → Consulta; "EXAME…" → Exame)
+// Retorna { linhasLimpas, tiposPorIndice }
+// tiposPorIndice[i] corresponde a parsedLines[i] após detectColumns() remover o cabeçalho.
+function extrairTipoDoSheet(linhas){
+  var tipoAtual = "";
+  var linhasLimpas = [];
+  var tiposPorIndice = {};
+  var dataIdx = 0;
+  var colHeaderIncluido = false;
+
+  for(var i = 0; i < linhas.length; i++){
+    var row = linhas[i];
+    var naoVazias = row.filter(function(c){ return (c||"").trim() !== ""; });
+    if(naoVazias.length === 0) continue; // linha vazia
+
+    var primeiraCell = (row[0]||"").trim();
+
+    // Linha de título geral ("PLANILHA PADRÃO DE NOTAS FISCAIS…")
+    if(/^planilha\b/i.test(primeiraCell)) continue;
+
+    // Verifica se alguma célula parece um CPF (11 dígitos após remover . e -)
+    var temCpf = row.some(function(c){
+      var digits = (c||"").replace(/[\s.\-]/g,"");
+      return digits.length === 11 && /^\d{11}$/.test(digits);
+    });
+
+    if(!temCpf){
+      // --- Cabeçalhos de seção ---
+      // "PÓS CONSULTA" / "POS CONSULTA" → Tipo = Consulta
+      if(/pós[\s\-]?consulta|pos[\s\-]?consulta/i.test(primeiraCell)){
+        tipoAtual = "Consulta"; continue;
+      }
+      // "CONSULTA" isolada (pode ter poucos extras na mesma linha) → Tipo = Consulta
+      if(/^consulta\b/i.test(primeiraCell)){
+        tipoAtual = "Consulta"; continue;
+      }
+      // "EXAME" / "EXAMES" → Tipo = Exame
+      if(/^exame/i.test(primeiraCell)){
+        tipoAtual = "Exame"; continue;
+      }
+      // "EMISSÃO DE NOTA FISCAL" (aparece como rótulo da seção de exames em algumas abas)
+      if(/emissão\s+de\s+nota|emissao\s+de\s+nota/i.test(primeiraCell)){
+        tipoAtual = "Exame"; continue;
+      }
+
+      // --- Cabeçalho de colunas (NOME, CPF, VALOR…) — inclui uma única vez ---
+      if(!colHeaderIncluido){
+        var isColHeader = /^(nome|paciente)$/i.test(primeiraCell) &&
+                          row.some(function(c){ return /^cpf$/i.test((c||"").trim()); });
+        if(isColHeader){
+          linhasLimpas.push(row);
+          colHeaderIncluido = true;
+          continue;
+        }
+      }
+
+      // Qualquer outra linha sem CPF (notas, rótulos desconhecidos): ignora
+      continue;
+    }
+
+    // Linha com CPF — inclui como dado e registra o tipo da seção corrente
+    linhasLimpas.push(row);
+    if(tipoAtual) tiposPorIndice[dataIdx] = tipoAtual;
+    dataIdx++;
+  }
+
+  return { linhasLimpas: linhasLimpas, tiposPorIndice: tiposPorIndice };
+}
+
 async function puxarDoSheet(){
   const dateIso = document.getElementById('puxarDataInput').value;
   const statusEl = document.getElementById('puxarStatus');
@@ -1730,12 +1808,22 @@ async function puxarDoSheet(){
     const { linhas, nomeAbaEncontrada } = await buscarLinhasDoSheetPorData(dateIso);
     if(!linhas.length){ throw new Error(`Aba "${nomeAbaEncontrada}" encontrada, mas está vazia.`); }
 
+    // Processa as linhas: remove seções/títulos e detecta Tipo por seção
+    const { linhasLimpas, tiposPorIndice } = extrairTipoDoSheet(linhas);
+    // Armazena o mapa de tipos para ser aplicado após detectColumns()
+    window.__sheetTipoByIdx = tiposPorIndice;
+
     // Reaproveita o mesmo pipeline de "colar dados": monta texto separado por TAB e entrega pro detectColumns()
-    const asTsv = linhas.map(r => r.join('\t')).join('\n');
+    const asTsv = linhasLimpas.map(r => r.join('\t')).join('\n');
     document.getElementById('input').value = asTsv;
     document.getElementById('dataConsulta').value = dateIso;
 
-    statusEl.innerHTML = `<span style="color:var(--ok)">✓ ${linhas.length-1} linha(s) puxada(s) da aba "${nomeAbaEncontrada}".</span> Clique em "Avançar → Mapear colunas" abaixo.`;
+    const nDados = linhasLimpas.filter(function(r){
+      return r.some(function(c){ var d=(c||"").replace(/[\s.\-]/g,""); return d.length===11&&/^\d{11}$/.test(d); });
+    }).length;
+    const nTipos = Object.keys(tiposPorIndice).length;
+    const tipoInfo = nTipos > 0 ? ` — ${nTipos} linha(s) com Tipo detectado automaticamente` : "";
+    statusEl.innerHTML = `<span style="color:var(--ok)">✓ ${nDados} paciente(s) puxado(s) da aba "${nomeAbaEncontrada}"${tipoInfo}.</span> Clique em "Avançar → Mapear colunas" abaixo.`;
   }catch(e){
     statusEl.innerHTML = `<span style="color:var(--err)">${e.message}</span>`;
   }finally{
