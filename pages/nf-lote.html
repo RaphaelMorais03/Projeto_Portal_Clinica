@@ -1696,7 +1696,7 @@ async function buscarLinhasDoSheetPorData(dateIso){
   }
   if(!gid){
     const lista = todasAbasEncontradas.length
-      ? `\n\nAbas encontradas na planilha: ${todasAbasEncontradas.slice(0,20).map(n => \`"${n}"\`).join(', ')}`
+      ? '\n\nAbas encontradas na planilha: ' + todasAbasEncontradas.slice(0,20).map(function(n){ return '"' + n + '"'; }).join(', ')
       : "\n\n(Nenhuma aba encontrada no HTML — verifique se a planilha está publicada)";
     throw new Error(`Não achei uma aba para ${nomeAba} na planilha.${lista}`);
   }
