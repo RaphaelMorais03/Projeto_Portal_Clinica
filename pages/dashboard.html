@@ -1,4 +1,4 @@
-﻿<!-- VERSION: v1.5 | dashboard.html | 14/07/2026 | feat: aba contratos com lista mensal e resumo para repasse Dra. Lauriana -->
+<!-- VERSION: v1.5 | dashboard.html | 14/07/2026 | feat: aba contratos com lista mensal e resumo para repasse Dra. Lauriana -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -3294,6 +3294,52 @@ if (_origRenderVisao) {
 }
 
 console.log('[Dashboard v2.1] Addon carregado — Debounce · Filtros · Audit · Charts · PDF · Responsivo');
+})();
+</script>
+<script>
+/* --- Adicionar aba "NF em Lote" na nav (só aparece pra quem já é admin,
+   porque toda a página do dashboard já é restrita a admin) --- */
+(function() {
+  var _origSwitch2 = window.switchMainTab;
+  window.switchMainTab = function(tab) {
+    if (tab === 'nflote') {
+      document.querySelectorAll('.view-panel').forEach(function(p) {
+        p.classList.remove('active');
+        p.style.removeProperty('display');
+      });
+      var vn = document.getElementById('viewNfLote');
+      if (vn) vn.classList.add('active');
+      document.querySelectorAll('.main-tab').forEach(function(b){ b.classList.remove('active'); });
+      var btn = document.getElementById('mainTabNfLote');
+      if (btn) btn.classList.add('active');
+      try { localStorage.setItem('dsh_lastTab', 'nflote'); } catch(e) {}
+      return;
+    }
+    var vn = document.getElementById('viewNfLote');
+    if (vn) { vn.classList.remove('active'); vn.style.removeProperty('display'); }
+    if (_origSwitch2) _origSwitch2(tab);
+  };
+
+  // painel com o iframe da ferramenta (isolado — não compartilha JS/CSS com o dashboard,
+  // então não tem risco nenhum de conflito de nomes de função/estilo)
+  var content = document.querySelector('.content');
+  if (content && !document.getElementById('viewNfLote')) {
+    var panel = document.createElement('div');
+    panel.className = 'view-panel';
+    panel.id = 'viewNfLote';
+    panel.innerHTML = '<iframe src="nf-lote.html" style="width:100%; height:calc(100vh - 160px); border:0; border-radius:14px; background:white;"></iframe>';
+    content.appendChild(panel);
+  }
+
+  var nav = document.querySelector('.main-tabs');
+  if (nav && !document.getElementById('mainTabNfLote')) {
+    var btn = document.createElement('button');
+    btn.className = 'main-tab';
+    btn.id = 'mainTabNfLote';
+    btn.innerHTML = '<i class="fas fa-file-invoice"></i> NF em Lote';
+    btn.addEventListener('click', function(){ window.switchMainTab('nflote'); });
+    nav.appendChild(btn);
+  }
 })();
 </script>
 
