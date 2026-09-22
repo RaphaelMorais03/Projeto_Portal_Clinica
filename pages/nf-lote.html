@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>NF em Lote — Gerar e Histórico</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Paleta extraída do Design System (Figma — Portal Clínica) */
+:root{
+  --bg:#F3F5F7; --card:#ffffff; --text:#374151; --muted:#6B7280;
+  --title:#003366;
+  --primary:#61C1D0; --primary-dark:#3FA6B6;
+  --cta:#E60012; --cta-dark:#B5000E;
+  --danger:#980000; --danger-dark:#750000;
+  --secondary-c:#E6B1AD;
+  --accent:#61C1D0; --accent-dark:#3FA6B6; --border:#E2E5E9;
+  --ok:#10B981; --ok-bg:#E4F9F1; --err:#980000; --err-bg:#FBEAEA;
+  --warn-text:#92620A; --warn-bg:#FEF3DA;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181C; --card:#1E242A; --text:#E7EAEE; --muted:#98A2AE;
+    --title:#8FD9FF;
+    --primary:#61C1D0; --primary-dark:#7ED2DF;
+    --cta:#FF4D5E; --cta-dark:#E60012;
+    --danger:#FF8A80; --danger-dark:#E05A50;
+    --secondary-c:#E6B1AD;
+    --accent:#61C1D0; --accent-dark:#7ED2DF; --border:#2C333B;
+    --ok:#34D399; --ok-bg:#123529; --err:#FF8A80; --err-bg:#3A2320;
+    --warn-text:#F2C14E; --warn-bg:#3A3320;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181C; --card:#1E242A; --text:#E7EAEE; --muted:#98A2AE;
+  --title:#8FD9FF;
+  --primary:#61C1D0; --primary-dark:#7ED2DF;
+  --cta:#FF4D5E; --cta-dark:#E60012;
+  --danger:#FF8A80; --danger-dark:#E05A50;
+  --secondary-c:#E6B1AD;
+  --accent:#61C1D0; --accent-dark:#7ED2DF; --border:#2C333B;
+  --ok:#34D399; --ok-bg:#123529; --err:#FF8A80; --err-bg:#3A2320;
+  --warn-text:#F2C14E; --warn-bg:#3A3320;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  padding:24px;
+}
+.wrap{max-width:1100px;margin:0 auto;}
+h1{font-size:1.8rem;font-weight:800;margin-bottom:4px;color:var(--title);}
+p.sub{color:var(--muted);margin-top:0;margin-bottom:20px;font-size:0.95rem;}
+.tabs{display:flex; gap:8px; margin-bottom:20px; border-bottom:1px solid var(--border);}
+.tab{padding:10px 18px; cursor:pointer; font-weight:600; font-size:0.9rem; color:var(--muted); border-bottom:2px solid transparent;}
+.tab.active{color:var(--primary-dark); border-bottom-color:var(--primary);}
+.page{display:none;}
+.page.active{display:block;}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:20px; margin-bottom:20px; box-shadow:0 1px 2px rgba(16,24,40,0.04);
+}
+/* ===== Wizard: cada etapa abre como uma janela (modal) na frente da ferramenta ===== */
+.step-overlay{
+  display:none; position:fixed; inset:0; background:rgba(15,23,32,0.55);
+  z-index:1000; align-items:flex-start; justify-content:center; padding:5vh 16px; overflow-y:auto;
+}
+.step-overlay.open{display:flex;}
+.step-overlay .card{
+  width:100%; max-width:760px; margin:0; box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  border-top:4px solid var(--primary);
+}
+.step-kicker{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.step-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:50%; background:var(--primary); color:#fff;
+  font-weight:800; font-size:0.85rem; flex:none;
+}
+.step-title{font-size:1.15rem; font-weight:700; color:var(--title); margin:0;}
+label{font-weight:600; font-size:0.9rem; display:block; margin-bottom:8px; color:var(--text);}
+textarea{
+  width:100%; min-height:160px; font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:0.85rem; padding:12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text); resize:vertical;
+}
+input[type=date], input[type=text], input[type=number]{
+  padding:10px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text); font-size:0.9rem; width:100%;
+}
+.formrow{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+.formrow > div{flex:1; min-width:150px;}
+.hint{font-size:0.8rem; color:var(--muted); margin-top:8px; line-height:1.5;}
+.row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+button{
+  background:var(--primary); color:#fff; border:none; padding:10px 18px;
+  border-radius:8px; font-size:0.9rem; font-weight:700; cursor:pointer;
+  font-family:inherit;
+}
+button:hover{background:var(--primary-dark);}
+button.secondary{background:transparent; color:var(--primary-dark); border:1px solid var(--primary);}
+button.secondary:hover{background:var(--bg);}
+button.cta{background:var(--cta);}
+button.cta:hover{background:var(--cta-dark);}
+button.danger{background:var(--danger);}
+button.danger:hover{background:var(--danger-dark);}
+table{width:100%; border-collapse:collapse; font-size:0.82rem; margin-top:6px;}
+.tablewrap{overflow-x:auto; border:1px solid var(--border); border-radius:8px;}
+th,td{padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;}
+th{background:var(--bg); position:sticky; top:0;}
+tr.error td{background:var(--err-bg);}
+tr.nfalert td{background:var(--warn-bg);}
+.badge{display:inline-block; padding:2px 8px; border-radius:20px; font-size:0.75rem; font-weight:600;}
+.badge.ok{color:var(--ok); background:rgba(47,125,79,0.12);}
+.badge.err{color:var(--err); background:rgba(192,57,43,0.12);}
+.badge.warn{color:var(--warn-text); background:rgba(224,195,76,0.25);}
+.summary{margin-top:14px; font-size:0.9rem;}
+.err-list{margin-top:6px; font-size:0.8rem; color:var(--err);}
+.err-list li{margin-bottom:2px;}
+select.mapsel{padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:0.8rem;}
+select.mapsel.dupe{border-color:var(--err); background:var(--err-bg);}
+.dupe-warning{background:var(--err-bg); color:var(--err); padding:10px 14px; border-radius:8px; font-size:0.85rem; margin-bottom:12px;}
+input.addrfield{padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:0.8rem; width:100%;}
+input.addrfield.missing{border-color:var(--err); background:var(--err-bg);}
+.saved-banner{background:var(--ok-bg); color:var(--ok); padding:10px 14px; border-radius:8px; font-size:0.85rem; font-weight:600; margin-top:14px; display:none;}
+.calendar-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+.calendar-nav h2{font-size:1.1rem; margin:0; text-transform:capitalize;}
+.calendar-nav button{padding:6px 12px;}
+.calgrid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+.calgrid .dow{text-align:center; font-size:0.75rem; color:var(--muted); font-weight:600; padding-bottom:4px;}
+.calgrid .day{
+  aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:0.85rem; border:1px solid var(--border); background:var(--bg); cursor:pointer; position:relative;
+}
+.calgrid .day.empty{border:none; background:transparent; cursor:default;}
+.calgrid .day.done{background:var(--ok-bg); border-color:var(--ok); color:var(--ok); font-weight:700;}
+.calgrid .day .dot{width:5px; height:5px; border-radius:50%; background:var(--ok); margin-top:2px;}
+.calgrid .day:hover:not(.empty){outline:2px solid var(--accent);}
+.legend{display:flex; gap:16px; margin-top:14px; font-size:0.8rem; color:var(--muted); align-items:center;}
+.legend .swatch{width:12px;height:12px;border-radius:4px;display:inline-block; margin-right:6px; vertical-align:middle;}
+ul.history{list-style:none; padding:0; margin:0;}
+ul.history li{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 4px; border-bottom:1px solid var(--border); font-size:0.9rem;
+}
+ul.history li:last-child{border-bottom:none;}
+ul.history .meta{color:var(--muted); font-size:0.8rem;}
+ul.history .del{color:var(--err); background:none; border:none; cursor:pointer; font-size:0.85rem; padding:4px 8px;}
+.empty-state{color:var(--muted); font-size:0.9rem; text-align:center; padding:20px;}
+footer{color:var(--muted); font-size:0.78rem; text-align:center; margin-top:30px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== GATE DE ACESSO (só admin) ===================== -->
+<div id="authGate" style="position:fixed; inset:0; background:var(--bg,#F3F5F7); z-index:9999; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; color:#374151;">
+  <div style="text-align:center;">
+    <div style="font-size:1rem; font-weight:600;">Verificando acesso…</div>
+  </div>
+</div>
+
+<div class="wrap" id="appWrap" style="display:none;">
+  <h1>NF em Lote</h1>
+  <p class="sub">Gere a planilha a partir dos dados colados e acompanhe o histórico de exportações — tudo em um só lugar. Ao baixar a planilha, a data é registrada automaticamente no histórico.</p>
+
+  <div class="tabs">
+    <div class="tab active" id="tabGerarBtn" onclick="showTab('gerar')">📄 Gerar planilha</div>
+    <div class="tab" id="tabConferirBtn" onclick="showTab('conferir')">✅ Conferir NF</div>
+    <div class="tab" id="tabHistBtn" onclick="showTab('historico')">📅 Histórico</div>
+  </div>
+
+  <!-- ===================== PÁGINA: GERAR PLANILHA ===================== -->
+  <div class="page active" id="page-gerar">
+
+    <div class="step-overlay open" id="ov-intro">
+      <div class="card">
+        <div class="step-kicker"><span class="step-badge">i</span><p class="step-title">Bem-vindo(a) — como funciona esta ferramenta</p></div>
+        <div class="hint">
+          Esta ferramenta te ajuda a montar a planilha de <b>NF em lote</b> no formato exato que o Sinaxys aceita, e depois a <b>conferir</b> se cada pagamento recebido realmente virou nota fiscal — evitando os erros de valor que já aconteceram antes (como um valor de R$ 600,00 virar R$ 6,00 por perda do ponto decimal ao importar um .xlsx).
+        </div>
+        <div class="hint">
+          O fluxo tem 3 partes, acessíveis pelas abas no topo:
+          <br>1️⃣ <b>Gerar Planilha</b> — cole ou importe os dados dos pacientes, mapeie as colunas, cruze com os agendados e confira o CEP antes de baixar a planilha pronta pra upload.
+          <br>2️⃣ <b>Conferir NF</b> — depois de emitir, carregue os pagamentos recebidos e a exportação de notas emitidas para checar quem ainda falta, quem teve valor divergente e quem teve tentativa recusada.
+          <br>3️⃣ <b>Histórico</b> — um calendário simples pra marcar os dias em que o lote já foi enviado.
+        </div>
+        <div class="hint">Cada etapa abre em uma janela na frente da ferramenta, uma de cada vez, pra ficar bem claro onde você está no processo.</div>
+        <div class="row">
+          <button class="cta" onclick="closeStep('ov-intro'); openStep('ov-paste');">Prosseguir →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-overlay" id="ov-paste">
+      <div class="card">
+        <div class="step-kicker"><span class="step-badge">1</span><p class="step-title">Etapa 1 — dados dos pacientes</p></div>
+
+        <div class="hint" style="background:var(--ok-bg); border:1px solid var(--ok); border-radius:8px; padding:10px 12px;">
+          <b>🔎 Puxar direto da planilha "NOTAS FISCAIS 3.0"</b> — escolha a data do lote e a ferramenta busca as linhas daquela aba automaticamente, sem precisar copiar e colar (evita erro de formatação).
+        </div>
+        <div class="row" style="align-items:center; margin-top:8px;">
+          <input type="date" id="puxarDataInput" style="max-width:170px;">
+          <button id="puxarBtn" class="secondary" onclick="puxarDoSheet()">🔎 Puxar dados desse dia da planilha</button>
+        </div>
+        <div class="hint" id="puxarStatus"></div>
+
+        <label for="dataConsulta" style="margin-top:18px;">Data (opcional — só preenche as linhas que não trouxerem data própria. Se você for colar o mês inteiro com uma coluna de data por linha, deixe este campo em branco e mapeie a coluna "Data de Consulta" na Etapa 2)</label>
+        <input type="date" id="dataConsulta" style="margin-bottom:16px;">
+
+        <label for="input">Ou cole aqui os dados que você já tem (separados por TAB, como ao copiar do Excel). Pode ser só algumas colunas — na próxima etapa você diz o que é cada uma.</label>
+        <textarea id="input" placeholder="Cole aqui os dados que você tiver, em qualquer ordem..."></textarea>
+        <div class="hint">
+          Não precisa ter todos os campos nem estar na ordem do modelo — no próximo passo você indica o que é cada coluna colada. Se você mapear o <b>CEP</b>, a ferramenta busca automaticamente Logradouro, Bairro, Cidade e UF pela API do ViaCEP — sobrando só <b>e-mail, telefone e número</b> pra preencher manualmente. Os demais campos não informados ficam em branco.
+        </div>
+        <div class="row">
+          <button onclick="detectColumns()">Avançar → Mapear colunas</button>
+          <button class="secondary" onclick="loadExample()">Ver exemplo</button>
+          <button class="secondary" onclick="clearAll()">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-overlay" id="ov-map">
+      <div class="card" id="mapCard">
+        <div class="step-kicker"><span class="step-badge">2</span><p class="step-title">Etapa 2 — diga o que é cada coluna colada</p></div>
+        <div class="hint">Prévia mostra até 3 linhas coladas, pra você conferir melhor. O campo sugerido em cada coluna é escolhido olhando várias linhas (não só a 1ª), pra errar menos. Escolha "Não usar" para colunas que não quer importar.</div>
+        <div id="mapDupeWarning" class="dupe-warning" style="display:none;"></div>
+        <div class="tablewrap">
+          <table id="mapTable"></table>
+        </div>
+        <div class="row">
+          <button class="secondary" onclick="reorganizeColumns()">🔄 Organizar colunas automaticamente</button>
+        </div>
+        <div class="row">
+          <button onclick="goToAgendStep()">Avançar → Cruzar com agendados</button>
+          <button class="secondary" onclick="closeStep('ov-map'); openStep('ov-paste');">Voltar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-overlay" id="ov-agend">
+      <div class="card" id="agendCard">
+        <div class="step-kicker"><span class="step-badge">3</span><p class="step-title">Etapa 3 — cruzar com a lista de agendados (opcional)</p></div>
+        <div class="hint">Traga a lista de pacientes agendados (relatório de agendamentos) para completar automaticamente o que estiver faltando — o cruzamento é feito pelo <b>CPF</b> e é automático, as colunas são identificadas sozinhas.</div>
+        <div class="row" style="margin-bottom:6px;">
+          <label for="agendFile" style="font-weight:400;font-size:0.82rem;margin:0;">📎 Carregar arquivo .xlsx do relatório</label>
+        </div>
+        <input type="file" id="agendFile" accept=".xlsx,.xls,.csv" onchange="handleAgendFile(event)">
+        <div class="hint" style="margin-top:14px;">Ou, se preferir, cole os dados abaixo (separados por TAB, como ao copiar do Excel):</div>
+        <textarea id="agendInput" placeholder="Cole aqui a lista de agendados, separada por TAB..."></textarea>
+        <div class="row">
+          <button onclick="cruzarAgendados()">🔗 Cruzar por CPF e preencher faltantes</button>
+        </div>
+        <div class="hint" id="agendResultHint"></div>
+        <div class="row">
+          <button onclick="goToCepStep()">Avançar → Verificar CEP</button>
+          <button class="secondary" onclick="closeStep('ov-agend'); openStep('ov-map');">Voltar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-overlay" id="ov-cep">
+      <div class="card" id="cepCard">
+      <div class="step-kicker"><span class="step-badge">4</span><p class="step-title">Etapa 4 — completar endereço pelo CEP (opcional)</p></div>
+      <div class="hint" id="cepHint">Essa etapa só é necessária se faltar endereço em alguma linha — se os colaboradores já preencheram CEP/endereço na planilha, pode ir direto em <b>"Gerar planilha"</b> abaixo sem clicar em "Buscar CEP". Se quiser, use o botão pra completar Logradouro, Bairro, Cidade e UF automaticamente pelas linhas que estiverem faltando.</div>
+      <div class="row" style="align-items:center;">
+        <label for="ufPadrao" style="font-weight:400;font-size:0.82rem;margin:0;">UF padrão (preenche sozinho quando não achar pelo CEP):</label>
+        <select id="ufPadrao" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:0.85rem;">
+          <option value="">— nenhum —</option>
+          <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option>
+          <option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option>
+          <option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+          <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option>
+          <option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option>
+          <option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+          <option value="SP" selected>SP</option><option value="SE">SE</option><option value="TO">TO</option>
+        </select>
+      </div>
+      <div class="row">
+        <button id="buscarCepBtn" onclick="buscarCeps()">🔍 Buscar CEP</button>
+      </div>
+      <div class="tablewrap" style="margin-top:14px;">
+        <table id="cepTable"></table>
+      </div>
+      <ul class="err-list" id="cepErrList"></ul>
+      <div class="row">
+        <button id="genBtn" onclick="processData()">Gerar planilha</button>
+        <button class="secondary" onclick="closeStep('ov-cep'); openStep('ov-agend');">Voltar</button>
+      </div>
+      </div>
+    </div>
+
+    <div class="step-overlay" id="ov-result">
+      <div class="card" id="resultCard">
+        <div class="step-kicker"><span class="step-badge">✓</span><p class="step-title">Resultado</p></div>
+        <div class="tablewrap">
+          <table id="resultTable"></table>
+        </div>
+        <div class="summary" id="summary"></div>
+        <ul class="err-list" id="errList"></ul>
+        <div class="row">
+          <button onclick="downloadXlsx()">⬇ Baixar planilhas (.xlsx): Consultas + Exames + Incompletos</button>
+          <button class="secondary" onclick="copyClean()">Copiar dados limpos</button>
+          <button class="secondary" onclick="closeStep('ov-result'); openStep('ov-paste');">Começar novo lote</button>
+        </div>
+        <div class="saved-banner" id="savedBanner">✓ Registrado no histórico!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== PÁGINA: CONFERIR NF ===================== -->
+  <div class="page" id="page-conferir">
+
+    <div class="step-overlay open" id="ov-conf1">
+      <div class="card">
+        <div class="step-kicker"><span class="step-badge">1</span><p class="step-title">Etapa 1 — pacientes que precisam de NF (pagamentos recebidos)</p></div>
+        <div class="hint">Carregue a planilha com os pagamentos que precisam virar nota fiscal (Nome, CPF, Valor). Aceita .xlsx, .xls ou .csv — não precisa vir formatada de um jeito específico, você mapeia as colunas na próxima etapa.</div>
+        <input type="file" id="confPagamentosFile" accept=".xlsx,.xls,.csv" onchange="handleConfFile(event, 'pagamentos')">
+        <div class="hint" style="margin-top:14px;">Ou cole os dados abaixo (separados por TAB):</div>
+        <textarea id="confPagamentosInput" placeholder="Cole aqui os pagamentos a conferir..."></textarea>
+        <div class="row">
+          <button onclick="detectConfColumns('pagamentos')">Detectar colunas</button>
+        </div>
+        <div class="tablewrap" style="margin-top:14px;">
+          <table id="confPagamentosMapTable"></table>
+        </div>
+        <div class="row">
+          <button onclick="closeStep('ov-conf1'); openStep('ov-conf2');">Avançar → Notas emitidas</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-overlay" id="ov-conf2">
+      <div class="card">
+        <div class="step-kicker"><span class="step-badge">2</span><p class="step-title">Etapa 2 — notas fiscais já emitidas (exportação do sistema de NF)</p></div>
+        <div class="hint">Carregue a planilha exportada do sistema de notas fiscais, com CPF, Valor e o Número da NF de cada emissão.</div>
+        <input type="file" id="confNfFile" accept=".xlsx,.xls,.csv" onchange="handleConfFile(event, 'nf')">
+        <div class="hint" style="margin-top:14px;">Ou cole os dados abaixo (separados por TAB):</div>
+        <textarea id="confNfInput" placeholder="Cole aqui as notas fiscais já emitidas..."></textarea>
+        <div class="row">
+          <button onclick="detectConfColumns('nf')">Detectar colunas</button>
+        </div>
+        <div class="tablewrap" style="margin-top:14px;">
+          <table id="confNfMapTable"></table>
+        </div>
+        <div class="row">
+          <button onclick="closeStep('ov-conf2'); openStep('ov-conf3');">Avançar → Conferir</button>
+          <button class="secondary" onclick="closeStep('ov-conf2'); openStep('ov-conf1');">Voltar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-overlay" id="ov-conf3">
+      <div class="card">
+        <div class="step-kicker"><span class="step-badge">3</span><p class="step-title">Etapa 3 — conferir</p></div>
+        <div class="hint">O cruzamento é feito por <b>CPF</b>, usando o <b>Valor</b> para conferir qual emissão específica bate — importante quando a mesma pessoa tem mais de um pagamento ou mais de uma nota. Ajuste a tolerância se houver pequenas diferenças de centavos entre os valores.</div>
+        <div class="row" style="align-items:center;">
+          <label for="confTolerancia" style="font-weight:400;font-size:0.82rem;margin:0;">Tolerância no valor (R$):</label>
+          <input type="number" id="confTolerancia" value="0.00" step="0.01" min="0" style="max-width:100px;">
+        </div>
+        <div class="row">
+          <button onclick="conferirNotas()">🔍 Conferir pagamentos x notas emitidas</button>
+          <button class="secondary" onclick="closeStep('ov-conf3'); openStep('ov-conf2');">Voltar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-overlay" id="ov-confResult">
+      <div class="card" id="confResultCard">
+        <div class="step-kicker"><span class="step-badge">✓</span><p class="step-title">Resultado da conferência</p></div>
+        <div class="summary" id="confSummary"></div>
+        <div class="tablewrap" style="margin-top:10px;">
+          <table id="confResultTable"></table>
+        </div>
+        <div class="row">
+          <button onclick="downloadConfXlsx()">⬇ Baixar planilha de conferência (.xlsx)</button>
+          <button class="secondary" onclick="closeStep('ov-confResult'); openStep('ov-conf3');">Voltar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== PÁGINA: HISTÓRICO ===================== -->
+  <div class="page" id="page-historico">
+
+    <div class="card">
+      <label>Registrar uma exportação manualmente</label>
+      <div class="formrow">
+        <div>
+          <label for="regDate" style="font-weight:400;font-size:0.78rem;">Data</label>
+          <input type="date" id="regDate">
+        </div>
+        <div>
+          <label for="regCount" style="font-weight:400;font-size:0.78rem;">Qtd. de linhas (opcional)</label>
+          <input type="number" id="regCount" placeholder="ex: 12" min="0">
+        </div>
+        <div style="flex:2;">
+          <label for="regNote" style="font-weight:400;font-size:0.78rem;">Observação (opcional)</label>
+          <input type="text" id="regNote" placeholder="ex: lote da clínica X">
+        </div>
+      </div>
+      <button onclick="addEntryManual()">+ Marcar como feito</button>
+    </div>
+
+    <div class="card">
+      <div class="calendar-nav">
+        <button class="secondary" onclick="changeMonth(-1)">‹ Anterior</button>
+        <h2 id="calTitle"></h2>
+        <button class="secondary" onclick="changeMonth(1)">Próximo ›</button>
+      </div>
+      <div class="calgrid" id="calGrid"></div>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--ok-bg); border:1px solid var(--ok);"></span>Dia com exportação registrada</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Todas as datas registradas</label>
+      <ul class="history" id="historyList"></ul>
+    </div>
+  </div>
+
+  <footer>Os dados ficam salvos só neste navegador (nesta página) — nada é enviado para nenhum servidor.</footer>
+</div>
+
+<script>
+/* ===================== ASSISTENTE DE ETAPAS (janela por vez) ===================== */
+function openStep(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.add('open');
+  el.scrollTop = 0;
+}
+function closeStep(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('open');
+}
+
+/* ===================== NAVEGAÇÃO ENTRE ABAS ===================== */
+function showTab(name){
+  document.getElementById('page-gerar').classList.toggle('active', name==='gerar');
+  document.getElementById('page-conferir').classList.toggle('active', name==='conferir');
+  document.getElementById('page-historico').classList.toggle('active', name==='historico');
+  document.getElementById('tabGerarBtn').classList.toggle('active', name==='gerar');
+  document.getElementById('tabConferirBtn').classList.toggle('active', name==='conferir');
+  document.getElementById('tabHistBtn').classList.toggle('active', name==='historico');
+  if(name==='historico') renderAll();
+}
+
+/* ===================== HISTÓRICO (armazenamento) ===================== */
+const STORAGE_KEY = "nf_lote_historico";
+let entries = [];
+let calDate = new Date();
+
+function loadEntries(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    entries = raw ? JSON.parse(raw) : [];
+  }catch(e){ entries = []; }
+}
+function saveEntries(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+  catch(e){ /* silencioso */ }
+}
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+function addEntry(date, count, note){
+  entries.push({ date, count: count || null, note: note || null, ts: Date.now() });
+  entries.sort((a,b)=> a.date < b.date ? 1 : -1);
+  saveEntries();
+}
+
+function addEntryManual(){
+  const date = document.getElementById('regDate').value || todayISO();
+  const count = document.getElementById('regCount').value;
+  const note = document.getElementById('regNote').value.trim();
+  addEntry(date, count, note);
+  document.getElementById('regCount').value = "";
+  document.getElementById('regNote').value = "";
+  renderAll();
+}
+
+function deleteEntry(ts){
+  entries = entries.filter(e => e.ts !== ts);
+  saveEntries();
+  renderAll();
+}
+
+function formatDateBR(iso){
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if(!entries.length){
+    list.innerHTML = `<div class="empty-state">Nenhuma exportação registrada ainda.</div>`;
+    return;
+  }
+  list.innerHTML = entries.map(e => `
+    <li>
+      <span><b>${formatDateBR(e.date)}</b>${e.note ? ` — ${e.note}` : ""}${e.count ? `<span class="meta"> · ${e.count} linha(s)</span>` : ""}</span>
+      <button class="del" onclick="deleteEntry(${e.ts})">Remover</button>
+    </li>
+  `).join("");
+}
+
+const DOW = ["D","S","T","Q","Q","S","S"];
+const MONTHS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+
+function changeMonth(delta){
+  calDate.setMonth(calDate.getMonth()+delta);
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const year = calDate.getFullYear();
+  const month = calDate.getMonth();
+  document.getElementById('calTitle').textContent = `${MONTHS[month]} de ${year}`;
+
+  const doneDates = new Set(entries.map(e=>e.date));
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+
+  const grid = document.getElementById('calGrid');
+  let html = DOW.map(d=>`<div class="dow">${d}</div>`).join("");
+
+  for(let i=0;i<startWeekday;i++){
+    html += `<div class="day empty"></div>`;
+  }
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isDone = doneDates.has(iso);
+    html += `<div class="day ${isDone?'done':''}" onclick="quickFill('${iso}')">${d}${isDone?'<div class="dot"></div>':''}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function quickFill(iso){
+  document.getElementById('regDate').value = iso;
+  document.getElementById('regDate').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function renderAll(){
+  renderHistory();
+  renderCalendar();
+}
+
+/* ===================== GERAR PLANILHA ===================== */
+const HEADERS = ["Data de Consulta","Paciente","CPF","Email","Telefone","CEP","Logradouro","Número","Complemento","Bairro","Cidade","UF","Valor","Descrição do Procedimento"];
+let currentRows = [];
+let parsedLines = [];
+let numCols = 0;
+
+function onlyDigits(s){ return (s||"").toString().replace(/\D/g,""); }
+
+const viaCepCache = {};
+async function fetchViaCep(cep){
+  if(viaCepCache[cep] !== undefined) return viaCepCache[cep];
+  try{
+    const resp = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    if(!resp.ok){
+      const result = {ok:false, reason:`erro HTTP ${resp.status}`};
+      viaCepCache[cep] = result;
+      return result;
+    }
+    const data = await resp.json();
+    if(data.erro){
+      const result = {ok:false, reason:"CEP não existe na base do ViaCEP"};
+      viaCepCache[cep] = result;
+      return result;
+    }
+    const result = {
+      ok:true,
+      logradouro: data.logradouro || "",
+      bairro: data.bairro || "",
+      cidade: data.localidade || "",
+      uf: data.uf || ""
+    };
+    viaCepCache[cep] = result;
+    return result;
+  }catch(e){
+    // Isso normalmente é falha de rede ou bloqueio de CORS (comum quando o arquivo é aberto direto como file://,
+    // sem passar por um servidor) — não significa que o CEP está errado.
+    const result = {ok:false, reason: `erro de conexão (${e.message||"desconhecido"}) — provavelmente bloqueio de rede/CORS, não o CEP em si`};
+    viaCepCache[cep] = result;
+    return result;
+  }
+}
+
+function cleanValor(s){
+  if(s===undefined || s===null || s==="") return {value:"", ok:true, guessed:false};
+  let str = s.toString().trim();
+  str = str.replace(/R\$\s?/gi,"").trim();
+  let guessed = false;
+  if(str.includes(",") && str.includes(".")){
+    str = str.replace(/\./g,"").replace(",",".");
+  } else if(str.includes(",")){
+    str = str.replace(",",".");
+  } else if(/^\d+$/.test(str) && str.length >= 3){
+    // só dígitos, sem vírgula nem ponto: o ponto decimal se perdeu.
+    // assume que os 2 últimos dígitos são os centavos.
+    str = str.slice(0, -2) + "." + str.slice(-2);
+    guessed = true;
+  }
+  const num = parseFloat(str);
+  if(isNaN(num)) return {value:s, ok:false, guessed:false};
+  return {value:num.toFixed(2), ok:true, guessed};
+}
+
+function validEmail(s){
+  if(!s) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+}
+
+function loadExample(){
+  document.getElementById('input').value =
+"Guilherme Da Silva Gonçalves\t119.261.446-19\tguilherme@email.com\t(35) 99869-2223\tRecebimento, repasse Clínica\t21,00\n" +
+"Maria Souza Lima\t987.654.321-00\tmaria@email.com\t(11) 91234-5678\tRecebimento, repasse Fornecedor\t98,00";
+}
+
+function clearAll(){
+  document.getElementById('input').value = "";
+  closeStep('ov-map');
+  closeStep('ov-cep');
+  closeStep('ov-agend');
+  closeStep('ov-result');
+  agendMatches = null;
+  agendParsedLines = [];
+  agendColMapping = [];
+  document.getElementById('agendInput').value = "";
+  document.getElementById('agendResultHint').innerHTML = "";
+}
+
+function formatDateInputBR(isoDate){
+  if(!isoDate) return "";
+  const [y,m,d] = isoDate.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// Valida CPF de verdade (algoritmo dos dígitos verificadores) — evita confundir com telefone,
+// já que ambos têm 11 dígitos, mas só o CPF passa nessa validação.
+function isValidCPF(digits){
+  if(digits.length !== 11) return false;
+  if(/^(\d)\1{10}$/.test(digits)) return false; // todos os dígitos iguais: inválido
+  let sum = 0;
+  for(let i=0;i<9;i++) sum += parseInt(digits[i],10) * (10-i);
+  let rev = 11 - (sum % 11);
+  if(rev >= 10) rev = 0;
+  if(rev !== parseInt(digits[9],10)) return false;
+  sum = 0;
+  for(let i=0;i<10;i++) sum += parseInt(digits[i],10) * (11-i);
+  rev = 11 - (sum % 11);
+  if(rev >= 10) rev = 0;
+  if(rev !== parseInt(digits[10],10)) return false;
+  return true;
+}
+
+function guessField(sample){
+  const s = (sample||"").trim();
+  if(!s) return "";
+  const digits = onlyDigits(s);
+  if(digits.length === 11 && isValidCPF(digits)) return "CPF";
+  if(digits.length === 8 && /^\d{5}-?\d{3}$/.test(s)) return "CEP";
+  if(/^\(?\d{2}\)?\s?9?\d{4}-?\d{4}$/.test(s)) return "Telefone";
+  if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return "Email";
+  if(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(s)) return "Data de Consulta";
+  if(/^R?\$?\s?\d+([.,]\d{1,2})?$/.test(s)) return "Valor";
+  if(/^[A-Za-z]{2}$/.test(s)) return "UF";
+  return "";
+}
+
+// Adivinha o campo de uma coluna olhando várias linhas (não só a 1ª) e usando a resposta mais comum — reduz erro de mapeamento.
+function guessFieldColumn(rows, colIdx, sampleSize){
+  const votes = {};
+  let checked = 0;
+  for(let i=0;i<rows.length && checked<sampleSize;i++){
+    const val = (rows[i][colIdx]||"").trim();
+    if(!val) continue;
+    checked++;
+    const g = guessField(val);
+    if(g) votes[g] = (votes[g]||0)+1;
+  }
+  let best = "", bestCount = 0;
+  Object.keys(votes).forEach(k => { if(votes[k]>bestCount){ best=k; bestCount=votes[k]; } });
+  return best;
+}
+
+// Limpa uma célula: junta quebras de linha internas (de campos entre aspas) num espaço só.
+function cleanCell(s){ return (s||"").toString().replace(/\s+/g," ").trim(); }
+
+// Converte uma célula vinda de um .xlsx (que pode já ser um número real do Excel, ex: 600 ou 600.5)
+// em texto SEM perder a informação de decimal. Isso evita que cleanValor() confunda um número
+// inteiro de reais (ex: 600 = R$600,00) com um valor colado sem ponto decimal (ex: "60000" = R$600,00),
+// o que causava valores errados (ex: R$600,00 virando R$6,00) ao importar arquivos .xlsx.
+function xlsxCellToText(v){
+  if(v === undefined || v === null || v === "") return "";
+  if(typeof v === "number") return v.toFixed(2);
+  return v.toString();
+}
+
+// Parser de texto colado (tipo TSV) que entende campos entre aspas com quebra de linha dentro
+// (exatamente como o Excel exporta nomes/CPFs que vêm em várias linhas). Evita quebrar a colagem.
+function parseTSV(text){
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+  while(i < text.length){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += c; i++; continue;
+    } else {
+      if(c === '"' && field === ""){ inQuotes = true; i++; continue; }
+      if(c === '\t'){ row.push(field); field = ""; i++; continue; }
+      if(c === '\r'){ i++; continue; }
+      if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+      field += c; i++; continue;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows
+    .map(r => r.map(cleanCell))
+    .filter(r => r.some(c => c !== ""));
+}
+
+// Se a 1ª linha colada bater com nomes de cabeçalho conhecidos, usa ela pra mapear
+// automaticamente (e não conta como linha de dado).
+const KNOWN_MAIN_HEADERS = {
+  "nome": "Paciente", "paciente": "Paciente",
+  "cpf": "CPF",
+  "valor": "Valor",
+  "email": "Email", "e mail": "Email",
+  "telefone": "Telefone", "celular": "Telefone",
+  "cep": "CEP",
+  "numero": "Número", "n": "Número",
+  "data": "Data de Consulta", "data de consulta": "Data de Consulta", "data agendamento": "Data de Consulta",
+  "descricao": "Descrição do Procedimento", "procedimento": "Descrição do Procedimento",
+  "pagamento": "", "forma de pagamento": "", "operador": "",
+  "n nota fiscal": "__NF_EMITIDA__", "no nota fiscal": "__NF_EMITIDA__",
+  "nota fiscal": "__NF_EMITIDA__", "numero nota fiscal": "__NF_EMITIDA__",
+  // cabeçalho fixo usado na planilha "NOTAS FISCAIS 3.0" do Google Sheets (cola direta dos colaboradores)
+  "n de celular": "Telefone", "no de celular": "Telefone",
+  "n da casa": "Número", "no da casa": "Número"
+};
+function normHeaderKey(s){ return normHeader(s).replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim(); }
+
+function detectColumns(){
+  const raw = document.getElementById('input').value.trim();
+  if(!raw){ alert("Cole os dados primeiro."); return; }
+  const rows = parseTSV(raw);
+  if(!rows.length){ alert("Não consegui ler nenhuma linha — confira os dados colados."); return; }
+
+  // Detecta se a 1ª linha é um cabeçalho conhecido
+  const firstRow = rows[0];
+  let knownHits = 0;
+  const headerGuess = firstRow.map(cell => {
+    const key = normHeaderKey(cell);
+    if(key in KNOWN_MAIN_HEADERS){ knownHits++; return KNOWN_MAIN_HEADERS[key]; }
+    return undefined;
+  });
+  const isHeaderRow = knownHits >= 2; // pelo menos 2 colunas reconhecidas: assume que é cabeçalho
+
+  parsedLines = isHeaderRow ? rows.slice(1) : rows;
+  numCols = Math.max(...parsedLines.map(c => c.length));
+  buildMapTable(isHeaderRow ? headerGuess : null);
+}
+
+function buildMapTable(headerGuess){
+  const previewCount = Math.min(3, parsedLines.length);
+  const table = document.getElementById('mapTable');
+  let headHtml = "<tr>";
+  let selectHtml = "<tr>";
+  let previewRowsHtml = "";
+  for(let p=0;p<previewCount;p++) previewRowsHtml += "<tr>";
+
+  for(let i=0;i<numCols;i++){
+    headHtml += `<th>Coluna ${i+1}</th>`;
+    let guess = "";
+    if(headerGuess && headerGuess[i] !== undefined){
+      guess = headerGuess[i]; // cabeçalho reconhecido — inclusive quando é pra ficar "Não usar" (ex: Pagamento, Operador)
+    } else {
+      guess = guessFieldColumn(parsedLines, i, 8); // cabeçalho não reconhecido (ou sem cabeçalho): adivinha pelo valor
+    }
+    let opts = `<option value="">— Não usar —</option><option value="__NF_EMITIDA__">⚠ Nº Nota Fiscal (já emitida) — só alerta, não vai pra planilha</option>`;
+    HEADERS.forEach(h => {
+      opts += `<option value="${h}" ${h===guess?'selected':''}>${h}</option>`;
+    });
+    selectHtml += `<td><select class="mapsel" id="map_${i}" onchange="checkDuplicateMapping()">${opts}</select></td>`;
+  }
+  headHtml += "</tr>";
+  selectHtml += "</tr>";
+
+  // monta as linhas de prévia (várias, não só a 1ª) fora do loop de colunas
+  let previewRows = [];
+  for(let p=0;p<previewCount;p++){
+    let row = "<tr>";
+    for(let i=0;i<numCols;i++){
+      row += `<td><i>${(parsedLines[p][i]||"").toString().slice(0,25) || "(vazio)"}</i></td>`;
+    }
+    row += "</tr>";
+    previewRows.push(row);
+  }
+
+  table.innerHTML = headHtml + selectHtml + previewRows.join("");
+
+  closeStep('ov-paste');
+  openStep('ov-map');
+  setTimeout(checkDuplicateMapping, 0);
+}
+
+function reorganizeColumns(){
+  buildMapTable(null);
+}
+
+// Avisa se duas colunas foram mapeadas pro mesmo campo — erro comum que gera dado errado na planilha.
+function checkDuplicateMapping(){
+  const counts = {};
+  for(let i=0;i<numCols;i++){
+    const sel = document.getElementById('map_'+i);
+    if(!sel) continue;
+    const val = sel.value;
+    sel.classList.remove('dupe');
+    if(val && val !== "__NF_EMITIDA__"){
+      counts[val] = (counts[val]||0)+1;
+    }
+  }
+  const dupes = Object.keys(counts).filter(k => counts[k]>1);
+  for(let i=0;i<numCols;i++){
+    const sel = document.getElementById('map_'+i);
+    if(sel && dupes.includes(sel.value)) sel.classList.add('dupe');
+  }
+  const warnEl = document.getElementById('mapDupeWarning');
+  if(dupes.length){
+    warnEl.innerHTML = `⚠ Campo(s) mapeado(s) em mais de uma coluna: <b>${dupes.join(", ")}</b> — corrija antes de avançar, senão um dos valores vai sobrescrever o outro.`;
+    warnEl.style.display = "block";
+  } else {
+    warnEl.style.display = "none";
+  }
+}
+
+function goToAgendStep(){
+  const mapping = [];
+  for(let i=0;i<numCols;i++){
+    mapping.push(document.getElementById('map_'+i).value);
+  }
+  window._currentMapping = mapping;
+
+  closeStep('ov-map');
+  openStep('ov-agend');
+}
+
+let agendParsedLines = [];
+let agendMatches = null; // will hold matched data keyed by row index of parsedLines
+
+const KNOWN_AGEND_HEADERS = {
+  "nome paciente": "Paciente",
+  "cpf paciente": "CPF",
+  "email paciente": "Email",
+  "celular paciente": "Telefone",
+  "telefone paciente": "Telefone",
+  "cidade paciente": "Cidade",
+  "bairro paciente": "Bairro",
+  "endereco paciente": "Logradouro",
+  "numero endereco paciente": "Número",
+  "cep paciente": "CEP",
+  "uf paciente": "UF",
+  "data agendamento": "Data de Consulta",
+  "valor procedimento agendamento": "Valor",
+  // NÃO mapeamos "nome procedimento" pra Descrição do Procedimento — a descrição final é decidida pelo
+  // Tipo (Consulta/Exame), não pelo texto livre do relatório. Usamos os dois campos abaixo só pra decidir o Tipo.
+  "tipo agendamento": "__TIPO__",
+  "nome procedimento": "__PROCEDIMENTO__"
+};
+
+// A partir do Tipo Agendamento / Nome Procedimento do relatório do Tableau, decide se a linha é
+// Consulta ou Exame. Prioriza "Tipo Agendamento" (campo mais direto); usa o nome do procedimento como reforço.
+function classificarTipo(tipoAgendamento, nomeProcedimento){
+  const t = normHeader(tipoAgendamento);
+  const p = normHeader(nomeProcedimento);
+  if(/exame/.test(t) || /exame/.test(p)) return "Exame";
+  if(/consulta/.test(t) || /consulta/.test(p)) return "Consulta";
+  return "";
+}
+function normHeader(s){ return (s||"").toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+function normName(s){ return (s||"").toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," "); }
+
+// Detecta automaticamente o que cada coluna da lista de agendados representa — sem pedir confirmação do usuário.
+function autoMapAgendColumns(headerRow, firstDataRow, cols){
+  const mapping = [];
+  for(let i=0;i<cols;i++){
+    let guess = "";
+    if(headerRow && headerRow[i]) guess = KNOWN_AGEND_HEADERS[normHeader(headerRow[i])] || "";
+    if(!guess) guess = guessField(firstDataRow ? firstDataRow[i] : "");
+    mapping.push(guess);
+  }
+  return mapping;
+}
+
+let agendColMapping = [];
+
+function handleAgendFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
+      if(!rows.length){ alert("Arquivo vazio."); return; }
+      const headerRow = rows[0].map(h => cleanCell(h));
+      const dataRows = rows.slice(1).filter(r => r.some(c => (c||"").toString().trim()!==""));
+      agendParsedLines = dataRows.map(r => headerRow.map((_,i) => cleanCell(xlsxCellToText(r[i]))));
+      agendColMapping = autoMapAgendColumns(headerRow, agendParsedLines[0], headerRow.length);
+      document.getElementById('agendInput').value = `[Arquivo carregado: ${file.name} — ${agendParsedLines.length} linha(s)]`;
+    }catch(err){
+      alert("Não consegui ler esse arquivo. Confira se é um .xlsx/.xls/.csv válido.");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function cruzarAgendados(){
+  // Se veio de colar texto (não de arquivo), detecta agora
+  if(!agendParsedLines.length){
+    const raw = document.getElementById('agendInput').value.trim();
+    if(!raw){ alert("Carregue o arquivo .xlsx ou cole a lista de agendados primeiro."); return; }
+    agendParsedLines = parseTSV(raw);
+    const cols = Math.max(...agendParsedLines.map(c => c.length));
+    agendColMapping = autoMapAgendColumns(null, agendParsedLines[0], cols);
+  }
+
+  // monta lista de registros de agendados já com campos nomeados
+  const agendRecords = agendParsedLines.map(cols => {
+    const rec = {};
+    HEADERS.forEach(h => rec[h] = "");
+    rec["__TIPO__"] = ""; rec["__PROCEDIMENTO__"] = "";
+    agendColMapping.forEach((h, colIdx) => {
+      if(!h) return;
+      let val = (cols[colIdx]||"").trim();
+      if(h === "CPF") val = onlyDigits(val);
+      if(h === "Telefone") val = onlyDigits(val);
+      if(h === "CEP") val = onlyDigits(val);
+      if(!rec[h] && val) rec[h] = val; // primeira coluna detectada pro campo vale; evita sobrescrita por duplicidade
+    });
+    rec["__TIPO__"] = classificarTipo(rec["__TIPO__"], rec["__PROCEDIMENTO__"]);
+    return rec;
+  });
+
+  // Prioridade: CPF (chave mais confiável, presente nos dois lados). Nome entra como reforço/desempate.
+  const byCpf = {};
+  const byNome = {};
+  agendRecords.forEach(rec => {
+    if(rec["CPF"] && rec["CPF"].length===11) byCpf[rec["CPF"]] = rec;
+    if(rec["Paciente"]) byNome[normName(rec["Paciente"])] = rec;
+  });
+
+  const mainMapping = window._currentMapping || [];
+  agendMatches = {};
+  let matched = 0, notMatched = 0;
+
+  parsedLines.forEach((cols, idx) => {
+    let cpf = "", nome = "";
+    mainMapping.forEach((h, colIdx) => {
+      const val = (cols[colIdx]||"").trim();
+      if(h==="CPF") cpf = onlyDigits(val);
+      if(h==="Paciente") nome = val;
+    });
+
+    let rec = null;
+    if(cpf && byCpf[cpf]) rec = byCpf[cpf];
+    else if(nome && byNome[normName(nome)]) rec = byNome[normName(nome)];
+
+    if(rec){ agendMatches[idx] = rec; matched++; } else { notMatched++; }
+  });
+
+  document.getElementById('agendResultHint').innerHTML =
+    `<b style="color:var(--ok)">${matched}</b> linha(s) cruzada(s) por CPF com sucesso, <b>${notMatched}</b> sem correspondência (irão para o final da lista com um alerta).`;
+}
+
+// Calcula, para cada linha, o CEP disponível: o que o colaborador colou tem prioridade (é o dado mais
+// atualizado); o cruzamento com o relatório só entra pra completar quando não veio nada colado.
+function getCepForRow(cols, idx){
+  const mainMapping = window._currentMapping || [];
+  const cepColIdx = mainMapping.indexOf("CEP");
+  const pasted = cepColIdx !== -1 ? onlyDigits(cols[cepColIdx]||"") : "";
+  if(pasted) return pasted;
+  if(agendMatches && agendMatches[idx] && agendMatches[idx]["CEP"]) return agendMatches[idx]["CEP"];
+  return "";
+}
+
+function getNomeForRow(cols, idx){
+  const mainMapping = window._currentMapping || [];
+  const nomeColIdx = mainMapping.indexOf("Paciente");
+  const pasted = nomeColIdx!==-1 ? cols[nomeColIdx] : "";
+  return pasted || (agendMatches && agendMatches[idx] && agendMatches[idx]["Paciente"]) || "(sem nome)";
+}
+
+function goToCepStep(){
+  const table = document.getElementById('cepTable');
+  document.getElementById('buscarCepBtn').style.display = "inline-block";
+  document.getElementById('cepHint').textContent = `Confira o CEP de cada paciente abaixo — corrija o que estiver errado ou preencha o que faltar, depois clique em "Buscar CEP" para validar e preencher Logradouro, Bairro, Cidade e UF pela API do ViaCEP.`;
+
+  let html = "<tr><th>Paciente</th><th>CEP</th><th>Logradouro</th><th>Bairro</th><th>Cidade</th><th>UF</th><th>Status</th></tr>";
+  parsedLines.forEach((cols, idx) => {
+    const cep = getCepForRow(cols, idx);
+    const nome = getNomeForRow(cols, idx);
+    html += `<tr id="ceprow_${idx}">
+      <td>${nome}</td>
+      <td><input class="addrfield" id="cep_cep_${idx}" value="${cep}" maxlength="8" style="max-width:90px;"></td>
+      <td><input class="addrfield" id="cep_log_${idx}"></td>
+      <td><input class="addrfield" id="cep_bai_${idx}"></td>
+      <td><input class="addrfield" id="cep_cid_${idx}"></td>
+      <td><input class="addrfield" id="cep_uf_${idx}" style="max-width:60px;"></td>
+      <td id="cep_status_${idx}"></td>
+    </tr>`;
+  });
+  table.innerHTML = html;
+  document.getElementById('cepErrList').innerHTML = "";
+
+  closeStep('ov-agend');
+  openStep('ov-cep');
+}
+
+async function buscarCeps(){
+  const btn = document.getElementById('buscarCepBtn');
+  btn.disabled = true;
+  let found = 0, missing = 0, semCep = 0;
+  const problems = []; // {nome, cep, reason}
+  let networkErrorCount = 0;
+  const ufPadrao = document.getElementById('ufPadrao').value;
+
+  for(let idx=0; idx<parsedLines.length; idx++){
+    const cepInput = document.getElementById(`cep_cep_${idx}`);
+    if(!cepInput) continue;
+    const cep = onlyDigits(cepInput.value);
+    const logEl = document.getElementById(`cep_log_${idx}`);
+    const baiEl = document.getElementById(`cep_bai_${idx}`);
+    const cidEl = document.getElementById(`cep_cid_${idx}`);
+    const ufEl = document.getElementById(`cep_uf_${idx}`);
+    const statusEl = document.getElementById(`cep_status_${idx}`);
+    [logEl,baiEl,cidEl,ufEl].forEach(el => el.classList.remove('missing'));
+
+    if(cep.length !== 8){
+      semCep++;
+      statusEl.innerHTML = cep.length===0
+        ? '<span class="badge err">Sem CEP</span>'
+        : '<span class="badge err">CEP incompleto</span>';
+      [logEl,baiEl,cidEl,ufEl].forEach(el => el.classList.add('missing'));
+      if(!ufEl.value && ufPadrao){ ufEl.value = ufPadrao; ufEl.classList.remove('missing'); }
+      if(cep.length>0){
+        const nome = getNomeForRow(parsedLines[idx], idx);
+        problems.push(`${nome} — CEP "${cepInput.value}" incompleto (precisa ter 8 dígitos)`);
+      }
+      continue;
+    }
+
+    btn.textContent = `Buscando ${idx+1}/${parsedLines.length}...`;
+    const addr = await fetchViaCep(cep);
+    if(addr && addr.ok){
+      logEl.value = addr.logradouro; baiEl.value = addr.bairro; cidEl.value = addr.cidade; ufEl.value = addr.uf;
+      if(!addr.logradouro) logEl.classList.add('missing');
+      if(!ufEl.value && ufPadrao) ufEl.value = ufPadrao;
+      statusEl.innerHTML = '<span class="badge ok">OK</span>';
+      found++;
+    } else {
+      [logEl,baiEl,cidEl,ufEl].forEach(el => el.classList.add('missing'));
+      if(!ufEl.value && ufPadrao){ ufEl.value = ufPadrao; ufEl.classList.remove('missing'); }
+      statusEl.innerHTML = '<span class="badge err">Erro</span>';
+      missing++;
+      const reason = (addr && addr.reason) || "motivo desconhecido";
+      const nome = getNomeForRow(parsedLines[idx], idx);
+      problems.push(`${nome} — CEP ${cep}: ${reason}`);
+      if(reason.includes("conexão")) networkErrorCount++;
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = "🔍 Buscar CEP";
+
+  let hintHtml = `<b>${found}</b> validado(s), <b style="color:var(--err)">${missing}</b> com erro na busca, <b style="color:var(--err)">${semCep}</b> sem CEP preenchido.`;
+  if(networkErrorCount === missing && missing > 0){
+    hintHtml += ` <b style="color:var(--err)">Os erros parecem ser de conexão/CORS</b>, não de CEP inexistente — veja a dica abaixo.`;
+  } else if(missing || semCep){
+    hintHtml += ` Preencha ou corrija os campos em vermelho e clique em "Buscar CEP" de novo.`;
+  }
+  document.getElementById('cepHint').innerHTML = hintHtml;
+
+  let listHtml = problems.map(m=>`<li>${m}</li>`).join("");
+  if(networkErrorCount > 0){
+    listHtml += `<li style="list-style:none; margin-top:10px; padding:10px; background:var(--err-bg); border-radius:8px;">
+      <b>Dica:</b> erro de conexão/CORS geralmente acontece quando o arquivo .html é aberto direto no navegador (endereço começando com <code>file://</code>).
+      Tente abrir através de um servidor local, ou confira o Console do navegador (F12) pra ver a mensagem exata.
+    </li>`;
+  }
+  document.getElementById('cepErrList').innerHTML = listHtml;
+}
+
+function processData(){
+  const mapping = window._currentMapping || [];
+  const pickedDate = formatDateInputBR(document.getElementById('dataConsulta').value);
+  currentRows = [];
+  let warnCount = 0;
+  const warnMsgs = [];
+  let nfAlertMsgs = [];
+
+  parsedLines.forEach((cols, idx) => {
+    const rowMap = {};
+    HEADERS.forEach(h => rowMap[h] = "");
+    let rowWarnings = [];
+    let nfNumero = "";
+
+    mapping.forEach((h, colIdx) => {
+      if(!h) return;
+      let val = (cols[colIdx]||"").trim();
+      if(h === "__NF_EMITIDA__"){ nfNumero = val; return; } // não entra na planilha, só vira alerta
+      if(h === "CPF") val = onlyDigits(val);
+      if(h === "Telefone") val = onlyDigits(val);
+      if(h === "CEP") val = onlyDigits(val);
+      if(h === "UF") val = val.toUpperCase();
+      if(h === "Valor"){ const r = cleanValor(val); const original = val; val = r.value; if(!r.ok) { rowWarnings.push(`valor não reconhecido ("${cols[colIdx]}")`); } else if(r.guessed) { rowWarnings.push(`valor sem ponto decimal — ajustado de "${original}" para "${r.value}", confira`); } }
+      rowMap[h] = val;
+    });
+
+    if(pickedDate && !rowMap["Data de Consulta"]) rowMap["Data de Consulta"] = pickedDate;
+
+    // Preenche campos faltantes a partir da lista de agendados cruzada (Etapa 4), se houver
+    const wasCrossReferenced = agendMatches && agendMatches[idx];
+    if(wasCrossReferenced){
+      const rec = agendMatches[idx];
+      HEADERS.forEach(h => { if(!rowMap[h] && rec[h]) rowMap[h] = rec[h]; });
+    } else if(agendMatches){
+      // etapa de cruzamento foi executada mas esta linha não teve correspondência
+      rowWarnings.push(`não encontrado na lista de agendados (CPF ${rowMap["CPF"]||"—"})`);
+    }
+
+    // Preenche endereço a partir da tabela de CEP (Etapa 4), usando o que foi confirmado/editado ali
+    const cepInputEl = document.getElementById(`cep_cep_${idx}`);
+    if(cepInputEl){
+      const cepFinal = onlyDigits(cepInputEl.value);
+      if(cepFinal) rowMap["CEP"] = cepFinal; // usa o CEP como ficou na Etapa 4 (pode ter sido corrigido/preenchido lá)
+      const logEl = document.getElementById(`cep_log_${idx}`);
+      if(logEl){
+        if(!rowMap["Logradouro"]) rowMap["Logradouro"] = logEl.value || "";
+        if(!rowMap["Bairro"]) rowMap["Bairro"] = document.getElementById(`cep_bai_${idx}`).value || "";
+        if(!rowMap["Cidade"]) rowMap["Cidade"] = document.getElementById(`cep_cid_${idx}`).value || "";
+        if(!rowMap["UF"]) rowMap["UF"] = document.getElementById(`cep_uf_${idx}`).value || "";
+      }
+    }
+    const cep = rowMap["CEP"];
+
+    // Dados obrigatórios pra qualquer envio — sem isso, nem vale a pena mandar pro Sinaxys
+    const faltando = [];
+    if(!rowMap["Paciente"]) faltando.push("nome");
+    if(!rowMap["CPF"]) faltando.push("CPF");
+    if(!rowMap["Valor"]) faltando.push("valor");
+    if(!cep) faltando.push("CEP");
+    if(!rowMap["UF"]) faltando.push("UF");
+    if(faltando.length) rowWarnings.push(`dados incompletos: falta ${faltando.join(", ")}`);
+
+    if(rowMap["CPF"] && rowMap["CPF"].length !== 11) rowWarnings.push(`CPF com ${rowMap["CPF"].length} dígitos (esperado 11)`);
+    if(rowMap["Email"] && !validEmail(rowMap["Email"])) rowWarnings.push(`e-mail com formato estranho ("${rowMap["Email"]}")`);
+    if(rowMap["Telefone"] && rowMap["Telefone"].length < 10) rowWarnings.push(`telefone com poucos dígitos ("${rowMap["Telefone"]}")`);
+    if(cep && cep.length !== 8) rowWarnings.push(`CEP inválido ("${cep}" — precisa ter 8 dígitos)`);
+    if(!rowMap["Logradouro"] && cep && cep.length===8) rowWarnings.push(`endereço do CEP ${cep} ainda não preenchido (use "Buscar CEP" se quiser completar)`);
+
+    // Tipo (Consulta/Exame) — vem SEMPRE da seção da planilha "NOTAS FISCAIS 3.0" (Google Sheets).
+    // O relatório de agendados só preenche dados do paciente (CEP, telefone, e-mail, etc.) — nunca o Tipo.
+    let tipo = (window.__sheetTipoByIdx && window.__sheetTipoByIdx[idx]) ? window.__sheetTipoByIdx[idx] : "";
+    if(!tipo) rowWarnings.push(`tipo (Consulta/Exame) não detectado — linha irá para o arquivo "Incompletos"`);
+    if(!rowMap["Descrição do Procedimento"]){
+      if(tipo === "Exame") rowMap["Descrição do Procedimento"] = "Ref a exames realizados.";
+      else if(tipo === "Consulta") rowMap["Descrição do Procedimento"] = "Ref a consulta médica realizada.";
+    }
+
+    const isNfAlert = !!nfNumero;
+    if(isNfAlert){
+      nfAlertMsgs.push(`${rowMap["Paciente"] || "Linha "+(idx+1)}: NF Nº ${nfNumero} já emitida — NÃO emitir novamente!`);
+    }
+
+    if(rowWarnings.length){
+      warnCount += rowWarnings.length;
+      warnMsgs.push(`${rowMap["Paciente"] || "Linha "+(idx+1)}: ${rowWarnings.join("; ")}`);
+    }
+
+    currentRows.push({ rowMap, values: HEADERS.map(h => rowMap[h]), hasWarning: rowWarnings.length>0, isNfAlert, nfNumero, tipo, originalIndex: idx });
+  });
+
+  // Marca duplicadas: mesmo CPF + mesmo valor aparecendo mais de uma vez (provável cola duplicada)
+  const seen = {};
+  currentRows.forEach(r => {
+    const key = (r.rowMap["CPF"]||"") + "|" + (r.rowMap["Valor"]||"");
+    if(!key.trim().replace(/\|/g,"")) return;
+    seen[key] = (seen[key]||0) + 1;
+  });
+  currentRows.forEach(r => {
+    const key = (r.rowMap["CPF"]||"") + "|" + (r.rowMap["Valor"]||"");
+    if(seen[key] > 1){
+      r.hasWarning = true;
+      r.isDupe = true;
+    }
+  });
+
+  // Organiza: alertas de NF já emitida primeiro (mais crítico), depois linhas ok, depois as com problema de formato
+  currentRows.sort((a,b) => {
+    const pa = a.isNfAlert ? 0 : (a.hasWarning ? 2 : 1);
+    const pb = b.isNfAlert ? 0 : (b.hasWarning ? 2 : 1);
+    return pa===pb ? (a.originalIndex-b.originalIndex) : (pa-pb);
+  });
+
+  renderResultTable(warnCount, warnMsgs, nfAlertMsgs);
+}
+
+function tipoSelectHtml(ri, tipo){
+  const opts = ["", "Consulta", "Exame"].map(t =>
+    `<option value="${t}" ${t===tipo?'selected':''}>${t || "— selecionar —"}</option>`).join("");
+  return `<select class="addrfield" id="tipo_${ri}" onchange="onTipoChange(${ri})" style="min-width:110px;">${opts}</select>`;
+}
+
+// Quando o usuário escolhe o Tipo manualmente (linha não identificada pelo cruzamento), atualiza
+// também a Descrição do Procedimento, se ela ainda estiver vazia ou for a padrão da outra opção.
+function onTipoChange(ri){
+  const sel = document.getElementById('tipo_'+ri);
+  const tipo = sel.value;
+  currentRows[ri].tipo = tipo;
+  const descColIdx = HEADERS.indexOf("Descrição do Procedimento");
+  const descEl = document.getElementById(`cell_${ri}_${descColIdx}`);
+  if(descEl){
+    const atual = descEl.value.trim();
+    if(!atual || atual === "Ref a exames realizados." || atual === "Ref a consulta médica realizada."){
+      descEl.value = tipo === "Exame" ? "Ref a exames realizados." : (tipo === "Consulta" ? "Ref a consulta médica realizada." : "");
+    }
+  }
+}
+
+function renderResultTable(warnCount, warnMsgs, nfAlertMsgs){
+  const table = document.getElementById('resultTable');
+  let html = "<tr><th>Tipo</th>" + HEADERS.map(h=>`<th>${h}</th>`).join("") + "<th>Status</th></tr>";
+  currentRows.forEach((r, ri) => {
+    const rowClass = r.isNfAlert ? 'nfalert' : (r.hasWarning ? 'error' : '');
+    let badge = '<span class="badge ok">OK</span>';
+    if(r.isNfAlert) badge = `<span class="badge warn">NF ${r.nfNumero} já emitida</span>`;
+    else if(r.isDupe) badge = '<span class="badge err">Duplicada</span>';
+    else if(r.hasWarning) badge = '<span class="badge err">Revisar</span>';
+    html += `<tr class="${rowClass}">` +
+      `<td>${tipoSelectHtml(ri, r.tipo)}</td>` +
+      r.values.map((v,ci)=>`<td><input class="addrfield" id="cell_${ri}_${ci}" value="${(v||"").toString().replace(/"/g,'&quot;')}"></td>`).join("") +
+      `<td>${badge}</td></tr>`;
+  });
+  table.innerHTML = html;
+
+  const nfAlertCount = currentRows.filter(r=>r.isNfAlert).length;
+  const withWarning = currentRows.filter(r=>r.hasWarning && !r.isNfAlert).length;
+  const semTipo = currentRows.filter(r=>!r.tipo).length;
+  document.getElementById('summary').innerHTML =
+    `<b>${currentRows.length}</b> linha(s) geradas — <b>${currentRows.length-withWarning-nfAlertCount}</b> ok` +
+    (nfAlertCount ? `, <b style="color:var(--warn-text)">${nfAlertCount}</b> com NF já emitida (⚠ não emitir de novo)` : ``) +
+    (withWarning ? `, <b style="color:var(--err)">${withWarning}</b> com alerta de formato` : ``) +
+    (semTipo ? `, <b style="color:var(--err)">${semTipo}</b> sem Tipo detectado → irão para <b>nf_lote_INCOMPLETOS.xlsx</b>` : ``) +
+    `. Os campos abaixo são <b>editáveis</b> — complete o que faltar (e-mail, telefone, número etc.) antes de baixar. Ao baixar, são gerados até 3 arquivos: <b>CONSULTAS</b>, <b>EXAMES</b> e <b>INCOMPLETOS</b> (linhas sem Tipo ou com dados faltando).`;
+
+  document.getElementById('errList').innerHTML =
+    (nfAlertMsgs||[]).map(m=>`<li style="color:var(--warn-text);">⚠ ${m}</li>`).join("") +
+    warnMsgs.map(m=>`<li>${m}</li>`).join("");
+  document.getElementById('savedBanner').style.display = "none";
+  closeStep('ov-cep');
+  openStep('ov-result');
+}
+
+function collectEditedRows(){
+  currentRows.forEach((r, ri) => {
+    r.values = r.values.map((v, ci) => {
+      const el = document.getElementById(`cell_${ri}_${ci}`);
+      return el ? el.value : v;
+    });
+    const tipoSel = document.getElementById('tipo_'+ri);
+    if(tipoSel) r.tipo = tipoSel.value;
+  });
+}
+
+function buildWorkbookFor(rows){
+  const wsData = [HEADERS, ...rows.map(r=>r.values)];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Modelo Importação");
+  return wb;
+}
+
+function downloadXlsx(){
+  if(!currentRows.length){ alert("Gere a planilha primeiro."); return; }
+  collectEditedRows();
+
+  // Separa em 3 grupos:
+  // • Consultas  — tipo definido como "Consulta"
+  // • Exames     — tipo definido como "Exame"
+  // • Incompletos — sem tipo OU com avisos de dados faltando (CEP, endereço, etc.)
+  const consultas   = currentRows.filter(r => r.tipo === "Consulta" && !r.hasWarning);
+  const exames      = currentRows.filter(r => r.tipo === "Exame"    && !r.hasWarning);
+  const incompletos = currentRows.filter(r => !r.tipo || r.hasWarning);
+
+  let baixados = [];
+
+  if(consultas.length){
+    XLSX.writeFile(buildWorkbookFor(consultas), "nf_lote_CONSULTAS.xlsx");
+    baixados.push(`${consultas.length} Consulta(s)`);
+  }
+  if(exames.length){
+    XLSX.writeFile(buildWorkbookFor(exames), "nf_lote_EXAMES.xlsx");
+    baixados.push(`${exames.length} Exame(s)`);
+  }
+  if(incompletos.length){
+    XLSX.writeFile(buildWorkbookFor(incompletos), "nf_lote_INCOMPLETOS.xlsx");
+    baixados.push(`${incompletos.length} Incompleto(s)`);
+  }
+
+  if(!baixados.length){ alert("Nenhuma linha para baixar."); return; }
+
+  // Salva automaticamente no histórico
+  const pickedDateIso = document.getElementById('dataConsulta').value || todayISO();
+  addEntry(pickedDateIso, currentRows.length, `Gerado pela ferramenta (${baixados.join(", ")})`);
+  document.getElementById('savedBanner').style.display = "block";
+}
+
+function copyClean(){
+  if(!currentRows.length){ alert("Gere a planilha primeiro."); return; }
+  collectEditedRows();
+  const text = [HEADERS.join('\t'), ...currentRows.map(r=>r.values.join('\t'))].join('\n');
+  navigator.clipboard.writeText(text).then(()=> alert("Dados copiados! Cole direto na planilha."));
+}
+
+/* ===================== CONFERIR NF (cruzar pagamentos x notas emitidas) ===================== */
+const CONF_FIELDS = ["Nome","CPF","Valor","NumeroNF","Data"];
+const KNOWN_CONF_HEADERS = {
+  "nome": "Nome", "paciente": "Nome", "cliente": "Nome",
+  "cpf": "CPF", "cpf cliente": "CPF", "cpf paciente": "CPF",
+  "valor": "Valor",
+  "n nota fiscal": "NumeroNF", "no nota fiscal": "NumeroNF", "nota fiscal": "NumeroNF",
+  "numero nf": "NumeroNF", "numero da nf": "NumeroNF",
+  "data": "Data", "data de atendimento": "Data", "cadastrada em": "Data"
+};
+
+let confData = { pagamentos: null, nf: null };
+
+function confGuessField(sample){
+  const s = (sample||"").trim();
+  if(!s) return "";
+  const digits = onlyDigits(s);
+  if(digits.length === 11 && isValidCPF(digits)) return "CPF";
+  if(/^R?\$?\s?\d+([.,]\d{1,2})?$/.test(s)) return "Valor";
+  return "";
+}
+
+function handleConfFile(event, kind){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
+      if(!rows.length){ alert("Arquivo vazio."); return; }
+      // encontra a primeira linha que pareça cabeçalho (evita linhas de seção tipo "PÓS-CONSULTA")
+      let headerRowIdx = 0;
+      for(let i=0;i<Math.min(rows.length,5);i++){
+        const hits = rows[i].filter(c => normHeaderKey(c) in KNOWN_CONF_HEADERS).length;
+        if(hits >= 2){ headerRowIdx = i; break; }
+      }
+      const headerRow = rows[headerRowIdx].map(h => cleanCell(h));
+      const dataRows = rows.slice(headerRowIdx+1)
+        .filter(r => r.some(c => (c||"").toString().trim()!==""))
+        .map(r => headerRow.map((_,i) => cleanCell(xlsxCellToText(r[i]))));
+
+      confData[kind] = { headerRow, dataRows };
+      const inputEl = document.getElementById(kind==='pagamentos' ? 'confPagamentosInput' : 'confNfInput');
+      inputEl.value = `[Arquivo carregado: ${file.name} — ${dataRows.length} linha(s)]`;
+      buildConfMapTable(kind);
+    }catch(err){
+      alert("Não consegui ler esse arquivo. Confira se é um .xlsx/.xls/.csv válido.");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function detectConfColumns(kind){
+  const inputId = kind==='pagamentos' ? 'confPagamentosInput' : 'confNfInput';
+  const raw = document.getElementById(inputId).value.trim();
+  if(!raw){ alert("Carregue o arquivo ou cole os dados primeiro."); return; }
+  if(raw.startsWith("[Arquivo carregado")){
+    if(confData[kind]) { buildConfMapTable(kind); return; }
+    alert("Não consegui reler o arquivo — carregue de novo."); return;
+  }
+  const rows = parseTSV(raw);
+  if(!rows.length){ alert("Não consegui ler nenhuma linha."); return; }
+  let headerRowIdx = 0;
+  for(let i=0;i<Math.min(rows.length,5);i++){
+    const hits = rows[i].filter(c => normHeaderKey(c) in KNOWN_CONF_HEADERS).length;
+    if(hits >= 2){ headerRowIdx = i; break; }
+  }
+  const headerRow = rows[headerRowIdx];
+  const dataRows = rows.slice(headerRowIdx+1);
+  confData[kind] = { headerRow, dataRows };
+  buildConfMapTable(kind);
+}
+
+function buildConfMapTable(kind){
+  const { headerRow, dataRows } = confData[kind];
+  const numCols = Math.max(headerRow.length, ...dataRows.slice(0,5).map(r=>r.length));
+  const tableId = kind==='pagamentos' ? 'confPagamentosMapTable' : 'confNfMapTable';
+  const table = document.getElementById(tableId);
+
+  let headHtml = "<tr>", selectHtml = "<tr>", previewHtml = "<tr>";
+  const previewCount = Math.min(2, dataRows.length);
+  for(let i=0;i<numCols;i++){
+    const label = headerRow[i] || `Coluna ${i+1}`;
+    headHtml += `<th>${label}</th>`;
+    let guess = KNOWN_CONF_HEADERS[normHeaderKey(headerRow[i]||"")] || confGuessField(dataRows[0] ? dataRows[0][i] : "");
+    let opts = `<option value="">— Não usar —</option>`;
+    CONF_FIELDS.forEach(f => { opts += `<option value="${f}" ${f===guess?'selected':''}>${f}</option>`; });
+    selectHtml += `<td><select class="mapsel" id="confmap_${kind}_${i}">${opts}</select></td>`;
+  }
+  headHtml += "</tr>"; selectHtml += "</tr>";
+  for(let p=0;p<previewCount;p++){
+    previewHtml += "<tr>";
+    for(let i=0;i<numCols;i++) previewHtml += `<td><i>${(dataRows[p][i]||"").toString().slice(0,20) || "(vazio)"}</i></td>`;
+    previewHtml += "</tr>";
+  }
+  table.innerHTML = headHtml + selectHtml + previewHtml;
+  confData[kind].numCols = numCols;
+}
+
+function conferirNotas(){
+  if(!confData.pagamentos || !confData.nf){
+    alert("Carregue e detecte as colunas das duas planilhas (pagamentos e notas emitidas) antes de conferir.");
+    return;
+  }
+  const tolerancia = parseFloat(document.getElementById('confTolerancia').value) || 0;
+
+  function buildRecords(kind){
+    const { dataRows, numCols } = confData[kind];
+    const mapping = [];
+    for(let i=0;i<numCols;i++) mapping.push(document.getElementById(`confmap_${kind}_${i}`).value);
+    return dataRows.map(cols => {
+      const rec = {};
+      CONF_FIELDS.forEach(f => rec[f]="");
+      mapping.forEach((f, colIdx) => {
+        if(!f) return;
+        let val = (cols[colIdx]||"").trim();
+        if(f === "CPF") val = onlyDigits(val);
+        if(f === "Valor"){ const r = cleanValor(val); val = r.ok ? r.value : ""; }
+        rec[f] = val;
+      });
+      return rec;
+    }).filter(r => r.CPF && r.CPF.length===11);
+  }
+
+  const pagamentos = buildRecords('pagamentos');
+  let notasRaw = buildRecords('nf');
+
+  // O Nº NF da Sinaxys mistura dois formatos na mesma coluna: número curto (ex: 134568) é uma nota
+  // realmente emitida; número longo (13 dígitos, ex: 2003010835269) é um protocolo de tentativa
+  // RECUSADA pela prefeitura/provedor — não é uma nota válida. Sem uma coluna de status separada,
+  // o comprimento do número é o único jeito de diferenciar os dois casos.
+  const notasRecusadas = notasRaw.filter(n => onlyDigits(n.NumeroNF).length >= 10);
+  const notas = notasRaw.filter(n => onlyDigits(n.NumeroNF).length < 10 && n.NumeroNF);
+  const notasRecusadasPorCpf = {};
+  notasRecusadas.forEach(n => { (notasRecusadasPorCpf[n.CPF] = notasRecusadasPorCpf[n.CPF]||[]).push(n); });
+
+  // agrupa notas por CPF
+  const notasPorCpf = {};
+  notas.forEach(n => {
+    if(!notasPorCpf[n.CPF]) notasPorCpf[n.CPF] = [];
+    notasPorCpf[n.CPF].push(n);
+  });
+
+  // Detecta duplicidade nos PAGAMENTOS: mesmo CPF aparecendo mais de uma vez.
+  // Isso é normal quando o paciente tem consulta + pós-consulta/exames (valores diferentes),
+  // mas é suspeito quando o mesmo CPF + mesmo valor se repetem (pode ser lançamento em dobro).
+  const pagPorCpf = {};
+  pagamentos.forEach(p => { (pagPorCpf[p.CPF] = pagPorCpf[p.CPF]||[]).push(p); });
+  function dupInfoPagamento(p){
+    const doMesmoCpf = pagPorCpf[p.CPF] || [];
+    if(doMesmoCpf.length <= 1) return null;
+    const mesmoValor = doMesmoCpf.filter(x => Math.abs(parseFloat(x.Valor)-parseFloat(p.Valor)) < 0.005).length;
+    return {
+      total: doMesmoCpf.length,
+      suspeita: mesmoValor > 1 // 2+ lançamentos com CPF E valor idênticos: mais provável ser duplicado por engano
+    };
+  }
+
+  // Detecta duplicidade nas NOTAS EMITIDAS: mesmo CPF + mesmo valor emitido mais de uma vez
+  // (nota emitida em duplicidade por engano no sistema).
+  const notaDupKeyCount = {};
+  notas.forEach(n => {
+    const k = n.CPF+"|"+n.Valor;
+    notaDupKeyCount[k] = (notaDupKeyCount[k]||0)+1;
+  });
+
+  const usedNotas = new Set(); // evita casar a mesma nota emitida duas vezes
+  const results = pagamentos.map(p => {
+    const candidatas = (notasPorCpf[p.CPF] || []);
+    const valorPag = parseFloat(p.Valor);
+    let match = null;
+    for(let i=0;i<candidatas.length;i++){
+      const n = candidatas[i];
+      const key = n.CPF+"|"+n.Valor+"|"+n.NumeroNF+"|"+i;
+      if(usedNotas.has(key)) continue;
+      const valorNota = parseFloat(n.Valor);
+      if(!isNaN(valorPag) && !isNaN(valorNota) && Math.abs(valorPag-valorNota) <= tolerancia + 1e-9){
+        match = n; usedNotas.add(key); break;
+      }
+    }
+    const dup = dupInfoPagamento(p);
+    const nfDup = match ? (notaDupKeyCount[match.CPF+"|"+match.Valor] || 0) > 1 : false;
+    if(!match){
+      const anyForCpf = candidatas.length > 0;
+      if(!anyForCpf){
+        // não achou nenhuma nota válida para o CPF — verifica se existe uma tentativa RECUSADA
+        // (protocolo de 13 dígitos rejeitado pela prefeitura/provedor) pra avisar o motivo.
+        const recusadas = notasRecusadasPorCpf[p.CPF] || [];
+        if(recusadas.length){
+          return { nome: p.Nome, cpf: p.CPF, valor: p.Valor, status: "recusada", nfNumero: recusadas[0].NumeroNF, nfValor: recusadas[0].Valor, dup, nfDup: false };
+        }
+      }
+      return { nome: p.Nome, cpf: p.CPF, valor: p.Valor, status: anyForCpf ? "valor_diverge" : "nao_emitida", nfNumero: "", nfValor: anyForCpf ? candidatas[0].Valor : "", dup, nfDup: false };
+    }
+    return { nome: p.Nome, cpf: p.CPF, valor: p.Valor, status: "emitida", nfNumero: match.NumeroNF, nfValor: match.Valor, dup, nfDup };
+  });
+
+  renderConfResult(results);
+}
+
+function renderConfResult(results){
+  const emitidas = results.filter(r=>r.status==="emitida");
+  const naoEmitidas = results.filter(r=>r.status==="nao_emitida");
+  const divergentes = results.filter(r=>r.status==="valor_diverge");
+  const recusadas = results.filter(r=>r.status==="recusada");
+  const dupSuspeitas = results.filter(r=>r.dup && r.dup.suspeita);
+  const nfDuplicadas = results.filter(r=>r.nfDup);
+
+  // ordena: duplicidade suspeita e NF duplicada primeiro (mais crítico), depois recusadas/não emitidas/divergentes, emitidas normais por último
+  const criticas = results.filter(r => (r.dup && r.dup.suspeita) || r.nfDup);
+  const semCritica = results.filter(r => !((r.dup && r.dup.suspeita) || r.nfDup));
+  const recusadasResto = semCritica.filter(r=>r.status==="recusada");
+  const naoEmitidasResto = semCritica.filter(r=>r.status==="nao_emitida");
+  const divergentesResto = semCritica.filter(r=>r.status==="valor_diverge");
+  const emitidasResto = semCritica.filter(r=>r.status==="emitida");
+  const ordered = [...criticas, ...recusadasResto, ...naoEmitidasResto, ...divergentesResto, ...emitidasResto];
+
+  document.getElementById('confSummary').innerHTML =
+    `<b>${results.length}</b> pagamento(s) conferido(s) — ` +
+    `<span style="color:var(--ok)"><b>${emitidas.length}</b> já com NF emitida</span>, ` +
+    `<span style="color:var(--err)"><b>${naoEmitidas.length}</b> sem NF emitida</span>` +
+    (recusadas.length ? `, <span style="color:var(--err)"><b>${recusadas.length}</b> com tentativa RECUSADA (prefeitura/provedor) — precisa reemitir</span>` : ``) +
+    (divergentes.length ? `, <span style="color:var(--warn-text)"><b>${divergentes.length}</b> com CPF encontrado mas valor divergente</span>` : ``) +
+    (dupSuspeitas.length ? `, <span style="color:var(--err)"><b>${dupSuspeitas.length}</b> possível pagamento duplicado (mesmo CPF + mesmo valor)</span>` : ``) +
+    (nfDuplicadas.length ? `, <span style="color:var(--err)"><b>${nfDuplicadas.length}</b> com NF emitida em duplicidade</span>` : ``) +
+    `. Pacientes com mais de um pagamento (ex: consulta + pós-consulta/exames) aparecem com a coluna "Duplicidade" preenchida — valores diferentes são normais, valores iguais merecem revisão.`;
+
+  let html = "<tr><th>Nome</th><th>CPF</th><th>Valor pago</th><th>Status</th><th>Nº NF</th><th>Valor da NF</th><th>Duplicidade</th></tr>";
+  ordered.forEach(r => {
+    let rowClass = "", badge = "";
+    if(r.status==="emitida"){ badge = '<span class="badge ok">NF emitida</span>'; }
+    else if(r.status==="nao_emitida"){ rowClass="error"; badge = '<span class="badge err">Sem NF — emitir</span>'; }
+    else if(r.status==="recusada"){ rowClass="error"; badge = '<span class="badge err">⚠ Tentativa RECUSADA — reemitir</span>'; }
+    else { rowClass="nfalert"; badge = '<span class="badge warn">CPF ok, valor diverge</span>'; }
+
+    let dupBadge = "—";
+    if(r.nfDup){ dupBadge = '<span class="badge err">⚠ NF emitida em duplicidade</span>'; rowClass="error"; }
+    else if(r.dup && r.dup.suspeita){ dupBadge = `<span class="badge err">⚠ Mesmo CPF+valor ${r.dup.total}x — conferir</span>`; rowClass="error"; }
+    else if(r.dup){ dupBadge = `<span class="badge warn">${r.dup.total}x pagamentos (valores diferentes — provável consulta + pós-consulta)</span>`; }
+
+    html += `<tr class="${rowClass}"><td>${r.nome}</td><td>${r.cpf}</td><td>${r.valor}</td><td>${badge}</td><td>${r.nfNumero||"—"}</td><td>${r.nfValor||"—"}</td><td>${dupBadge}</td></tr>`;
+  });
+  document.getElementById('confResultTable').innerHTML = html;
+  closeStep('ov-conf3');
+  openStep('ov-confResult');
+
+  window._confOrdered = ordered;
+}
+
+function downloadConfXlsx(){
+  const ordered = window._confOrdered || [];
+  if(!ordered.length){ alert("Rode a conferência primeiro."); return; }
+  const statusLabel = { emitida: "NF emitida", nao_emitida: "SEM NF — EMITIR", valor_diverge: "CPF ok, valor diverge", recusada: "TENTATIVA RECUSADA (prefeitura/provedor) — REEMITIR" };
+  function dupLabel(r){
+    if(r.nfDup) return "NF EMITIDA EM DUPLICIDADE";
+    if(r.dup && r.dup.suspeita) return `MESMO CPF+VALOR ${r.dup.total}x — CONFERIR`;
+    if(r.dup) return `${r.dup.total}x pagamentos (valores diferentes)`;
+    return "";
+  }
+  const wsData = [["Nome","CPF","Valor pago","Status","Nº NF","Valor da NF","Duplicidade"],
+    ...ordered.map(r => [r.nome, r.cpf, r.valor, statusLabel[r.status], r.nfNumero, r.nfValor, dupLabel(r)])];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Conferência NF");
+  XLSX.writeFile(wb, "conferencia_nf.xlsx");
+}
+
+/* ===================== PUXAR DIRETO DA PLANILHA (Google Sheets publicado) ===================== */
+// Mesma técnica já usada no Caixa (pages/caixa.html): a planilha é publicada na web
+// (Arquivo → Compartilhar → Publicar na Web), então dá pra ler sem login/OAuth — só um fetch público.
+// A planilha "NOTAS FISCAIS 3.0" tem uma aba por dia, nomeada "DD MM YYYY" (com espaço).
+const NF_LOTE_SHEET_PUBHTML = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCry8fv2plDONnHIBwl8lveBA6nZpzEZ4CaydiLQtErvzMOm579OlKMDZ2C16SsJa6aJx_UbRHGEMm/pubhtml";
+
+function fetchComTimeout(url, ms){
+  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
+  return Promise.race([fetch(url), timeout]);
+}
+
+// Parser CSV (RFC 4180) — mesma lógica de aspas/quebra de linha do parseTSV, mas separado por vírgula.
+function parseCsvRFC4180(text){
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+  while(i < text.length){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += c; i++; continue;
+    } else {
+      if(c === '"' && field === ""){ inQuotes = true; i++; continue; }
+      if(c === ','){ row.push(field); field = ""; i++; continue; }
+      if(c === '\r'){ i++; continue; }
+      if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+      field += c; i++; continue;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.map(r => r.map(cleanCell));
+}
+
+// Data no formato do <input type="date"> (YYYY-MM-DD) → variações do nome da aba
+function isoParaVariacoesAba(iso){
+  if(!iso || iso.length !== 10) return [];
+  const [y,m,d] = iso.split('-');
+  const D = d, M = m, A = y;
+  const d1 = String(parseInt(d,10)), m1 = String(parseInt(m,10)); // sem zero à esquerda
+  return [
+    `${D} ${M} ${A}`,   // "14 09 2026" — padrão esperado
+    `${D}/${M}/${A}`,   // "14/09/2026"
+    `${D}-${M}-${A}`,   // "14-09-2026"
+    `${d1} ${m1} ${A}`, // "14 9 2026"  — sem zero
+    `${D} ${M} ${A.slice(2)}`, // "14 09 26" — ano curto
+    `${D}/${M}/${A.slice(2)}`, // "14/09/26"
+  ];
+}
+function isoParaNomeAba(iso){
+  const v = isoParaVariacoesAba(iso);
+  return v.length ? v[0] : null;
+}
+
+// Busca o gid da aba com esse nome dentro do pubhtml, monta a URL CSV daquela aba e devolve as linhas já lidas.
+async function buscarLinhasDoSheetPorData(dateIso){
+  const variacoes = new Set(isoParaVariacoesAba(dateIso).map(s => s.toLowerCase()));
+  const nomeAba = isoParaNomeAba(dateIso);
+  if(!nomeAba) throw new Error("Escolha uma data válida.");
+
+  const csvBase = NF_LOTE_SHEET_PUBHTML.replace(/pubhtml.*$/, "pub?output=csv");
+
+  let htxt;
+  try{
+    const r = await fetchComTimeout(NF_LOTE_SHEET_PUBHTML, 15000);
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    htxt = await r.text();
+  }catch(e){
+    throw new Error(`Não consegui acessar a planilha (${e.message}). Confira sua conexão — se o erro persistir, pode ser bloqueio de rede/CORS ao abrir o arquivo direto (file://); tente rodar a partir de um servidor local ou do link publicado no Portal.`);
+  }
+
+  // Extração robusta: 3 regexes cobrem variações do formato pubhtml do Google Sheets
+  const todasAbasEncontradas = [];
+  let gid = null, achado = "";
+  const regexes = [
+    /items\.push\(\{name:\s*"((?:[^"\\]|\\.)*)",\s*pageUrl:\s*"([^"]+)"/g,
+    /"name"\s*:\s*"([^"]+)"[^}]{0,200}"pageUrl"\s*:\s*"([^"]+)"/g,
+    /data-sheet-id="(\d+)"[^>]*>([^<]+)</g,
+  ];
+  for(const re of regexes){
+    if(gid) break;
+    let m;
+    re.lastIndex = 0;
+    while((m = re.exec(htxt)) !== null){
+      const tabName = m[1].replace(/\\\//g, '/').trim();
+      const gidM = m[2].match(/gid=(-?\d+)/);
+      if(tabName) todasAbasEncontradas.push(tabName);
+      if(gidM && variacoes.has(tabName.toLowerCase())){
+        gid = gidM[1]; achado = tabName; break;
+      }
+    }
+  }
+  if(!gid){
+    const lista = todasAbasEncontradas.length
+      ? '\n\nAbas encontradas na planilha: ' + todasAbasEncontradas.slice(0,20).map(function(n){ return '"' + n + '"'; }).join(', ')
+      : "\n\n(Nenhuma aba encontrada no HTML — verifique se a planilha está publicada)";
+    throw new Error(`Não achei uma aba para ${nomeAba} na planilha.${lista}`);
+  }
+
+  const csvUrl = csvBase + "&gid=" + gid;
+  let r2;
+  try{
+    r2 = await fetchComTimeout(csvUrl, 15000);
+  }catch(e){
+    throw new Error(`Achei a aba "${achado}" mas não consegui baixar os dados dela (${e.message}).`);
+  }
+  if(!r2.ok) throw new Error(`HTTP ${r2.status} ao baixar a aba "${achado}".`);
+  const csvText = await r2.text();
+  if(csvText.trim().startsWith('<')) throw new Error("A planilha retornou HTML em vez de CSV — confira se ela está mesmo publicada como CSV.");
+
+  const linhas = parseCsvRFC4180(csvText).filter(r => r.some(c => c !== ""));
+  return { linhas, nomeAbaEncontrada: achado };
+}
+
+// Analisa as linhas brutas do Google Sheets (já em array de arrays) e:
+// 1. Remove linhas de título, seção e notas sem CPF
+// 2. Mantém a linha de cabeçalho de colunas (NOME, CPF, VALOR…) e as linhas com CPF
+// 3. Detecta o Tipo (Consulta/Exame) a partir das linhas de cabeçalho de seção
+//    ("PÓS CONSULTA" → Consulta; "CONSULTA" → Consulta; "EXAME…" → Exame)
+// Retorna { linhasLimpas, tiposPorIndice }
+// tiposPorIndice[i] corresponde a parsedLines[i] após detectColumns() remover o cabeçalho.
+function extrairTipoDoSheet(linhas){
+  var tipoAtual = "";
+  var linhasLimpas = [];
+  var tiposPorIndice = {};
+  var dataIdx = 0;
+  var colHeaderIncluido = false;
+
+  for(var i = 0; i < linhas.length; i++){
+    var row = linhas[i];
+    var naoVazias = row.filter(function(c){ return (c||"").trim() !== ""; });
+    if(naoVazias.length === 0) continue; // linha vazia
+
+    var primeiraCell = (row[0]||"").trim();
+
+    // Linha de título geral ("PLANILHA PADRÃO DE NOTAS FISCAIS…")
+    if(/^planilha\b/i.test(primeiraCell)) continue;
+
+    // Verifica se alguma célula parece um CPF (11 dígitos após remover . e -)
+    var temCpf = row.some(function(c){
+      var digits = (c||"").replace(/[\s.\-]/g,"");
+      return digits.length === 11 && /^\d{11}$/.test(digits);
+    });
+
+    if(!temCpf){
+      // --- Cabeçalhos de seção ---
+      // "PÓS CONSULTA" / "POS CONSULTA" → Tipo = Consulta
+      if(/pós[\s\-]?consulta|pos[\s\-]?consulta/i.test(primeiraCell)){
+        tipoAtual = "Consulta"; continue;
+      }
+      // "CONSULTA" isolada (pode ter poucos extras na mesma linha) → Tipo = Consulta
+      if(/^consulta\b/i.test(primeiraCell)){
+        tipoAtual = "Consulta"; continue;
+      }
+      // "EXAME" / "EXAMES" → Tipo = Exame
+      if(/^exame/i.test(primeiraCell)){
+        tipoAtual = "Exame"; continue;
+      }
+      // "EMISSÃO DE NOTA FISCAL" (aparece como rótulo da seção de exames em algumas abas)
+      if(/emissão\s+de\s+nota|emissao\s+de\s+nota/i.test(primeiraCell)){
+        tipoAtual = "Exame"; continue;
+      }
+
+      // --- Cabeçalho de colunas (NOME, CPF, VALOR…) — inclui uma única vez ---
+      if(!colHeaderIncluido){
+        var isColHeader = /^(nome|paciente)$/i.test(primeiraCell) &&
+                          row.some(function(c){ return /^cpf$/i.test((c||"").trim()); });
+        if(isColHeader){
+          linhasLimpas.push(row);
+          colHeaderIncluido = true;
+          continue;
+        }
+      }
+
+      // Qualquer outra linha sem CPF (notas, rótulos desconhecidos): ignora
+      continue;
+    }
+
+    // Linha com CPF — inclui como dado e registra o tipo da seção corrente
+    linhasLimpas.push(row);
+    if(tipoAtual) tiposPorIndice[dataIdx] = tipoAtual;
+    dataIdx++;
+  }
+
+  return { linhasLimpas: linhasLimpas, tiposPorIndice: tiposPorIndice };
+}
+
+async function puxarDoSheet(){
+  const dateIso = document.getElementById('puxarDataInput').value;
+  const statusEl = document.getElementById('puxarStatus');
+  const btn = document.getElementById('puxarBtn');
+  if(!dateIso){ statusEl.innerHTML = `<span style="color:var(--err)">Escolha uma data primeiro.</span>`; return; }
+
+  btn.disabled = true;
+  btn.textContent = "Buscando...";
+  statusEl.innerHTML = "";
+
+  try{
+    const { linhas, nomeAbaEncontrada } = await buscarLinhasDoSheetPorData(dateIso);
+    if(!linhas.length){ throw new Error(`Aba "${nomeAbaEncontrada}" encontrada, mas está vazia.`); }
+
+    // Processa as linhas: remove seções/títulos e detecta Tipo por seção
+    const { linhasLimpas, tiposPorIndice } = extrairTipoDoSheet(linhas);
+    // Armazena o mapa de tipos para ser aplicado após detectColumns()
+    window.__sheetTipoByIdx = tiposPorIndice;
+
+    // Reaproveita o mesmo pipeline de "colar dados": monta texto separado por TAB e entrega pro detectColumns()
+    const asTsv = linhasLimpas.map(r => r.join('\t')).join('\n');
+    document.getElementById('input').value = asTsv;
+    document.getElementById('dataConsulta').value = dateIso;
+
+    const nDados = linhasLimpas.filter(function(r){
+      return r.some(function(c){ var d=(c||"").replace(/[\s.\-]/g,""); return d.length===11&&/^\d{11}$/.test(d); });
+    }).length;
+    const nTipos = Object.keys(tiposPorIndice).length;
+    const tipoInfo = nTipos > 0 ? ` — ${nTipos} linha(s) com Tipo detectado automaticamente` : "";
+    statusEl.innerHTML = `<span style="color:var(--ok)">✓ ${nDados} paciente(s) puxado(s) da aba "${nomeAbaEncontrada}"${tipoInfo}.</span> Clique em "Avançar → Mapear colunas" abaixo.`;
+  }catch(e){
+    statusEl.innerHTML = `<span style="color:var(--err)">${e.message}</span>`;
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "🔎 Puxar dados desse dia da planilha";
+  }
+}
+
+/* ===================== INIT ===================== */
+loadEntries();
+document.getElementById('regDate').value = todayISO();
+renderAll();
+</script>
+
+<!-- ===================== GATE DE ACESSO — só admin (Firebase Auth) ===================== -->
+<script src="../js/firebase-config.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+  const _app  = initializeApp(window.FIREBASE_CONFIG);
+  const _auth = getAuth(_app);
+  const _db   = getDatabase(_app);
+
+  function negarAcesso(msg){
+    document.getElementById('authGate').innerHTML =
+      `<div style="text-align:center; max-width:360px;">
+         <div style="font-size:1.05rem; font-weight:700; color:#980000; margin-bottom:8px;">Acesso restrito</div>
+         <div style="font-size:0.9rem; color:#6B7280;">${msg || "Esta ferramenta é exclusiva para administradores."}</div>
+       </div>`;
+  }
+
+  onAuthStateChanged(_auth, async (user) => {
+    if(!user){ window.location.replace("../login.html"); return; }
+    try{
+      const snap = await get(ref(_db, 'admin/usuarios/' + user.uid));
+      const dados = snap.exists() ? snap.val() : null;
+      const isAdmin = !!(dados && dados.perms && dados.perms.admin);
+      if(!isAdmin){ negarAcesso(); return; }
+      document.getElementById('authGate').style.display = 'none';
+      document.getElementById('appWrap').style.display = '';
+    }catch(e){
+      negarAcesso("Não foi possível confirmar sua permissão agora. Tente novamente em instantes.");
+    }
+  });
+</script>
+</body>
+</html>
