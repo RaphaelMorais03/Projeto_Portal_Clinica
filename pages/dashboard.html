@@ -1,4 +1,4 @@
-<!-- VERSION: v3.1 | dashboard.html | 22/09/2026 | redesign SaaS + sidebar + NF em Lote via iframe -->
+<!-- VERSION: v3.3 | dashboard.html | 22/09/2026 | NF em Lote: máscaras de CPF, CEP, Telefone e Title-Case em Paciente/Endereço -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,6 +8,7 @@
   <title>Dashboard de Produção</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="../js/firebase-config.js"></script>
   <script src="../js/shared-utils.js"></script>
   <style>
@@ -346,6 +347,238 @@
       .content{margin-left:0 !important; padding:20px 16px 60px !important;}
       .s-header{padding-left:64px !important;}
     }
+  </style>
+
+  <!-- ═══════════ NF EM LOTE — estilos nativos com tokens do dashboard ═══════════ -->
+  <style>
+    /* Mapeamento de tokens NF→Dashboard:
+       --primary   → var(--teal)          #0d9488
+       --title     → var(--navy)          #0A1F44
+       --ok        → var(--green)         #15803d
+       --ok-bg     → var(--green-bg)      #dcfce7
+       --err       → var(--red)           #C62828
+       --warn-text → var(--amber)         #b45309
+       --bg        → var(--gray-50)       #f8fafc
+       --card      → #ffffff
+       --border    → var(--gray-200)      #e2e8f0
+       --muted     → var(--gray-500)      #64748b
+    */
+    #viewNflote { padding: 0; }
+    #viewNflote .wrap {
+      max-width: 900px; margin: 0 auto; padding: 0 0 40px;
+    }
+    #viewNflote h1 {
+      font-size: 1.5rem; font-weight: 800; color: var(--navy); margin-bottom: 6px;
+    }
+    #viewNflote .sub {
+      color: var(--gray-500); font-size: 0.88rem; margin-bottom: 20px; line-height: 1.6;
+    }
+    /* inner tabs */
+    #viewNflote .tabs {
+      display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200);
+      padding-bottom: 0; flex-wrap: wrap;
+    }
+    #viewNflote .tab {
+      padding: 9px 16px; border-radius: 8px 8px 0 0; cursor: pointer;
+      font-size: 0.86rem; font-weight: 600; color: var(--gray-500);
+      border: 2px solid transparent; border-bottom: none;
+      background: transparent; transition: all .15s;
+      margin-bottom: -2px;
+    }
+    #viewNflote .tab:hover { color: var(--navy); background: var(--gray-100); }
+    #viewNflote .tab.active {
+      color: var(--navy); background: white;
+      border-color: var(--gray-200); border-bottom-color: white;
+    }
+    /* pages */
+    #viewNflote .page { display: none; position: relative; min-height: 300px; }
+    #viewNflote .page.active { display: block; }
+    /* wizard overlays */
+    #viewNflote .step-overlay {
+      display: none; padding: 10px 0;
+    }
+    #viewNflote .step-overlay.open { display: block; }
+    #viewNflote .card {
+      background: white; border-radius: 14px; padding: 24px 28px;
+      box-shadow: var(--shadow); margin-bottom: 16px;
+    }
+    #viewNflote .step-kicker {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;
+    }
+    #viewNflote .step-badge {
+      background: var(--navy); color: white; border-radius: 50%;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.82rem; font-weight: 700; flex-shrink: 0;
+    }
+    #viewNflote .step-title {
+      font-size: 1rem; font-weight: 700; color: var(--navy); margin: 0;
+      padding-top: 3px;
+    }
+    #viewNflote .hint {
+      background: var(--gray-50); border-radius: 8px; padding: 10px 14px;
+      font-size: 0.84rem; color: var(--gray-600); margin-bottom: 12px; line-height: 1.6;
+    }
+    #viewNflote label {
+      display: block; font-size: 0.84rem; font-weight: 600;
+      color: var(--gray-700); margin-bottom: 6px;
+    }
+    #viewNflote input[type="text"],
+    #viewNflote input[type="number"],
+    #viewNflote input[type="date"],
+    #viewNflote select,
+    #viewNflote textarea {
+      width: 100%; border: 1.5px solid var(--gray-200); border-radius: 8px;
+      padding: 8px 12px; font-family: 'Inter', sans-serif; font-size: 0.85rem;
+      color: var(--gray-800); background: white; margin-bottom: 12px;
+      transition: border-color .15s;
+    }
+    #viewNflote input:focus,
+    #viewNflote select:focus,
+    #viewNflote textarea:focus {
+      outline: none; border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+    }
+    #viewNflote textarea { min-height: 110px; resize: vertical; }
+    #viewNflote .row {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: center;
+    }
+    #viewNflote button {
+      padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; font-family: 'Inter', sans-serif;
+      background: var(--teal); color: white; transition: background .15s;
+    }
+    #viewNflote button:hover { background: #0f766e; }
+    #viewNflote button.secondary {
+      background: var(--gray-100); color: var(--gray-700); border: 1.5px solid var(--gray-200);
+    }
+    #viewNflote button.secondary:hover { background: var(--gray-200); }
+    #viewNflote button:disabled { opacity: .55; cursor: not-allowed; }
+    #viewNflote .cta { background: var(--navy); }
+    #viewNflote .cta:hover { background: var(--navy-mid); }
+    /* tables */
+    #viewNflote .tablewrap { overflow-x: auto; margin-top: 10px; }
+    #viewNflote table {
+      border-collapse: collapse; width: 100%; font-size: 0.82rem;
+    }
+    #viewNflote th {
+      background: var(--navy); color: white; padding: 8px 10px;
+      text-align: left; font-weight: 600; white-space: nowrap;
+    }
+    #viewNflote td {
+      padding: 7px 10px; border-bottom: 1px solid var(--gray-200);
+      vertical-align: middle;
+    }
+    #viewNflote tr:nth-child(even) td { background: var(--gray-50); }
+    #viewNflote tr.error td { background: #fff0f0; }
+    #viewNflote tr.nfalert td { background: var(--amber-bg); }
+    #viewNflote td input, #viewNflote td select {
+      width: 100%; border: 1px solid var(--gray-200); border-radius: 5px;
+      padding: 4px 7px; font-size: 0.8rem; background: white; margin: 0;
+    }
+    #viewNflote td input:focus, #viewNflote td select:focus {
+      border-color: var(--teal); outline: none;
+    }
+    #viewNflote .mapsel {
+      width: 100%; border: 1px solid var(--gray-200); border-radius: 6px;
+      padding: 4px 7px; font-size: 0.8rem; background: white;
+    }
+    /* badges */
+    #viewNflote .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 0.74rem; font-weight: 700;
+    }
+    #viewNflote .badge.ok { background: var(--green-bg); color: var(--green); }
+    #viewNflote .badge.err { background: #fee2e2; color: var(--red); }
+    #viewNflote .badge.warn { background: var(--amber-bg); color: var(--amber); }
+    /* misc */
+    #viewNflote .summary {
+      background: var(--gray-50); border-radius: 8px; padding: 12px 16px;
+      font-size: 0.85rem; color: var(--gray-700); margin-top: 14px;
+    }
+    #viewNflote .err-list {
+      list-style: none; padding: 0; margin: 8px 0 0; font-size: 0.82rem;
+    }
+    #viewNflote .dupe-warning {
+      background: var(--amber-bg); border: 1px solid var(--amber); border-radius: 8px;
+      padding: 8px 12px; font-size: 0.82rem; color: var(--amber); margin-bottom: 10px;
+    }
+    #viewNflote .saved-banner {
+      display: none; background: var(--green-bg); color: var(--green);
+      border-radius: 8px; padding: 10px 14px; font-weight: 600;
+      font-size: 0.85rem; margin-top: 12px;
+    }
+    /* histórico */
+    #viewNflote .calendar-nav {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+    }
+    #viewNflote .calendar-nav h2 {
+      font-size: 1rem; font-weight: 700; color: var(--navy); text-transform: capitalize;
+    }
+    #viewNflote .calgrid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+    }
+    #viewNflote .calgrid .dow {
+      text-align: center; font-size: 0.75rem; color: var(--gray-500);
+      font-weight: 600; padding-bottom: 4px;
+    }
+    #viewNflote .calgrid .day {
+      aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; font-size: 0.85rem;
+      border: 1px solid var(--gray-200); background: var(--gray-50);
+      cursor: pointer; position: relative;
+    }
+    #viewNflote .calgrid .day.empty { border: none; background: transparent; cursor: default; }
+    #viewNflote .calgrid .day.done {
+      background: var(--green-bg); border-color: var(--green);
+      color: var(--green); font-weight: 700;
+    }
+    #viewNflote .calgrid .day .dot {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin-top: 2px;
+    }
+    #viewNflote .legend {
+      display: flex; gap: 16px; margin-top: 14px; font-size: 0.8rem;
+      color: var(--gray-500); align-items: center;
+    }
+    #viewNflote .legend .swatch {
+      width: 12px; height: 12px; border-radius: 4px; display: inline-block;
+      margin-right: 6px; vertical-align: middle;
+    }
+    #viewNflote ul.history { list-style: none; padding: 0; margin: 0; }
+    #viewNflote ul.history li {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 4px; border-bottom: 1px solid var(--gray-200); font-size: 0.9rem;
+    }
+    #viewNflote ul.history li:last-child { border-bottom: none; }
+    #viewNflote ul.history .meta { color: var(--gray-500); font-size: 0.8rem; }
+    #viewNflote ul.history .del {
+      color: var(--red); background: none; border: none; cursor: pointer;
+      font-size: 0.85rem; padding: 4px 8px;
+    }
+    #viewNflote .empty-state {
+      color: var(--gray-500); font-size: 0.9rem; text-align: center; padding: 20px;
+    }
+    #viewNflote .formrow {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    #viewNflote .formrow > div { flex: 1; min-width: 120px; }
+    /* Comparativo Sinaxys */
+    #viewNflote .sin-lote-card {
+      background: var(--gray-50); border: 1.5px solid var(--gray-200); border-radius: 12px;
+      padding: 16px 18px; margin-bottom: 12px; display: flex;
+      align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    #viewNflote .sin-lote-card .sin-meta { font-size: 0.84rem; color: var(--gray-700); }
+    #viewNflote .sin-lote-card .sin-date { font-weight: 700; color: var(--navy); margin-right: 8px; }
+    #viewNflote .sin-lote-card .sin-count {
+      font-size: 0.8rem; color: var(--gray-500); margin-top: 2px;
+    }
+    #viewNflote .sin-status-ok { color: var(--green); font-weight: 700; }
+    #viewNflote .sin-status-err { color: var(--red); font-weight: 700; }
+    #viewNflote .sin-status-pend { color: var(--amber); font-weight: 700; }
+    #viewNflote footer {
+      color: var(--gray-400); font-size: 0.78rem; text-align: center; margin-top: 30px;
+    }
+    #viewNflote input[type="file"] { margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -996,7 +1229,7 @@
       if (tab === 'visao')    { preencherMesVisao(); renderVisao(); }
       if (tab === 'contratos'){ preencherMesContratos(); renderContratos(); }
       if (tab === 'odonto')   { dshOdPreencherMes(); }
-      if (tab === 'nflote')   { /* iframe carrega sozinho */ }
+      if (tab === 'nflote')   { /* painel nativo — sem ação extra */ }
     };
 
     function preencherMesContratos() {
@@ -2415,36 +2648,1471 @@
     });
   </script>
 
-  <!-- ═══════════ NF EM LOTE (via iframe — mantém funcionamento 100%) ═══════════ -->
-  <script>
-    (function() {
-      var _origSwitch2 = window.switchMainTab;
-      window.switchMainTab = function(tab) {
-        if (tab === 'nflote') {
-          document.querySelectorAll('.view-panel').forEach(function(p) {
-            p.classList.remove('active');
-            p.style.removeProperty('display');
-          });
-          var vn = document.getElementById('viewNfLote');
-          if (vn) vn.classList.add('active');
-          document.querySelectorAll('.main-tab').forEach(function(b){ b.classList.remove('active'); });
-          try { localStorage.setItem('dsh_lastTab', 'nflote'); } catch(e) {}
-          return;
-        }
-        var vn = document.getElementById('viewNfLote');
-        if (vn) { vn.classList.remove('active'); vn.style.removeProperty('display'); }
-        if (_origSwitch2) _origSwitch2(tab);
-      };
+  <!-- ═══════════ NF EM LOTE — painel nativo (sem iframe) ═══════════ -->
+  <div class="view-panel" id="viewNflote">
+    <div class="wrap" id="nflWrap">
+      <h1>NF em Lote</h1>
+      <p class="sub">Gere a planilha a partir dos dados colados, confira as NFs emitidas e compare com o Sinaxys — tudo em um só lugar.</p>
 
-      var content = document.querySelector('.content');
-      if (content && !document.getElementById('viewNfLote')) {
-        var panel = document.createElement('div');
-        panel.className = 'view-panel';
-        panel.id = 'viewNfLote';
-        panel.innerHTML = '<iframe src="nf-lote.html" style="width:100%; height:calc(100vh - 140px); border:0; border-radius:14px; background:white; display:block;"></iframe>';
-        content.appendChild(panel);
+      <div class="tabs">
+        <div class="tab active" id="tabGerarBtn" onclick="nflShowTab('gerar')">📄 Gerar planilha</div>
+        <div class="tab" id="tabConferirBtn" onclick="nflShowTab('conferir')">✅ Conferir NF</div>
+        <div class="tab" id="tabSinaxysBtn" onclick="nflShowTab('sinaxys')">📊 Comparativo Sinaxys</div>
+        <div class="tab" id="tabHistBtn" onclick="nflShowTab('historico')">📅 Histórico</div>
+      </div>
+
+      <!-- ===== GERAR PLANILHA ===== -->
+      <div class="page active" id="nfl-page-gerar">
+        <div class="step-overlay open" id="ov-intro">
+          <div class="card">
+            <div class="step-kicker"><span class="step-badge">i</span><p class="step-title">Como funciona esta ferramenta</p></div>
+            <div class="hint">Esta ferramenta monta a planilha de <b>NF em lote</b> no formato exato que o Sinaxys aceita, e depois confere se cada pagamento recebido realmente virou nota fiscal.</div>
+            <div class="hint">
+              Fluxo em 4 abas:<br>
+              1️⃣ <b>Gerar Planilha</b> — cole ou importe os dados, mapeie as colunas, cruze com os agendados e confira o CEP antes de baixar.<br>
+              2️⃣ <b>Conferir NF</b> — após emitir, carregue pagamentos + exportação do Sinaxys e veja quem falta, quem tem valor divergente e quem foi recusado.<br>
+              3️⃣ <b>Comparativo Sinaxys</b> — salve o lote gerado no Firebase e depois compare com o retorno do Sinaxys para ver o que passou e o que deu erro.<br>
+              4️⃣ <b>Histórico</b> — calendário simples dos dias em que o lote foi enviado.
+            </div>
+            <div class="row">
+              <button class="cta" onclick="nflCloseStep('ov-intro'); nflOpenStep('ov-paste');">Prosseguir →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-paste">
+          <div class="card">
+            <div class="step-kicker"><span class="step-badge">1</span><p class="step-title">Etapa 1 — dados dos pacientes</p></div>
+            <div class="hint" style="background:var(--teal-bg); border:1px solid var(--teal); border-radius:8px; padding:10px 12px;">
+              <b>🔎 Puxar direto da planilha "NOTAS FISCAIS 3.0"</b> — escolha a data e a ferramenta busca as linhas daquela aba automaticamente.
+            </div>
+            <div class="row" style="align-items:center; margin-top:8px;">
+              <input type="date" id="puxarDataInput" style="max-width:170px;">
+              <button id="puxarBtn" class="secondary" onclick="nflPuxarDoSheet()">🔎 Puxar dados desse dia da planilha</button>
+            </div>
+            <div class="hint" id="puxarStatus"></div>
+            <label for="dataConsulta" style="margin-top:18px;">Data (opcional — preenche linhas sem data própria)</label>
+            <input type="date" id="dataConsulta" style="margin-bottom:16px;">
+            <label for="nflInput">Ou cole aqui os dados (separados por TAB, como ao copiar do Excel)</label>
+            <textarea id="nflInput" placeholder="Cole aqui os dados que você tiver, em qualquer ordem..."></textarea>
+            <div class="hint">Não precisa ter todos os campos nem estar na ordem do modelo — você mapeia as colunas no próximo passo.</div>
+            <div class="row">
+              <button onclick="nflDetectColumns()">Avançar → Mapear colunas</button>
+              <button class="secondary" onclick="nflLoadExample()">Ver exemplo</button>
+              <button class="secondary" onclick="nflClearAll()">Limpar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-map">
+          <div class="card" id="mapCard">
+            <div class="step-kicker"><span class="step-badge">2</span><p class="step-title">Etapa 2 — diga o que é cada coluna</p></div>
+            <div class="hint">Prévia mostra até 3 linhas. O campo sugerido é escolhido olhando várias linhas. Escolha "Não usar" para colunas que não quer importar.</div>
+            <div id="mapDupeWarning" class="dupe-warning" style="display:none;"></div>
+            <div class="tablewrap"><table id="mapTable"></table></div>
+            <div class="row">
+              <button class="secondary" onclick="nflReorganizeColumns()">🔄 Organizar automaticamente</button>
+            </div>
+            <div class="row">
+              <button onclick="nflGoToAgendStep()">Avançar → Cruzar com agendados</button>
+              <button class="secondary" onclick="nflCloseStep('ov-map'); nflOpenStep('ov-paste');">Voltar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-agend">
+          <div class="card" id="agendCard">
+            <div class="step-kicker"><span class="step-badge">3</span><p class="step-title">Etapa 3 — cruzar com agendados (opcional)</p></div>
+            <div class="hint">Traga a lista de agendados para completar automaticamente o que estiver faltando — cruzamento por <b>CPF</b>.</div>
+            <div class="row" style="margin-bottom:6px;">
+              <label for="agendFile" style="font-weight:400;font-size:0.82rem;margin:0;">📎 Carregar arquivo .xlsx do relatório</label>
+            </div>
+            <input type="file" id="agendFile" accept=".xlsx,.xls,.csv" onchange="nflHandleAgendFile(event)">
+            <div class="hint" style="margin-top:14px;">Ou cole os dados abaixo (separados por TAB):</div>
+            <textarea id="agendInput" placeholder="Cole aqui a lista de agendados..."></textarea>
+            <div class="row">
+              <button onclick="nflCruzarAgendados()">🔗 Cruzar por CPF e preencher faltantes</button>
+            </div>
+            <div class="hint" id="agendResultHint"></div>
+            <div class="row">
+              <button onclick="nflGoToCepStep()">Avançar → Verificar CEP</button>
+              <button class="secondary" onclick="nflCloseStep('ov-agend'); nflOpenStep('ov-map');">Voltar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-cep">
+          <div class="card" id="cepCard">
+            <div class="step-kicker"><span class="step-badge">4</span><p class="step-title">Etapa 4 — completar endereço pelo CEP (opcional)</p></div>
+            <div class="hint" id="cepHint">Se faltar endereço, use o botão para completar Logradouro, Bairro, Cidade e UF via ViaCEP. Se já estiver preenchido, clique direto em "Gerar planilha".</div>
+            <div class="row" style="align-items:center;">
+              <label for="ufPadrao" style="font-weight:400;font-size:0.82rem;margin:0;">UF padrão:</label>
+              <select id="ufPadrao" style="max-width:90px;">
+                <option value="">—</option>
+                <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option>
+                <option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option>
+                <option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+                <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option>
+                <option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option>
+                <option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+                <option value="SP" selected>SP</option><option value="SE">SE</option><option value="TO">TO</option>
+              </select>
+            </div>
+            <div class="row">
+              <button id="buscarCepBtn" onclick="nflBuscarCeps()">🔍 Buscar CEP</button>
+            </div>
+            <div class="tablewrap" style="margin-top:14px;"><table id="cepTable"></table></div>
+            <ul class="err-list" id="cepErrList"></ul>
+            <div class="row">
+              <button id="genBtn" onclick="nflProcessData()">Gerar planilha</button>
+              <button class="secondary" onclick="nflCloseStep('ov-cep'); nflOpenStep('ov-agend');">Voltar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-result">
+          <div class="card" id="resultCard">
+            <div class="step-kicker"><span class="step-badge">✓</span><p class="step-title">Resultado</p></div>
+            <div class="tablewrap"><table id="resultTable"></table></div>
+            <div class="summary" id="nflSummary"></div>
+            <ul class="err-list" id="errList"></ul>
+            <div class="row">
+              <button onclick="nflDownloadXlsx()">⬇ Baixar planilhas (.xlsx): Consultas + Exames + Incompletos</button>
+              <button class="secondary" onclick="nflCopyClean()">Copiar dados limpos</button>
+              <button class="secondary" onclick="nflCloseStep('ov-result'); nflOpenStep('ov-paste');">Começar novo lote</button>
+            </div>
+            <div class="row" style="margin-top:6px;">
+              <button onclick="nflSalvarLoteNoFirebase()" style="background:var(--purple);">💾 Salvar lote no Comparativo Sinaxys</button>
+            </div>
+            <div class="saved-banner" id="savedBanner">✓ Registrado no histórico!</div>
+            <div id="sinaxySaveBanner" style="display:none;background:var(--purple-bg);color:var(--purple);border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;margin-top:8px;"></div>
+          </div>
+        </div>
+      </div><!-- /page gerar -->
+
+      <!-- ===== CONFERIR NF ===== -->
+      <div class="page" id="nfl-page-conferir">
+        <div class="step-overlay open" id="ov-conf1">
+          <div class="card">
+            <div class="step-kicker"><span class="step-badge">1</span><p class="step-title">Etapa 1 — pagamentos recebidos</p></div>
+            <div class="hint">Carregue a planilha com os pagamentos que precisam virar NF (Nome, CPF, Valor). Aceita .xlsx, .xls ou .csv.</div>
+            <input type="file" id="confPagamentosFile" accept=".xlsx,.xls,.csv" onchange="nflHandleConfFile(event, 'pagamentos')">
+            <div class="hint" style="margin-top:14px;">Ou cole os dados (separados por TAB):</div>
+            <textarea id="confPagamentosInput" placeholder="Cole aqui os pagamentos a conferir..."></textarea>
+            <div class="row">
+              <button onclick="nflDetectConfColumns('pagamentos')">Detectar colunas</button>
+            </div>
+            <div class="tablewrap" style="margin-top:14px;"><table id="confPagamentosMapTable"></table></div>
+            <div class="row">
+              <button onclick="nflCloseStep('ov-conf1'); nflOpenStep('ov-conf2');">Avançar → Notas emitidas</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-conf2">
+          <div class="card">
+            <div class="step-kicker"><span class="step-badge">2</span><p class="step-title">Etapa 2 — notas fiscais emitidas (exportação Sinaxys)</p></div>
+            <div class="hint">Carregue a exportação do Sinaxys com CPF, Valor e Número da NF.</div>
+            <input type="file" id="confNfFile" accept=".xlsx,.xls,.csv" onchange="nflHandleConfFile(event, 'nf')">
+            <div class="hint" style="margin-top:14px;">Ou cole os dados (separados por TAB):</div>
+            <textarea id="confNfInput" placeholder="Cole aqui as notas fiscais emitidas..."></textarea>
+            <div class="row">
+              <button onclick="nflDetectConfColumns('nf')">Detectar colunas</button>
+            </div>
+            <div class="tablewrap" style="margin-top:14px;"><table id="confNfMapTable"></table></div>
+            <div class="row">
+              <button onclick="nflCloseStep('ov-conf2'); nflOpenStep('ov-conf3');">Avançar → Conferir</button>
+              <button class="secondary" onclick="nflCloseStep('ov-conf2'); nflOpenStep('ov-conf1');">Voltar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-conf3">
+          <div class="card">
+            <div class="step-kicker"><span class="step-badge">3</span><p class="step-title">Etapa 3 — conferir</p></div>
+            <div class="hint">Cruzamento por <b>CPF</b> usando o <b>Valor</b> para diferenciar emissões. Ajuste a tolerância se houver diferenças de centavos.</div>
+            <div class="row" style="align-items:center;">
+              <label for="confTolerancia" style="font-weight:400;font-size:0.82rem;margin:0;">Tolerância no valor (R$):</label>
+              <input type="number" id="confTolerancia" value="0.00" step="0.01" min="0" style="max-width:100px;">
+            </div>
+            <div class="row">
+              <button onclick="nflConferirNotas()">🔍 Conferir pagamentos × notas emitidas</button>
+              <button class="secondary" onclick="nflCloseStep('ov-conf3'); nflOpenStep('ov-conf2');">Voltar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-confResult">
+          <div class="card" id="confResultCard">
+            <div class="step-kicker"><span class="step-badge">✓</span><p class="step-title">Resultado da conferência</p></div>
+            <div class="summary" id="confSummary"></div>
+            <div class="tablewrap" style="margin-top:10px;"><table id="confResultTable"></table></div>
+            <div class="row">
+              <button onclick="nflDownloadConfXlsx()">⬇ Baixar planilha de conferência (.xlsx)</button>
+              <button class="secondary" onclick="nflCloseStep('ov-confResult'); nflOpenStep('ov-conf3');">Voltar</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /page conferir -->
+
+      <!-- ===== COMPARATIVO SINAXYS ===== -->
+      <div class="page" id="nfl-page-sinaxys">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">S</span><p class="step-title">Comparativo Sinaxys</p></div>
+          <div class="hint">Salve o lote gerado na aba <b>Gerar Planilha</b> clicando em "💾 Salvar lote no Comparativo Sinaxys". Depois, carregue o retorno do Sinaxys (exportação de NFs emitidas) abaixo para ver o que passou e o que deu erro.</div>
+          <div class="hint" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple);">
+            <b>Como funciona:</b> cada lote salvo fica armazenado no Firebase com data, nome e CPF de cada paciente. Quando você importar o retorno do Sinaxys, a ferramenta cruza por CPF e mostra: ✅ emitida | ❌ não emitida | ⚠ recusada (número longo = protocolo rejeitado).
+          </div>
+        </div>
+
+        <div class="card">
+          <label>1. Lotes salvos no Firebase</label>
+          <div id="sinLotesList"><div class="empty-state">Carregando lotes...</div></div>
+          <div class="row" style="margin-top:8px;">
+            <button class="secondary" onclick="nflSinCarregarLotes()">🔄 Recarregar lotes</button>
+          </div>
+        </div>
+
+        <div class="card" id="sinComparativoCard" style="display:none;">
+          <label>2. Comparar lote selecionado com retorno Sinaxys</label>
+          <div class="hint" id="sinLoteInfo"></div>
+          <div class="hint" style="margin-top:8px;">Carregue a exportação do Sinaxys (NFs emitidas) para este lote:</div>
+          <input type="file" id="sinRetornoFile" accept=".xlsx,.xls,.csv" onchange="nflSinHandleRetorno(event)">
+          <div class="hint" style="margin-top:8px;">Ou cole os dados (separados por TAB):</div>
+          <textarea id="sinRetornoInput" placeholder="Cole aqui o retorno do Sinaxys..."></textarea>
+          <div class="row">
+            <button onclick="nflSinDetectarRetorno()">Detectar colunas do retorno</button>
+          </div>
+          <div class="tablewrap" style="margin-top:10px;"><table id="sinRetornoMapTable"></table></div>
+          <div class="row" style="margin-top:6px;">
+            <button onclick="nflSinConferir()" style="background:var(--purple);">📊 Comparar lote × retorno Sinaxys</button>
+          </div>
+        </div>
+
+        <div class="card" id="sinResultadoCard" style="display:none;">
+          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">✓</span><p class="step-title">Resultado do comparativo</p></div>
+          <div class="summary" id="sinResultSummary"></div>
+          <div class="tablewrap" style="margin-top:10px;"><table id="sinResultTable"></table></div>
+          <div class="row">
+            <button onclick="nflSinDownloadXlsx()" style="background:var(--purple);">⬇ Baixar comparativo (.xlsx)</button>
+            <button class="secondary" onclick="nflSinExcluirLote()" style="color:var(--red); border-color:var(--red);">🗑 Excluir lote selecionado</button>
+          </div>
+        </div>
+      </div><!-- /page sinaxys -->
+
+      <!-- ===== HISTÓRICO ===== -->
+      <div class="page" id="nfl-page-historico">
+        <div class="card">
+          <label>Registrar uma exportação manualmente</label>
+          <div class="formrow">
+            <div>
+              <label for="regDate" style="font-weight:400;font-size:0.78rem;">Data</label>
+              <input type="date" id="regDate">
+            </div>
+            <div>
+              <label for="regCount" style="font-weight:400;font-size:0.78rem;">Qtd. linhas (opcional)</label>
+              <input type="number" id="regCount" placeholder="ex: 12" min="0">
+            </div>
+            <div style="flex:2;">
+              <label for="regNote" style="font-weight:400;font-size:0.78rem;">Observação (opcional)</label>
+              <input type="text" id="regNote" placeholder="ex: lote da clínica X">
+            </div>
+          </div>
+          <button onclick="nflAddEntryManual()">+ Marcar como feito</button>
+        </div>
+
+        <div class="card">
+          <div class="calendar-nav">
+            <button class="secondary" onclick="nflChangeMonth(-1)">‹ Anterior</button>
+            <h2 id="calTitle"></h2>
+            <button class="secondary" onclick="nflChangeMonth(1)">Próximo ›</button>
+          </div>
+          <div class="calgrid" id="calGrid"></div>
+          <div class="legend">
+            <span><span class="swatch" style="background:var(--green-bg); border:1px solid var(--green);"></span>Dia com exportação registrada</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Todas as datas registradas</label>
+          <ul class="history" id="historyList"></ul>
+        </div>
+      </div><!-- /page historico -->
+
+      <footer>Histórico salvo localmente neste navegador. Lotes do Comparativo Sinaxys salvos no Firebase.</footer>
+    </div><!-- /wrap -->
+  </div><!-- /viewNflote -->
+
+  <!-- ═══════════ NF EM LOTE — JavaScript nativo ═══════════ -->
+  <script>
+  /* ===================== NF EM LOTE — prefixo "nfl" em todas as funções/vars globais ===================== */
+
+  /* --- Etapas (wizard) --- */
+  function nflOpenStep(id){ var el=document.getElementById(id); if(el) el.classList.add('open'); }
+  function nflCloseStep(id){ var el=document.getElementById(id); if(el) el.classList.remove('open'); }
+
+  /* --- Navegação entre abas internas --- */
+  function nflShowTab(name){
+    ['gerar','conferir','sinaxys','historico'].forEach(function(n){
+      var p=document.getElementById('nfl-page-'+n);
+      var b=document.getElementById('tab'+(n.charAt(0).toUpperCase()+n.slice(1))+'Btn');
+      if(p) p.classList.toggle('active', n===name);
+      if(b) b.classList.toggle('active', n===name);
+    });
+    if(name==='historico') nflRenderAll();
+    if(name==='sinaxys') nflSinCarregarLotes();
+  }
+
+  /* --- Histórico (localStorage) --- */
+  var NFL_STORAGE_KEY = "nf_lote_historico";
+  var nflEntries = [];
+  var nflCalDate = new Date();
+
+  function nflLoadEntries(){
+    try{ var r=localStorage.getItem(NFL_STORAGE_KEY); nflEntries=r?JSON.parse(r):[]; }
+    catch(e){ nflEntries=[]; }
+  }
+  function nflSaveEntries(){
+    try{ localStorage.setItem(NFL_STORAGE_KEY, JSON.stringify(nflEntries)); }catch(e){}
+  }
+  function nflTodayISO(){ return new Date().toISOString().slice(0,10); }
+
+  function nflAddEntry(date, count, note){
+    nflEntries.push({ date:date, count:count||null, note:note||null, ts:Date.now() });
+    nflEntries.sort(function(a,b){ return a.date<b.date?1:-1; });
+    nflSaveEntries();
+  }
+  function nflAddEntryManual(){
+    var date=document.getElementById('regDate').value||nflTodayISO();
+    var count=document.getElementById('regCount').value;
+    var note=document.getElementById('regNote').value.trim();
+    nflAddEntry(date, count, note);
+    document.getElementById('regCount').value='';
+    document.getElementById('regNote').value='';
+    nflRenderAll();
+  }
+  function nflDeleteEntry(ts){
+    nflEntries=nflEntries.filter(function(e){ return e.ts!==ts; });
+    nflSaveEntries(); nflRenderAll();
+  }
+  function nflFormatDateBR(iso){ var p=iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+
+  function nflRenderHistory(){
+    var list=document.getElementById('historyList');
+    if(!nflEntries.length){ list.innerHTML='<div class="empty-state">Nenhuma exportação registrada ainda.</div>'; return; }
+    list.innerHTML=nflEntries.map(function(e){
+      return '<li><span><b>'+nflFormatDateBR(e.date)+'</b>'+(e.note?' — '+e.note:'')+(e.count?'<span class="meta"> · '+e.count+' linha(s)</span>':'')+
+        '</span><button class="del" onclick="nflDeleteEntry('+e.ts+')">Remover</button></li>';
+    }).join('');
+  }
+
+  var NFL_DOW=['D','S','T','Q','Q','S','S'];
+  var NFL_MONTHS=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+  function nflChangeMonth(delta){ nflCalDate.setMonth(nflCalDate.getMonth()+delta); nflRenderCalendar(); }
+  function nflRenderCalendar(){
+    var year=nflCalDate.getFullYear(), month=nflCalDate.getMonth();
+    document.getElementById('calTitle').textContent=NFL_MONTHS[month]+' de '+year;
+    var doneDates=new Set(nflEntries.map(function(e){ return e.date; }));
+    var firstDay=new Date(year,month,1);
+    var startWeekday=firstDay.getDay();
+    var daysInMonth=new Date(year,month+1,0).getDate();
+    var grid=document.getElementById('calGrid');
+    var html=NFL_DOW.map(function(d){ return '<div class="dow">'+d+'</div>'; }).join('');
+    for(var i=0;i<startWeekday;i++) html+='<div class="day empty"></div>';
+    for(var d=1;d<=daysInMonth;d++){
+      var iso=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var isDone=doneDates.has(iso);
+      html+='<div class="day '+(isDone?'done':'')+'" onclick="nflQuickFill(\''+iso+'\')">'
+        +d+(isDone?'<div class="dot"></div>':'')+'</div>';
+    }
+    grid.innerHTML=html;
+  }
+  function nflQuickFill(iso){ document.getElementById('regDate').value=iso; }
+  function nflRenderAll(){ nflRenderHistory(); nflRenderCalendar(); }
+
+  /* --- Constantes de colunas --- */
+  var NFL_HEADERS=["Data de Consulta","Paciente","CPF","Email","Telefone","CEP","Logradouro","Número","Complemento","Bairro","Cidade","UF","Valor","Descrição do Procedimento"];
+
+  /* --- Dados globais NF --- */
+  var nflCurrentRows=[];
+  var nflParsedLines=[];
+  var nflNumCols=0;
+  var nflAgendMatches=null;
+  var nflAgendParsedLines=[];
+  var nflAgendColMapping=[];
+  var nflAlertMsgs=[];
+  var nflWarnMsgs=[];
+
+  /* --- Helpers --- */
+  function nflOnlyDigits(s){ return (s||'').toString().replace(/\D/g,''); }
+  function nflCleanCell(s){ return (s||'').toString().replace(/\s+/g,' ').trim(); }
+  function nflXlsxCellToText(v){ if(v===undefined||v===null||v==='') return ''; if(typeof v==='number') return v.toFixed(2); return v.toString(); }
+
+  /* --- Formatadores de máscara --- */
+  function nflFmtCPF(v){
+    var d=nflOnlyDigits(v).slice(0,11);
+    if(d.length<=3) return d;
+    if(d.length<=6) return d.slice(0,3)+'.'+d.slice(3);
+    if(d.length<=9) return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6);
+    return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9);
+  }
+  function nflFmtCEP(v){
+    var d=nflOnlyDigits(v).slice(0,8);
+    if(d.length<=5) return d;
+    return d.slice(0,5)+'-'+d.slice(5);
+  }
+  function nflFmtTel(v){
+    var d=nflOnlyDigits(v).slice(0,11);
+    if(d.length===0) return '';
+    if(d.length<=2) return '('+d;
+    if(d.length<=6) return '('+d.slice(0,2)+') '+d.slice(2);
+    if(d.length<=10) return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);
+    return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7);
+  }
+  function nflFmtNome(v){
+    if(!v) return '';
+    var minors=['de','da','do','das','dos','e','em','a','o','ao'];
+    return v.toLowerCase().split(' ').map(function(w,i){
+      if(!w) return w;
+      if(i>0 && minors.indexOf(w)!==-1) return w;
+      return w.charAt(0).toUpperCase()+w.slice(1);
+    }).join(' ');
+  }
+  /* retorna o formatador para cada índice de coluna */
+  var NFL_COL_FMT = (function(){
+    var map={};
+    map[NFL_HEADERS.indexOf('CPF')]       = nflFmtCPF;
+    map[NFL_HEADERS.indexOf('CEP')]       = nflFmtCEP;
+    map[NFL_HEADERS.indexOf('Telefone')]  = nflFmtTel;
+    map[NFL_HEADERS.indexOf('Paciente')]  = nflFmtNome;
+    map[NFL_HEADERS.indexOf('Logradouro')]= nflFmtNome;
+    map[NFL_HEADERS.indexOf('Bairro')]    = nflFmtNome;
+    map[NFL_HEADERS.indexOf('Cidade')]    = nflFmtNome;
+    return map;
+  })();
+  /* tipo de máscara por coluna (para oninput) */
+  var NFL_COL_MASK = (function(){
+    var m={};
+    m[NFL_HEADERS.indexOf('CPF')]      = 'cpf';
+    m[NFL_HEADERS.indexOf('CEP')]      = 'cep';
+    m[NFL_HEADERS.indexOf('Telefone')] = 'tel';
+    return m;
+  })();
+  /* aplicado em tempo real no campo */
+  function nflMaskInput(el, maskType){
+    var cur = el.selectionStart;
+    var rawLen = el.value.length;
+    if(maskType==='cpf')      el.value = nflFmtCPF(el.value);
+    else if(maskType==='cep') el.value = nflFmtCEP(el.value);
+    else if(maskType==='tel') el.value = nflFmtTel(el.value);
+    /* ajusta cursor para não pular após dígito */
+    var diff = el.value.length - rawLen;
+    try{ el.setSelectionRange(cur+diff, cur+diff); }catch(e){}
+  }
+
+  function nflIsValidCPF(digits){
+    if(digits.length!==11) return false;
+    if(/^(\d)\1{10}$/.test(digits)) return false;
+    var sum=0;
+    for(var i=0;i<9;i++) sum+=parseInt(digits[i],10)*(10-i);
+    var rev=11-(sum%11); if(rev>=10) rev=0;
+    if(rev!==parseInt(digits[9],10)) return false;
+    sum=0;
+    for(var i=0;i<10;i++) sum+=parseInt(digits[i],10)*(11-i);
+    rev=11-(sum%11); if(rev>=10) rev=0;
+    return rev===parseInt(digits[10],10);
+  }
+
+  function nflCleanValor(s){
+    if(s===undefined||s===null||s==='') return {value:'',ok:true,guessed:false};
+    var str=s.toString().trim().replace(/R\$\s?/gi,'').trim();
+    var guessed=false;
+    if(str.includes(',')&&str.includes('.')) str=str.replace(/\./g,'').replace(',','.');
+    else if(str.includes(',')) str=str.replace(',','.');
+    else if(/^\d+$/.test(str)&&str.length>=3){ str=str.slice(0,-2)+'.'+str.slice(-2); guessed=true; }
+    var num=parseFloat(str);
+    if(isNaN(num)) return {value:s,ok:false,guessed:false};
+    return {value:num.toFixed(2),ok:true,guessed:guessed};
+  }
+
+  function nflValidEmail(s){ if(!s) return true; return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim()); }
+
+  function nflNormHeaderKey(s){ return (s||'').toLowerCase().replace(/[^a-záéíóúãõâêîôûçàü0-9]+/g,' ').trim(); }
+
+  var NFL_KNOWN_HEADERS={
+    'nome':'Paciente','paciente':'Paciente','nome do paciente':'Paciente','cliente':'Paciente',
+    'cpf':'CPF','cpf cliente':'CPF','cpf paciente':'CPF',
+    'email':'Email','e-mail':'Email','email do paciente':'Email',
+    'telefone':'Telefone','celular':'Telefone','fone':'Telefone','tel':'Telefone',
+    'cep':'CEP',
+    'logradouro':'Logradouro','rua':'Logradouro','endereço':'Logradouro',
+    'numero':'Número','número':'Número','num':'Número','nº':'Número',
+    'complemento':'Complemento',
+    'bairro':'Bairro',
+    'cidade':'Cidade','municipio':'Cidade','município':'Cidade',
+    'uf':'UF','estado':'UF',
+    'valor':'Valor','valor total':'Valor','valor do procedimento':'Valor','total':'Valor',
+    'descricao':'Descrição do Procedimento','descrição':'Descrição do Procedimento',
+    'procedimento':'Descrição do Procedimento','descrição do procedimento':'Descrição do Procedimento',
+    'data':'Data de Consulta','data consulta':'Data de Consulta','data de consulta':'Data de Consulta',
+    'data atendimento':'Data de Consulta','data de atendimento':'Data de Consulta'
+  };
+
+  function nflGuessField(sample){
+    var s=(sample||'').trim();
+    if(!s) return '';
+    var digits=nflOnlyDigits(s);
+    if(digits.length===11&&nflIsValidCPF(digits)) return 'CPF';
+    if(digits.length===8&&/^\d{5}-?\d{3}$/.test(s)) return 'CEP';
+    if(/^\(?\d{2}\)?\s?9?\d{4}-?\d{4}$/.test(s)) return 'Telefone';
+    if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return 'Email';
+    if(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(s)) return 'Data de Consulta';
+    if(/^R?\$?\s?\d+([.,]\d{1,2})?$/.test(s)) return 'Valor';
+    if(/^[A-Za-z]{2}$/.test(s)) return 'UF';
+    return '';
+  }
+  function nflGuessFieldColumn(rows,colIdx,sampleSize){
+    var votes={};var checked=0;
+    for(var i=0;i<rows.length&&checked<sampleSize;i++){
+      var val=(rows[i][colIdx]||'').trim(); if(!val) continue; checked++;
+      var g=nflGuessField(val); if(g) votes[g]=(votes[g]||0)+1;
+    }
+    var best='',bestCount=0;
+    Object.keys(votes).forEach(function(k){ if(votes[k]>bestCount){best=k;bestCount=votes[k];} });
+    return best;
+  }
+
+  function nflParseTSV(text){
+    var rows=[],row=[],field='',inQuotes=false,i=0;
+    while(i<text.length){
+      var c=text[i];
+      if(inQuotes){
+        if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQuotes=false;i++;continue; }
+        field+=c;i++;continue;
+      } else {
+        if(c==='"'&&field===''){inQuotes=true;i++;continue;}
+        if(c==='\t'){row.push(field);field='';i++;continue;}
+        if(c==='\r'){i++;continue;}
+        if(c==='\n'){row.push(field);rows.push(row);row=[];field='';i++;continue;}
+        field+=c;i++;continue;
       }
-    })();
+    }
+    if(field.length||row.length){row.push(field);rows.push(row);}
+    return rows.map(function(r){ return r.map(nflCleanCell); });
+  }
+
+  /* --- ViaCEP --- */
+  var nflViaCepCache={};
+  async function nflFetchViaCep(cep){
+    if(nflViaCepCache[cep]!==undefined) return nflViaCepCache[cep];
+    try{
+      var resp=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+      if(!resp.ok){var r={ok:false,reason:'erro HTTP '+resp.status};nflViaCepCache[cep]=r;return r;}
+      var data=await resp.json();
+      if(data.erro){var r={ok:false,reason:'CEP não existe na base do ViaCEP'};nflViaCepCache[cep]=r;return r;}
+      var r={ok:true,logradouro:data.logradouro||'',bairro:data.bairro||'',cidade:data.localidade||'',uf:data.uf||''};
+      nflViaCepCache[cep]=r;return r;
+    }catch(e){
+      var r={ok:false,reason:'erro de conexão ('+( e.message||'desconhecido')+')'};
+      nflViaCepCache[cep]=r;return r;
+    }
+  }
+
+  /* --- Carregar arquivo de agendados --- */
+  function nflHandleAgendFile(event){
+    var file=event.target.files[0]; if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var data=new Uint8Array(e.target.result);
+        var wb=XLSX.read(data,{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        if(!rows.length){alert('Arquivo vazio.');return;}
+        document.getElementById('agendInput').value=rows.map(function(r){
+          return r.map(nflXlsxCellToText).join('\t');
+        }).join('\n');
+      }catch(err){alert('Não consegui ler esse arquivo.');}
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  /* --- Detecção de colunas --- */
+  function nflDetectColumns(){
+    var raw=document.getElementById('nflInput').value.trim();
+    if(!raw){alert('Cole os dados primeiro.');return;}
+    nflParsedLines=nflParseTSV(raw);
+    if(nflParsedLines.length<1){alert('Não consegui ler nenhuma linha.');return;}
+    nflNumCols=Math.max.apply(null,nflParsedLines.map(function(r){return r.length;}));
+    nflBuildMapTable();
+    nflCloseStep('ov-paste');
+    nflOpenStep('ov-map');
+  }
+
+  function nflBuildMapTable(){
+    var headerRow=nflParsedLines[0]||[];
+    var dataRows=nflParsedLines.slice(1);
+    var table=document.getElementById('mapTable');
+    var headHtml='<tr>',selectHtml='<tr>',previewHtml='';
+    var previewCount=Math.min(3,dataRows.length);
+    var usedFields={};
+    for(var i=0;i<nflNumCols;i++){
+      var label=nflCleanCell(headerRow[i]||('Coluna '+(i+1)));
+      headHtml+='<th>'+label+'</th>';
+      var guess=NFL_KNOWN_HEADERS[nflNormHeaderKey(headerRow[i]||'')]||nflGuessFieldColumn(dataRows,i,10);
+      if(guess&&usedFields[guess]){ guess=''; }
+      if(guess) usedFields[guess]=true;
+      var opts='<option value="">— Não usar —</option>';
+      NFL_HEADERS.forEach(function(f){ opts+='<option value="'+f+'"'+(f===guess?' selected':'')+'>'+f+'</option>'; });
+      selectHtml+='<td><select class="mapsel" id="nflmap_'+i+'">'+opts+'</select></td>';
+    }
+    headHtml+='</tr>';selectHtml+='</tr>';
+    for(var p=0;p<previewCount;p++){
+      previewHtml+='<tr>';
+      for(var i=0;i<nflNumCols;i++) previewHtml+='<td><i>'+((dataRows[p][i]||'').toString().slice(0,25)||'(vazio)')+'</i></td>';
+      previewHtml+='</tr>';
+    }
+    table.innerHTML=headHtml+selectHtml+previewHtml;
+    document.getElementById('mapDupeWarning').style.display='none';
+  }
+
+  function nflReorganizeColumns(){
+    var mapping=[];
+    for(var i=0;i<nflNumCols;i++){
+      var sel=document.getElementById('nflmap_'+i);
+      mapping.push(sel?sel.value:'');
+    }
+    var usedPos={};
+    NFL_HEADERS.forEach(function(h){
+      var idx=mapping.indexOf(h);
+      if(idx>=0) usedPos[h]=idx;
+    });
+    var warn=document.getElementById('mapDupeWarning');
+    var dupes=[];
+    var counts={};
+    mapping.forEach(function(m){ if(m) counts[m]=(counts[m]||0)+1; });
+    Object.keys(counts).forEach(function(k){ if(counts[k]>1) dupes.push(k); });
+    if(dupes.length){ warn.style.display=''; warn.textContent='⚠ Campo duplicado: '+dupes.join(', ')+'. Deixe apenas uma coluna por campo.'; }
+    else { warn.style.display='none'; }
+  }
+
+  function nflGoToAgendStep(){
+    window._nflCurrentMapping=[];
+    for(var i=0;i<nflNumCols;i++){
+      var s=document.getElementById('nflmap_'+i);
+      window._nflCurrentMapping.push(s?s.value:'');
+    }
+    nflCloseStep('ov-map');
+    nflOpenStep('ov-agend');
+  }
+
+  function nflGoToCepStep(){
+    nflCloseStep('ov-agend');
+    nflOpenStep('ov-cep');
+  }
+
+  /* --- Cruzar com agendados --- */
+  function nflCruzarAgendados(){
+    var raw=document.getElementById('agendInput').value.trim();
+    if(!raw){nflAgendMatches=null;document.getElementById('agendResultHint').innerHTML='<span style="color:var(--amber)">Nenhum dado de agendados colado — os campos faltantes ficarão em branco.</span>';return;}
+    nflAgendParsedLines=nflParseTSV(raw);
+    if(nflAgendParsedLines.length<2){document.getElementById('agendResultHint').innerHTML='<span style="color:var(--red)">Não consegui ler linhas dos agendados.</span>';return;}
+    var headerAgend=nflAgendParsedLines[0];
+    var dataAgend=nflAgendParsedLines.slice(1);
+    nflAgendColMapping=headerAgend.map(function(h){ return NFL_KNOWN_HEADERS[nflNormHeaderKey(h)]||nflGuessFieldColumn(dataAgend,headerAgend.indexOf(h),10)||''; });
+    var cpfCol=nflAgendColMapping.indexOf('CPF');
+    if(cpfCol<0){document.getElementById('agendResultHint').innerHTML='<span style="color:var(--red)">Não achei coluna CPF nos agendados.</span>';return;}
+    nflAgendMatches={};
+    dataAgend.forEach(function(row){
+      var cpfRaw=row[cpfCol]||'';
+      var digits=nflOnlyDigits(cpfRaw);
+      if(digits.length===11&&nflIsValidCPF(digits)){
+        var rec={};
+        nflAgendColMapping.forEach(function(f,ci){ if(f) rec[f]=nflCleanCell(row[ci]||''); });
+        nflAgendMatches[digits]=rec;
+      }
+    });
+    document.getElementById('agendResultHint').innerHTML='<span style="color:var(--green)">✓ '+Object.keys(nflAgendMatches).length+' paciente(s) carregados dos agendados.</span>';
+  }
+
+  /* --- Buscar CEP --- */
+  async function nflBuscarCeps(){
+    var btn=document.getElementById('buscarCepBtn');
+    btn.disabled=true; btn.textContent='Buscando...';
+    var mapping=window._nflCurrentMapping||[];
+    var cpfIdx=mapping.indexOf('CPF');
+    var cepIdx=mapping.indexOf('CEP');
+    if(cepIdx<0){btn.disabled=false;btn.textContent='🔍 Buscar CEP';alert('Mapeie a coluna CEP primeiro.');return;}
+    var dataRows=nflParsedLines.slice(1);
+    var table=document.getElementById('cepTable');
+    var errList=document.getElementById('cepErrList');
+    var rows=[];var erros=[];
+    for(var i=0;i<dataRows.length;i++){
+      var row=dataRows[i];
+      var cepRaw=nflOnlyDigits(row[cepIdx]||'');
+      if(cepRaw.length!==8){rows.push(null);continue;}
+      var res=await nflFetchViaCep(cepRaw);
+      rows.push(res);
+      if(!res.ok) erros.push('CEP '+(row[cepIdx]||'?')+': '+res.reason);
+    }
+    var html='<tr><th>Paciente</th><th>CEP</th><th>Resultado</th></tr>';
+    var nomIdx=mapping.indexOf('Paciente'); if(nomIdx<0) nomIdx=mapping.indexOf('Nome');
+    dataRows.forEach(function(row,i){
+      var res=rows[i]; var cep=row[cepIdx]||''; var nom=nomIdx>=0?(row[nomIdx]||''):'';
+      if(!res) html+='<tr><td>'+nom+'</td><td>'+cep+'</td><td style="color:var(--gray-400)">sem CEP</td></tr>';
+      else if(res.ok) html+='<tr><td>'+nom+'</td><td>'+cep+'</td><td style="color:var(--green)">✓ '+res.logradouro+', '+res.bairro+', '+res.cidade+'/'+res.uf+'</td></tr>';
+      else html+='<tr><td>'+nom+'</td><td>'+cep+'</td><td style="color:var(--amber)">⚠ '+res.reason+'</td></tr>';
+    });
+    table.innerHTML=html;
+    errList.innerHTML=erros.map(function(e){ return '<li style="color:var(--amber)">'+e+'</li>'; }).join('');
+    window._nflCepResults=rows;
+    btn.disabled=false;btn.textContent='🔍 Buscar CEP';
+  }
+
+  /* --- Processar dados e gerar result table --- */
+  function nflProcessData(){
+    var mapping=window._nflCurrentMapping||[];
+    var dataRows=nflParsedLines.slice(1);
+    var cepResults=window._nflCepResults||[];
+    var dateGlobal=document.getElementById('dataConsulta').value||'';
+    var ufPadrao=document.getElementById('ufPadrao').value||'';
+    var tipoMap=window.__sheetTipoByIdx||{};
+
+    nflCurrentRows=[];
+    nflAlertMsgs=[];
+    nflWarnMsgs=[];
+
+    dataRows.forEach(function(row,ri){
+      var rec={};
+      NFL_HEADERS.forEach(function(h){ rec[h]=''; });
+
+      mapping.forEach(function(f,ci){ if(f) rec[f]=nflCleanCell(nflXlsxCellToText(row[ci])||''); });
+
+      // Cross com agendados
+      var cpfDigits=nflOnlyDigits(rec['CPF']);
+      if(nflAgendMatches&&nflAgendMatches[cpfDigits]){
+        var ag=nflAgendMatches[cpfDigits];
+        NFL_HEADERS.forEach(function(h){ if(!rec[h]&&ag[h]) rec[h]=ag[h]; });
+      }
+
+      // CEP results
+      if(cepResults[ri]&&cepResults[ri].ok){
+        var cr=cepResults[ri];
+        if(!rec['Logradouro']) rec['Logradouro']=cr.logradouro;
+        if(!rec['Bairro']) rec['Bairro']=cr.bairro;
+        if(!rec['Cidade']) rec['Cidade']=cr.cidade;
+        if(!rec['UF']) rec['UF']=cr.uf;
+      }
+      if(!rec['UF']&&ufPadrao) rec['UF']=ufPadrao;
+
+      // Data
+      if(!rec['Data de Consulta']&&dateGlobal){
+        rec['Data de Consulta']=dateGlobal.split('-').reverse().join('/');
+      }
+
+      // Valor
+      var vr=nflCleanValor(rec['Valor']);
+      if(!vr.ok){
+        nflAlertMsgs.push('Linha '+(ri+1)+' ('+rec['Paciente']+'): valor "'+rec['Valor']+'" inválido');
+      } else {
+        if(vr.guessed) nflAlertMsgs.push('Linha '+(ri+1)+' ('+rec['Paciente']+'): valor interpretado como R$'+vr.value+' (sem ponto decimal no original)');
+        rec['Valor']=vr.value;
+      }
+
+      // Tipo (só do sheet)
+      var tipo=tipoMap[ri]||'';
+
+      // Validações
+      var hasWarning=false;
+      var warns=[];
+      if(!cpfDigits||cpfDigits.length!==11||!nflIsValidCPF(cpfDigits)) warns.push('CPF inválido');
+      if(!rec['Email']) warns.push('Email em branco');
+      if(!rec['Telefone']) warns.push('Telefone em branco');
+      if(!rec['Logradouro']) warns.push('Logradouro em branco');
+      if(!rec['Número']) warns.push('Número em branco');
+      if(!rec['Bairro']) warns.push('Bairro em branco');
+      if(!rec['Cidade']) warns.push('Cidade em branco');
+      if(!rec['UF']) warns.push('UF em branco');
+      if(!rec['Valor']||!vr.ok) warns.push('Valor inválido');
+      if(warns.length) hasWarning=true;
+
+      nflCurrentRows.push({ values:NFL_HEADERS.map(function(h){ return rec[h]||''; }), tipo:tipo, hasWarning:hasWarning, warns:warns });
+    });
+
+    nflRenderResultTable();
+  }
+
+  function nflRenderResultTable(){
+    var table=document.getElementById('resultTable');
+    var semTipo=nflCurrentRows.filter(function(r){ return !r.tipo; }).length;
+    var comWarning=nflCurrentRows.filter(function(r){ return r.hasWarning; }).length;
+
+    var headHtml='<tr>';
+    NFL_HEADERS.forEach(function(h){ headHtml+='<th>'+h+'</th>'; });
+    headHtml+='<th>Tipo</th><th>⚠</th></tr>';
+
+    var bodyHtml=nflCurrentRows.map(function(r,ri){
+      var rowClass=r.hasWarning?'nfalert':'';
+      var cells=r.values.map(function(v,ci){
+        var fmt = NFL_COL_FMT[ci];
+        var disp = fmt ? fmt(v) : v;
+        var mask = NFL_COL_MASK[ci] ? ' oninput="nflMaskInput(this,\''+NFL_COL_MASK[ci]+'\')"' : '';
+        return '<td><input id="nflcell_'+ri+'_'+ci+'" value="'+disp.replace(/"/g,'&quot;')+'"'+mask+'></td>';
+      }).join('');
+      var tipoOpts='<option value="">—</option><option value="Consulta"'+(r.tipo==='Consulta'?' selected':'')+'>Consulta</option><option value="Exame"'+(r.tipo==='Exame'?' selected':'')+'>Exame</option>';
+      var warnCol=r.warns&&r.warns.length?'<span style="color:var(--amber);font-size:0.78rem;" title="'+r.warns.join('; ')+'">⚠ '+r.warns.length+'</span>':'';
+      return '<tr class="'+rowClass+'">'+cells+'<td><select id="nfltipo_'+ri+'">'+tipoOpts+'</select></td><td>'+warnCol+'</td></tr>';
+    }).join('');
+
+    table.innerHTML=headHtml+bodyHtml;
+
+    var sumEl=document.getElementById('nflSummary');
+    sumEl.innerHTML='<b>'+nflCurrentRows.length+'</b> linha(s) processada(s)'
+      +(comWarning?' — <b style="color:var(--amber)">'+comWarning+' com avisos</b>':'')
+      +(semTipo?' — <b style="color:var(--red)">'+semTipo+' sem Tipo → irão para INCOMPLETOS</b>':'')
+      +'. Campos editáveis antes de baixar.';
+
+    document.getElementById('errList').innerHTML=nflAlertMsgs.map(function(m){
+      return '<li style="color:var(--amber)">⚠ '+m+'</li>';
+    }).join('');
+    document.getElementById('savedBanner').style.display='none';
+    document.getElementById('sinaxySaveBanner').style.display='none';
+    nflCloseStep('ov-cep');
+    nflOpenStep('ov-result');
+  }
+
+  function nflCollectEditedRows(){
+    var cpfIdx  = NFL_HEADERS.indexOf('CPF');
+    var cepIdx  = NFL_HEADERS.indexOf('CEP');
+    nflCurrentRows.forEach(function(r,ri){
+      r.values=r.values.map(function(v,ci){
+        var el=document.getElementById('nflcell_'+ri+'_'+ci);
+        var val=el?el.value:v;
+        /* normaliza antes de salvar: CPF e CEP sem máscara para XLSX */
+        if(ci===cpfIdx) val=nflFmtCPF(val);  /* garante formato XXX.XXX.XXX-XX */
+        if(ci===cepIdx) val=nflFmtCEP(val);  /* garante formato XXXXX-XXX */
+        return val;
+      });
+      var s=document.getElementById('nfltipo_'+ri);
+      if(s) r.tipo=s.value;
+    });
+  }
+
+  function nflBuildWorkbookFor(rows){
+    var wsData=[NFL_HEADERS].concat(rows.map(function(r){ return r.values; }));
+    var ws=XLSX.utils.aoa_to_sheet(wsData);
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Modelo Importação');
+    return wb;
+  }
+
+  function nflDownloadXlsx(){
+    if(!nflCurrentRows.length){alert('Gere a planilha primeiro.');return;}
+    nflCollectEditedRows();
+    var consultas=nflCurrentRows.filter(function(r){ return r.tipo==='Consulta'&&!r.hasWarning; });
+    var exames=nflCurrentRows.filter(function(r){ return r.tipo==='Exame'&&!r.hasWarning; });
+    var incompletos=nflCurrentRows.filter(function(r){ return !r.tipo||r.hasWarning; });
+    var baixados=[];
+    if(consultas.length){XLSX.writeFile(nflBuildWorkbookFor(consultas),'nf_lote_CONSULTAS.xlsx');baixados.push(consultas.length+' Consulta(s)');}
+    if(exames.length){XLSX.writeFile(nflBuildWorkbookFor(exames),'nf_lote_EXAMES.xlsx');baixados.push(exames.length+' Exame(s)');}
+    if(incompletos.length){XLSX.writeFile(nflBuildWorkbookFor(incompletos),'nf_lote_INCOMPLETOS.xlsx');baixados.push(incompletos.length+' Incompleto(s)');}
+    if(!baixados.length){alert('Nenhuma linha para baixar.');return;}
+    var pickedDate=document.getElementById('dataConsulta').value||nflTodayISO();
+    nflAddEntry(pickedDate, nflCurrentRows.length, 'Gerado ('+baixados.join(', ')+')');
+    document.getElementById('savedBanner').style.display='block';
+  }
+
+  function nflCopyClean(){
+    if(!nflCurrentRows.length){alert('Gere a planilha primeiro.');return;}
+    nflCollectEditedRows();
+    var text=[NFL_HEADERS.join('\t')].concat(nflCurrentRows.map(function(r){ return r.values.join('\t'); })).join('\n');
+    navigator.clipboard.writeText(text).then(function(){ alert('Dados copiados!'); });
+  }
+
+  function nflLoadExample(){
+    document.getElementById('nflInput').value=
+      'Guilherme Da Silva\t119.261.446-19\tguilherme@email.com\t(35) 99869-2223\t21,00\n'+
+      'Maria Souza Lima\t987.654.321-00\tmaria@email.com\t(11) 91234-5678\t98,00';
+  }
+
+  function nflClearAll(){
+    document.getElementById('nflInput').value='';
+    ['ov-map','ov-cep','ov-agend','ov-result'].forEach(nflCloseStep);
+    nflAgendMatches=null; nflAgendParsedLines=[]; nflAgendColMapping=[];
+    document.getElementById('agendInput').value='';
+    document.getElementById('agendResultHint').innerHTML='';
+  }
+
+  /* ===== Salvar lote no Firebase (Comparativo Sinaxys) ===== */
+  async function nflSalvarLoteNoFirebase(){
+    if(!nflCurrentRows.length){alert('Gere a planilha primeiro.');return;}
+    nflCollectEditedRows();
+    var banner=document.getElementById('sinaxySaveBanner');
+    banner.style.display='block';
+    banner.textContent='💾 Salvando no Firebase...';
+    try{
+      var pickedDate=document.getElementById('dataConsulta').value||nflTodayISO();
+      var ts=Date.now();
+      var key='nfl_sinaxys_lotes/'+pickedDate+'_'+ts;
+      var loteData={
+        data: pickedDate,
+        ts: ts,
+        total: nflCurrentRows.length,
+        linhas: nflCurrentRows.map(function(r,i){
+          var cpfIdx=NFL_HEADERS.indexOf('CPF');
+          var nomIdx=NFL_HEADERS.indexOf('Paciente');
+          var valIdx=NFL_HEADERS.indexOf('Valor');
+          return {
+            idx:i,
+            nome:r.values[nomIdx]||'',
+            cpf:nflOnlyDigits(r.values[cpfIdx]||''),
+            valor:r.values[valIdx]||'',
+            tipo:r.tipo||''
+          };
+        })
+      };
+      if(window.fbSet){
+        await window.fbSet(key, loteData);
+        banner.textContent='✓ Lote salvo! Acesse a aba "Comparativo Sinaxys" para comparar depois.';
+        banner.style.background='var(--purple-bg)';
+        banner.style.color='var(--purple)';
+      } else {
+        banner.textContent='⚠ Firebase não disponível nesta sessão — tente recarregar a página.';
+        banner.style.background='var(--amber-bg)'; banner.style.color='var(--amber)';
+      }
+    }catch(e){
+      banner.textContent='Erro ao salvar: '+e.message;
+      banner.style.background='#fee2e2'; banner.style.color='var(--red)';
+    }
+  }
+
+  /* ===== Google Sheets — puxar dados ===== */
+  var NFL_SHEET_PUBHTML="https://docs.google.com/spreadsheets/d/e/2PACX-1vTCry8fv2plDONnHIBwl8lveBA6nZpzEZ4CaydiLQtErvzMOm579OlKMDZ2C16SsJa6aJx_UbRHGEMm/pubhtml";
+
+  function nflFetchComTimeout(url,ms){
+    var timeout=new Promise(function(_,rej){ setTimeout(function(){rej(new Error('timeout'));},ms); });
+    return Promise.race([fetch(url),timeout]);
+  }
+
+  function nflParseCsvRFC4180(text){
+    var rows=[],row=[],field='',inQuotes=false,i=0;
+    while(i<text.length){
+      var c=text[i];
+      if(inQuotes){
+        if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQuotes=false;i++;continue; }
+        field+=c;i++;continue;
+      } else {
+        if(c==='"'&&field===''){inQuotes=true;i++;continue;}
+        if(c===','){row.push(field);field='';i++;continue;}
+        if(c==='\r'){i++;continue;}
+        if(c==='\n'){row.push(field);rows.push(row);row=[];field='';i++;continue;}
+        field+=c;i++;continue;
+      }
+    }
+    if(field.length||row.length){row.push(field);rows.push(row);}
+    return rows.map(function(r){ return r.map(nflCleanCell); });
+  }
+
+  function nflIsoParaVariacoesAba(iso){
+    if(!iso||iso.length!==10) return [];
+    var parts=iso.split('-'),y=parts[0],m=parts[1],d=parts[2];
+    var d1=String(parseInt(d,10)),m1=String(parseInt(m,10));
+    return [d+' '+m+' '+y, d+'/'+m+'/'+y, d+'-'+m+'-'+y, d1+' '+m1+' '+y, d+' '+m+' '+y.slice(2), d+'/'+m+'/'+y.slice(2)];
+  }
+
+  function nflExtrairTipoDoSheet(linhas){
+    var tipoAtual='',linhasLimpas=[],tiposPorIndice={},dataIdx=0,colHeaderIncluido=false;
+    for(var i=0;i<linhas.length;i++){
+      var row=linhas[i];
+      var naoVazias=row.filter(function(c){ return (c||'').trim()!==''; });
+      if(naoVazias.length===0) continue;
+      var prim=(row[0]||'').trim();
+      if(/^planilha\b/i.test(prim)) continue;
+      var temCpf=row.some(function(c){ var d=(c||'').replace(/[\s.\-]/g,''); return d.length===11&&/^\d{11}$/.test(d); });
+      if(!temCpf){
+        if(/pós[\s\-]?consulta|pos[\s\-]?consulta/i.test(prim)){tipoAtual='Consulta';continue;}
+        if(/^consulta\b/i.test(prim)){tipoAtual='Consulta';continue;}
+        if(/^exame/i.test(prim)){tipoAtual='Exame';continue;}
+        if(/emissão\s+de\s+nota|emissao\s+de\s+nota/i.test(prim)){tipoAtual='Exame';continue;}
+        if(!colHeaderIncluido){
+          var isColHeader=/^(nome|paciente)$/i.test(prim)&&row.some(function(c){ return /^cpf$/i.test((c||'').trim()); });
+          if(isColHeader){linhasLimpas.push(row);colHeaderIncluido=true;continue;}
+        }
+        continue;
+      }
+      linhasLimpas.push(row);
+      if(tipoAtual) tiposPorIndice[dataIdx]=tipoAtual;
+      dataIdx++;
+    }
+    return {linhasLimpas:linhasLimpas, tiposPorIndice:tiposPorIndice};
+  }
+
+  async function nflPuxarDoSheet(){
+    var dateIso=document.getElementById('puxarDataInput').value;
+    var statusEl=document.getElementById('puxarStatus');
+    var btn=document.getElementById('puxarBtn');
+    if(!dateIso){statusEl.innerHTML='<span style="color:var(--red)">Escolha uma data primeiro.</span>';return;}
+    btn.disabled=true;btn.textContent='Buscando...';statusEl.innerHTML='';
+    try{
+      var variacoes=new Set(nflIsoParaVariacoesAba(dateIso).map(function(s){ return s.toLowerCase(); }));
+      var csvBase=NFL_SHEET_PUBHTML.replace(/pubhtml.*$/,'pub?output=csv');
+      var r=await nflFetchComTimeout(NFL_SHEET_PUBHTML,15000);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      var htxt=await r.text();
+      var todasAbas=[],gid=null,achado='';
+      var regexes=[
+        /items\.push\(\{name:\s*"((?:[^"\\]|\\.)*)",\s*pageUrl:\s*"([^"]+)"/g,
+        /"name"\s*:\s*"([^"]+)"[^}]{0,200}"pageUrl"\s*:\s*"([^"]+)"/g,
+        /data-sheet-id="(\d+)"[^>]*>([^<]+)</g
+      ];
+      for(var ri=0;ri<regexes.length;ri++){
+        if(gid) break;
+        var re=regexes[ri]; re.lastIndex=0; var m;
+        while((m=re.exec(htxt))!==null){
+          var tabName=m[1].replace(/\\\//g,'/').trim();
+          var gidM=m[2].match(/gid=(-?\d+)/);
+          if(tabName) todasAbas.push(tabName);
+          if(gidM&&variacoes.has(tabName.toLowerCase())){gid=gidM[1];achado=tabName;break;}
+        }
+      }
+      if(!gid){
+        var lista=todasAbas.length?'\n\nAbas encontradas: '+todasAbas.slice(0,20).map(function(n){ return '"'+n+'"'; }).join(', '):'';
+        throw new Error('Não achei uma aba para '+nflIsoParaVariacoesAba(dateIso)[0]+' na planilha.'+lista);
+      }
+      var r2=await nflFetchComTimeout(csvBase+'&gid='+gid,15000);
+      if(!r2.ok) throw new Error('HTTP '+r2.status+' ao baixar a aba "'+achado+'".');
+      var csvText=await r2.text();
+      if(csvText.trim().startsWith('<')) throw new Error('Planilha retornou HTML — confira se está publicada como CSV.');
+      var linhas=nflParseCsvRFC4180(csvText).filter(function(row){ return row.some(function(c){ return c!==''; }); });
+      if(!linhas.length) throw new Error('Aba "'+achado+'" encontrada, mas vazia.');
+      var result=nflExtrairTipoDoSheet(linhas);
+      window.__sheetTipoByIdx=result.tiposPorIndice;
+      var asTsv=result.linhasLimpas.map(function(r){ return r.join('\t'); }).join('\n');
+      document.getElementById('nflInput').value=asTsv;
+      document.getElementById('dataConsulta').value=dateIso;
+      var nDados=result.linhasLimpas.filter(function(r){ return r.some(function(c){ var d=(c||'').replace(/[\s.\-]/g,''); return d.length===11&&/^\d{11}$/.test(d); }); }).length;
+      var nTipos=Object.keys(result.tiposPorIndice).length;
+      statusEl.innerHTML='<span style="color:var(--green)">✓ '+nDados+' paciente(s) da aba "'+achado+'"'+(nTipos>0?' — '+nTipos+' com Tipo detectado':'')+'. Clique em "Avançar → Mapear colunas".</span>';
+    }catch(e){
+      statusEl.innerHTML='<span style="color:var(--red)">'+e.message+'</span>';
+    }finally{
+      btn.disabled=false;btn.textContent='🔎 Puxar dados desse dia da planilha';
+    }
+  }
+
+  /* ===== CONFERIR NF ===== */
+  var NFL_CONF_FIELDS=["Nome","CPF","Valor","NumeroNF","Data"];
+  var NFL_KNOWN_CONF_HEADERS={
+    'nome':'Nome','paciente':'Nome','cliente':'Nome',
+    'cpf':'CPF','cpf cliente':'CPF','cpf paciente':'CPF',
+    'valor':'Valor',
+    'n nota fiscal':'NumeroNF','no nota fiscal':'NumeroNF','nota fiscal':'NumeroNF',
+    'numero nf':'NumeroNF','numero da nf':'NumeroNF',
+    'data':'Data','data de atendimento':'Data','cadastrada em':'Data'
+  };
+  var nflConfData={pagamentos:null,nf:null};
+
+  function nflConfGuessField(sample){
+    var s=(sample||'').trim(); if(!s) return '';
+    var digits=nflOnlyDigits(s);
+    if(digits.length===11&&nflIsValidCPF(digits)) return 'CPF';
+    if(/^R?\$?\s?\d+([.,]\d{1,2})?$/.test(s)) return 'Valor';
+    return '';
+  }
+
+  function nflHandleConfFile(event,kind){
+    var file=event.target.files[0]; if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var data=new Uint8Array(e.target.result);
+        var wb=XLSX.read(data,{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        if(!rows.length){alert('Arquivo vazio.');return;}
+        var headerRowIdx=0;
+        for(var i=0;i<Math.min(rows.length,5);i++){
+          var hits=rows[i].filter(function(c){ return nflNormHeaderKey(c) in NFL_KNOWN_CONF_HEADERS; }).length;
+          if(hits>=2){headerRowIdx=i;break;}
+        }
+        var headerRow=rows[headerRowIdx].map(function(h){ return nflCleanCell(h); });
+        var dataRows=rows.slice(headerRowIdx+1)
+          .filter(function(r){ return r.some(function(c){ return (c||'').toString().trim()!==''; }); })
+          .map(function(r){ return headerRow.map(function(_,i){ return nflCleanCell(nflXlsxCellToText(r[i])); }); });
+        nflConfData[kind]={headerRow:headerRow,dataRows:dataRows};
+        var inputId=kind==='pagamentos'?'confPagamentosInput':'confNfInput';
+        document.getElementById(inputId).value='[Arquivo: '+file.name+' — '+dataRows.length+' linha(s)]';
+        nflBuildConfMapTable(kind);
+      }catch(err){alert('Não consegui ler esse arquivo.');}
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function nflDetectConfColumns(kind){
+    var inputId=kind==='pagamentos'?'confPagamentosInput':'confNfInput';
+    var raw=document.getElementById(inputId).value.trim();
+    if(!raw){alert('Carregue o arquivo ou cole os dados.');return;}
+    if(raw.startsWith('[Arquivo:')){if(nflConfData[kind]){nflBuildConfMapTable(kind);return;}alert('Carregue o arquivo de novo.');return;}
+    var rows=nflParseTSV(raw);
+    if(!rows.length){alert('Não consegui ler nenhuma linha.');return;}
+    var headerRowIdx=0;
+    for(var i=0;i<Math.min(rows.length,5);i++){
+      var hits=rows[i].filter(function(c){ return nflNormHeaderKey(c) in NFL_KNOWN_CONF_HEADERS; }).length;
+      if(hits>=2){headerRowIdx=i;break;}
+    }
+    nflConfData[kind]={headerRow:rows[headerRowIdx],dataRows:rows.slice(headerRowIdx+1)};
+    nflBuildConfMapTable(kind);
+  }
+
+  function nflBuildConfMapTable(kind){
+    var cd=nflConfData[kind];
+    var numCols=Math.max.apply(null,[cd.headerRow.length].concat(cd.dataRows.slice(0,5).map(function(r){ return r.length; })));
+    var tableId=kind==='pagamentos'?'confPagamentosMapTable':'confNfMapTable';
+    var table=document.getElementById(tableId);
+    var headHtml='<tr>',selectHtml='<tr>',previewHtml='<tr>';
+    var previewCount=Math.min(2,cd.dataRows.length);
+    for(var i=0;i<numCols;i++){
+      var label=cd.headerRow[i]||('Coluna '+(i+1));
+      headHtml+='<th>'+label+'</th>';
+      var guess=NFL_KNOWN_CONF_HEADERS[nflNormHeaderKey(cd.headerRow[i]||'')]||nflConfGuessField(cd.dataRows[0]?cd.dataRows[0][i]:'');
+      var opts='<option value="">— Não usar —</option>';
+      NFL_CONF_FIELDS.forEach(function(f){ opts+='<option value="'+f+'"'+(f===guess?' selected':'')+'>'+f+'</option>'; });
+      selectHtml+='<td><select class="mapsel" id="nflconfmap_'+kind+'_'+i+'">'+opts+'</select></td>';
+    }
+    headHtml+='</tr>';selectHtml+='</tr>';
+    for(var p=0;p<previewCount;p++){
+      previewHtml='<tr>';
+      for(var i=0;i<numCols;i++) previewHtml+='<td><i>'+((cd.dataRows[p][i]||'').toString().slice(0,20)||'(vazio)')+'</i></td>';
+      previewHtml+='</tr>';
+    }
+    table.innerHTML=headHtml+selectHtml+previewHtml;
+    nflConfData[kind].numCols=numCols;
+  }
+
+  function nflConferirNotas(){
+    if(!nflConfData.pagamentos||!nflConfData.nf){alert('Carregue e detecte as colunas das duas planilhas.');return;}
+    var tolerancia=parseFloat(document.getElementById('confTolerancia').value)||0;
+
+    function buildRecords(kind){
+      var cd=nflConfData[kind];
+      var mapping=[];
+      for(var i=0;i<cd.numCols;i++) mapping.push(document.getElementById('nflconfmap_'+kind+'_'+i).value);
+      return cd.dataRows.map(function(cols){
+        var rec={}; NFL_CONF_FIELDS.forEach(function(f){ rec[f]=''; });
+        mapping.forEach(function(f,colIdx){
+          if(!f) return;
+          var val=(cols[colIdx]||'').trim();
+          if(f==='CPF') val=nflOnlyDigits(val);
+          if(f==='Valor'){ var r=nflCleanValor(val); val=r.ok?r.value:''; }
+          rec[f]=val;
+        });
+        return rec;
+      }).filter(function(r){ return r.CPF&&r.CPF.length===11; });
+    }
+
+    var pagamentos=buildRecords('pagamentos');
+    var notasRaw=buildRecords('nf');
+    var notasRecusadas=notasRaw.filter(function(n){ return nflOnlyDigits(n.NumeroNF).length>=10; });
+    var notas=notasRaw.filter(function(n){ return nflOnlyDigits(n.NumeroNF).length<10&&n.NumeroNF; });
+    var notasRecusadasPorCpf={};
+    notasRecusadas.forEach(function(n){ (notasRecusadasPorCpf[n.CPF]=notasRecusadasPorCpf[n.CPF]||[]).push(n); });
+    var notasPorCpf={};
+    notas.forEach(function(n){ if(!notasPorCpf[n.CPF]) notasPorCpf[n.CPF]=[]; notasPorCpf[n.CPF].push(n); });
+    var pagPorCpf={};
+    pagamentos.forEach(function(p){ (pagPorCpf[p.CPF]=pagPorCpf[p.CPF]||[]).push(p); });
+    function dupInfoPag(p){
+      var d=pagPorCpf[p.CPF]||[]; if(d.length<=1) return null;
+      var mv=d.filter(function(x){ return Math.abs(parseFloat(x.Valor)-parseFloat(p.Valor))<0.005; }).length;
+      return {total:d.length,suspeita:mv>1};
+    }
+    var notaDupKeyCount={};
+    notas.forEach(function(n){ var k=n.CPF+'|'+n.Valor; notaDupKeyCount[k]=(notaDupKeyCount[k]||0)+1; });
+    var usedNotas=new Set();
+    var results=pagamentos.map(function(p){
+      var candidatas=notasPorCpf[p.CPF]||[];
+      var valorPag=parseFloat(p.Valor);
+      var match=null;
+      for(var i=0;i<candidatas.length;i++){
+        var n=candidatas[i];
+        var key=n.CPF+'|'+n.Valor+'|'+n.NumeroNF+'|'+i;
+        if(usedNotas.has(key)) continue;
+        var valorNota=parseFloat(n.Valor);
+        if(!isNaN(valorPag)&&!isNaN(valorNota)&&Math.abs(valorPag-valorNota)<=tolerancia+1e-9){match=n;usedNotas.add(key);break;}
+      }
+      var dup=dupInfoPag(p);
+      var nfDup=match?(notaDupKeyCount[match.CPF+'|'+match.Valor]||0)>1:false;
+      if(!match){
+        var anyForCpf=candidatas.length>0;
+        if(!anyForCpf){
+          var rec2=notasRecusadasPorCpf[p.CPF]||[];
+          if(rec2.length) return {nome:p.Nome,cpf:p.CPF,valor:p.Valor,status:'recusada',nfNumero:rec2[0].NumeroNF,nfValor:rec2[0].Valor,dup:dup,nfDup:false};
+        }
+        return {nome:p.Nome,cpf:p.CPF,valor:p.Valor,status:anyForCpf?'valor_diverge':'nao_emitida',nfNumero:'',nfValor:anyForCpf?candidatas[0].Valor:'',dup:dup,nfDup:false};
+      }
+      return {nome:p.Nome,cpf:p.CPF,valor:p.Valor,status:'emitida',nfNumero:match.NumeroNF,nfValor:match.Valor,dup:dup,nfDup:nfDup};
+    });
+    nflRenderConfResult(results);
+  }
+
+  function nflRenderConfResult(results){
+    var emitidas=results.filter(function(r){ return r.status==='emitida'; });
+    var naoEmitidas=results.filter(function(r){ return r.status==='nao_emitida'; });
+    var divergentes=results.filter(function(r){ return r.status==='valor_diverge'; });
+    var recusadas=results.filter(function(r){ return r.status==='recusada'; });
+    var dupSuspeitas=results.filter(function(r){ return r.dup&&r.dup.suspeita; });
+    var nfDuplicadas=results.filter(function(r){ return r.nfDup; });
+    var criticas=results.filter(function(r){ return (r.dup&&r.dup.suspeita)||r.nfDup; });
+    var semCritica=results.filter(function(r){ return !((r.dup&&r.dup.suspeita)||r.nfDup); });
+    var ordered=[].concat(criticas,semCritica.filter(function(r){ return r.status==='recusada'; }),semCritica.filter(function(r){ return r.status==='nao_emitida'; }),semCritica.filter(function(r){ return r.status==='valor_diverge'; }),semCritica.filter(function(r){ return r.status==='emitida'; }));
+    document.getElementById('confSummary').innerHTML=
+      '<b>'+results.length+'</b> pagamento(s) conferido(s) — '+
+      '<span style="color:var(--green)"><b>'+emitidas.length+'</b> com NF emitida</span>, '+
+      '<span style="color:var(--red)"><b>'+naoEmitidas.length+'</b> sem NF emitida</span>'+
+      (recusadas.length?', <span style="color:var(--red)"><b>'+recusadas.length+'</b> RECUSADA(S) — reemitir</span>':'')+
+      (divergentes.length?', <span style="color:var(--amber)"><b>'+divergentes.length+'</b> valor divergente</span>':'')+
+      (dupSuspeitas.length?', <span style="color:var(--red)"><b>'+dupSuspeitas.length+'</b> possível pagamento duplicado</span>':'')+
+      (nfDuplicadas.length?', <span style="color:var(--red)"><b>'+nfDuplicadas.length+'</b> NF emitida em duplicidade</span>':'')+'.'
+    ;
+    var html='<tr><th>Nome</th><th>CPF</th><th>Valor pago</th><th>Status</th><th>Nº NF</th><th>Valor NF</th><th>Duplicidade</th></tr>';
+    ordered.forEach(function(r){
+      var rowClass='',badge='';
+      if(r.status==='emitida') badge='<span class="badge ok">NF emitida</span>';
+      else if(r.status==='nao_emitida'){rowClass='error';badge='<span class="badge err">Sem NF — emitir</span>';}
+      else if(r.status==='recusada'){rowClass='error';badge='<span class="badge err">⚠ RECUSADA — reemitir</span>';}
+      else{rowClass='nfalert';badge='<span class="badge warn">CPF ok, valor diverge</span>';}
+      var dupBadge='—';
+      if(r.nfDup){dupBadge='<span class="badge err">⚠ NF em duplicidade</span>';rowClass='error';}
+      else if(r.dup&&r.dup.suspeita){dupBadge='<span class="badge err">⚠ Mesmo CPF+valor '+r.dup.total+'x</span>';rowClass='error';}
+      else if(r.dup){dupBadge='<span class="badge warn">'+r.dup.total+'x pagamentos</span>';}
+      html+='<tr class="'+rowClass+'"><td>'+r.nome+'</td><td>'+r.cpf+'</td><td>'+r.valor+'</td><td>'+badge+'</td><td>'+( r.nfNumero||'—')+'</td><td>'+(r.nfValor||'—')+'</td><td>'+dupBadge+'</td></tr>';
+    });
+    document.getElementById('confResultTable').innerHTML=html;
+    nflCloseStep('ov-conf3');
+    nflOpenStep('ov-confResult');
+    window._nflConfOrdered=ordered;
+  }
+
+  function nflDownloadConfXlsx(){
+    var ordered=window._nflConfOrdered||[];
+    if(!ordered.length){alert('Rode a conferência primeiro.');return;}
+    var statusLabel={emitida:'NF emitida',nao_emitida:'SEM NF — EMITIR',valor_diverge:'CPF ok, valor diverge',recusada:'TENTATIVA RECUSADA — REEMITIR'};
+    function dupLabel(r){
+      if(r.nfDup) return 'NF EM DUPLICIDADE';
+      if(r.dup&&r.dup.suspeita) return 'MESMO CPF+VALOR '+r.dup.total+'x — CONFERIR';
+      if(r.dup) return r.dup.total+'x pagamentos';
+      return '';
+    }
+    var wsData=[["Nome","CPF","Valor pago","Status","Nº NF","Valor da NF","Duplicidade"]].concat(ordered.map(function(r){ return [r.nome,r.cpf,r.valor,statusLabel[r.status],r.nfNumero,r.nfValor,dupLabel(r)]; }));
+    var ws=XLSX.utils.aoa_to_sheet(wsData);
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Conferência NF');
+    XLSX.writeFile(wb,'conferencia_nf.xlsx');
+  }
+
+  /* ===== COMPARATIVO SINAXYS ===== */
+  var nflSinLoteAtivo=null;
+  var nflSinRetornoData=null;
+
+  async function nflSinCarregarLotes(){
+    var container=document.getElementById('sinLotesList');
+    container.innerHTML='<div class="empty-state">Carregando...</div>';
+    document.getElementById('sinComparativoCard').style.display='none';
+    document.getElementById('sinResultadoCard').style.display='none';
+    nflSinLoteAtivo=null;
+    try{
+      if(!window.fbGet){container.innerHTML='<div class="empty-state" style="color:var(--amber)">Firebase não disponível — recarregue a página.</div>';return;}
+      var snap=await window.fbGet('nfl_sinaxys_lotes');
+      var dados=snap.val();
+      if(!dados||!Object.keys(dados).length){
+        container.innerHTML='<div class="empty-state">Nenhum lote salvo ainda. Gere uma planilha e clique em "💾 Salvar lote no Comparativo Sinaxys".</div>';
+        return;
+      }
+      var lotes=Object.entries(dados).map(function(e){ return Object.assign({_key:e[0]},e[1]); });
+      lotes.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+      container.innerHTML=lotes.map(function(l){
+        var dt=l.data||'—';
+        var count=l.total||0;
+        return '<div class="sin-lote-card">'
+          +'<div class="sin-meta"><span class="sin-date">'+nflFormatDateBR(dt)+'</span>'+
+          '<div class="sin-count">'+count+' paciente(s) · salvo em '+new Date(l.ts||0).toLocaleString('pt-BR')+'</div></div>'
+          +'<button onclick="nflSinSelecionarLote(\''+l._key+'\')">Selecionar →</button></div>';
+      }).join('');
+    }catch(e){
+      container.innerHTML='<div class="empty-state" style="color:var(--red)">Erro ao carregar: '+e.message+'</div>';
+    }
+  }
+
+  async function nflSinSelecionarLote(key){
+    try{
+      var snap=await window.fbGet('nfl_sinaxys_lotes/'+key);
+      nflSinLoteAtivo={key:key, dados:snap.val()};
+      var l=nflSinLoteAtivo.dados;
+      document.getElementById('sinLoteInfo').innerHTML='Lote selecionado: <b>'+nflFormatDateBR(l.data||'—')+'</b> — '+l.total+' paciente(s).';
+      document.getElementById('sinComparativoCard').style.display='block';
+      document.getElementById('sinResultadoCard').style.display='none';
+      document.getElementById('sinRetornoInput').value='';
+      document.getElementById('sinRetornoFile').value='';
+      document.getElementById('sinRetornoMapTable').innerHTML='';
+      nflSinRetornoData=null;
+    }catch(e){alert('Erro ao carregar lote: '+e.message);}
+  }
+
+  function nflSinHandleRetorno(event){
+    var file=event.target.files[0]; if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var data=new Uint8Array(e.target.result);
+        var wb=XLSX.read(data,{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        if(!rows.length){alert('Arquivo vazio.');return;}
+        var headerRowIdx=0;
+        for(var i=0;i<Math.min(rows.length,5);i++){
+          var hits=rows[i].filter(function(c){ return nflNormHeaderKey(c) in NFL_KNOWN_CONF_HEADERS; }).length;
+          if(hits>=2){headerRowIdx=i;break;}
+        }
+        var headerRow=rows[headerRowIdx].map(function(h){ return nflCleanCell(h); });
+        var dataRows=rows.slice(headerRowIdx+1).filter(function(r){ return r.some(function(c){ return (c||'').toString().trim()!==''; }); })
+          .map(function(r){ return headerRow.map(function(_,i){ return nflCleanCell(nflXlsxCellToText(r[i])); }); });
+        nflSinRetornoData={headerRow:headerRow,dataRows:dataRows};
+        document.getElementById('sinRetornoInput').value='[Arquivo: '+file.name+' — '+dataRows.length+' linha(s)]';
+        nflSinBuildRetornoMap();
+      }catch(err){alert('Não consegui ler esse arquivo.');}
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function nflSinDetectarRetorno(){
+    var raw=document.getElementById('sinRetornoInput').value.trim();
+    if(!raw){alert('Carregue o arquivo ou cole os dados.');return;}
+    if(raw.startsWith('[Arquivo:')){if(nflSinRetornoData){nflSinBuildRetornoMap();return;}alert('Carregue o arquivo de novo.');return;}
+    var rows=nflParseTSV(raw);
+    if(!rows.length){alert('Não consegui ler nenhuma linha.');return;}
+    var headerRowIdx=0;
+    for(var i=0;i<Math.min(rows.length,5);i++){
+      var hits=rows[i].filter(function(c){ return nflNormHeaderKey(c) in NFL_KNOWN_CONF_HEADERS; }).length;
+      if(hits>=2){headerRowIdx=i;break;}
+    }
+    nflSinRetornoData={headerRow:rows[headerRowIdx],dataRows:rows.slice(headerRowIdx+1)};
+    nflSinBuildRetornoMap();
+  }
+
+  function nflSinBuildRetornoMap(){
+    var cd=nflSinRetornoData;
+    var numCols=Math.max.apply(null,[cd.headerRow.length].concat(cd.dataRows.slice(0,5).map(function(r){ return r.length; })));
+    nflSinRetornoData.numCols=numCols;
+    var table=document.getElementById('sinRetornoMapTable');
+    var headHtml='<tr>',selectHtml='<tr>',previewHtml='<tr>';
+    var previewCount=Math.min(2,cd.dataRows.length);
+    for(var i=0;i<numCols;i++){
+      var label=cd.headerRow[i]||('Coluna '+(i+1));
+      headHtml+='<th>'+label+'</th>';
+      var guess=NFL_KNOWN_CONF_HEADERS[nflNormHeaderKey(cd.headerRow[i]||'')]||nflConfGuessField(cd.dataRows[0]?cd.dataRows[0][i]:'');
+      var opts='<option value="">— Não usar —</option>';
+      NFL_CONF_FIELDS.forEach(function(f){ opts+='<option value="'+f+'"'+(f===guess?' selected':'')+'>'+f+'</option>'; });
+      selectHtml+='<td><select class="mapsel" id="sinmap_'+i+'">'+opts+'</select></td>';
+    }
+    headHtml+='</tr>';selectHtml+='</tr>';
+    for(var p=0;p<previewCount;p++){
+      previewHtml='<tr>';
+      for(var i=0;i<numCols;i++) previewHtml+='<td><i>'+((cd.dataRows[p][i]||'').toString().slice(0,20)||'(vazio)')+'</i></td>';
+      previewHtml+='</tr>';
+    }
+    table.innerHTML=headHtml+selectHtml+previewHtml;
+  }
+
+  function nflSinConferir(){
+    if(!nflSinLoteAtivo||!nflSinRetornoData){alert('Selecione um lote e carregue o retorno do Sinaxys.');return;}
+    var cd=nflSinRetornoData;
+    var mapping=[];
+    for(var i=0;i<cd.numCols;i++) mapping.push((document.getElementById('sinmap_'+i)||{}).value||'');
+
+    // Constrói registros do retorno Sinaxys
+    var retorno=cd.dataRows.map(function(cols){
+      var rec={}; NFL_CONF_FIELDS.forEach(function(f){ rec[f]=''; });
+      mapping.forEach(function(f,ci){
+        if(!f) return;
+        var val=(cols[ci]||'').trim();
+        if(f==='CPF') val=nflOnlyDigits(val);
+        if(f==='Valor'){var r=nflCleanValor(val);val=r.ok?r.value:'';}
+        rec[f]=val;
+      });
+      return rec;
+    }).filter(function(r){ return r.CPF&&r.CPF.length===11; });
+
+    // Separa emitidas de recusadas (número longo = protocolo rejeitado)
+    var emitidas=retorno.filter(function(n){ return nflOnlyDigits(n.NumeroNF).length<10&&n.NumeroNF; });
+    var recusadas=retorno.filter(function(n){ return nflOnlyDigits(n.NumeroNF).length>=10; });
+    var emitidasPorCpf={};
+    emitidas.forEach(function(n){ (emitidasPorCpf[n.CPF]=emitidasPorCpf[n.CPF]||[]).push(n); });
+    var recusadasPorCpf={};
+    recusadas.forEach(function(n){ (recusadasPorCpf[n.CPF]=recusadasPorCpf[n.CPF]||[]).push(n); });
+
+    // Cruza com o lote salvo
+    var linhasLote=nflSinLoteAtivo.dados.linhas||[];
+    var results=linhasLote.map(function(l){
+      var cpf=l.cpf||'';
+      var em=emitidasPorCpf[cpf];
+      var rec2=recusadasPorCpf[cpf];
+      if(em&&em.length) return {nome:l.nome,cpf:cpf,valor:l.valor,tipo:l.tipo,status:'emitida',nfNumero:em[0].NumeroNF,nfValor:em[0].Valor};
+      if(rec2&&rec2.length) return {nome:l.nome,cpf:cpf,valor:l.valor,tipo:l.tipo,status:'recusada',nfNumero:rec2[0].NumeroNF,nfValor:''};
+      return {nome:l.nome,cpf:cpf,valor:l.valor,tipo:l.tipo,status:'nao_emitida',nfNumero:'',nfValor:''};
+    });
+
+    // Renderiza
+    var emitidasR=results.filter(function(r){ return r.status==='emitida'; });
+    var naoEmitidasR=results.filter(function(r){ return r.status==='nao_emitida'; });
+    var recusadasR=results.filter(function(r){ return r.status==='recusada'; });
+    document.getElementById('sinResultSummary').innerHTML=
+      '<b>'+results.length+'</b> paciente(s) no lote — '+
+      '<span class="sin-status-ok">✅ '+emitidasR.length+' emitida(s)</span> | '+
+      '<span class="sin-status-err">❌ '+naoEmitidasR.length+' não emitida(s)</span>'+
+      (recusadasR.length?' | <span class="sin-status-err">⚠ '+recusadasR.length+' recusada(s) — reemitir</span>':'')+'.'
+    ;
+    var ordered=[].concat(recusadasR,naoEmitidasR,emitidasR);
+    var html='<tr><th>Nome</th><th>CPF</th><th>Valor lote</th><th>Tipo</th><th>Status</th><th>Nº NF</th><th>Valor NF</th></tr>';
+    ordered.forEach(function(r){
+      var rowClass=r.status==='emitida'?'':'error';
+      var badge=r.status==='emitida'?'<span class="badge ok">✅ Emitida</span>':r.status==='recusada'?'<span class="badge err">⚠ Recusada</span>':'<span class="badge err">❌ Não emitida</span>';
+      html+='<tr class="'+rowClass+'"><td>'+r.nome+'</td><td>'+r.cpf+'</td><td>'+r.valor+'</td><td>'+(r.tipo||'—')+'</td><td>'+badge+'</td><td>'+(r.nfNumero||'—')+'</td><td>'+(r.nfValor||'—')+'</td></tr>';
+    });
+    document.getElementById('sinResultTable').innerHTML=html;
+    document.getElementById('sinResultadoCard').style.display='block';
+    window._nflSinOrdered=ordered;
+  }
+
+  function nflSinDownloadXlsx(){
+    var ordered=window._nflSinOrdered||[];
+    if(!ordered.length){alert('Rode o comparativo primeiro.');return;}
+    var statusLabel={emitida:'Emitida',nao_emitida:'NÃO EMITIDA',recusada:'RECUSADA — REEMITIR'};
+    var wsData=[["Nome","CPF","Valor Lote","Tipo","Status","Nº NF","Valor NF"]].concat(ordered.map(function(r){ return [r.nome,r.cpf,r.valor,r.tipo||'',statusLabel[r.status]||r.status,r.nfNumero||'',r.nfValor||'']; }));
+    var ws=XLSX.utils.aoa_to_sheet(wsData);
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Comparativo Sinaxys');
+    XLSX.writeFile(wb,'comparativo_sinaxys.xlsx');
+  }
+
+  async function nflSinExcluirLote(){
+    if(!nflSinLoteAtivo){alert('Selecione um lote primeiro.');return;}
+    if(!confirm('Excluir este lote do Firebase? Essa ação não pode ser desfeita.')) return;
+    try{
+      if(window.fbSet) await window.fbSet('nfl_sinaxys_lotes/'+nflSinLoteAtivo.key, null);
+      nflSinLoteAtivo=null;
+      document.getElementById('sinComparativoCard').style.display='none';
+      document.getElementById('sinResultadoCard').style.display='none';
+      await nflSinCarregarLotes();
+    }catch(e){alert('Erro ao excluir: '+e.message);}
+  }
+
+  /* ===== INIT ===== */
+  (function(){
+    nflLoadEntries();
+    var regDate=document.getElementById('regDate');
+    if(regDate) regDate.value=nflTodayISO();
+    nflRenderAll();
+  })();
   </script>
 
   <!-- ═══════════ SIDEBAR SAAS ═══════════ -->
@@ -2536,6 +4204,6 @@
     })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v3.1 · 22/09/2026</span>
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v3.3 · 22/09/2026</span>
 </body>
 </html>
