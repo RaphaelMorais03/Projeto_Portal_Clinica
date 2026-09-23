@@ -1,0 +1,514 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastros — Parceiros e Exames</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <style>
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--amber:#92400e;--amber-bg:#fef3c7;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-800:#1e293b;--green:#15803d;--green-bg:#dcfce7;--shadow:0 4px 20px rgba(10,31,68,.1);}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
+    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
+    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .header-right{display:flex;align-items:center;gap:10px;}
+    .admin-badge{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:5px;}
+    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .back-btn:hover{background:var(--red-h);}
+    .content{max-width:1200px;margin:0 auto;padding:24px 24px 60px;}
+    .page-title{font-size:22px;font-weight:900;color:white;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+    .page-title i{color:var(--amber);}
+    .tabs{display:flex;gap:6px;margin-bottom:22px;background:white;border:1px solid var(--gray-200);border-radius:14px;padding:6px;box-shadow:var(--shadow);overflow-x:auto;}
+    .tab-btn{flex:1;min-width:110px;padding:9px 12px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--gray-400);display:flex;align-items:center;justify-content:center;gap:5px;transition:all .18s;white-space:nowrap;}
+    .tab-btn:hover{color:var(--navy);background:var(--gray-50);}
+    .tab-btn.active{color:white;background:var(--navy);box-shadow:0 4px 12px rgba(10,31,68,.25);}
+    .tab-pane{display:none;}.tab-pane.active{display:block;}
+    .panel{background:white;border:1px solid var(--gray-200);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);flex-wrap:wrap;gap:10px;}
+    .panel-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+    .panel-title i{color:var(--red);}
+    .f-label{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:5px;}
+    .f-input,.f-select,textarea.f-input{padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:14px;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color .2s;width:100%;}
+    .f-input:focus,.f-select:focus,textarea.f-input:focus{border-color:var(--navy);background:white;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+    .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+    .btn-p{padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s,transform .15s;}
+    .btn-p:hover{background:var(--navy-mid);transform:translateY(-1px);}
+    .btn-s{padding:9px 14px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+    .btn-s:hover{background:var(--gray-200);}
+    .btn-r{padding:9px 14px;background:var(--red);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-r:hover{background:var(--red-h);}
+    .btn-g{padding:9px 14px;background:var(--green);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-g:hover{background:#166534;}
+    .row{display:flex;align-items:center;gap:14px;padding:13px 15px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;margin-bottom:9px;transition:all .18s;flex-wrap:wrap;}
+    .row:hover{border-color:var(--navy);}
+    .row-avatar{width:38px;height:38px;border-radius:10px;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;}
+    .row-info{flex:1;min-width:180px;}
+    .row-name{font-size:13px;font-weight:700;color:var(--navy);}
+    .row-sub{font-size:11px;color:var(--gray-400);margin-top:2px;}
+    .tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#eff6ff;color:#1d4ed8;}
+    .tag.interno{background:var(--green-bg);color:var(--green);}
+    .tag.divergente{background:#fee2e2;color:var(--red);}
+    .tag.inativo{background:var(--gray-100);color:var(--gray-400);}
+    .empty-state{text-align:center;padding:40px 20px;color:var(--gray-400);}
+    .empty-state i{font-size:32px;margin-bottom:10px;display:block;}
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:500;align-items:center;justify-content:center;padding:20px;}
+    .modal-bg.open{display:flex;}
+    .modal{background:white;border-radius:18px;padding:24px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+    .modal-title{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+    .toast-box{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
+    .toast{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;color:white;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;align-items:center;gap:8px;animation:slideIn .2s;}
+    .toast.success{background:var(--green);} .toast.error{background:var(--red);} .toast.info{background:var(--navy);}
+    @keyframes slideIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    .parceiro-select-bar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
+    .loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;z-index:999;}
+    @media(max-width:768px){.form-grid,.form-grid-3{grid-template-columns:1fr;}.tabs{gap:4px;}.tab-btn{min-width:80px;font-size:11px;}.content{padding:14px 14px 60px;}}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+  <div id="loadingScreen" class="loading-screen"><i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Verificando acesso...</div>
+
+  <header class="s-header">
+    <div class="s-logo">
+      <div>
+        <div class="s-logo-name">Cadastros</div>
+        <div class="s-logo-sub">Parceiros · Exames · Valores · Preparos</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="admin-badge"><i class="fas fa-shield-halved"></i> Admin</span>
+      <button class="back-btn" onclick="irPara('admin.html')"><i class="fas fa-arrow-left"></i> Voltar ao Admin</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-title"><i class="fas fa-database"></i> Cadastros do Portal</div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="tab('parceiros')"><i class="fas fa-handshake"></i> Parceiros</button>
+      <button class="tab-btn" onclick="tab('exames')"><i class="fas fa-stethoscope"></i> Exames</button>
+      <button class="tab-btn" onclick="irPara('admin.html')"><i class="fas fa-user-doctor"></i> Profissionais</button>
+    </div>
+
+    <!-- ── PARCEIROS ── -->
+    <div id="pane-parceiros" class="tab-pane active">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-handshake"></i> Parceiros (<span id="countParceiros">0</span>)</div>
+          <button class="btn-p" onclick="abrirModalParceiro()"><i class="fas fa-plus"></i> Novo parceiro</button>
+        </div>
+        <input class="f-input" id="buscaParceiro" placeholder="Buscar parceiro..." oninput="filtrarParceiros()" style="margin-bottom:14px;">
+        <div id="listaParceiros"></div>
+      </div>
+    </div>
+
+    <!-- ── EXAMES ── -->
+    <div id="pane-exames" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-stethoscope"></i> Exames por parceiro</div>
+          <button class="btn-p" id="btnNovoExame" onclick="abrirModalExame()" disabled><i class="fas fa-plus"></i> Novo exame</button>
+        </div>
+        <div class="parceiro-select-bar">
+          <select class="f-select" id="selParceiroExames" style="max-width:320px;" onchange="carregarExamesDoParceiro()">
+            <option value="">Selecione um parceiro...</option>
+          </select>
+          <input class="f-input" id="buscaExame" placeholder="Buscar exame..." oninput="filtrarExames()" style="max-width:280px;">
+          <span class="tag divergente" id="avisoDivergentes" style="display:none;"></span>
+        </div>
+        <div id="listaExames"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Parceiro -->
+  <div class="modal-bg" id="modalParceiro">
+    <div class="modal">
+      <div class="modal-title"><i class="fas fa-handshake"></i> <span id="modalParceiroTitle">Novo Parceiro</span></div>
+      <label class="f-label">Nome</label>
+      <input class="f-input" id="pcNome" style="margin-bottom:12px;">
+      <label class="f-label">Tipo</label>
+      <select class="f-select" id="pcTipo" style="margin-bottom:12px;" onchange="atualizarVisibilidadeModeloPreco()">
+        <option value="interno">Interno (equipe/clínica)</option>
+        <option value="externo">Externo (parceiro terceirizado)</option>
+      </select>
+      <div id="grpModeloPreco" style="display:none;">
+        <label class="f-label">Modelo de preço</label>
+        <select class="f-select" id="pcModeloPreco" style="margin-bottom:12px;">
+          <option value="convenio">Convênio (total / guia / resta)</option>
+          <option value="cartao_particular">Cartão / Particular</option>
+        </select>
+      </div>
+      <label class="f-label">Observações</label>
+      <textarea class="f-input" id="pcObs" rows="2" style="margin-bottom:12px;"></textarea>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--gray-600);">
+        <input type="checkbox" id="pcAtivo" checked> Ativo
+      </label>
+      <div class="modal-actions">
+        <button class="btn-s" onclick="fecharModalParceiro()">Cancelar</button>
+        <button class="btn-p" onclick="salvarParceiro()"><i class="fas fa-floppy-disk"></i> Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Exame -->
+  <div class="modal-bg" id="modalExame">
+    <div class="modal">
+      <div class="modal-title"><i class="fas fa-stethoscope"></i> <span id="modalExameTitle">Novo Exame</span></div>
+      <div class="form-grid">
+        <div><label class="f-label">Nome do exame</label><input class="f-input" id="exNome"></div>
+        <div><label class="f-label">Categoria</label><input class="f-input" id="exCategoria"></div>
+      </div>
+      <div class="form-grid" id="grpPrecoCartaoParticular">
+        <div><label class="f-label">Valor cartão (R$)</label><input class="f-input" id="exPrecoCt" type="number" step="0.01"></div>
+        <div><label class="f-label">Valor particular (R$)</label><input class="f-input" id="exPrecoPt" type="number" step="0.01"></div>
+      </div>
+      <div class="form-grid" id="grpPrecoConvenio" style="display:none;grid-template-columns:1fr 1fr 1fr;">
+        <div><label class="f-label">Valor total (R$)</label><input class="f-input" id="exValorTotal" type="number" step="0.01"></div>
+        <div><label class="f-label">Valor guia (R$)</label><input class="f-input" id="exValorGuia" type="number" step="0.01"></div>
+        <div><label class="f-label">Resta pagar (R$)</label><input class="f-input" id="exValorResta" type="number" step="0.01"></div>
+      </div>
+      <div id="grpUnidadeObs" style="display:none;">
+        <label class="f-label">Observação da unidade</label>
+        <input class="f-input" id="exUnidadeObs" style="margin-bottom:12px;">
+      </div>
+      <label class="f-label">Profissional (opcional)</label>
+      <select class="f-select" id="exProfissional" style="margin-bottom:12px;">
+        <option value="">— Nenhum —</option>
+      </select>
+      <label class="f-label">Preparo</label>
+      <textarea class="f-input" id="exPreparo" rows="2" style="margin-bottom:12px;"></textarea>
+      <label class="f-label">Observação</label>
+      <textarea class="f-input" id="exObservacao" rows="2" style="margin-bottom:12px;"></textarea>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--gray-600);">
+        <input type="checkbox" id="exAtivo" checked> Ativo
+      </label>
+      <div class="modal-actions">
+        <button class="btn-s" onclick="fecharModalExame()">Cancelar</button>
+        <button class="btn-p" onclick="salvarExame()"><i class="fas fa-floppy-disk"></i> Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-box" id="toastBox"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import {
+      getFirestore, collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const app  = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const rtdb = getDatabase(app);
+    const db   = getFirestore(app);
+    window.initFirebaseUtils(rtdb, ref, get);
+
+    let currentUser = null;
+    let parceiros = [];       // [{id, nome, tipo, ativo, ...}]
+    let profissionaisRTDB = []; // [{key, nome, especialidade}]
+    let examesCache = [];     // exames do parceiro selecionado
+    let editandoParceiroId = null;
+    let editandoExameId = null;
+
+    function slugify(s){
+      return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+        .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60) || ('x'+Date.now());
+    }
+
+    window.tab = function(name){
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+      const idx = ['parceiros','exames'].indexOf(name);
+      if (idx>=0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+      document.getElementById('pane-'+name).classList.add('active');
+    };
+
+    // ───────── PARCEIROS ─────────
+    async function carregarParceiros(){
+      const snap = await getDocs(query(collection(db,'parceiros'), orderBy('nome')));
+      parceiros = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      document.getElementById('countParceiros').textContent = parceiros.length;
+      renderParceiros(parceiros);
+      const sel = document.getElementById('selParceiroExames');
+      sel.innerHTML = '<option value="">Selecione um parceiro...</option>' +
+        parceiros.map(p=>`<option value="${p.id}">${esc(p.nome)} ${p.tipo==='interno'?'(interno)':''}</option>`).join('');
+    }
+
+    function renderParceiros(lista){
+      const el = document.getElementById('listaParceiros');
+      if (!lista.length){ el.innerHTML = '<div class="empty-state"><i class="fas fa-handshake"></i><p>Nenhum parceiro cadastrado.</p></div>'; return; }
+      el.innerHTML = lista.map(p => `
+        <div class="row">
+          <div class="row-avatar">${esc((p.nome||'?')[0].toUpperCase())}</div>
+          <div class="row-info">
+            <div class="row-name">${esc(p.nome)}</div>
+            <div class="row-sub">
+              <span class="tag ${p.tipo==='interno'?'interno':''}">${p.tipo==='interno'?'Interno':'Externo'}</span>
+              ${p.ativo===false ? '<span class="tag inativo">Inativo</span>' : ''}
+              ${p.observacoes ? ' · '+esc(p.observacoes) : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-s" style="padding:6px 10px;" onclick="abrirModalParceiro('${p.id}')"><i class="fas fa-pen"></i></button>
+            <button class="btn-r" style="padding:6px 10px;" onclick="excluirParceiro('${p.id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`).join('');
+    }
+
+    window.filtrarParceiros = function(){
+      const q = (document.getElementById('buscaParceiro').value||'').toLowerCase();
+      renderParceiros(parceiros.filter(p => (p.nome||'').toLowerCase().includes(q)));
+    };
+
+    window.atualizarVisibilidadeModeloPreco = function(){
+      const tipo = document.getElementById('pcTipo').value;
+      document.getElementById('grpModeloPreco').style.display = (tipo === 'externo') ? 'block' : 'none';
+    };
+
+    window.abrirModalParceiro = function(id){
+      editandoParceiroId = id || null;
+      document.getElementById('modalParceiroTitle').textContent = id ? 'Editar Parceiro' : 'Novo Parceiro';
+      document.getElementById('pcNome').value = '';
+      document.getElementById('pcTipo').value = 'interno';
+      document.getElementById('pcModeloPreco').value = 'convenio';
+      document.getElementById('pcObs').value = '';
+      document.getElementById('pcAtivo').checked = true;
+      if (id){
+        const p = parceiros.find(x=>x.id===id);
+        if (p){
+          document.getElementById('pcNome').value = p.nome||'';
+          document.getElementById('pcTipo').value = p.tipo||'interno';
+          document.getElementById('pcModeloPreco').value = p.modeloPreco || (p.tipo==='interno' ? 'cartao_particular' : 'convenio');
+          document.getElementById('pcObs').value = p.observacoes||'';
+          document.getElementById('pcAtivo').checked = p.ativo!==false;
+        }
+      }
+      atualizarVisibilidadeModeloPreco();
+      document.getElementById('modalParceiro').classList.add('open');
+    };
+    window.fecharModalParceiro = function(){ document.getElementById('modalParceiro').classList.remove('open'); };
+
+    window.salvarParceiro = async function(){
+      const nome = document.getElementById('pcNome').value.trim();
+      if (!nome){ toast('Informe o nome do parceiro','error'); return; }
+      const now = new Date().toISOString();
+      const tipo = document.getElementById('pcTipo').value;
+      const data = {
+        nome,
+        tipo,
+        modeloPreco: tipo === 'interno' ? 'cartao_particular' : document.getElementById('pcModeloPreco').value,
+        observacoes: document.getElementById('pcObs').value.trim(),
+        ativo: document.getElementById('pcAtivo').checked,
+        updatedAt: now, updatedBy: currentUser.email
+      };
+      try {
+        if (editandoParceiroId){
+          await updateDoc(doc(db,'parceiros',editandoParceiroId), data);
+        } else {
+          const id = 'p_' + slugify(nome) + '_' + Date.now().toString(36).slice(-4);
+          await setDoc(doc(db,'parceiros',id), {...data, createdAt: now, createdBy: currentUser.email});
+        }
+        toast('Parceiro salvo!','success');
+        fecharModalParceiro();
+        await carregarParceiros();
+      } catch(e){ toast('Erro: '+e.message,'error'); }
+    };
+
+    window.excluirParceiro = async function(id){
+      const p = parceiros.find(x=>x.id===id);
+      if (!confirm(`Remover o parceiro "${p?.nome||id}"? Os exames dele não serão apagados automaticamente — revise a aba Exames antes.`)) return;
+      try { await deleteDoc(doc(db,'parceiros',id)); toast('Parceiro removido','success'); await carregarParceiros(); }
+      catch(e){ toast('Erro: '+e.message,'error'); }
+    };
+
+    // ───────── PROFISSIONAIS (lidos da Realtime Database — cadastro já existente em admin.html) ─────────
+    async function carregarProfissionaisRTDB(){
+      try {
+        const snap = await get(ref(rtdb, 'admin/profissionais'));
+        const obj = snap.exists() ? snap.val() : {};
+        profissionaisRTDB = Object.entries(obj).map(([key,p]) => ({key, ...p}));
+      } catch(e){ profissionaisRTDB = []; }
+      const sel = document.getElementById('exProfissional');
+      sel.innerHTML = '<option value="">— Nenhum —</option>' +
+        profissionaisRTDB.map(p => `<option value="rtdb:${p.key}">${esc(p.nome)}${p.especialidade?' — '+esc(p.especialidade):''}</option>`).join('') +
+        '<option value="" disabled>──────────</option>' +
+        '<li style="list-style:none;padding:4px 8px;font-size:11px;color:var(--gray-400);">Cadastre novos profissionais na aba "Profissionais" do Admin</li>';
+    }
+    function nomeProfissional(profissionalId){
+      if (!profissionalId) return '';
+      if (profissionalId.startsWith('rtdb:')){
+        const key = profissionalId.slice(5);
+        const p = profissionaisRTDB.find(x=>x.key===key);
+        return p ? p.nome : '(profissional removido)';
+      }
+      return '(profissional legado — reselecione)';
+    }
+
+    // ───────── EXAMES (subcoleção parceiros/{id}/exames) ─────────
+    window.carregarExamesDoParceiro = async function(){
+      const parceiroId = document.getElementById('selParceiroExames').value;
+      document.getElementById('btnNovoExame').disabled = !parceiroId;
+      if (!parceiroId){ examesCache = []; renderExames([]); document.getElementById('avisoDivergentes').style.display='none'; return; }
+      const snap = await getDocs(query(collection(db,'parceiros',parceiroId,'exames'), orderBy('categoria')));
+      examesCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      const divergentes = examesCache.filter(e=>e._precoDivergente).length;
+      const avisoEl = document.getElementById('avisoDivergentes');
+      if (divergentes){ avisoEl.style.display='inline-flex'; avisoEl.textContent = divergentes + ' exame(s) com preço divergente — revisar'; }
+      else avisoEl.style.display = 'none';
+      filtrarExames();
+    };
+
+    function renderExames(lista){
+      const el = document.getElementById('listaExames');
+      if (!document.getElementById('selParceiroExames').value){ el.innerHTML = '<div class="empty-state"><i class="fas fa-arrow-up"></i><p>Selecione um parceiro para ver os exames dele.</p></div>'; return; }
+      if (!lista.length){ el.innerHTML = '<div class="empty-state"><i class="fas fa-stethoscope"></i><p>Nenhum exame cadastrado para este parceiro.</p></div>'; return; }
+      const parceiroSel = parceiros.find(p=>p.id===document.getElementById('selParceiroExames').value);
+      const isConvenio = parceiroSel && parceiroSel.modeloPreco === 'convenio';
+      el.innerHTML = lista.map(e => `
+        <div class="row">
+          <div class="row-avatar" style="background:${e._precoDivergente?'var(--red)':'var(--navy)'};"><i class="fas fa-stethoscope" style="font-size:13px;"></i></div>
+          <div class="row-info">
+            <div class="row-name">${esc(e.nome)}</div>
+            <div class="row-sub">
+              ${esc(e.categoria||'')} · ${isConvenio
+                ? `Total R$ ${fmtMoeda(e.valor_total)} · Guia R$ ${fmtMoeda(e.valor_guia)} · Resta R$ ${fmtMoeda(e.valor_resta)}`
+                : `Cartão R$ ${fmtMoeda(e.preco_ct)} · Particular R$ ${fmtMoeda(e.preco_pt)}`}
+              ${e.profissionalId ? ' · '+esc(nomeProfissional(e.profissionalId)) : ''}
+              ${e._precoDivergente ? ' <span class="tag divergente">preço divergente — revisar</span>' : ''}
+              ${e.ativo===false ? ' <span class="tag inativo">Inativo</span>' : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-s" style="padding:6px 10px;" onclick="abrirModalExame('${e.id}')"><i class="fas fa-pen"></i></button>
+            <button class="btn-r" style="padding:6px 10px;" onclick="excluirExame('${e.id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`).join('');
+    }
+
+    window.filtrarExames = function(){
+      const q = (document.getElementById('buscaExame').value||'').toLowerCase();
+      renderExames(examesCache.filter(e => (e.nome||'').toLowerCase().includes(q) || (e.categoria||'').toLowerCase().includes(q)));
+    };
+
+    window.abrirModalExame = function(id){
+      const parceiroId = document.getElementById('selParceiroExames').value;
+      if (!parceiroId){ toast('Selecione um parceiro primeiro','error'); return; }
+      const parceiroSel = parceiros.find(p=>p.id===parceiroId);
+      const isConvenio = parceiroSel && parceiroSel.modeloPreco === 'convenio';
+      document.getElementById('grpPrecoCartaoParticular').style.display = isConvenio ? 'none' : 'grid';
+      document.getElementById('grpPrecoConvenio').style.display = isConvenio ? 'grid' : 'none';
+      document.getElementById('grpUnidadeObs').style.display = isConvenio ? 'block' : 'none';
+      editandoExameId = id || null;
+      document.getElementById('modalExameTitle').textContent = id ? 'Editar Exame' : 'Novo Exame';
+      document.getElementById('exNome').value = '';
+      document.getElementById('exCategoria').value = '';
+      document.getElementById('exPrecoCt').value = '';
+      document.getElementById('exPrecoPt').value = '';
+      document.getElementById('exValorTotal').value = '';
+      document.getElementById('exValorGuia').value = '';
+      document.getElementById('exValorResta').value = '';
+      document.getElementById('exUnidadeObs').value = '';
+      document.getElementById('exProfissional').value = '';
+      document.getElementById('exPreparo').value = '';
+      document.getElementById('exObservacao').value = '';
+      document.getElementById('exAtivo').checked = true;
+      if (id){
+        const e = examesCache.find(x=>x.id===id);
+        if (e){
+          document.getElementById('exNome').value = e.nome||'';
+          document.getElementById('exCategoria').value = e.categoria||'';
+          document.getElementById('exPrecoCt').value = e.preco_ct ?? '';
+          document.getElementById('exPrecoPt').value = e.preco_pt ?? '';
+          document.getElementById('exValorTotal').value = e.valor_total ?? '';
+          document.getElementById('exValorGuia').value = e.valor_guia ?? '';
+          document.getElementById('exValorResta').value = e.valor_resta ?? '';
+          document.getElementById('exUnidadeObs').value = e.unidadeObs || '';
+          document.getElementById('exProfissional').value = e.profissionalId && e.profissionalId.startsWith('rtdb:') ? e.profissionalId : '';
+          document.getElementById('exPreparo').value = e.preparo||'';
+          document.getElementById('exObservacao').value = e.observacao||'';
+          document.getElementById('exAtivo').checked = e.ativo!==false;
+        }
+      }
+      document.getElementById('modalExame').classList.add('open');
+    };
+    window.fecharModalExame = function(){ document.getElementById('modalExame').classList.remove('open'); };
+
+    window.salvarExame = async function(){
+      const parceiroId = document.getElementById('selParceiroExames').value;
+      const parceiroSel = parceiros.find(p=>p.id===parceiroId);
+      const isConvenio = parceiroSel && parceiroSel.modeloPreco === 'convenio';
+      const nome = document.getElementById('exNome').value.trim();
+      if (!nome){ toast('Informe o nome do exame','error'); return; }
+      const now = new Date().toISOString();
+      const numOrNull = v => v === '' ? null : Number(v);
+      const data = {
+        nome,
+        categoria: document.getElementById('exCategoria').value.trim(),
+        profissionalId: document.getElementById('exProfissional').value || null,
+        preparo: document.getElementById('exPreparo').value.trim(),
+        observacao: document.getElementById('exObservacao').value.trim(),
+        ativo: document.getElementById('exAtivo').checked,
+        updatedAt: now, updatedBy: currentUser.email
+      };
+      if (isConvenio){
+        data.valor_total = numOrNull(document.getElementById('exValorTotal').value);
+        data.valor_guia  = numOrNull(document.getElementById('exValorGuia').value);
+        data.valor_resta = numOrNull(document.getElementById('exValorResta').value);
+        data.unidadeObs  = document.getElementById('exUnidadeObs').value.trim();
+      } else {
+        data.preco_ct = numOrNull(document.getElementById('exPrecoCt').value);
+        data.preco_pt = numOrNull(document.getElementById('exPrecoPt').value);
+      }
+      try {
+        if (editandoExameId){
+          // preserva flags de origem/divergencia ja existentes, so atualiza campos editaveis
+          await updateDoc(doc(db,'parceiros',parceiroId,'exames',editandoExameId), data);
+        } else {
+          const id = 'e_' + slugify(nome) + '_' + Date.now().toString(36).slice(-4);
+          await setDoc(doc(db,'parceiros',parceiroId,'exames',id), {
+            ...data, caracteristica:'', beneficio:'', _precoDivergente:false, _origemIds:[],
+            createdAt: now, createdBy: currentUser.email
+          });
+        }
+        toast('Exame salvo!','success');
+        fecharModalExame();
+        await carregarExamesDoParceiro();
+      } catch(e){ toast('Erro: '+e.message,'error'); }
+    };
+
+    window.excluirExame = async function(id){
+      const parceiroId = document.getElementById('selParceiroExames').value;
+      if (!confirm('Remover este exame?')) return;
+      try { await deleteDoc(doc(db,'parceiros',parceiroId,'exames',id)); toast('Exame removido','success'); await carregarExamesDoParceiro(); }
+      catch(e){ toast('Erro: '+e.message,'error'); }
+    };
+
+    // ───────── AUTH GATE (mesmo padrão do admin.html) ─────────
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { irPara('../login.html'); return; }
+      try {
+        const snap = await get(ref(rtdb, `admin/usuarios/${user.uid}`));
+        const perms = snap.exists() ? (snap.val().perms || {}) : {};
+        if (!perms.admin) { irPara('../login.html'); return; }
+      } catch(e) { irPara('../login.html'); return; }
+
+      currentUser = user;
+      document.getElementById('loadingScreen').style.display = 'none';
+      await carregarProfissionaisRTDB();
+      await carregarParceiros();
+    });
+  </script>
+</body>
+</html>
