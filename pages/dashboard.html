@@ -1,4 +1,4 @@
-<!-- VERSION: v3.4 | dashboard.html | 23/09/2026 | NF em Lote: CEP sem perder zero à esquerda no ViaCEP, detecção de Consulta/Exame mais tolerante, barra de progresso na busca de CEP -->
+<!-- VERSION: v3.5 | dashboard.html | 23/09/2026 | NF em Lote: classificação Consulta/Exame por operador (fallback quando a planilha não tem seção), nome de aba tolerante a barra duplicada, CEP sem perder zero, barra de progresso na busca de CEP -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -3837,6 +3837,13 @@
     return [d+' '+m+' '+y, d+'/'+m+'/'+y, d+'-'+m+'-'+y, d1+' '+m1+' '+y, d+' '+m+' '+y.slice(2), d+'/'+m+'/'+y.slice(2)];
   }
 
+  /* Nome de aba tolerante a erro de digitação tipo "22/09//2026" (barra
+     duplicada): colapsa separadores repetidos (/, -, espaço) antes de
+     comparar, então "22/09//2026" e "22/09/2026" batem igual. */
+  function nflNormNomeAba(s){
+    return (s||'').toLowerCase().trim().replace(/[\/\-\s]+/g,'/');
+  }
+
   /* Remove acentos/pontuação e normaliza espaços — deixa a detecção de
      cabeçalho "Consulta(s)"/"Exame(s)" tolerante a variações de escrita na
      planilha (maiúsculas, plural, acento, emoji/numeração na frente etc). */
@@ -3847,6 +3854,27 @@
       .replace(/[^a-z0-9\s]/g,' ')
       .replace(/\s+/g,' ')
       .trim();
+  }
+
+  /* Classificação de fallback por operador: em dias em que a planilha não
+     tem seção "Consulta"/"Exame" (só agrupa por forma de pagamento), o
+     tipo é inferido por quem processou o atendimento. Regra definida por
+     Raphael em 23/09/2026 — não é um palpite automático, veio direto dele. */
+  var NFL_OPERADOR_TIPO = {
+    'giovanna':'Exame', 'natiely':'Exame', 'bruna':'Exame', 'kauany':'Exame', 'gustavo':'Exame',
+    'fernanda':'Consulta', 'tayna':'Consulta', 'mariluce':'Consulta', 'carla':'Consulta'
+  };
+  function nflTipoPorOperador(row){
+    /* Casa por palavra dentro da célula (não a célula inteira), porque a
+       coluna Operador às vezes tem só o primeiro nome ("CARLA") e às vezes
+       nome completo ("TAYNA SAMPAIO"). */
+    for(var i=0;i<row.length;i++){
+      var tokens=nflNormTxt(row[i]).split(' ');
+      for(var j=0;j<tokens.length;j++){
+        if(NFL_OPERADOR_TIPO[tokens[j]]) return NFL_OPERADOR_TIPO[tokens[j]];
+      }
+    }
+    return '';
   }
 
   function nflExtrairTipoDoSheet(linhas){
@@ -3873,7 +3901,12 @@
         continue;
       }
       linhasLimpas.push(row);
-      if(tipoAtual) tiposPorIndice[dataIdx]=tipoAtual;
+      /* Prioridade: cabeçalho de seção explícito (Consulta/Exame na planilha).
+         Sem ele, cai no fallback por operador (dias 18,19,21,22,23/09, que só
+         agrupam por forma de pagamento). Sem nenhum dos dois, fica sem tipo
+         e a linha vai para INCOMPLETOS — nunca chuta. */
+      var tipoLinha = tipoAtual || nflTipoPorOperador(row);
+      if(tipoLinha) tiposPorIndice[dataIdx]=tipoLinha;
       dataIdx++;
     }
     return {linhasLimpas:linhasLimpas, tiposPorIndice:tiposPorIndice};
@@ -3886,7 +3919,7 @@
     if(!dateIso){statusEl.innerHTML='<span style="color:var(--red)">Escolha uma data primeiro.</span>';return;}
     btn.disabled=true;btn.textContent='Buscando...';statusEl.innerHTML='';
     try{
-      var variacoes=new Set(nflIsoParaVariacoesAba(dateIso).map(function(s){ return s.toLowerCase(); }));
+      var variacoes=new Set(nflIsoParaVariacoesAba(dateIso).map(nflNormNomeAba));
       var csvBase=NFL_SHEET_PUBHTML.replace(/pubhtml.*$/,'pub?output=csv');
       var r=await nflFetchComTimeout(NFL_SHEET_PUBHTML,15000);
       if(!r.ok) throw new Error('HTTP '+r.status);
@@ -3904,7 +3937,7 @@
           var tabName=m[1].replace(/\\\//g,'/').trim();
           var gidM=m[2].match(/gid=(-?\d+)/);
           if(tabName) todasAbas.push(tabName);
-          if(gidM&&variacoes.has(tabName.toLowerCase())){gid=gidM[1];achado=tabName;break;}
+          if(gidM&&variacoes.has(nflNormNomeAba(tabName))){gid=gidM[1];achado=tabName;break;}
         }
       }
       if(!gid){
