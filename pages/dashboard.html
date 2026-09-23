@@ -1,4 +1,4 @@
-<!-- VERSION: v3.3 | dashboard.html | 22/09/2026 | NF em Lote: máscaras de CPF, CEP, Telefone e Title-Case em Paciente/Endereço -->
+<!-- VERSION: v3.4 | dashboard.html | 23/09/2026 | NF em Lote: CEP sem perder zero à esquerda no ViaCEP, detecção de Consulta/Exame mais tolerante, barra de progresso na busca de CEP -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -795,6 +795,40 @@
       </div>
     </div>
 
+    <!-- PAINEL RANKING -->
+    <div class="view-panel" id="viewRanking">
+      <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--navy);">Ranking de Produção</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">Selecione o período e veja quem produziu mais</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;">
+          <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:3px;">De</label><input type="date" id="rankDataIni" class="f-select" style="width:140px;"></div>
+          <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:3px;">Até</label><input type="date" id="rankDataFim" class="f-select" style="width:140px;"></div>
+          <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:3px;">Departamento</label><select id="rankDepto" class="f-select" style="width:150px;"><option value="">Todos</option></select></div>
+          <div style="padding-top:16px;"><button onclick="renderRanking()" style="padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;"><i class="fas fa-trophy"></i> Gerar Ranking</button></div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500);margin-bottom:8px;letter-spacing:.5px;">Formas de pagamento no ranking</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#1d4ed8;">
+            <input type="checkbox" id="rkChkDeb" checked style="width:14px;height:14px;accent-color:#1d4ed8;"> Débito
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#0369a1;">
+            <input type="checkbox" id="rkChkPix" checked style="width:14px;height:14px;accent-color:#0369a1;"> PIX
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#065f46;">
+            <input type="checkbox" id="rkChkDin" checked style="width:14px;height:14px;accent-color:#065f46;"> Dinheiro
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#7c3aed;">
+            <input type="checkbox" id="rkChkCrd" style="width:14px;height:14px;accent-color:#7c3aed;"> Crédito
+          </label>
+        </div>
+      </div>
+      <div id="rankingArea"><div class="loading" style="padding:48px;text-align:center;"><i class="fas fa-trophy" style="font-size:36px;opacity:.15;display:block;margin-bottom:10px;"></i>Selecione um período e clique em Gerar Ranking</div></div>
+    </div>
+
   </div><!-- /content -->
 
   <!-- Modal detalhes odonto -->
@@ -1229,6 +1263,7 @@
       if (tab === 'visao')    { preencherMesVisao(); renderVisao(); }
       if (tab === 'contratos'){ preencherMesContratos(); renderContratos(); }
       if (tab === 'odonto')   { dshOdPreencherMes(); }
+      if (tab === 'ranking')  { rankInitDatas(); renderRanking(); }
       if (tab === 'nflote')   { /* painel nativo — sem ação extra */ }
     };
 
@@ -1427,6 +1462,150 @@
       document.getElementById('dshOdModal').style.display = 'flex';
     };
 
+    /* ══════════════════════════════════════
+       ABA RANKING
+       Restaurada em 23/09/2026 — havia sido apagada por engano no commit
+       ad43b64 ("Update print statement from 'Hello' to 'Goodbye'"), que
+       substituiu o dashboard.html por uma versão antiga (upload manual).
+       Reescrita para usar calcRow(snap.totForma, uid) — a mesma leitura
+       correta dos dados que a aba Produção/Visão Geral já usa — em vez do
+       helper lerTotForma() da versão antiga.
+    ══════════════════════════════════════ */
+    function rankInitDatas() {
+      var ini = document.getElementById('rankDataIni');
+      var fim = document.getElementById('rankDataFim');
+      var sel = document.getElementById('rankDepto');
+      if (sel && sel.options.length <= 1) {
+        var deptos = {};
+        var usuarios = window._usuarios || {};
+        Object.keys(usuarios).forEach(function(uid) {
+          var u = usuarios[uid];
+          if (u && u.departamento) deptos[u.departamento] = true;
+        });
+        var opts = '<option value="">Todos</option>';
+        Object.keys(deptos).sort().forEach(function(d) { opts += '<option value="' + esc(d) + '">' + esc(d) + '</option>'; });
+        sel.innerHTML = opts;
+      }
+      if (!ini || ini.value) return;
+      var hoje = new Date(), y = hoje.getFullYear(), m = hoje.getMonth();
+      function pad(n) { return n < 10 ? '0' + n : '' + n; }
+      ini.value = y + '-' + pad(m + 1) + '-01';
+      fim.value = y + '-' + pad(m + 1) + '-' + pad(new Date(y, m + 1, 0).getDate());
+    }
+
+    window.renderRanking = function() {
+      var iniV = (document.getElementById('rankDataIni') || {}).value || '';
+      var fimV = (document.getElementById('rankDataFim') || {}).value || '';
+      var deptoFiltro = (document.getElementById('rankDepto') || {}).value || '';
+      var area = document.getElementById('rankingArea');
+      if (!area) return;
+      if (!iniV || !fimV) { area.innerHTML = '<div class="loading">Selecione as datas.</div>'; return; }
+      area.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Calculando...</div>';
+
+      setTimeout(function() {
+        var por = {};
+        var usuarios = window._usuarios || {};
+        for (var uid in _dados) {
+          if (deptoFiltro) {
+            var u = usuarios[uid];
+            var depto = u ? (u.departamento || '') : '';
+            if (depto !== deptoFiltro) continue;
+          }
+          for (var dia in _dados[uid]) {
+            if (dia < iniV || dia > fimV) continue;
+            var snap = _dados[uid][dia];
+            if (!snap || !snap.totForma) continue;
+            var nome = aplicarAlias(snap.colaborador || uid);
+            if (!por[uid]) por[uid] = { nome: nome, deb: 0, pix: 0, crd: 0, din: 0, desp: 0, dias: 0 };
+            var v = calcRow(snap.totForma, uid);
+            por[uid].deb += v.debito; por[uid].pix += v.pix; por[uid].crd += v.credito;
+            por[uid].din += v.dinheiro; por[uid].desp += v.despesas; por[uid].dias++;
+          }
+        }
+
+        var nomes = Object.keys(por);
+        if (!nomes.length) { area.innerHTML = '<div class="loading">Nenhum caixa no período selecionado.</div>'; return; }
+
+        function fR(n) { return 'R$ ' + (n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function fD(s) { var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+
+        var useDeb = !!(document.getElementById('rkChkDeb') && document.getElementById('rkChkDeb').checked);
+        var usePix = !!(document.getElementById('rkChkPix') && document.getElementById('rkChkPix').checked);
+        var useDin = !!(document.getElementById('rkChkDin') && document.getElementById('rkChkDin').checked);
+        var useCrd = !!(document.getElementById('rkChkCrd') && document.getElementById('rkChkCrd').checked);
+        var lblFormas = [];
+        if (useDeb) lblFormas.push('Débito');
+        if (usePix) lblFormas.push('PIX');
+        if (useDin) lblFormas.push('Dinheiro');
+        if (useCrd) lblFormas.push('Crédito');
+        if (!lblFormas.length) { area.innerHTML = '<div class="loading">Selecione ao menos uma forma de pagamento.</div>'; return; }
+
+        var rank = nomes.map(function(uid2) {
+          var v = por[uid2];
+          var av = (useDeb ? v.deb : 0) + (usePix ? v.pix : 0) + (useDin ? v.din : 0) + (useCrd ? v.crd : 0);
+          var u2 = (window._usuarios || {})[uid2] || {};
+          return { nome: v.nome, uid: uid2, depto: u2.departamento || '', av: av, deb: v.deb, pix: v.pix, din: v.din, crd: v.crd, desp: v.desp, total: v.deb + v.pix + v.din + v.crd - v.desp, dias: v.dias };
+        }).sort(function(a, b) { return b.av - a.av; });
+
+        var maxAv = rank[0].av || 1;
+        var sumAv  = rank.reduce(function(s, r) { return s + r.av; }, 0);
+        var sumCrd = rank.reduce(function(s, r) { return s + r.crd; }, 0);
+        var sumTot = rank.reduce(function(s, r) { return s + r.total; }, 0);
+
+        var html = '<div class="table-card">';
+        html += '<div class="table-header">';
+        html += '<i class="fas fa-trophy" style="color:#d97706;font-size:16px;"></i>';
+        html += '<span class="table-title">Ranking: ' + esc(lblFormas.join(' + ')) + '</span>';
+        html += '<span class="period-pill"><i class="fas fa-calendar"></i> ' + fD(iniV) + ' a ' + fD(fimV) + '</span>';
+        html += '<span style="margin-left:auto;font-size:11px;color:var(--gray-400);">' + rank.length + ' colaboradores</span>';
+        html += '</div>';
+
+        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 18px;border-bottom:1px solid var(--gray-200);">';
+        html += '<div style="background:#f0fdf4;border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;margin-bottom:3px;">Total à Vista</div><div style="font-size:18px;font-weight:900;color:#15803d;">' + fR(sumAv) + '</div></div>';
+        html += '<div style="background:#f5f3ff;border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;margin-bottom:3px;">Crédito</div><div style="font-size:18px;font-weight:900;color:#7c3aed;">' + fR(sumCrd) + '</div></div>';
+        html += '<div style="background:#eff6ff;border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;margin-bottom:3px;">Total Geral</div><div style="font-size:18px;font-weight:900;color:var(--navy);">' + fR(sumTot) + '</div></div>';
+        html += '</div>';
+
+        html += '<div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;">';
+        var medals = ['🥇', '🥈', '🥉'];
+        var bgTop  = ['#d97706', '#64748b', '#b45309'];
+
+        rank.forEach(function(r, i) {
+          var pct   = Math.round(r.av / maxAv * 100);
+          var share = sumAv > 0 ? (r.av / sumAv * 100).toFixed(1) : '0.0';
+          var init  = r.nome.split(' ').filter(Boolean).map(function(w) { return w[0]; }).join('').toUpperCase().slice(0, 2);
+          var bg    = bgTop[i] || 'var(--navy)';
+          var pos   = i < 3 ? '<span style="font-size:22px;">' + medals[i] + '</span>' : '<span style="font-size:13px;font-weight:800;color:var(--gray-400);">' + (i + 1) + '.</span>';
+
+          html += '<div style="background:white;border:1px solid var(--gray-200);border-radius:14px;padding:14px 16px;">';
+          html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
+          html += '<div style="min-width:28px;text-align:center;">' + pos + '</div>';
+          html += '<div style="width:36px;height:36px;border-radius:50%;background:' + bg + ';color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">' + esc(init) + '</div>';
+          html += '<div style="flex:1;min-width:0;">';
+          html += '<div style="font-size:14px;font-weight:800;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(r.nome) + '</div>';
+          html += '<div style="font-size:11px;color:var(--gray-400);">' + r.dias + ' dia(s)' + (r.depto ? ' · <span style="background:var(--teal-bg,#e6fffa);color:var(--teal,#0d9488);padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;">' + esc(r.depto) + '</span>' : '') + '</div>';
+          html += '</div>';
+          html += '<div style="text-align:right;">';
+          html += '<div style="font-size:18px;font-weight:900;color:#15803d;">' + fR(r.av) + '</div>';
+          html += '<div style="font-size:10px;color:var(--gray-400);">' + share + '% do grupo</div>';
+          html += '</div></div>';
+          html += '<div style="height:7px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-bottom:8px;">';
+          html += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#15803d,#22c55e);border-radius:4px;"></div>';
+          html += '</div>';
+          html += '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--gray-500);">';
+          if (useDeb) html += '<span><b style="color:#1d4ed8;">Deb</b> ' + fR(r.deb) + '</span>';
+          if (usePix) html += '<span><b style="color:#0369a1;">PIX</b> ' + fR(r.pix) + '</span>';
+          if (useDin) html += '<span><b style="color:#065f46;">Din</b> ' + fR(r.din) + '</span>';
+          if (useCrd) html += '<span><b style="color:#7c3aed;">Cred</b> ' + fR(r.crd) + '</span>';
+          if (r.desp > 0) html += '<span><b style="color:var(--red);">Desp</b> -' + fR(r.desp) + '</span>';
+          html += '</div></div>';
+        });
+
+        html += '</div></div>';
+        area.innerHTML = html;
+      }, 0);
+    };
+
     function preencherMesVisao() {
       var sel = document.getElementById('visaoMesSelect');
       if (!sel || sel.options.length > 1) return;
@@ -1443,23 +1622,29 @@
     window.renderVisao = async function() {
       var mes = (document.getElementById('visaoMesSelect') || {}).value || '';
       if (!mes) return;
-      var totais = { debito:0, pix:0, dinheiro:0, credito_av:0, credito_pa:0, despesa:0 };
+      // NOTA (22/09/2026): antes este bloco lia _dados[uid][dia] como um dicionário de
+      // "lançamentos" com campos .forma/.valor em minúsculo (debito, credito_av, ...),
+      // formato que nunca existiu nos dados reais — por isso os totais ficavam sempre
+      // zerados. Os dados reais são um snapshot por dia (snap.totForma), a mesma
+      // estrutura que a aba Produção já lê via calcRow(). Corrigido para usar calcRow.
+      var totais = { debito:0, pix:0, dinheiro:0, credito:0, despesa:0 };
       for (var uid in _dados) {
         for (var dia in _dados[uid]) {
           if (!dia.startsWith(mes)) continue;
-          var lancamentos = _dados[uid][dia];
-          for (var k in lancamentos) {
-            var it = lancamentos[k];
-            if (totais[it.forma] !== undefined) totais[it.forma] += (it.valor || 0);
-          }
+          var c = calcRow(_dados[uid][dia].totForma, uid);
+          totais.debito   += c.debito;
+          totais.pix      += c.pix;
+          totais.dinheiro += c.dinheiro;
+          totais.credito  += c.credito;
+          totais.despesa  += c.despesas;
         }
       }
-      var avista  = totais.debito + totais.pix + totais.dinheiro + totais.credito_av;
-      var credito = totais.credito_pa;
+      var avista  = totais.debito + totais.pix + totais.dinheiro;
+      var credito = totais.credito;
       var despesa = totais.despesa;
       var total   = avista + credito - despesa;
 
-      function fmtV(v) { return 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2}); }
+      function fmtV(v) { return 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 
       var cardsData = [
         { label:'Total Geral',  val: fmtV(total),   cor:'var(--navy)',   bg:'#eff6ff', icon:'fa-coins' },
@@ -1559,24 +1744,26 @@
         exEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;">Erro ao carregar exames.</div>';
       }
 
+      // NOTA (22/09/2026): mesma correção do bloco de totais acima — usa calcRow()
+      // sobre snap.totForma (formato real) e snap.colaborador para o nome, em vez de
+      // um formato de lançamento inexistente que fazia cair no fallback "uid2" (por
+      // isso apareciam UIDs do Firebase no lugar dos nomes dos colaboradores).
       var comEl = document.getElementById('visaoComissoes');
-      var TAXA_AV = 0.5, TAXA_CR = 0.1;
       var grupos = {};
       for (var uid2 in _dados) {
         for (var dia2 in _dados[uid2]) {
           if (!dia2.startsWith(mes)) continue;
-          for (var k2 in _dados[uid2][dia2]) {
-            var it2 = _dados[uid2][dia2][k2];
-            var nome2 = it2.colaborador || uid2;
-            if (!grupos[nome2]) grupos[nome2] = { avista:0, credito:0 };
-            if (['debito','pix','dinheiro','credito_av'].includes(it2.forma)) grupos[nome2].avista += (it2.valor||0);
-            if (it2.forma === 'credito_pa') grupos[nome2].credito += (it2.valor||0);
-          }
+          var snap2 = _dados[uid2][dia2];
+          var nome2 = snap2.colaborador || uid2;
+          var c2 = calcRow(snap2.totForma, uid2);
+          if (!grupos[nome2]) grupos[nome2] = { avista:0, credito:0, comissao:0 };
+          grupos[nome2].avista   += c2.avista;
+          grupos[nome2].credito  += c2.credito;
+          grupos[nome2].comissao += c2.comissao;
         }
       }
       var entries = Object.entries(grupos).map(function(e) {
-        var com = (e[1].avista * TAXA_AV / 100) + (e[1].credito * TAXA_CR / 100);
-        return { nome: e[0], avista: e[1].avista, credito: e[1].credito, comissao: com };
+        return { nome: e[0], avista: e[1].avista, credito: e[1].credito, comissao: e[1].comissao };
       }).sort(function(a,b) { return b.comissao - a.comissao; });
 
       if (!entries.length) {
@@ -1589,8 +1776,8 @@
         '<div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:16px;"><i class="fas fa-users" style="color:var(--gray-400);margin-right:6px;"></i>Comissões do Período</div>' +
         entries.map(function(e) {
           var pct = maxCom > 0 ? Math.round(e.comissao / maxCom * 100) : 0;
-          var comFmt = 'R$ ' + e.comissao.toLocaleString('pt-BR',{minimumFractionDigits:2});
-          var prodFmt = 'R$ ' + (e.avista+e.credito).toLocaleString('pt-BR',{minimumFractionDigits:2});
+          var comFmt = 'R$ ' + e.comissao.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+          var prodFmt = 'R$ ' + (e.avista+e.credito).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
           return '<div style="margin-bottom:14px;">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
               '<div>' +
@@ -2758,8 +2945,12 @@
                 <option value="SP" selected>SP</option><option value="SE">SE</option><option value="TO">TO</option>
               </select>
             </div>
-            <div class="row">
+            <div class="row" style="align-items:center;gap:10px;">
               <button id="buscarCepBtn" onclick="nflBuscarCeps()">🔍 Buscar CEP</button>
+              <span id="cepProgressLabel" style="display:none;font-size:0.82rem;color:var(--gray-500,#64748b);font-weight:600;"></span>
+            </div>
+            <div id="cepProgressWrap" style="display:none;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin:4px 0 2px;">
+              <div id="cepProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#0f766e,#14b8a6);border-radius:4px;transition:width .15s ease;"></div>
             </div>
             <div class="tablewrap" style="margin-top:14px;"><table id="cepTable"></table></div>
             <ul class="err-list" id="cepErrList"></ul>
@@ -3057,8 +3248,17 @@
     if(d.length<=9) return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6);
     return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9);
   }
+  /* Normaliza dígitos de CEP: Excel/Sheets costuma converter o CEP em número e
+     comer o zero à esquerda (ex: 05089-000 vira 5089000, com 7 dígitos em vez
+     de 8) — isso fazia o CEP não bater com o ViaCEP. Recompõe o zero quando
+     sobram exatamente 7 dígitos, que é o padrão desse tipo de perda. */
+  function nflNormCEPDigits(v){
+    var d=nflOnlyDigits(v);
+    if(d.length===7) d='0'+d;
+    return d.slice(0,8);
+  }
   function nflFmtCEP(v){
-    var d=nflOnlyDigits(v).slice(0,8);
+    var d=nflNormCEPDigits(v);
     if(d.length<=5) return d;
     return d.slice(0,5)+'-'+d.slice(5);
   }
@@ -3164,7 +3364,7 @@
     if(!s) return '';
     var digits=nflOnlyDigits(s);
     if(digits.length===11&&nflIsValidCPF(digits)) return 'CPF';
-    if(digits.length===8&&/^\d{5}-?\d{3}$/.test(s)) return 'CEP';
+    if((digits.length===8||digits.length===7)&&/^\d{4,5}-?\d{3}$/.test(s)) return 'CEP';
     if(/^\(?\d{2}\)?\s?9?\d{4}-?\d{4}$/.test(s)) return 'Telefone';
     if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return 'Email';
     if(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(s)) return 'Data de Consulta';
@@ -3339,6 +3539,9 @@
   /* --- Buscar CEP --- */
   async function nflBuscarCeps(){
     var btn=document.getElementById('buscarCepBtn');
+    var progWrap=document.getElementById('cepProgressWrap');
+    var progBar=document.getElementById('cepProgressBar');
+    var progLbl=document.getElementById('cepProgressLabel');
     btn.disabled=true; btn.textContent='Buscando...';
     var mapping=window._nflCurrentMapping||[];
     var cpfIdx=mapping.indexOf('CPF');
@@ -3348,13 +3551,24 @@
     var table=document.getElementById('cepTable');
     var errList=document.getElementById('cepErrList');
     var rows=[];var erros=[];
+    var total=dataRows.length;
+    if(progWrap){ progWrap.style.display='block'; progBar.style.width='0%'; }
+    if(progLbl){ progLbl.style.display='inline'; progLbl.textContent='0/'+total; }
     for(var i=0;i<dataRows.length;i++){
       var row=dataRows[i];
-      var cepRaw=nflOnlyDigits(row[cepIdx]||'');
-      if(cepRaw.length!==8){rows.push(null);continue;}
-      var res=await nflFetchViaCep(cepRaw);
-      rows.push(res);
-      if(!res.ok) erros.push('CEP '+(row[cepIdx]||'?')+': '+res.reason);
+      /* nflNormCEPDigits recompõe o zero à esquerda que o Excel/Sheets às vezes
+         derruba (célula virou número) — sem isso o CEP "sumia" e caía direto
+         em "sem CEP" sem nem tentar o ViaCEP. */
+      var cepRaw=nflNormCEPDigits(row[cepIdx]||'');
+      if(cepRaw.length!==8){
+        rows.push(null);
+      } else {
+        var res=await nflFetchViaCep(cepRaw);
+        rows.push(res);
+        if(!res.ok) erros.push('CEP '+(row[cepIdx]||'?')+': '+res.reason);
+      }
+      if(progBar){ var pct=Math.round(((i+1)/total)*100); progBar.style.width=pct+'%'; }
+      if(progLbl){ progLbl.textContent=(i+1)+'/'+total; }
     }
     var html='<tr><th>Paciente</th><th>CEP</th><th>Resultado</th></tr>';
     var nomIdx=mapping.indexOf('Paciente'); if(nomIdx<0) nomIdx=mapping.indexOf('Nome');
@@ -3368,6 +3582,8 @@
     errList.innerHTML=erros.map(function(e){ return '<li style="color:var(--amber)">'+e+'</li>'; }).join('');
     window._nflCepResults=rows;
     btn.disabled=false;btn.textContent='🔍 Buscar CEP';
+    if(progLbl) progLbl.style.display='none';
+    if(progWrap) setTimeout(function(){ progWrap.style.display='none'; },600);
   }
 
   /* --- Processar dados e gerar result table --- */
@@ -3621,6 +3837,18 @@
     return [d+' '+m+' '+y, d+'/'+m+'/'+y, d+'-'+m+'-'+y, d1+' '+m1+' '+y, d+' '+m+' '+y.slice(2), d+'/'+m+'/'+y.slice(2)];
   }
 
+  /* Remove acentos/pontuação e normaliza espaços — deixa a detecção de
+     cabeçalho "Consulta(s)"/"Exame(s)" tolerante a variações de escrita na
+     planilha (maiúsculas, plural, acento, emoji/numeração na frente etc). */
+  function nflNormTxt(s){
+    return (s||'').toString()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
   function nflExtrairTipoDoSheet(linhas){
     var tipoAtual='',linhasLimpas=[],tiposPorIndice={},dataIdx=0,colHeaderIncluido=false;
     for(var i=0;i<linhas.length;i++){
@@ -3628,15 +3856,18 @@
       var naoVazias=row.filter(function(c){ return (c||'').trim()!==''; });
       if(naoVazias.length===0) continue;
       var prim=(row[0]||'').trim();
-      if(/^planilha\b/i.test(prim)) continue;
+      var primN=nflNormTxt(prim);
+      if(/^planilha\b/.test(primN)) continue;
       var temCpf=row.some(function(c){ var d=(c||'').replace(/[\s.\-]/g,''); return d.length===11&&/^\d{11}$/.test(d); });
       if(!temCpf){
-        if(/pós[\s\-]?consulta|pos[\s\-]?consulta/i.test(prim)){tipoAtual='Consulta';continue;}
-        if(/^consulta\b/i.test(prim)){tipoAtual='Consulta';continue;}
-        if(/^exame/i.test(prim)){tipoAtual='Exame';continue;}
-        if(/emissão\s+de\s+nota|emissao\s+de\s+nota/i.test(prim)){tipoAtual='Exame';continue;}
+        /* Cabeçalhos de seção — aceita singular/plural, com ou sem acento,
+           e prefixos como "1)", "—", emoji etc, já removidos por nflNormTxt. */
+        if(/(^|\s)(pos\s?consultas?|retornos?)(\s|$)/.test(primN)){tipoAtual='Consulta';continue;}
+        if(/^consultas?\b/.test(primN)){tipoAtual='Consulta';continue;}
+        if(/^exames?\b/.test(primN)){tipoAtual='Exame';continue;}
+        if(/emissao\s+de\s+(nota|nf)|nota\s+fiscal/.test(primN)){tipoAtual='Exame';continue;}
         if(!colHeaderIncluido){
-          var isColHeader=/^(nome|paciente)$/i.test(prim)&&row.some(function(c){ return /^cpf$/i.test((c||'').trim()); });
+          var isColHeader=/^(nome|paciente)$/.test(primN)&&row.some(function(c){ return /^cpf$/.test(nflNormTxt(c)); });
           if(isColHeader){linhasLimpas.push(row);colHeaderIncluido=true;continue;}
         }
         continue;
@@ -4128,6 +4359,7 @@
         ]},
         {group:'Análises', items:[
           {id:'visao',     icon:'fa-gauge-high',   label:'Visão Geral'},
+          {id:'ranking',   icon:'fa-trophy',       label:'Ranking'},
           {id:'contratos', icon:'fa-file-contract',label:'Contratos'},
           {id:'odonto',    icon:'fa-tooth',        label:'Caixa Odonto'}
         ]},
