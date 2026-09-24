@@ -1,4 +1,5 @@
-﻿<!-- VERSION: v1.1 | caixa.html | 24/09/2026 | Nova seção "Preencher NF do Dia" acima do Relatório de Caixa: colaborador cadastra pacientes que vão precisar de NF (campos liberados em cadeia, CEP via ViaCEP), salva a qualquer momento como rascunho (operacao/{uid}/nf_dia/{data}), e ao Gerar Relatório o sistema compara nome+valor com o copia-e-cola do AMEI, avisa se achar algo fora do comum (confirmar/voltar) e troca a coluna "N° NF" por "Dados NF" (✓/✗). Salva o lote do dia em nf_dia_relatorios/{data}/{uid} para o Dashboard puxar por data em "Gerar Planilha". -->
+﻿<!-- VERSION: v1.2 | caixa.html | 24/09/2026 | Preencher NF do Dia: cartão de cada paciente recolhe (mostra só o nome) ao salvar, clique de novo pra reabrir e editar. Remove o painel "Controle de Caixa" (Fundo/Entradas/Saídas/Sobra) e "Registro de Troco/Vale" da tela; Relatório de Caixa passa a ficar centralizado, sozinho, logo abaixo de Preencher NF do Dia. -->
+<!-- v1.1: Nova seção "Preencher NF do Dia" acima do Relatório de Caixa: colaborador cadastra pacientes que vão precisar de NF (campos liberados em cadeia, CEP via ViaCEP), salva a qualquer momento como rascunho (operacao/{uid}/nf_dia/{data}), e ao Gerar Relatório o sistema compara nome+valor com o copia-e-cola do AMEI, avisa se achar algo fora do comum (confirmar/voltar) e troca a coluna "N° NF" por "Dados NF" (✓/✗). Salva o lote do dia em nf_dia_relatorios/{data}/{uid} para o Dashboard puxar por data em "Gerar Planilha". -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -133,52 +134,19 @@
         </div>
       </div>
 
-      <div class="caixa-grid">
-        <!-- Controle de Caixa -->
-        <div>
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title"><i class="fas fa-coins"></i> Controle de Caixa</div>
-            </div>
-            <div class="caixa-nums">
-              <div class="caixa-c"><div class="caixa-lbl">Fundo de Caixa</div><input class="caixa-inp" id="cFundo" placeholder="0,00" oninput="mascaraMoeda(this);salvarCx()"></div>
-              <div class="caixa-c"><div class="caixa-lbl">Entradas</div><input class="caixa-inp" id="cEntradas" placeholder="0,00" oninput="mascaraMoeda(this);salvarCx()"></div>
-              <div class="caixa-c"><div class="caixa-lbl">Saídas</div><input class="caixa-inp" id="cSaidas" placeholder="0,00" oninput="mascaraMoeda(this);salvarCx()"></div>
-              <div class="caixa-c sobra"><div class="caixa-lbl">Sobra / Troco pendente</div><input class="caixa-inp" id="cSobra" placeholder="0,00" oninput="mascaraMoeda(this);salvarCx()" style="border-color:#fde68a;"></div>
-            </div>
-            <div class="saldo-bar">
-              <span style="font-size:13px;font-weight:700;opacity:.6;">Saldo Atual</span>
-              <span style="font-size:22px;font-weight:900;letter-spacing:-1px;" id="cSaldo">R$ 0,00</span>
-            </div>
-
-            <div class="panel-title" style="margin-bottom:12px;"><i class="fas fa-receipt"></i> Registro de Troco / Vale</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-              <div><label class="f-label">Paciente</label><input class="f-input" id="vPac" placeholder="Nome" style="margin-top:4px;"></div>
-              <div><label class="f-label">CPF</label><input class="f-input" id="vCpf" placeholder="000.000.000-00" oninput="mascaraCPF(this)" maxlength="14" style="margin-top:4px;"></div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-              <div><label class="f-label">Especialidade / Médico</label><input class="f-input" id="vEsp" placeholder="Ex: Cardiologia — Dr. Juan" style="margin-top:4px;"></div>
-              <div><label class="f-label">Valor do Troco</label><input class="f-input" id="vVal" placeholder="0,00" oninput="mascaraMoeda(this)" style="margin-top:4px;"></div>
-            </div>
-            <button class="btn-p" onclick="addVale()" style="margin-bottom:16px;"><i class="fas fa-plus"></i> Registrar Troco</button>
-            <div id="valeList"></div>
+      <!-- Gerar Relatório — centralizado abaixo do Preencher NF do Dia -->
+      <div style="max-width:640px;margin:0 auto;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-file-lines"></i> Relatório de Caixa</div>
           </div>
-        </div>
-
-        <!-- Gerar Relatório -->
-        <div>
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title"><i class="fas fa-file-lines"></i> Relatório de Caixa</div>
-            </div>
-            <div class="info-box">
-              <i class="fas fa-info-circle"></i> No AMEI: <strong>Caixa → Detalhes → Ctrl+A → Ctrl+C</strong> → cole abaixo e clique em Gerar.
-            </div>
-            <label class="f-label" style="margin-bottom:6px;">Cole os dados do caixa (AMEI)</label>
-            <textarea id="cxPaste" style="width:100%;height:280px;padding:14px;border:1.5px solid var(--gray-200);border-radius:12px;font-family:monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .2s;" placeholder="Cole aqui os dados copiados do sistema AMEI..." onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
-            <div style="margin-top:14px;">
-              <button class="btn-r" id="btnGerar" onclick="gerarRelatorio()" style="width:100%;justify-content:center;padding:14px;font-size:15px;"><i class="fas fa-chart-bar"></i> Gerar Relatório</button>
-            </div>
+          <div class="info-box">
+            <i class="fas fa-info-circle"></i> No AMEI: <strong>Caixa → Detalhes → Ctrl+A → Ctrl+C</strong> → cole abaixo e clique em Gerar.
+          </div>
+          <label class="f-label" style="margin-bottom:6px;">Cole os dados do caixa (AMEI)</label>
+          <textarea id="cxPaste" style="width:100%;height:280px;padding:14px;border:1.5px solid var(--gray-200);border-radius:12px;font-family:monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .2s;" placeholder="Cole aqui os dados copiados do sistema AMEI..." onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
+          <div style="margin-top:14px;">
+            <button class="btn-r" id="btnGerar" onclick="gerarRelatorio()" style="width:100%;justify-content:center;padding:14px;font-size:15px;"><i class="fas fa-chart-bar"></i> Gerar Relatório</button>
           </div>
         </div>
       </div>
@@ -424,7 +392,12 @@
     }
 
     /* ── CAIXA ── */
+    // Controle de Caixa (Fundo/Entradas/Saídas/Sobra) e Registro de Troco/Vale foram
+    // removidos da tela a pedido — as funções ficam aqui só como no-op seguro (não
+    // quebram init()/os listeners do Firebase que ainda chamam renderCaixa/renderVales).
     window.salvarCx = function() {
+      const elF = document.getElementById('cFundo');
+      if (!elF) return; // painel removido da tela
       window.caixa.fundo    = pv(document.getElementById('cFundo').value);
       window.caixa.entradas = pv(document.getElementById('cEntradas').value);
       window.caixa.saidas   = pv(document.getElementById('cSaidas').value);
@@ -433,9 +406,12 @@
       updSaldo();
     };
     window.updSaldo = function() {
-      document.getElementById('cSaldo').textContent = fm(window.caixa.entradas - window.caixa.saidas);
+      const el = document.getElementById('cSaldo');
+      if (el) el.textContent = fm(window.caixa.entradas - window.caixa.saidas);
     };
     window.renderCaixa = function() {
+      const elF = document.getElementById('cFundo');
+      if (!elF) return; // painel removido da tela
       const fmtV = v => v ? v.toFixed(2).replace('.',',') : '';
       document.getElementById('cFundo').value    = fmtV(window.caixa.fundo);
       document.getElementById('cEntradas').value = fmtV(window.caixa.entradas);
@@ -446,7 +422,9 @@
 
     /* ── VALES ── */
     window.addVale = function() {
-      const p = document.getElementById('vPac').value.trim();
+      const elP = document.getElementById('vPac');
+      if (!elP) return; // painel removido da tela
+      const p = elP.value.trim();
       if (!p) { toast('Informe o paciente', 'error'); return; }
       window.vales.push({
         id: Date.now()+'', pac: p,
@@ -467,6 +445,7 @@
     };
     window.renderVales = function() {
       const el = document.getElementById('valeList');
+      if (!el) return; // painel removido da tela
       if (!window.vales.length) {
         el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--gray-400);font-size:12px;">Sem trocos registrados hoje.</div>';
         return;
@@ -560,6 +539,60 @@
         ' style="' + (liberado ? '' : 'opacity:.5;cursor:not-allowed;') + '">' +
         '</div>';
     }
+    window.nfDiaToggle = function(id) {
+      const row = window._nfDia.find(r => r.id === id);
+      if (!row) return;
+      row.colapsado = !row.colapsado;
+      nfDiaRender();
+    };
+    function nfDiaCartaoColapsado(row, i) {
+      return '<div style="border:1.5px solid var(--gray-200);border-radius:12px;padding:12px 16px;margin-bottom:8px;background:white;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;" onclick="nfDiaToggle(\'' + row.id + '\')">' +
+        '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
+          '<div style="width:26px;height:26px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-check" style="font-size:11px;"></i></div>' +
+          '<div style="min-width:0;">' +
+            '<div style="font-size:13px;font-weight:800;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(row.nome || 'Paciente ' + (i+1)) + '</div>' +
+            '<div style="font-size:11px;color:var(--gray-400);">' + (row.cpf ? esc(row.cpf) + ' · ' : '') + (row.valor ? 'R$ ' + esc(row.valor) : 'sem valor') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">' +
+          '<button onclick="event.stopPropagation();nfDiaToggle(\'' + row.id + '\')" style="width:26px;height:26px;background:var(--gray-100);border:none;border-radius:6px;cursor:pointer;color:var(--gray-500);font-size:11px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-pen"></i></button>' +
+          '<button onclick="event.stopPropagation();nfDiaRemove(\'' + row.id + '\')" style="width:26px;height:26px;background:rgba(198,40,40,.08);border:none;border-radius:6px;cursor:pointer;color:var(--red);font-size:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-trash"></i></button>' +
+        '</div>' +
+      '</div>';
+    }
+    function nfDiaCartaoAberto(row, i) {
+      const enderecoOk = !!row.logradouro;
+      return '<div style="border:1.5px solid var(--gray-200);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--gray-50);">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+          '<div style="font-size:11px;font-weight:800;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;">' + esc(row.nome || ('Paciente ' + (i+1))) + '</div>' +
+          '<div style="display:flex;gap:6px;">' +
+            (row.nome ? '<button onclick="nfDiaToggle(\'' + row.id + '\')" style="width:26px;height:26px;background:var(--gray-100);border:none;border-radius:6px;cursor:pointer;color:var(--gray-500);font-size:11px;display:flex;align-items:center;justify-content:center;" title="Recolher"><i class="fas fa-chevron-up"></i></button>' : '') +
+            '<button onclick="nfDiaRemove(\'' + row.id + '\')" style="width:26px;height:26px;background:rgba(198,40,40,.08);border:none;border-radius:6px;cursor:pointer;color:var(--red);font-size:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-trash"></i></button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
+          nfDiaCampoHtml(row, 'nome', 'Nome do paciente', {placeholder:'Nome completo'}) +
+          nfDiaCampoHtml(row, 'cpf', 'CPF', {placeholder:'000.000.000-00', mascara:'mascaraCPF', attrs:'maxlength="14"'}) +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
+          nfDiaCampoHtml(row, 'email', 'E-mail', {placeholder:'email@exemplo.com'}) +
+          nfDiaCampoHtml(row, 'telefone', 'Telefone', {placeholder:'(11) 90000-0000'}) +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:2fr auto;gap:10px;margin-bottom:8px;align-items:end;">' +
+          nfDiaCampoHtml(row, 'cep', 'CEP', {placeholder:'00000-000', attrs:'maxlength="9"'}) +
+          '<button id="nfDiaBtnCep_' + row.id + '" class="btn-teal" onclick="nfDiaBuscarCep(\'' + row.id + '\')" ' + (nfDiaLiberado(row,'cep') ? '' : 'disabled style="opacity:.5;cursor:not-allowed;"') + '><i class="fas fa-magnifying-glass-location"></i> Buscar CEP</button>' +
+        '</div>' +
+        (enderecoOk ? '<div style="font-size:11px;color:var(--gray-500);margin-bottom:10px;background:white;border:1px solid var(--gray-200);border-radius:8px;padding:6px 10px;"><i class="fas fa-location-dot"></i> ' + esc(row.logradouro) + ' · ' + esc(row.bairro) + ' · ' + esc(row.cidade) + '/' + esc(row.uf) + '</div>' : '') +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
+          nfDiaCampoHtml(row, 'numero', 'Número', {placeholder:'Ex: 123'}) +
+          nfDiaCampoHtml(row, 'complemento', 'Complemento (opcional)', {placeholder:'Apto, bloco...'}) +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;">' +
+          nfDiaCampoHtml(row, 'valor', 'Valor (R$)', {placeholder:'0,00', mascara:'mascaraMoeda'}) +
+          nfDiaCampoHtml(row, 'descricao', 'Descrição do Procedimento', {placeholder:'Ex: REF A CONSULTA REALIZADA'}) +
+        '</div>' +
+      '</div>';
+    }
     window.nfDiaRender = function() {
       const el = document.getElementById('nfDiaLista');
       const st = document.getElementById('nfDiaStatus');
@@ -569,38 +602,15 @@
         return;
       }
       if (st) st.textContent = window._nfDia.length + ' paciente(s) na lista';
-      el.innerHTML = window._nfDia.map((row, i) => {
-        const enderecoOk = !!row.logradouro;
-        return '<div style="border:1.5px solid var(--gray-200);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--gray-50);">' +
-          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
-            '<div style="font-size:11px;font-weight:800;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;">Paciente ' + (i+1) + '</div>' +
-            '<button onclick="nfDiaRemove(\'' + row.id + '\')" style="width:26px;height:26px;background:rgba(198,40,40,.08);border:none;border-radius:6px;cursor:pointer;color:var(--red);font-size:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-trash"></i></button>' +
-          '</div>' +
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
-            nfDiaCampoHtml(row, 'nome', 'Nome do paciente', {placeholder:'Nome completo'}) +
-            nfDiaCampoHtml(row, 'cpf', 'CPF', {placeholder:'000.000.000-00', mascara:'mascaraCPF', attrs:'maxlength="14"'}) +
-          '</div>' +
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
-            nfDiaCampoHtml(row, 'email', 'E-mail', {placeholder:'email@exemplo.com'}) +
-            nfDiaCampoHtml(row, 'telefone', 'Telefone', {placeholder:'(11) 90000-0000'}) +
-          '</div>' +
-          '<div style="display:grid;grid-template-columns:2fr auto;gap:10px;margin-bottom:8px;align-items:end;">' +
-            nfDiaCampoHtml(row, 'cep', 'CEP', {placeholder:'00000-000', attrs:'maxlength="9"'}) +
-            '<button id="nfDiaBtnCep_' + row.id + '" class="btn-teal" onclick="nfDiaBuscarCep(\'' + row.id + '\')" ' + (nfDiaLiberado(row,'cep') ? '' : 'disabled style="opacity:.5;cursor:not-allowed;"') + '><i class="fas fa-magnifying-glass-location"></i> Buscar CEP</button>' +
-          '</div>' +
-          (enderecoOk ? '<div style="font-size:11px;color:var(--gray-500);margin-bottom:10px;background:white;border:1px solid var(--gray-200);border-radius:8px;padding:6px 10px;"><i class="fas fa-location-dot"></i> ' + esc(row.logradouro) + ' · ' + esc(row.bairro) + ' · ' + esc(row.cidade) + '/' + esc(row.uf) + '</div>' : '') +
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
-            nfDiaCampoHtml(row, 'numero', 'Número', {placeholder:'Ex: 123'}) +
-            nfDiaCampoHtml(row, 'complemento', 'Complemento (opcional)', {placeholder:'Apto, bloco...'}) +
-          '</div>' +
-          '<div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;">' +
-            nfDiaCampoHtml(row, 'valor', 'Valor (R$)', {placeholder:'0,00', mascara:'mascaraMoeda'}) +
-            nfDiaCampoHtml(row, 'descricao', 'Descrição do Procedimento', {placeholder:'Ex: REF A CONSULTA REALIZADA'}) +
-          '</div>' +
-        '</div>';
-      }).join('');
+      el.innerHTML = window._nfDia.map((row, i) =>
+        row.colapsado ? nfDiaCartaoColapsado(row, i) : nfDiaCartaoAberto(row, i)
+      ).join('');
     };
     window.nfDiaSalvar = function() {
+      // Recolhe (mostra só o nome) todo paciente que já tem nome preenchido —
+      // assim a lista não fica gigante conforme o colaborador vai adicionando.
+      window._nfDia.forEach(r => { if ((r.nome||'').trim()) r.colapsado = true; });
+      nfDiaRender();
       if (window.fbSet) {
         window.fbSet('operacao/' + (window.USER_UID||'_') + '/nf_dia/' + window.TK_FB, window._nfDia)
           .then(() => toast('NF do dia salva ✓', 'success'))
@@ -611,6 +621,8 @@
     };
     window.nfDiaCarregar = function(dados) {
       window._nfDia = Array.isArray(dados) ? dados : [];
+      // Ao recarregar (ex: reabriu a página), já vem recolhido quem tem nome preenchido.
+      window._nfDia.forEach(r => { if ((r.nome||'').trim() && r.colapsado === undefined) r.colapsado = true; });
       nfDiaRender();
     };
 

@@ -1,4 +1,5 @@
-<!-- VERSION: v4.2 | dashboard.html | 24/09/2026 | Gerar Planilha: novo botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
+<!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
+<!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2876,6 +2877,7 @@
 
       <div class="tabs">
         <div class="tab active" id="tabGerarBtn" onclick="nflShowTab('gerar')">📄 Gerar planilha</div>
+        <div class="tab" id="tabNfDiaBtn" onclick="nflShowTab('nfdia')">🗓️ NF do Dia</div>
         <div class="tab" id="tabConferirBtn" onclick="nflShowTab('conferir')">✅ Conferir NF</div>
         <div class="tab" id="tabSinaxysBtn" onclick="nflShowTab('sinaxys')">📊 Comparativo Sinaxys</div>
         <div class="tab" id="tabPreencherBtn" onclick="nflShowTab('preencher')">🔗 Preencher Nº NF</div>
@@ -3195,6 +3197,21 @@
         </div>
       </div><!-- /page preencher -->
 
+      <!-- ===== NF DO DIA (armazenamento das datas novas vindas do Caixa) ===== -->
+      <div class="page" id="nfl-page-nfdia">
+        <div class="card">
+          <div class="hint">
+            Aqui ficam guardadas as datas em que colaboradores preencheram <b>"Preencher NF do Dia"</b> no fechamento de Caixa. Use isto para as datas <b>novas</b> daqui pra frente — as retroativas continuam pelo fluxo normal de "Gerar planilha".
+            Quando terminar de emitir na Sinaxys, marque a data como "Processada" pra ela sair da lista de pendentes.
+          </div>
+          <div class="row" style="align-items:center;">
+            <label style="font-weight:400;font-size:0.82rem;margin:0;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="nfDiaMostrarProcessadas" onchange="nflNfDiaCarregarLista()"> Mostrar também as já processadas</label>
+            <button class="secondary" onclick="nflNfDiaCarregarLista()">🔄 Atualizar lista</button>
+          </div>
+          <div class="tablewrap" style="margin-top:12px;"><table id="nfDiaTabela"></table></div>
+        </div>
+      </div><!-- /page nfdia -->
+
       <!-- ===== HISTÓRICO ===== -->
       <div class="page" id="nfl-page-historico">
         <div class="card">
@@ -3248,7 +3265,7 @@
 
   /* --- Navegação entre abas internas --- */
   function nflShowTab(name){
-    ['gerar','conferir','sinaxys','preencher','historico'].forEach(function(n){
+    ['gerar','nfdia','conferir','sinaxys','preencher','historico'].forEach(function(n){
       var p=document.getElementById('nfl-page-'+n);
       var b=document.getElementById('tab'+(n.charAt(0).toUpperCase()+n.slice(1))+'Btn');
       if(p) p.classList.toggle('active', n===name);
@@ -3256,6 +3273,7 @@
     });
     if(name==='historico') nflRenderAll();
     if(name==='sinaxys') nflSinCarregarLotes();
+    if(name==='nfdia') nflNfDiaCarregarLista();
   }
 
   /* --- Histórico (localStorage) --- */
@@ -4211,6 +4229,99 @@
     }
   }
 
+  /* Extrai as linhas (já na ordem do NFL_HEADERS) de um nó nf_dia_relatorios/{data},
+   * ignorando a chave "_status" (usada só para marcar processado/pendente). */
+  function nflMontarLinhasDoCaixa(porColaborador, dateIso){
+    var linhas=[], colaboradores=[];
+    Object.keys(porColaborador||{}).forEach(function(uid){
+      if(uid==='_status') return;
+      var bloco=porColaborador[uid]||{};
+      colaboradores.push(bloco.colaborador||uid);
+      (bloco.linhas||[]).forEach(function(r){
+        if(!r || !(r.nome||'').trim()) return;
+        linhas.push([
+          dateIso.split('-').reverse().join('/'), // Data de Consulta
+          r.nome||'', r.cpf||'', r.email||'', r.telefone||'',
+          r.cep||'', r.logradouro||'', r.numero||'', r.complemento||'',
+          r.bairro||'', r.cidade||'', r.uf||'', r.valor||'', r.descricao||''
+        ]);
+      });
+    });
+    return { linhas:linhas, colaboradores:colaboradores };
+  }
+
+  /* ===== NF DO DIA — lista de datas vindas do Caixa, para os lotes novos
+   * (as retroativas continuam pelo fluxo de "Gerar planilha" já existente) ===== */
+  async function nflNfDiaCarregarLista(){
+    var tbl=document.getElementById('nfDiaTabela');
+    if(!window.fbGet){ tbl.innerHTML='<tr><td>Firebase não disponível — recarregue a página.</td></tr>'; return; }
+    tbl.innerHTML='<tr><td>Carregando…</td></tr>';
+    try{
+      var snap=await window.fbGet('nf_dia_relatorios');
+      var porData=(snap && snap.exists()) ? snap.val() : null;
+      if(!porData || !Object.keys(porData).length){
+        tbl.innerHTML='<tr><td>Nenhuma data salva ainda. Assim que um colaborador salvar "Preencher NF do Dia" no Caixa, a data aparece aqui.</td></tr>';
+        return;
+      }
+      var mostrarProcessadas=document.getElementById('nfDiaMostrarProcessadas').checked;
+      var datas=Object.keys(porData).sort().reverse();
+      var linhasHtml='<tr><th>Data</th><th>Colaborador(es)</th><th>Pacientes</th><th>Status</th><th>Ações</th></tr>';
+      var nMostradas=0;
+      datas.forEach(function(dateIso){
+        var bloco=porData[dateIso]||{};
+        var processado = bloco._status==='processado';
+        if(processado && !mostrarProcessadas) return;
+        nMostradas++;
+        var extraido=nflMontarLinhasDoCaixa(bloco, dateIso);
+        var dataBr=dateIso.split('-').reverse().join('/');
+        linhasHtml += '<tr' + (processado?' style="opacity:.55;"':'') + '>' +
+          '<td>'+dataBr+'</td>' +
+          '<td>'+(extraido.colaboradores.join(', ')||'—')+'</td>' +
+          '<td>'+extraido.linhas.length+'</td>' +
+          '<td>'+(processado?'✓ Processada':'⏳ Pendente')+'</td>' +
+          '<td>' +
+            '<button class="secondary" onclick="nflNfDiaProcessar(\''+dateIso+'\')">📄 Processar / gerar planilha</button> ' +
+            '<button class="secondary" onclick="nflNfDiaMarcar(\''+dateIso+'\','+(processado?'false':'true')+')">'+(processado?'↩ Reabrir':'✓ Marcar processada')+'</button>' +
+          '</td>' +
+        '</tr>';
+      });
+      tbl.innerHTML = nMostradas ? linhasHtml : '<tr><td>Nenhuma data pendente — tudo processado. Marque "Mostrar também as já processadas" pra ver o histórico.</td></tr>';
+    }catch(e){
+      tbl.innerHTML='<tr><td style="color:var(--red)">Erro ao carregar: '+e.message+'</td></tr>';
+    }
+  }
+
+  /* Leva a data escolhida direto pro fluxo de "Gerar planilha" (mapear colunas,
+   * cruzar agendados, conferir CEP, gerar) — mesmo pipeline de sempre. */
+  async function nflNfDiaProcessar(dateIso){
+    if(!window.fbGet) return;
+    try{
+      var snap=await window.fbGet('nf_dia_relatorios/'+dateIso);
+      var porColaborador=(snap && snap.exists()) ? snap.val() : null;
+      var extraido=nflMontarLinhasDoCaixa(porColaborador||{}, dateIso);
+      if(!extraido.linhas.length){ toast('Nada preenchido nessa data', 'error'); return; }
+      var asTsv=extraido.linhas.map(function(r){ return r.join('\t'); }).join('\n');
+      document.getElementById('nflInput').value=asTsv;
+      document.getElementById('dataConsulta').value=dateIso;
+      nflShowTab('gerar');
+      nflCloseStep('ov-intro'); nflCloseStep('ov-map'); nflCloseStep('ov-agend'); nflCloseStep('ov-cep'); nflCloseStep('ov-result');
+      nflOpenStep('ov-paste');
+      toast(extraido.linhas.length+' paciente(s) carregado(s) — clique em "Avançar → Mapear colunas"', 'success');
+    }catch(e){
+      toast('Erro: '+e.message, 'error');
+    }
+  }
+
+  async function nflNfDiaMarcar(dateIso, processado){
+    if(!window.fbSet) return;
+    try{
+      await window.fbSet('nf_dia_relatorios/'+dateIso+'/_status', processado ? 'processado' : null);
+      nflNfDiaCarregarLista();
+    }catch(e){
+      toast('Erro ao marcar: '+e.message, 'error');
+    }
+  }
+
   /* Puxa o que os colaboradores preencheram em "Preencher NF do Dia" no Caixa
    * (nf_dia_relatorios/{data}/{uid} — um nó por colaborador que fechou caixa
    * naquele dia) e joga direto no fluxo de Gerar Planilha, no mesmo formato
@@ -4229,20 +4340,8 @@
         statusEl.innerHTML='<span style="color:var(--amber)">Nenhum colaborador salvou "NF do Dia" para '+dateIso.split('-').reverse().join('/')+'.</span>';
         return;
       }
-      var linhas=[], colaboradores=[];
-      Object.keys(porColaborador).forEach(function(uid){
-        var bloco=porColaborador[uid]||{};
-        colaboradores.push(bloco.colaborador||uid);
-        (bloco.linhas||[]).forEach(function(r){
-          if(!r || !(r.nome||'').trim()) return;
-          linhas.push([
-            dateIso.split('-').reverse().join('/'), // Data de Consulta
-            r.nome||'', r.cpf||'', r.email||'', r.telefone||'',
-            r.cep||'', r.logradouro||'', r.numero||'', r.complemento||'',
-            r.bairro||'', r.cidade||'', r.uf||'', r.valor||'', r.descricao||''
-          ]);
-        });
-      });
+      var extraido=nflMontarLinhasDoCaixa(porColaborador, dateIso);
+      var linhas=extraido.linhas, colaboradores=extraido.colaboradores;
       if(!linhas.length){
         statusEl.innerHTML='<span style="color:var(--amber)">Achei colaborador(es) mas nenhuma linha preenchida com nome.</span>';
         return;
@@ -4999,6 +5098,6 @@
     })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.2 · 24/09/2026</span>
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.3 · 24/09/2026</span>
 </body>
 </html>
