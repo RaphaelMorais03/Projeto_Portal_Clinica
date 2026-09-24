@@ -1,4 +1,4 @@
-<!-- VERSION: v3.5 | dashboard.html | 23/09/2026 | NF em Lote: classificação Consulta/Exame por operador (fallback quando a planilha não tem seção), nome de aba tolerante a barra duplicada, CEP sem perder zero, barra de progresso na busca de CEP -->
+<!-- VERSION: v3.9 | dashboard.html | 24/09/2026 | NF em Lote: e-mail vazio/inválido vira naotememail@gmail.com automaticamente, Descrição do Procedimento preenchida sozinha por Tipo, detecta CPF com nomes diferentes (nunca envia automático), detecta duplicata exata/suspeita, divide export em lotes de até 500 registros, caixas de edição da tabela de resultado maiores e com destaque ao focar, Comparativo Sinaxys envia o Nº NF direto pro Google Sheets via Apps Script (webhook), aba extra "Preencher Nº NF" cruzando 2 arquivos locais como alternativa offline -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -458,25 +458,58 @@
     /* tables */
     #viewNflote .tablewrap { overflow-x: auto; margin-top: 10px; }
     #viewNflote table {
-      border-collapse: collapse; width: 100%; font-size: 0.82rem;
+      border-collapse: collapse; width: 100%; font-size: 0.86rem;
     }
     #viewNflote th {
-      background: var(--navy); color: white; padding: 8px 10px;
+      background: var(--navy); color: white; padding: 9px 10px;
       text-align: left; font-weight: 600; white-space: nowrap;
+      position: sticky; top: 0; z-index: 2;
     }
     #viewNflote td {
-      padding: 7px 10px; border-bottom: 1px solid var(--gray-200);
+      padding: 5px 7px; border-bottom: 1px solid var(--gray-200);
       vertical-align: middle;
     }
     #viewNflote tr:nth-child(even) td { background: var(--gray-50); }
     #viewNflote tr.error td { background: #fff0f0; }
     #viewNflote tr.nfalert td { background: var(--amber-bg); }
+    /* Tabela de resultado (linhas editáveis do NF em Lote): caixas maiores e
+       com largura mínima por coluna, pra dar espaço de sobra pra ler e digitar. */
+    #resultTable td input, #resultTable td select {
+      width: 100%; min-width: 100%; box-sizing: border-box;
+      border: 1px solid var(--gray-300, #cbd5e1); border-radius: 6px;
+      padding: 8px 9px; font-size: 0.92rem; line-height: 1.3;
+      background: white; margin: 0; min-height: 38px;
+      transition: box-shadow .12s ease, border-color .12s ease;
+    }
+    #resultTable td:nth-child(1) input { min-width: 100px; }   /* Data */
+    #resultTable td:nth-child(2) input { min-width: 220px; }   /* Paciente */
+    #resultTable td:nth-child(3) input { min-width: 140px; }   /* CPF */
+    #resultTable td:nth-child(4) input { min-width: 230px; }   /* Email */
+    #resultTable td:nth-child(5) input { min-width: 140px; }   /* Telefone */
+    #resultTable td:nth-child(6) input { min-width: 100px; }   /* CEP */
+    #resultTable td:nth-child(7) input { min-width: 230px; }   /* Logradouro */
+    #resultTable td:nth-child(8) input { min-width: 80px; }    /* Número */
+    #resultTable td:nth-child(9) input { min-width: 150px; }   /* Complemento */
+    #resultTable td:nth-child(10) input { min-width: 170px; }  /* Bairro */
+    #resultTable td:nth-child(11) input { min-width: 150px; }  /* Cidade */
+    #resultTable td:nth-child(12) input { min-width: 60px; }   /* UF */
+    #resultTable td:nth-child(13) input { min-width: 100px; }  /* Valor */
+    #resultTable td:nth-child(14) input { min-width: 230px; }  /* Descrição */
+    #resultTable td select { min-width: 120px; }
     #viewNflote td input, #viewNflote td select {
       width: 100%; border: 1px solid var(--gray-200); border-radius: 5px;
       padding: 4px 7px; font-size: 0.8rem; background: white; margin: 0;
     }
     #viewNflote td input:focus, #viewNflote td select:focus {
       border-color: var(--teal); outline: none;
+    }
+    /* Ao focar, a caixa cresce por cima das vizinhas pra mostrar o texto todo
+       sem precisar rolar pros lados enquanto você digita. */
+    #resultTable td input:focus, #resultTable td select:focus {
+      border-color: var(--teal); outline: none;
+      box-shadow: 0 0 0 3px rgba(13,148,136,.18), 0 2px 10px rgba(0,0,0,.12);
+      position: relative; z-index: 5;
+      min-width: max(260px, 100%);
     }
     #viewNflote .mapsel {
       width: 100%; border: 1px solid var(--gray-200); border-radius: 6px;
@@ -2845,6 +2878,7 @@
         <div class="tab active" id="tabGerarBtn" onclick="nflShowTab('gerar')">📄 Gerar planilha</div>
         <div class="tab" id="tabConferirBtn" onclick="nflShowTab('conferir')">✅ Conferir NF</div>
         <div class="tab" id="tabSinaxysBtn" onclick="nflShowTab('sinaxys')">📊 Comparativo Sinaxys</div>
+        <div class="tab" id="tabPreencherBtn" onclick="nflShowTab('preencher')">🔗 Preencher Nº NF</div>
         <div class="tab" id="tabHistBtn" onclick="nflShowTab('historico')">📅 Histórico</div>
       </div>
 
@@ -3089,7 +3123,48 @@
             <button class="secondary" onclick="nflSinExcluirLote()" style="color:var(--red); border-color:var(--red);">🗑 Excluir lote selecionado</button>
           </div>
         </div>
+
+        <div class="card" id="sinWebhookCard" style="display:none;">
+          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">📤</span><p class="step-title">Enviar Nº NF direto pro Google Sheets</p></div>
+          <div class="hint">Escreve o Nº NF das notas <b>emitidas</b> deste comparativo direto na aba do dia, na planilha "NOTAS FISCAIS 3.0" — sem precisar copiar/colar. Requer o Apps Script instalado uma vez na planilha (peça pra eu gerar o script e o passo a passo se ainda não fez isso).</div>
+          <div class="formrow" style="margin-top:8px;">
+            <div style="flex:2;">
+              <label for="sinWebhookUrl" style="font-weight:400;font-size:0.78rem;">URL do Apps Script (termina em /exec)</label>
+              <input type="text" id="sinWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec" oninput="localStorage.setItem('nfl_webhook_url', this.value)">
+            </div>
+            <div>
+              <label for="sinWebhookToken" style="font-weight:400;font-size:0.78rem;">Token</label>
+              <input type="text" id="sinWebhookToken" placeholder="sua senha do script" oninput="localStorage.setItem('nfl_webhook_token', this.value)">
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <button onclick="nflEnviarNfsParaSheet()" style="background:var(--purple);">📤 Enviar Nº NF pro Sheets</button>
+          </div>
+          <div id="sinWebhookBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
+        </div>
       </div><!-- /page sinaxys -->
+
+      <!-- ===== PREENCHER Nº NF (cruzamento de 2 arquivos, sem precisar de webhook) ===== -->
+      <div class="page" id="nfl-page-preencher">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">🔗</span><p class="step-title">Preencher Nº NF na NOTAS FISCAIS 3.0</p></div>
+          <div class="hint">Sobe a planilha "NOTAS FISCAIS 3.0" (com as abas por dia) + a planilha com o retorno do Sinaxys por dia (Paciente/CPF/Valor/Nº NF/Status). Cruza por <b>aba do dia + CPF + Valor</b> e devolve a NOTAS FISCAIS 3.0 com a coluna Nº NF preenchida nas linhas que baterem — sem mexer em mais nada.</div>
+          <div class="hint" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple);">
+            Só preenche onde achou <b>exatamente 1</b> correspondência de CPF+Valor com status "Emitida"; o resto fica em branco do jeito que já estava, pra você revisar (nunca chuta).
+          </div>
+        </div>
+        <div class="card">
+          <label>1. Planilha NOTAS FISCAIS 3.0 (a que vai ser atualizada)</label>
+          <input type="file" id="preencherNotasFile" accept=".xlsx,.xls">
+          <label style="margin-top:14px;">2. Planilha com o retorno do Sinaxys por dia (Paciente/CPF/Valor/Nº NF/Status)</label>
+          <input type="file" id="preencherRetornoFile" accept=".xlsx,.xls">
+          <div class="row" style="margin-top:14px;">
+            <button onclick="nflPreencherCruzar()" style="background:var(--purple);">🔗 Cruzar e gerar planilha atualizada</button>
+          </div>
+          <div id="preencherBanner" style="display:none;margin-top:10px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
+          <div class="tablewrap" style="margin-top:12px;"><table id="preencherResumoTable"></table></div>
+        </div>
+      </div><!-- /page preencher -->
 
       <!-- ===== HISTÓRICO ===== -->
       <div class="page" id="nfl-page-historico">
@@ -3144,7 +3219,7 @@
 
   /* --- Navegação entre abas internas --- */
   function nflShowTab(name){
-    ['gerar','conferir','sinaxys','historico'].forEach(function(n){
+    ['gerar','conferir','sinaxys','preencher','historico'].forEach(function(n){
       var p=document.getElementById('nfl-page-'+n);
       var b=document.getElementById('tab'+(n.charAt(0).toUpperCase()+n.slice(1))+'Btn');
       if(p) p.classList.toggle('active', n===name);
@@ -3639,11 +3714,19 @@
       // Tipo (só do sheet)
       var tipo=tipoMap[ri]||'';
 
+      // Email: regra Sinaxys — vazio ou inválido não bloqueia, vira placeholder automaticamente
+      if(!nflValidEmail(rec['Email'])) rec['Email']='naotememail@gmail.com';
+
+      // Descrição do Procedimento: preenche automaticamente pelo Tipo quando vier em branco
+      if(!rec['Descrição do Procedimento']&&tipo){
+        rec['Descrição do Procedimento']= tipo==='Exame' ? 'REF A EXAMES REALIZADOS' : 'REF A CONSULTA REALIZADA';
+      }
+
       // Validações
       var hasWarning=false;
       var warns=[];
       if(!cpfDigits||cpfDigits.length!==11||!nflIsValidCPF(cpfDigits)) warns.push('CPF inválido');
-      if(!rec['Email']) warns.push('Email em branco');
+      if(!rec['Paciente']) warns.push('Paciente em branco');
       if(!rec['Telefone']) warns.push('Telefone em branco');
       if(!rec['Logradouro']) warns.push('Logradouro em branco');
       if(!rec['Número']) warns.push('Número em branco');
@@ -3653,7 +3736,43 @@
       if(!rec['Valor']||!vr.ok) warns.push('Valor inválido');
       if(warns.length) hasWarning=true;
 
-      nflCurrentRows.push({ values:NFL_HEADERS.map(function(h){ return rec[h]||''; }), tipo:tipo, hasWarning:hasWarning, warns:warns });
+      nflCurrentRows.push({ values:NFL_HEADERS.map(function(h){ return rec[h]||''; }), tipo:tipo, hasWarning:hasWarning, warns:warns, _cpf:cpfDigits });
+    });
+
+    // ===== Duplicatas e conflito de CPF (regras da doc NF em Lote) =====
+    var byCpf={};
+    nflCurrentRows.forEach(function(r){ if(r._cpf){ (byCpf[r._cpf]=byCpf[r._cpf]||[]).push(r); } });
+    Object.keys(byCpf).forEach(function(cpf){
+      var group=byCpf[cpf];
+      if(group.length<2) return;
+      var pacIdx=NFL_HEADERS.indexOf('Paciente'), valIdx=NFL_HEADERS.indexOf('Valor'), dtIdx=NFL_HEADERS.indexOf('Data de Consulta');
+      var nomes=new Set(group.map(function(r){ return (r.values[pacIdx]||'').trim().toLowerCase(); }));
+      if(nomes.size>1){
+        // mesmo CPF, nomes diferentes → nunca enviar automático, sempre revisão manual
+        group.forEach(function(r){
+          r.hasWarning=true;
+          r.warns=(r.warns||[]).concat('CPF associado a nomes diferentes — revisão manual obrigatória');
+        });
+        return;
+      }
+      // mesmo CPF e mesmo nome: checa duplicata exata (todos campos iguais) vs parcial (data+valor iguais, resto difere)
+      var seenExact={};
+      group.forEach(function(r){ var k=r.values.join('|'); (seenExact[k]=seenExact[k]||[]).push(r); });
+      Object.keys(seenExact).forEach(function(k){
+        var dups=seenExact[k];
+        if(dups.length>1){
+          // mantém a primeira, marca as demais como duplicata exata (removidas do envio)
+          for(var i=1;i<dups.length;i++){ dups[i]._exactDup=true; dups[i].hasWarning=true; dups[i].warns=(dups[i].warns||[]).concat('Duplicata exata — removida'); }
+        }
+      });
+      var byDataValor={};
+      group.forEach(function(r){ if(r._exactDup) return; var k=(r.values[dtIdx]||'')+'|'+(r.values[valIdx]||''); (byDataValor[k]=byDataValor[k]||[]).push(r); });
+      Object.keys(byDataValor).forEach(function(k){
+        var arr=byDataValor[k];
+        if(arr.length>1){
+          arr.forEach(function(r){ r.hasWarning=true; r.warns=(r.warns||[]).concat('Duplicata suspeita (mesma data/CPF/valor) — revisar'); });
+        }
+      });
     });
 
     nflRenderResultTable();
@@ -3674,7 +3793,8 @@
         var fmt = NFL_COL_FMT[ci];
         var disp = fmt ? fmt(v) : v;
         var mask = NFL_COL_MASK[ci] ? ' oninput="nflMaskInput(this,\''+NFL_COL_MASK[ci]+'\')"' : '';
-        return '<td><input id="nflcell_'+ri+'_'+ci+'" value="'+disp.replace(/"/g,'&quot;')+'"'+mask+'></td>';
+        var safe=disp.replace(/"/g,'&quot;');
+        return '<td><input id="nflcell_'+ri+'_'+ci+'" value="'+safe+'" title="'+safe+'"'+mask+'></td>';
       }).join('');
       var tipoOpts='<option value="">—</option><option value="Consulta"'+(r.tipo==='Consulta'?' selected':'')+'>Consulta</option><option value="Exame"'+(r.tipo==='Exame'?' selected':'')+'>Exame</option>';
       var warnCol=r.warns&&r.warns.length?'<span style="color:var(--amber);font-size:0.78rem;" title="'+r.warns.join('; ')+'">⚠ '+r.warns.length+'</span>':'';
@@ -3723,6 +3843,12 @@
     return wb;
   }
 
+  var NFL_MAX_LOTE=500;
+  function nflSplitChunks(arr,size){
+    var out=[];
+    for(var i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+    return out;
+  }
   function nflDownloadXlsx(){
     if(!nflCurrentRows.length){alert('Gere a planilha primeiro.');return;}
     nflCollectEditedRows();
@@ -3730,8 +3856,16 @@
     var exames=nflCurrentRows.filter(function(r){ return r.tipo==='Exame'&&!r.hasWarning; });
     var incompletos=nflCurrentRows.filter(function(r){ return !r.tipo||r.hasWarning; });
     var baixados=[];
-    if(consultas.length){XLSX.writeFile(nflBuildWorkbookFor(consultas),'nf_lote_CONSULTAS.xlsx');baixados.push(consultas.length+' Consulta(s)');}
-    if(exames.length){XLSX.writeFile(nflBuildWorkbookFor(exames),'nf_lote_EXAMES.xlsx');baixados.push(exames.length+' Exame(s)');}
+    nflSplitChunks(consultas,NFL_MAX_LOTE).forEach(function(chunk,i){
+      var suf=consultas.length>NFL_MAX_LOTE?'_parte'+(i+1):'';
+      XLSX.writeFile(nflBuildWorkbookFor(chunk),'nf_lote_CONSULTAS'+suf+'.xlsx');
+    });
+    if(consultas.length) baixados.push(consultas.length+' Consulta(s)'+(consultas.length>NFL_MAX_LOTE?' em '+Math.ceil(consultas.length/NFL_MAX_LOTE)+' arquivo(s) de até '+NFL_MAX_LOTE:''));
+    nflSplitChunks(exames,NFL_MAX_LOTE).forEach(function(chunk,i){
+      var suf=exames.length>NFL_MAX_LOTE?'_parte'+(i+1):'';
+      XLSX.writeFile(nflBuildWorkbookFor(chunk),'nf_lote_EXAMES'+suf+'.xlsx');
+    });
+    if(exames.length) baixados.push(exames.length+' Exame(s)'+(exames.length>NFL_MAX_LOTE?' em '+Math.ceil(exames.length/NFL_MAX_LOTE)+' arquivo(s) de até '+NFL_MAX_LOTE:''));
     if(incompletos.length){XLSX.writeFile(nflBuildWorkbookFor(incompletos),'nf_lote_INCOMPLETOS.xlsx');baixados.push(incompletos.length+' Incompleto(s)');}
     if(!baixados.length){alert('Nenhuma linha para baixar.');return;}
     var pickedDate=document.getElementById('dataConsulta').value||nflTodayISO();
@@ -4344,7 +4478,217 @@
     });
     document.getElementById('sinResultTable').innerHTML=html;
     document.getElementById('sinResultadoCard').style.display='block';
+    document.getElementById('sinWebhookCard').style.display='block';
+    document.getElementById('sinWebhookBanner').style.display='none';
     window._nflSinOrdered=ordered;
+  }
+
+  /* ===== Envia Nº NF pro Google Sheets via Apps Script (webhook) ===== */
+  function nflInitWebhookFields(){
+    var u=localStorage.getItem('nfl_webhook_url'), t=localStorage.getItem('nfl_webhook_token');
+    var elU=document.getElementById('sinWebhookUrl'), elT=document.getElementById('sinWebhookToken');
+    if(elU&&u) elU.value=u;
+    if(elT&&t) elT.value=t;
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', nflInitWebhookFields);
+  } else {
+    nflInitWebhookFields();
+  }
+
+  async function nflEnviarNfsParaSheet(){
+    var url=(document.getElementById('sinWebhookUrl').value||'').trim();
+    var token=(document.getElementById('sinWebhookToken').value||'').trim();
+    var banner=document.getElementById('sinWebhookBanner');
+    function showBanner(txt,bg,color){ banner.style.display='block'; banner.textContent=txt; banner.style.background=bg; banner.style.color=color; }
+
+    if(!url){ showBanner('⚠ Cole a URL do Apps Script primeiro.', 'var(--amber-bg)', 'var(--amber)'); return; }
+    if(!nflSinLoteAtivo||!window._nflSinOrdered){ showBanner('⚠ Rode o comparativo primeiro.', 'var(--amber-bg)', 'var(--amber)'); return; }
+
+    var emitidas=window._nflSinOrdered.filter(function(r){ return r.status==='emitida'&&r.nfNumero; });
+    if(!emitidas.length){ showBanner('Nenhuma nota emitida neste comparativo pra enviar.', 'var(--amber-bg)', 'var(--amber)'); return; }
+
+    showBanner('📤 Enviando '+emitidas.length+' número(s) de NF pro Sheets...', 'var(--purple-bg)', 'var(--purple)');
+    try{
+      var resp=await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'}, // evita preflight CORS no Apps Script
+        body:JSON.stringify({
+          token:token,
+          data:nflSinLoteAtivo.dados.data,
+          items:emitidas.map(function(r){ return {cpf:r.cpf, valor:r.valor, nfNumero:r.nfNumero, nome:r.nome}; })
+        })
+      });
+      var out=await resp.json();
+      if(!out.ok){ showBanner('❌ '+(out.error||'Erro desconhecido no script.'), '#fee2e2', 'var(--red)'); return; }
+      var msg='✓ '+out.written+' número(s) escrito(s) na aba "'+out.aba+'".';
+      if(out.notFound&&out.notFound.length) msg+=' ⚠ '+out.notFound.length+' não encontrado(s): '+out.notFound.slice(0,5).join(', ')+(out.notFound.length>5?'...':'');
+      if(out.ambiguous&&out.ambiguous.length) msg+=' ⚠ '+out.ambiguous.length+' ambíguo(s) (não escrito p/ não errar).';
+      showBanner(msg, (out.notFound&&out.notFound.length)||(out.ambiguous&&out.ambiguous.length) ? 'var(--amber-bg)':'var(--purple-bg)', (out.notFound&&out.notFound.length)||(out.ambiguous&&out.ambiguous.length) ? 'var(--amber)':'var(--purple)');
+    }catch(e){
+      showBanner('❌ Não consegui falar com o script: '+e.message, '#fee2e2', 'var(--red)');
+    }
+  }
+
+  /* ===== Preencher Nº NF cruzando 2 arquivos locais (sem depender de webhook) ===== */
+  function nflReadXlsxFile(file){
+    return new Promise(function(resolve,reject){
+      var reader=new FileReader();
+      reader.onload=function(e){
+        try{ resolve(XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:false})); }
+        catch(err){ reject(err); }
+      };
+      reader.onerror=reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function nflPreencherToFloat(v){
+    if(v===null||v===undefined||v==='') return null;
+    if(typeof v==='number') return Math.round(v*100)/100;
+    var s=v.toString().trim().replace('R$','').replace(/\s/g,'');
+    if(/,\d{1,2}$/.test(s)) s=s.replace(/\./g,'').replace(',','.');
+    else s=s.replace(',','.');
+    var n=parseFloat(s);
+    return isNaN(n)?null:Math.round(n*100)/100;
+  }
+
+  function nflPreencherNormDia(nomeAba){
+    // "18-09" ou "18/09" ou "18092026" → chave "ddmm"
+    var d=nflOnlyDigits(nomeAba);
+    if(d.length>=4) return d.slice(0,2)+d.slice(2,4);
+    return null;
+  }
+
+  async function nflPreencherCruzar(){
+    var banner=document.getElementById('preencherBanner');
+    function showBanner(txt,bg,color){ banner.style.display='block'; banner.textContent=txt; banner.style.background=bg; banner.style.color=color; }
+    document.getElementById('preencherResumoTable').innerHTML='';
+
+    var fNotas=document.getElementById('preencherNotasFile').files[0];
+    var fRetorno=document.getElementById('preencherRetornoFile').files[0];
+    if(!fNotas||!fRetorno){ showBanner('⚠ Escolha os dois arquivos primeiro.', 'var(--amber-bg)', 'var(--amber)'); return; }
+
+    showBanner('🔗 Lendo planilhas e cruzando...', 'var(--purple-bg)', 'var(--purple)');
+    try{
+      var wbNotas=await nflReadXlsxFile(fNotas);
+      var wbRet=await nflReadXlsxFile(fRetorno);
+
+      // Monta lookup por dia (chave ddmm) a partir do retorno Sinaxys
+      var porDia={};
+      wbRet.SheetNames.forEach(function(sn){
+        var key=nflPreencherNormDia(sn);
+        if(!key) return;
+        var ws=wbRet.Sheets[sn];
+        var aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        var items=[];
+        for(var i=1;i<aoa.length;i++){
+          var r=aoa[i];
+          if(!r||r.length<5) continue;
+          var cpf=nflOnlyDigits(r[1]), valor=nflPreencherToFloat(r[2]), nf=r[3], status=(r[4]||'').toString().trim();
+          if(status==='Emitida'&&cpf.length===11&&valor!==null&&nf){
+            items.push({cpf:cpf,valor:valor,nf:nf,used:false});
+          }
+        }
+        porDia[key]=(porDia[key]||[]).concat(items);
+      });
+
+      // Índice das abas da NOTAS FISCAIS por chave ddmm (pode haver mais de uma — anos diferentes)
+      var notasPorChave={};
+      wbNotas.SheetNames.forEach(function(sn){
+        var key=nflPreencherNormDia(sn);
+        if(key){ (notasPorChave[key]=notasPorChave[key]||[]).push(sn); }
+      });
+
+      var resumo=[];
+      Object.keys(porDia).forEach(function(key){
+        var abasCandidatas=notasPorChave[key]||[];
+        if(!abasCandidatas.length){ resumo.push({dia:key,status:'aba não encontrada na NOTAS FISCAIS 3.0',preenchidos:0,jaTinham:0,semMatch:0}); return; }
+        // se houver mais de uma aba com o mesmo dd/mm (anos diferentes), usa a de nome mais longo/mais recente (com ano)
+        abasCandidatas.sort(function(a,b){ return b.length-a.length; });
+        var sn=abasCandidatas[0];
+        var ws=wbNotas.Sheets[sn];
+        var items=porDia[key];
+
+        var range=XLSX.utils.decode_range(ws['!ref']);
+        var headerRow=-1, cpfCol=-1, valorCol=-1, nfCol=-1, maxCol=range.e.c;
+        for(var r=range.s.r;r<=Math.min(range.s.r+3,range.e.r);r++){
+          for(var c=range.s.c;c<=range.e.c;c++){
+            var cell=ws[XLSX.utils.encode_cell({r:r,c:c})];
+            if(cell&&cell.v&&cell.v.toString().trim().toUpperCase()==='CPF'){ headerRow=r; break; }
+          }
+          if(headerRow!==-1) break;
+        }
+        if(headerRow===-1){ resumo.push({dia:key,status:'cabeçalho CPF não encontrado na aba "'+sn+'"',preenchidos:0,jaTinham:0,semMatch:0}); return; }
+        for(var c2=range.s.c;c2<=range.e.c;c2++){
+          var hc=ws[XLSX.utils.encode_cell({r:headerRow,c:c2})];
+          if(!hc||!hc.v) continue;
+          var htxt=hc.v.toString().trim().toUpperCase();
+          if(htxt==='CPF') cpfCol=c2;
+          else if(htxt==='VALOR') valorCol=c2;
+          else if(htxt.indexOf('NOTA FISCAL')!==-1||htxt==='N° NF'||htxt==='Nº NF') nfCol=c2;
+          if(c2>maxCol) maxCol=c2;
+        }
+        if(cpfCol===-1||valorCol===-1){ resumo.push({dia:key,status:'coluna CPF/Valor não encontrada na aba "'+sn+'"',preenchidos:0,jaTinham:0,semMatch:0}); return; }
+        if(nfCol===-1){
+          nfCol=maxCol+1;
+          ws[XLSX.utils.encode_cell({r:headerRow,c:nfCol})]={t:'s',v:'N° NOTA FISCAL'};
+          if(nfCol>range.e.c){ range.e.c=nfCol; ws['!ref']=XLSX.utils.encode_range(range); }
+        }
+
+        var preenchidos=0, jaTinham=0, semMatch=0;
+        for(var r2=headerRow+1;r2<=range.e.r;r2++){
+          var cpfCell=ws[XLSX.utils.encode_cell({r:r2,c:cpfCol})];
+          if(!cpfCell||!cpfCell.v) continue;
+          var cpfD=nflOnlyDigits(cpfCell.v);
+          if(cpfD.length!==11) continue;
+          var nfCell=ws[XLSX.utils.encode_cell({r:r2,c:nfCol})];
+          if(nfCell&&nfCell.v){ jaTinham++; continue; }
+          var valorCell=ws[XLSX.utils.encode_cell({r:r2,c:valorCol})];
+          var valorD=valorCell?nflPreencherToFloat(valorCell.v):null;
+          if(valorD===null) continue;
+          var achou=null;
+          for(var i2=0;i2<items.length;i2++){
+            var it=items[i2];
+            if(!it.used&&it.cpf===cpfD&&Math.abs(it.valor-valorD)<=0.01){ achou=it; break; }
+          }
+          if(achou){
+            achou.used=true;
+            ws[XLSX.utils.encode_cell({r:r2,c:nfCol})]={t: typeof achou.nf==='number'?'n':'s', v:achou.nf};
+            preenchidos++;
+          } else {
+            semMatch++;
+          }
+        }
+        resumo.push({dia:sn,status:'ok',preenchidos:preenchidos,jaTinham:jaTinham,semMatch:semMatch});
+      });
+
+      // Renderiza resumo
+      var html='<tr><th>Aba</th><th>Preenchidos</th><th>Já tinham Nº NF</th><th>Sem correspondência</th></tr>';
+      var totalPreenchidos=0;
+      resumo.forEach(function(r){
+        totalPreenchidos+=r.preenchidos||0;
+        html+='<tr><td>'+r.dia+'</td><td>'+(r.status==='ok'?r.preenchidos:('⚠ '+r.status))+'</td><td>'+(r.status==='ok'?r.jaTinham:'—')+'</td><td>'+(r.status==='ok'?r.semMatch:'—')+'</td></tr>';
+      });
+      document.getElementById('preencherResumoTable').innerHTML=html;
+
+      if(!totalPreenchidos){
+        showBanner('Nenhuma linha nova pra preencher (confira o resumo abaixo).', 'var(--amber-bg)', 'var(--amber)');
+        return;
+      }
+
+      var out=XLSX.write(wbNotas,{bookType:'xlsx',type:'array'});
+      var blob=new Blob([out],{type:'application/octet-stream'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url; a.download='NOTAS_FISCAIS_3.0_atualizada.xlsx';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},2000);
+
+      showBanner('✓ '+totalPreenchidos+' Nº NF preenchido(s). Planilha atualizada baixada — é só subir no lugar da atual.', 'var(--purple-bg)', 'var(--purple)');
+    }catch(e){
+      showBanner('❌ Erro ao cruzar as planilhas: '+e.message, '#fee2e2', 'var(--red)');
+    }
   }
 
   function nflSinDownloadXlsx(){
@@ -4469,6 +4813,6 @@
     })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v3.3 · 22/09/2026</span>
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v3.9 · 24/09/2026</span>
 </body>
 </html>
