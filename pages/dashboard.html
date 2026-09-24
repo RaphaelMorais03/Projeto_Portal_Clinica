@@ -1,4 +1,4 @@
-<!-- VERSION: v4.0 | dashboard.html | 24/09/2026 | NF em Lote: e-mail vazio/inválido vira naotememail@gmail.com automaticamente, Descrição do Procedimento preenchida sozinha por Tipo, detecta CPF com nomes diferentes (nunca envia automático), detecta duplicata exata/suspeita, divide export em lotes de até 500 registros, caixas de edição da tabela de resultado maiores e com destaque ao focar, Comparativo Sinaxys envia o Nº NF direto pro Google Sheets via Apps Script (webhook), aba extra "Preencher Nº NF" cruzando 2 arquivos locais como alternativa offline, importação em massa de lotes direto de um Excel (NOTAS FISCAIS 3.0) sem precisar passar por "Gerar planilha" -->
+<!-- VERSION: v4.2 | dashboard.html | 24/09/2026 | Gerar Planilha: novo botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2912,6 +2912,13 @@
               <button id="puxarBtn" class="secondary" onclick="nflPuxarDoSheet()">🔎 Puxar dados desse dia da planilha</button>
             </div>
             <div class="hint" id="puxarStatus"></div>
+            <div class="hint" style="background:var(--teal-bg); border:1px solid var(--teal); border-radius:8px; padding:10px 12px; margin-top:10px;">
+              <b>📥 Puxar do Caixa — "Preencher NF do Dia"</b> — traz o que os colaboradores já preencheram no fechamento de caixa daquele dia (todos que fecharam caixa naquela data), sem precisar de planilha nenhuma.
+            </div>
+            <div class="row" style="align-items:center; margin-top:8px;">
+              <button id="puxarCaixaBtn" class="secondary" onclick="nflPuxarDoCaixa()">📥 Puxar do Caixa nessa data</button>
+            </div>
+            <div class="hint" id="puxarCaixaStatus"></div>
             <label for="dataConsulta" style="margin-top:18px;">Data (opcional — preenche linhas sem data própria)</label>
             <input type="date" id="dataConsulta" style="margin-bottom:16px;">
             <label for="nflInput">Ou cole aqui os dados (separados por TAB, como ao copiar do Excel)</label>
@@ -3091,6 +3098,28 @@
         </div>
 
         <div class="card">
+          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">📤</span><p class="step-title">Conexão com o Google Sheets (Apps Script)</p></div>
+          <div class="hint">Configure uma vez a URL e o token do script instalado na planilha. Isso libera o botão de manutenção abaixo e o botão "Enviar Nº NF pro Sheets" no resultado do comparativo.</div>
+          <div class="formrow" style="margin-top:8px;">
+            <div style="flex:2;">
+              <label for="sinWebhookUrl" style="font-weight:400;font-size:0.78rem;">URL do Apps Script (termina em /exec)</label>
+              <input type="text" id="sinWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec" oninput="localStorage.setItem('nfl_webhook_url', this.value)">
+            </div>
+            <div>
+              <label for="sinWebhookToken" style="font-weight:400;font-size:0.78rem;">Token</label>
+              <input type="text" id="sinWebhookToken" placeholder="sua senha do script" oninput="localStorage.setItem('nfl_webhook_token', this.value)">
+            </div>
+          </div>
+          <div class="hint" style="margin-top:12px;background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple);">
+            <b>🛠 Manutenção (rodar 1 vez):</b> adiciona a coluna "N° NOTA FISCAL" logo depois de OPERADOR em toda aba que ainda não tiver essa coluna. Abas que já têm (como 04/09, 11/09, 12/09, 14/09) não são mexidas. Nenhum dado existente é apagado.
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <button onclick="nflSetupColunaNfTodasAbas()" style="background:var(--purple);">🛠 Adicionar coluna Nº NF nas abas que faltam</button>
+          </div>
+          <div id="sinSetupBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
+        </div>
+
+        <div class="card">
           <label>1. Lotes salvos no Firebase</label>
           <div id="sinLotesList"><div class="empty-state">Carregando lotes...</div></div>
           <div class="row" style="margin-top:8px;">
@@ -3136,17 +3165,7 @@
 
         <div class="card" id="sinWebhookCard" style="display:none;">
           <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">📤</span><p class="step-title">Enviar Nº NF direto pro Google Sheets</p></div>
-          <div class="hint">Escreve o Nº NF das notas <b>emitidas</b> deste comparativo direto na aba do dia, na planilha "NOTAS FISCAIS 3.0" — sem precisar copiar/colar. Requer o Apps Script instalado uma vez na planilha (peça pra eu gerar o script e o passo a passo se ainda não fez isso).</div>
-          <div class="formrow" style="margin-top:8px;">
-            <div style="flex:2;">
-              <label for="sinWebhookUrl" style="font-weight:400;font-size:0.78rem;">URL do Apps Script (termina em /exec)</label>
-              <input type="text" id="sinWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec" oninput="localStorage.setItem('nfl_webhook_url', this.value)">
-            </div>
-            <div>
-              <label for="sinWebhookToken" style="font-weight:400;font-size:0.78rem;">Token</label>
-              <input type="text" id="sinWebhookToken" placeholder="sua senha do script" oninput="localStorage.setItem('nfl_webhook_token', this.value)">
-            </div>
-          </div>
+          <div class="hint">Escreve o Nº NF das notas <b>emitidas</b> deste comparativo direto na aba do dia, na planilha "NOTAS FISCAIS 3.0" — sem precisar copiar/colar. Usa a URL/token configurados acima.</div>
           <div class="row" style="margin-top:8px;">
             <button onclick="nflEnviarNfsParaSheet()" style="background:var(--purple);">📤 Enviar Nº NF pro Sheets</button>
           </div>
@@ -4192,6 +4211,53 @@
     }
   }
 
+  /* Puxa o que os colaboradores preencheram em "Preencher NF do Dia" no Caixa
+   * (nf_dia_relatorios/{data}/{uid} — um nó por colaborador que fechou caixa
+   * naquele dia) e joga direto no fluxo de Gerar Planilha, no mesmo formato
+   * (ordem) do NFL_HEADERS — sem precisar de planilha/Excel nenhum. */
+  async function nflPuxarDoCaixa(){
+    var dateIso=document.getElementById('puxarDataInput').value;
+    var statusEl=document.getElementById('puxarCaixaStatus');
+    var btn=document.getElementById('puxarCaixaBtn');
+    if(!dateIso){statusEl.innerHTML='<span style="color:var(--red)">Escolha uma data primeiro.</span>';return;}
+    if(!window.fbGet){statusEl.innerHTML='<span style="color:var(--red)">Firebase não disponível — recarregue a página.</span>';return;}
+    btn.disabled=true;btn.textContent='Buscando...';statusEl.innerHTML='';
+    try{
+      var snap=await window.fbGet('nf_dia_relatorios/'+dateIso);
+      var porColaborador=(snap && snap.exists()) ? snap.val() : null;
+      if(!porColaborador || !Object.keys(porColaborador).length){
+        statusEl.innerHTML='<span style="color:var(--amber)">Nenhum colaborador salvou "NF do Dia" para '+dateIso.split('-').reverse().join('/')+'.</span>';
+        return;
+      }
+      var linhas=[], colaboradores=[];
+      Object.keys(porColaborador).forEach(function(uid){
+        var bloco=porColaborador[uid]||{};
+        colaboradores.push(bloco.colaborador||uid);
+        (bloco.linhas||[]).forEach(function(r){
+          if(!r || !(r.nome||'').trim()) return;
+          linhas.push([
+            dateIso.split('-').reverse().join('/'), // Data de Consulta
+            r.nome||'', r.cpf||'', r.email||'', r.telefone||'',
+            r.cep||'', r.logradouro||'', r.numero||'', r.complemento||'',
+            r.bairro||'', r.cidade||'', r.uf||'', r.valor||'', r.descricao||''
+          ]);
+        });
+      });
+      if(!linhas.length){
+        statusEl.innerHTML='<span style="color:var(--amber)">Achei colaborador(es) mas nenhuma linha preenchida com nome.</span>';
+        return;
+      }
+      var asTsv=linhas.map(function(r){ return r.join('\t'); }).join('\n');
+      document.getElementById('nflInput').value=asTsv;
+      document.getElementById('dataConsulta').value=dateIso;
+      statusEl.innerHTML='<span style="color:var(--green)">✓ '+linhas.length+' paciente(s) de '+colaboradores.length+' colaborador(es) ('+colaboradores.join(', ')+'). Clique em "Avançar → Mapear colunas" — a ordem já bate com o modelo, é só conferir.</span>';
+    }catch(e){
+      statusEl.innerHTML='<span style="color:var(--red)">'+e.message+'</span>';
+    }finally{
+      btn.disabled=false;btn.textContent='📥 Puxar do Caixa nessa data';
+    }
+  }
+
   /* ===== CONFERIR NF ===== */
   var NFL_CONF_FIELDS=["Nome","CPF","Valor","NumeroNF","Data"];
   var NFL_KNOWN_CONF_HEADERS={
@@ -4589,6 +4655,33 @@
     nflInitWebhookFields();
   }
 
+  async function nflSetupColunaNfTodasAbas(){
+    var url=(document.getElementById('sinWebhookUrl').value||'').trim();
+    var token=(document.getElementById('sinWebhookToken').value||'').trim();
+    var banner=document.getElementById('sinSetupBanner');
+    function showBanner(txt,bg,color){ banner.style.display='block'; banner.textContent=txt; banner.style.background=bg; banner.style.color=color; }
+    if(!url){ showBanner('⚠ Cole a URL do Apps Script primeiro.', 'var(--amber-bg)', 'var(--amber)'); return; }
+    if(!confirm('Isso vai adicionar a coluna "N° NOTA FISCAL" (logo após OPERADOR) em toda aba da planilha que ainda não tiver essa coluna. Abas que já têm não são alteradas, e nenhum dado é apagado. Continuar?')) return;
+
+    showBanner('🛠 Rodando nas abas da planilha... pode levar alguns segundos.', 'var(--purple-bg)', 'var(--purple)');
+    try{
+      var resp=await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({token:token, action:'setup_colunas'})
+      });
+      var out=await resp.json();
+      if(!out.ok){ showBanner('❌ '+(out.error||'Erro desconhecido no script.'), '#fee2e2', 'var(--red)'); return; }
+      var r=out.resumo||{criadas:[],jaTinha:[],ignoradas:[]};
+      var msg='✓ Coluna criada em '+r.criadas.length+' aba(s).';
+      msg+=' '+r.jaTinha.length+' aba(s) já tinham e não foram mexidas.';
+      if(r.ignoradas.length) msg+=' ⚠ '+r.ignoradas.length+' aba(s) ignorada(s) (sem cabeçalho CPF/OPERADOR reconhecível): '+r.ignoradas.slice(0,8).join(', ')+(r.ignoradas.length>8?'...':'');
+      showBanner(msg, r.ignoradas.length?'var(--amber-bg)':'var(--purple-bg)', r.ignoradas.length?'var(--amber)':'var(--purple)');
+    }catch(e){
+      showBanner('❌ Não consegui falar com o script: '+e.message, '#fee2e2', 'var(--red)');
+    }
+  }
+
   async function nflEnviarNfsParaSheet(){
     var url=(document.getElementById('sinWebhookUrl').value||'').trim();
     var token=(document.getElementById('sinWebhookToken').value||'').trim();
@@ -4906,6 +4999,6 @@
     })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.0 · 24/09/2026</span>
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.2 · 24/09/2026</span>
 </body>
 </html>
