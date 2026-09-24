@@ -1,4 +1,4 @@
-<!-- VERSION: v3.9 | dashboard.html | 24/09/2026 | NF em Lote: e-mail vazio/inválido vira naotememail@gmail.com automaticamente, Descrição do Procedimento preenchida sozinha por Tipo, detecta CPF com nomes diferentes (nunca envia automático), detecta duplicata exata/suspeita, divide export em lotes de até 500 registros, caixas de edição da tabela de resultado maiores e com destaque ao focar, Comparativo Sinaxys envia o Nº NF direto pro Google Sheets via Apps Script (webhook), aba extra "Preencher Nº NF" cruzando 2 arquivos locais como alternativa offline -->
+<!-- VERSION: v4.0 | dashboard.html | 24/09/2026 | NF em Lote: e-mail vazio/inválido vira naotememail@gmail.com automaticamente, Descrição do Procedimento preenchida sozinha por Tipo, detecta CPF com nomes diferentes (nunca envia automático), detecta duplicata exata/suspeita, divide export em lotes de até 500 registros, caixas de edição da tabela de resultado maiores e com destaque ao focar, Comparativo Sinaxys envia o Nº NF direto pro Google Sheets via Apps Script (webhook), aba extra "Preencher Nº NF" cruzando 2 arquivos locais como alternativa offline, importação em massa de lotes direto de um Excel (NOTAS FISCAIS 3.0) sem precisar passar por "Gerar planilha" -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -3098,6 +3098,16 @@
           </div>
         </div>
 
+        <div class="card">
+          <label>➕ Importar lote(s) direto de um Excel (sem passar por "Gerar planilha")</label>
+          <div class="hint">Sobe a planilha "NOTAS FISCAIS 3.0" (com Nome, CPF, Valor — uma aba por dia) e salva um lote no Firebase pra <b>cada aba com data</b> de uma vez, pra depois comparar aqui.</div>
+          <input type="file" id="sinImportarLoteFile" accept=".xlsx,.xls">
+          <div class="row" style="margin-top:10px;">
+            <button onclick="nflSinImportarLotesDeExcel()">➕ Importar lote(s) desse Excel</button>
+          </div>
+          <div id="sinImportarBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
+        </div>
+
         <div class="card" id="sinComparativoCard" style="display:none;">
           <label>2. Comparar lote selecionado com retorno Sinaxys</label>
           <div class="hint" id="sinLoteInfo"></div>
@@ -3934,6 +3944,89 @@
     }catch(e){
       banner.textContent='Erro ao salvar: '+e.message;
       banner.style.background='#fee2e2'; banner.style.color='var(--red)';
+    }
+  }
+
+  /* ===== Importar lote(s) direto de um Excel (sem passar por "Gerar planilha") ===== */
+  function nflSinTabDataParaIso(nomeAba){
+    // "18092026" ou "18-09" (assume ano corrente) → "2026-09-18"
+    var d=nflOnlyDigits(nomeAba);
+    if(d.length===8) return d.slice(4,8)+'-'+d.slice(2,4)+'-'+d.slice(0,2);
+    if(d.length===4) return new Date().getFullYear()+'-'+d.slice(2,4)+'-'+d.slice(0,2);
+    return null;
+  }
+
+  async function nflSinImportarLotesDeExcel(){
+    var banner=document.getElementById('sinImportarBanner');
+    function showBanner(txt,bg,color){ banner.style.display='block'; banner.textContent=txt; banner.style.background=bg; banner.style.color=color; }
+    var file=document.getElementById('sinImportarLoteFile').files[0];
+    if(!file){ showBanner('⚠ Escolha um arquivo primeiro.', 'var(--amber-bg)', 'var(--amber)'); return; }
+    if(!window.fbSet){ showBanner('⚠ Firebase não disponível — recarregue a página.', 'var(--amber-bg)', 'var(--amber)'); return; }
+
+    showBanner('📥 Lendo planilha...', 'var(--purple-bg)', 'var(--purple)');
+    try{
+      var wb=await nflReadXlsxFile(file);
+      var salvos=[], semData=[], semDados=[];
+      for(var si=0;si<wb.SheetNames.length;si++){
+        var sn=wb.SheetNames[si];
+        var iso=nflSinTabDataParaIso(sn);
+        if(!iso){ continue; } // aba sem cara de data (ex: "modelo-nota_em_branco") — ignora
+        var ws=wb.Sheets[sn];
+        var range=XLSX.utils.decode_range(ws['!ref']);
+        var headerRow=-1, nomeCol=-1, cpfCol=-1, valorCol=-1;
+        for(var r=range.s.r;r<=Math.min(range.s.r+3,range.e.r);r++){
+          for(var c=range.s.c;c<=range.e.c;c++){
+            var cell=ws[XLSX.utils.encode_cell({r:r,c:c})];
+            if(cell&&cell.v&&cell.v.toString().trim().toUpperCase()==='CPF'){ headerRow=r; break; }
+          }
+          if(headerRow!==-1) break;
+        }
+        if(headerRow===-1){ semDados.push(sn); continue; }
+        for(var c2=range.s.c;c2<=range.e.c;c2++){
+          var hc=ws[XLSX.utils.encode_cell({r:headerRow,c:c2})];
+          if(!hc||!hc.v) continue;
+          var htxt=hc.v.toString().trim().toUpperCase();
+          if(htxt==='NOME') nomeCol=c2;
+          else if(htxt==='CPF') cpfCol=c2;
+          else if(htxt==='VALOR') valorCol=c2;
+        }
+        if(cpfCol===-1||valorCol===-1){ semDados.push(sn); continue; }
+        // Detecta tipo padrão da aba (título antes do header, ex "EXAMES")
+        var tituloAba='';
+        for(var tr=range.s.r;tr<headerRow;tr++){
+          var tc=ws[XLSX.utils.encode_cell({r:tr,c:0})];
+          if(tc&&tc.v) tituloAba+=' '+tc.v.toString().toUpperCase();
+        }
+        var tipoPadrao = tituloAba.indexOf('EXAME')!==-1 ? 'Exame' : (tituloAba.indexOf('CONSULTA')!==-1 ? 'Consulta' : '');
+
+        var linhas=[];
+        for(var r2=headerRow+1;r2<=range.e.r;r2++){
+          var cpfCell=ws[XLSX.utils.encode_cell({r:r2,c:cpfCol})];
+          if(!cpfCell||!cpfCell.v) continue;
+          var cpfD=nflOnlyDigits(cpfCell.v);
+          if(cpfD.length!==11) continue;
+          var valorCell=ws[XLSX.utils.encode_cell({r:r2,c:valorCol})];
+          var valorD=valorCell?nflPreencherToFloat(valorCell.v):null;
+          if(valorD===null) continue;
+          var nomeCell=nomeCol!==-1?ws[XLSX.utils.encode_cell({r:r2,c:nomeCol})]:null;
+          linhas.push({idx:linhas.length, nome:nomeCell&&nomeCell.v?nomeCell.v.toString().trim():'', cpf:cpfD, valor:valorD, tipo:tipoPadrao});
+        }
+        if(!linhas.length){ semDados.push(sn); continue; }
+
+        var ts=Date.now();
+        var key='nfl_sinaxys_lotes/'+iso+'_'+ts;
+        await window.fbSet(key, {data:iso, ts:ts, total:linhas.length, linhas:linhas});
+        salvos.push(sn+' ('+linhas.length+' paciente(s))');
+      }
+
+      var msg='';
+      if(salvos.length) msg+='✓ '+salvos.length+' lote(s) importado(s): '+salvos.join(', ')+'. ';
+      if(semDados.length) msg+='⚠ '+semDados.length+' aba(s) ignorada(s) por falta de coluna CPF/Valor: '+semDados.join(', ')+'. ';
+      if(!salvos.length){ showBanner(msg||'Nenhuma aba com data reconhecível foi encontrada.', 'var(--amber-bg)', 'var(--amber)'); return; }
+      showBanner(msg, semDados.length?'var(--amber-bg)':'var(--purple-bg)', semDados.length?'var(--amber)':'var(--purple)');
+      nflSinCarregarLotes();
+    }catch(e){
+      showBanner('❌ Erro ao importar: '+e.message, '#fee2e2', 'var(--red)');
     }
   }
 
@@ -4813,6 +4906,6 @@
     })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v3.9 · 24/09/2026</span>
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.0 · 24/09/2026</span>
 </body>
 </html>
