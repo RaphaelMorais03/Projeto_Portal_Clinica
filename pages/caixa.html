@@ -1,4 +1,5 @@
-﻿<!-- VERSION: v1.2 | caixa.html | 24/09/2026 | Preencher NF do Dia: cartão de cada paciente recolhe (mostra só o nome) ao salvar, clique de novo pra reabrir e editar. Remove o painel "Controle de Caixa" (Fundo/Entradas/Saídas/Sobra) e "Registro de Troco/Vale" da tela; Relatório de Caixa passa a ficar centralizado, sozinho, logo abaixo de Preencher NF do Dia. -->
+﻿<!-- VERSION: v1.3 | caixa.html | 25/09/2026 | Preencher NF do Dia virou uma planilha de verdade: tabela com colunas fixas (Nome, CPF, E-mail, Telefone, CEP+busca, Endereço, Valor, Descrição), aceita colar direto do Excel/planilha (tab/quebra de linha vira colunas/linhas), salva sozinho 1,2s depois de parar de digitar (sem botão Salvar), botão "Verificar células" que só avisa o que parece errado sem travar nada, e continua opcional pra gerar o Relatório de Caixa. -->
+<!-- v1.2: Cartão de cada paciente recolhe (mostra só o nome) ao salvar, clique de novo pra reabrir e editar. Remove o painel "Controle de Caixa" (Fundo/Entradas/Saídas/Sobra) e "Registro de Troco/Vale" da tela; Relatório de Caixa passa a ficar centralizado, sozinho, logo abaixo de Preencher NF do Dia. -->
 <!-- v1.1: Nova seção "Preencher NF do Dia" acima do Relatório de Caixa: colaborador cadastra pacientes que vão precisar de NF (campos liberados em cadeia, CEP via ViaCEP), salva a qualquer momento como rascunho (operacao/{uid}/nf_dia/{data}), e ao Gerar Relatório o sistema compara nome+valor com o copia-e-cola do AMEI, avisa se achar algo fora do comum (confirmar/voltar) e troca a coluna "N° NF" por "Dados NF" (✓/✗). Salva o lote do dia em nf_dia_relatorios/{data}/{uid} para o Dashboard puxar por data em "Gerar Planilha". -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -118,20 +119,22 @@
         <div class="user-banner-icon"><i class="fas fa-cash-register"></i></div>
       </div>
 
-      <!-- Preencher NF do Dia -->
+      <!-- Preencher NF do Dia — layout de planilha, com salvamento automático -->
       <div class="panel" id="panelNfDia">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-file-invoice-dollar"></i> Preencher NF do Dia</div>
           <div style="font-size:11px;color:var(--gray-400);font-weight:600;" id="nfDiaStatus">—</div>
         </div>
-        <div class="info-box" style="margin-bottom:14px;">
-          <i class="fas fa-info-circle"></i> Preencha aqui os dados dos pacientes que vão precisar de Nota Fiscal hoje. Pode salvar a qualquer momento, mesmo incompleto — o que já foi salvo fica guardado até você gerar o relatório. Ao gerar, esses dados são comparados com o que veio do AMEI (nome + valor).
+        <div class="info-box" style="margin-bottom:12px;">
+          <i class="fas fa-info-circle"></i> Preencha como numa planilha — pode copiar e colar direto do Excel/planilha de notas, célula por célula ou várias de uma vez. Vai <b>salvando sozinho</b> conforme você digita (não precisa clicar em nada). Não é obrigatório preencher isso pra gerar o Relatório de Caixa.
         </div>
-        <div id="nfDiaLista" style="margin-bottom:14px;"></div>
-        <button class="btn-s" onclick="nfDiaAdd()" style="width:100%;justify-content:center;border:2px dashed var(--gray-300);padding:12px;"><i class="fas fa-plus"></i> Adicionar Paciente</button>
-        <div style="margin-top:14px;">
-          <button class="btn-p" onclick="nfDiaSalvar()" style="width:100%;justify-content:center;padding:12px;"><i class="fas fa-floppy-disk"></i> Salvar</button>
+        <div id="nfDiaTableWrap" style="overflow-x:auto;border:1.5px solid var(--gray-200);border-radius:10px;"></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn-s" onclick="nfDiaAddLinha()"><i class="fas fa-plus"></i> Adicionar linha</button>
+          <button class="btn-teal" onclick="nfDiaVerificar()"><i class="fas fa-magnifying-glass"></i> Verificar células</button>
+          <div id="nfDiaSaveIndicator" style="font-size:11px;color:var(--gray-400);font-weight:600;margin-left:auto;">—</div>
         </div>
+        <div id="nfDiaVerificacao" style="margin-top:10px;"></div>
       </div>
 
       <!-- Gerar Relatório — centralizado abaixo do Preencher NF do Dia -->
@@ -389,6 +392,7 @@
       document.getElementById('nomeUsuario').textContent = sessionStorage.getItem('usuario') || '—';
       renderCaixa();
       renderVales();
+      if (typeof window.nfDiaRender === 'function') window.nfDiaRender(); // mostra a planilha vazia já de cara, sem esperar o Firebase
     }
 
     /* ── CAIXA ── */
@@ -460,49 +464,79 @@
           '</div>').join('') + '</div>';
     };
 
-    /* ── PREENCHER NF DO DIA ── */
+    /* ── PREENCHER NF DO DIA — layout de planilha, salvamento automático ── */
     window._nfDia = [];
-    const NFDIA_CAMPOS = ['nome','cpf','email','telefone','cep','numero','complemento','valor','descricao'];
+    const NFDIA_COLS = [
+      {campo:'nome',        label:'Nome do paciente',  w:'170px'},
+      {campo:'cpf',         label:'CPF',                w:'118px', mascara:'mascaraCPF'},
+      {campo:'email',       label:'E-mail',             w:'170px'},
+      {campo:'telefone',    label:'Telefone',           w:'120px'},
+      {campo:'cep',         label:'CEP',                w:'92px'},
+      {campo:'_cepBtn',     label:'',                   w:'34px'},
+      {campo:'logradouro',  label:'Logradouro',         w:'150px'},
+      {campo:'numero',      label:'Nº',                 w:'56px'},
+      {campo:'complemento', label:'Compl.',             w:'90px'},
+      {campo:'bairro',      label:'Bairro',             w:'110px'},
+      {campo:'cidade',      label:'Cidade',             w:'110px'},
+      {campo:'uf',          label:'UF',                 w:'48px'},
+      {campo:'valor',       label:'Valor (R$)',         w:'90px', mascara:'mascaraMoeda'},
+      {campo:'descricao',   label:'Descrição do Procedimento', w:'220px'},
+      {campo:'_del',        label:'',                   w:'34px'}
+    ];
     function nfDiaVazio() {
       return { id: Date.now() + '_' + Math.random().toString(36).slice(2,7),
         nome:'', cpf:'', email:'', telefone:'', cep:'', logradouro:'', numero:'', complemento:'', bairro:'', cidade:'', uf:'', valor:'', descricao:'' };
     }
-    // Um campo só libera quando o anterior da cadeia estiver preenchido.
-    function nfDiaLiberado(row, campo) {
-      const ordem = ['nome','cpf','email','telefone','cep','numero','valor','descricao'];
-      const idx = ordem.indexOf(campo);
-      if (idx <= 0) return true;
-      const anterior = ordem[idx - 1];
-      if (anterior === 'cep') return !!row.logradouro; // só libera Número depois do CEP resolvido
-      return !!(row[anterior] || '').toString().trim();
-    }
-    window.nfDiaAdd = function() {
+    window.nfDiaAddLinha = function() {
       window._nfDia.push(nfDiaVazio());
       nfDiaRender();
+      nfDiaAgendarSalvar();
     };
     window.nfDiaRemove = function(id) {
-      if (!confirm('Remover este paciente da lista de NF do dia?')) return;
       window._nfDia = window._nfDia.filter(r => r.id !== id);
+      if (!window._nfDia.length) window._nfDia.push(nfDiaVazio());
       nfDiaRender();
+      nfDiaAgendarSalvar();
     };
-    // Ordem da cadeia de liberação — ao preencher um campo, libera o próximo sem
-    // reconstruir a lista inteira (senão o input perde o foco a cada tecla digitada).
-    const NFDIA_ORDEM = ['nome','cpf','email','telefone','cep','numero','valor','descricao'];
-    window.nfDiaCampo = function(id, campo, valor) {
+    window.nfDiaCel = function(id, campo, valor) {
       const row = window._nfDia.find(r => r.id === id);
       if (!row) return;
       row[campo] = valor;
-      const idx = NFDIA_ORDEM.indexOf(campo);
-      if (idx >= 0 && idx < NFDIA_ORDEM.length - 1) {
-        const proximo = NFDIA_ORDEM[idx + 1];
-        const elProx = document.getElementById('nfDiaInp_' + id + '_' + proximo);
-        const liberar = campo === 'cep' ? false : !!valor.toString().trim(); // CEP só libera Número após buscar
-        if (elProx) { elProx.disabled = !liberar; elProx.style.opacity = liberar ? '1' : '.5'; elProx.style.cursor = liberar ? 'text' : 'not-allowed'; }
+      nfDiaAgendarSalvar();
+    };
+    // Garante sempre uma última linha em branco pra continuar digitando/colando.
+    function nfDiaGarantirLinhaExtra() {
+      const ultima = window._nfDia[window._nfDia.length - 1];
+      if (!ultima || (ultima.nome||'').trim() || (ultima.valor||'').toString().trim()) {
+        window._nfDia.push(nfDiaVazio());
+        return true;
       }
-      if (campo === 'nome') {
-        const st = document.getElementById('nfDiaStatus');
-        if (st) st.textContent = window._nfDia.length + ' paciente(s) na lista';
-      }
+      return false;
+    }
+    // Colar tipo planilha (Excel/Google Sheets): tab entre colunas, quebra de linha entre linhas.
+    // Preenche a partir da célula onde colou, criando linhas/colunas conforme necessário.
+    window.nfDiaColar = function(ev, id, campo) {
+      const texto = (ev.clipboardData || window.clipboardData).getData('text');
+      if (!texto || (!texto.includes('\t') && !texto.includes('\n'))) return; // colagem normal de 1 célula
+      ev.preventDefault();
+      const linhasColadas = texto.replace(/\r/g,'').split('\n').filter((l,i,arr)=> !(i===arr.length-1 && l===''));
+      const colsEditaveis = NFDIA_COLS.filter(c => !c.campo.startsWith('_')).map(c => c.campo);
+      let rowIdx = window._nfDia.findIndex(r => r.id === id);
+      let colIdx = colsEditaveis.indexOf(campo);
+      if (rowIdx === -1 || colIdx === -1) return;
+      linhasColadas.forEach((linhaTxt, li) => {
+        const valores = linhaTxt.split('\t');
+        let r = window._nfDia[rowIdx + li];
+        if (!r) { r = nfDiaVazio(); window._nfDia.push(r); }
+        valores.forEach((v, ci) => {
+          const campoAlvo = colsEditaveis[colIdx + ci];
+          if (campoAlvo) r[campoAlvo] = v.trim();
+        });
+      });
+      nfDiaGarantirLinhaExtra();
+      nfDiaRender();
+      nfDiaAgendarSalvar();
+      toast('Colado ✓', 'success');
     };
     window.nfDiaBuscarCep = async function(id) {
       const row = window._nfDia.find(r => r.id === id);
@@ -524,106 +558,93 @@
         toast('Não consegui consultar o CEP agora — tente de novo', 'error');
       } finally {
         nfDiaRender();
+        nfDiaAgendarSalvar();
       }
     };
-    function nfDiaCampoHtml(row, campo, label, opts) {
-      opts = opts || {};
-      const liberado = nfDiaLiberado(row, campo);
-      const val = esc(row[campo] || '');
-      const extraAttrs = opts.attrs || '';
-      const oninput = "nfDiaCampo('" + row.id + "','" + campo + "',this.value)" + (opts.mascara ? ";" + opts.mascara + "(this)" : '');
-      return '<div>' +
-        '<label class="f-label">' + label + '</label>' +
-        '<input class="f-input" id="nfDiaInp_' + row.id + '_' + campo + '" value="' + val + '" ' + (liberado ? '' : 'disabled') +
-        ' placeholder="' + (opts.placeholder || '') + '" oninput="' + oninput + '" ' + extraAttrs +
-        ' style="' + (liberado ? '' : 'opacity:.5;cursor:not-allowed;') + '">' +
-        '</div>';
-    }
-    window.nfDiaToggle = function(id) {
-      const row = window._nfDia.find(r => r.id === id);
-      if (!row) return;
-      row.colapsado = !row.colapsado;
-      nfDiaRender();
-    };
-    function nfDiaCartaoColapsado(row, i) {
-      return '<div style="border:1.5px solid var(--gray-200);border-radius:12px;padding:12px 16px;margin-bottom:8px;background:white;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;" onclick="nfDiaToggle(\'' + row.id + '\')">' +
-        '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
-          '<div style="width:26px;height:26px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-check" style="font-size:11px;"></i></div>' +
-          '<div style="min-width:0;">' +
-            '<div style="font-size:13px;font-weight:800;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(row.nome || 'Paciente ' + (i+1)) + '</div>' +
-            '<div style="font-size:11px;color:var(--gray-400);">' + (row.cpf ? esc(row.cpf) + ' · ' : '') + (row.valor ? 'R$ ' + esc(row.valor) : 'sem valor') + '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">' +
-          '<button onclick="event.stopPropagation();nfDiaToggle(\'' + row.id + '\')" style="width:26px;height:26px;background:var(--gray-100);border:none;border-radius:6px;cursor:pointer;color:var(--gray-500);font-size:11px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-pen"></i></button>' +
-          '<button onclick="event.stopPropagation();nfDiaRemove(\'' + row.id + '\')" style="width:26px;height:26px;background:rgba(198,40,40,.08);border:none;border-radius:6px;cursor:pointer;color:var(--red);font-size:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-trash"></i></button>' +
-        '</div>' +
-      '</div>';
-    }
-    function nfDiaCartaoAberto(row, i) {
-      const enderecoOk = !!row.logradouro;
-      return '<div style="border:1.5px solid var(--gray-200);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--gray-50);">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
-          '<div style="font-size:11px;font-weight:800;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;">' + esc(row.nome || ('Paciente ' + (i+1))) + '</div>' +
-          '<div style="display:flex;gap:6px;">' +
-            (row.nome ? '<button onclick="nfDiaToggle(\'' + row.id + '\')" style="width:26px;height:26px;background:var(--gray-100);border:none;border-radius:6px;cursor:pointer;color:var(--gray-500);font-size:11px;display:flex;align-items:center;justify-content:center;" title="Recolher"><i class="fas fa-chevron-up"></i></button>' : '') +
-            '<button onclick="nfDiaRemove(\'' + row.id + '\')" style="width:26px;height:26px;background:rgba(198,40,40,.08);border:none;border-radius:6px;cursor:pointer;color:var(--red);font-size:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-trash"></i></button>' +
-          '</div>' +
-        '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
-          nfDiaCampoHtml(row, 'nome', 'Nome do paciente', {placeholder:'Nome completo'}) +
-          nfDiaCampoHtml(row, 'cpf', 'CPF', {placeholder:'000.000.000-00', mascara:'mascaraCPF', attrs:'maxlength="14"'}) +
-        '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
-          nfDiaCampoHtml(row, 'email', 'E-mail', {placeholder:'email@exemplo.com'}) +
-          nfDiaCampoHtml(row, 'telefone', 'Telefone', {placeholder:'(11) 90000-0000'}) +
-        '</div>' +
-        '<div style="display:grid;grid-template-columns:2fr auto;gap:10px;margin-bottom:8px;align-items:end;">' +
-          nfDiaCampoHtml(row, 'cep', 'CEP', {placeholder:'00000-000', attrs:'maxlength="9"'}) +
-          '<button id="nfDiaBtnCep_' + row.id + '" class="btn-teal" onclick="nfDiaBuscarCep(\'' + row.id + '\')" ' + (nfDiaLiberado(row,'cep') ? '' : 'disabled style="opacity:.5;cursor:not-allowed;"') + '><i class="fas fa-magnifying-glass-location"></i> Buscar CEP</button>' +
-        '</div>' +
-        (enderecoOk ? '<div style="font-size:11px;color:var(--gray-500);margin-bottom:10px;background:white;border:1px solid var(--gray-200);border-radius:8px;padding:6px 10px;"><i class="fas fa-location-dot"></i> ' + esc(row.logradouro) + ' · ' + esc(row.bairro) + ' · ' + esc(row.cidade) + '/' + esc(row.uf) + '</div>' : '') +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
-          nfDiaCampoHtml(row, 'numero', 'Número', {placeholder:'Ex: 123'}) +
-          nfDiaCampoHtml(row, 'complemento', 'Complemento (opcional)', {placeholder:'Apto, bloco...'}) +
-        '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;">' +
-          nfDiaCampoHtml(row, 'valor', 'Valor (R$)', {placeholder:'0,00', mascara:'mascaraMoeda'}) +
-          nfDiaCampoHtml(row, 'descricao', 'Descrição do Procedimento', {placeholder:'Ex: REF A CONSULTA REALIZADA'}) +
-        '</div>' +
-      '</div>';
-    }
     window.nfDiaRender = function() {
-      const el = document.getElementById('nfDiaLista');
+      const wrap = document.getElementById('nfDiaTableWrap');
       const st = document.getElementById('nfDiaStatus');
-      if (!window._nfDia.length) {
-        el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:20px;font-size:13px;">Nenhum paciente adicionado ainda.</div>';
-        if (st) st.textContent = '—';
-        return;
-      }
-      if (st) st.textContent = window._nfDia.length + ' paciente(s) na lista';
-      el.innerHTML = window._nfDia.map((row, i) =>
-        row.colapsado ? nfDiaCartaoColapsado(row, i) : nfDiaCartaoAberto(row, i)
-      ).join('');
+      if (!wrap) return;
+      if (!window._nfDia.length) window._nfDia.push(nfDiaVazio());
+      const preenchidas = window._nfDia.filter(r => (r.nome||'').trim()).length;
+      if (st) st.textContent = preenchidas ? preenchidas + ' paciente(s) preenchido(s)' : '—';
+
+      let html = '<table style="border-collapse:collapse;width:100%;font-size:12px;">';
+      html += '<thead><tr>' + NFDIA_COLS.map(c =>
+        '<th style="position:sticky;top:0;background:var(--navy);color:white;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:7px 6px;border:1px solid #0006;text-align:left;min-width:' + c.w + ';">' + esc(c.label) + '</th>'
+      ).join('') + '</tr></thead><tbody>';
+
+      window._nfDia.forEach((row, i) => {
+        html += '<tr>';
+        NFDIA_COLS.forEach(c => {
+          if (c.campo === '_del') {
+            html += '<td style="border:1px solid var(--gray-200);text-align:center;background:' + (i%2===0?'#fff':'var(--gray-50)') + ';">' +
+              '<button onclick="nfDiaRemove(\'' + row.id + '\')" style="width:22px;height:22px;background:rgba(198,40,40,.08);border:none;border-radius:5px;cursor:pointer;color:var(--red);font-size:9px;"><i class="fas fa-trash"></i></button>' +
+              '</td>';
+            return;
+          }
+          if (c.campo === '_cepBtn') {
+            html += '<td style="border:1px solid var(--gray-200);text-align:center;background:' + (i%2===0?'#fff':'var(--gray-50)') + ';">' +
+              '<button id="nfDiaBtnCep_' + row.id + '" onclick="nfDiaBuscarCep(\'' + row.id + '\')" title="Buscar endereço pelo CEP" style="width:22px;height:22px;background:var(--teal);border:none;border-radius:5px;cursor:pointer;color:white;font-size:9px;"><i class="fas fa-magnifying-glass-location"></i></button>' +
+              '</td>';
+            return;
+          }
+          const val = esc(row[c.campo] || '');
+          const oninput = "nfDiaCel('" + row.id + "','" + c.campo + "',this.value)" + (c.mascara ? ";" + c.mascara + "(this)" : '');
+          html += '<td style="border:1px solid var(--gray-200);padding:0;background:' + (i%2===0?'#fff':'var(--gray-50)') + ';">' +
+            '<input value="' + val + '" oninput="' + oninput + '" onpaste="nfDiaColar(event,\'' + row.id + '\',\'' + c.campo + '\')" ' +
+            'style="width:100%;min-width:' + c.w + ';border:none;background:transparent;padding:7px 8px;font-size:12px;font-family:inherit;outline:none;" ' +
+            'onfocus="this.style.background=\'#eff6ff\'" onblur="this.style.background=\'transparent\'">' +
+            '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
     };
-    window.nfDiaSalvar = function() {
-      // Recolhe (mostra só o nome) todo paciente que já tem nome preenchido —
-      // assim a lista não fica gigante conforme o colaborador vai adicionando.
-      window._nfDia.forEach(r => { if ((r.nome||'').trim()) r.colapsado = true; });
-      nfDiaRender();
-      if (window.fbSet) {
-        window.fbSet('operacao/' + (window.USER_UID||'_') + '/nf_dia/' + window.TK_FB, window._nfDia)
-          .then(() => toast('NF do dia salva ✓', 'success'))
-          .catch(e => { console.error('[nfDia] erro ao salvar:', e); toast('Erro ao salvar — verifique a conexão', 'error'); });
-      } else {
-        toast('Sem conexão com o Firebase agora', 'error');
-      }
-    };
+    // Salvamento automático — debounce de 1.2s depois da última tecla, pra não
+    // gravar no Firebase a cada caractere digitado.
+    let _nfDiaSaveTimer = null;
+    function nfDiaAgendarSalvar() {
+      const ind = document.getElementById('nfDiaSaveIndicator');
+      if (ind) ind.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> salvando...';
+      clearTimeout(_nfDiaSaveTimer);
+      _nfDiaSaveTimer = setTimeout(nfDiaSalvarAgora, 1200);
+    }
+    function nfDiaSalvarAgora() {
+      const ind = document.getElementById('nfDiaSaveIndicator');
+      if (!window.fbSet) { if (ind) ind.innerHTML = '<span style="color:var(--red)">sem conexão</span>'; return; }
+      const linhas = window._nfDia.filter(r => (r.nome||'').trim() || (r.valor||'').toString().trim());
+      window.fbSet('operacao/' + (window.USER_UID||'_') + '/nf_dia/' + window.TK_FB, linhas)
+        .then(() => { if (ind) ind.innerHTML = '<i class="fas fa-check"></i> salvo ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); })
+        .catch(e => { console.error('[nfDia] erro ao salvar:', e); if (ind) ind.innerHTML = '<span style="color:var(--red)">erro ao salvar</span>'; });
+    }
     window.nfDiaCarregar = function(dados) {
-      window._nfDia = Array.isArray(dados) ? dados : [];
-      // Ao recarregar (ex: reabriu a página), já vem recolhido quem tem nome preenchido.
-      window._nfDia.forEach(r => { if ((r.nome||'').trim() && r.colapsado === undefined) r.colapsado = true; });
+      window._nfDia = Array.isArray(dados) && dados.length ? dados.map(r => Object.assign(nfDiaVazio(), r)) : [];
+      nfDiaGarantirLinhaExtra();
       nfDiaRender();
+    };
+    /* Verificar células — checagem informativa (não bloqueia nada), destaca
+     * em vermelho o que parece errado: CPF com menos/mais de 11 dígitos,
+     * e-mail sem "@"/domínio, CEP incompleto, valor não numérico. */
+    window.nfDiaVerificar = function() {
+      let problemas = [];
+      window._nfDia.forEach((row, i) => {
+        if (!(row.nome||'').trim() && !(row.valor||'').toString().trim()) return; // linha em branco, ignora
+        const linha = i + 1;
+        if (!(row.nome||'').trim()) problemas.push('Linha ' + linha + ': sem nome');
+        if (row.cpf && row.cpf.replace(/\D/g,'').length !== 11) problemas.push('Linha ' + linha + ' (' + (row.nome||'—') + '): CPF incompleto');
+        if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) problemas.push('Linha ' + linha + ' (' + (row.nome||'—') + '): e-mail inválido');
+        if (row.cep && row.cep.replace(/\D/g,'').length !== 8) problemas.push('Linha ' + linha + ' (' + (row.nome||'—') + '): CEP incompleto');
+        if (row.valor && !(pv(row.valor) > 0)) problemas.push('Linha ' + linha + ' (' + (row.nome||'—') + '): valor inválido');
+      });
+      const el = document.getElementById('nfDiaVerificacao');
+      if (!el) return;
+      if (!problemas.length) {
+        el.innerHTML = '<div style="font-size:12px;color:var(--green);background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;"><i class="fas fa-check-circle"></i> Tudo certo — nenhuma célula com problema.</div>';
+      } else {
+        el.innerHTML = '<div style="font-size:12px;color:var(--amber);background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;"><i class="fas fa-triangle-exclamation"></i> ' + problemas.length + ' coisa(s) pra revisar:<ul style="margin:6px 0 0 18px;padding:0;">' + problemas.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul></div>';
+      }
     };
 
     /* ── PARSE CAIXA ── */
