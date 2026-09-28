@@ -1,4 +1,4 @@
-<!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
+<!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflMontarLinhasDoCaixa agora higieniza os dados vindos do Caixa no padrão Sinaxys antes de montar a planilha do NF em Lote: CPF só dígitos, CEP só dígitos, Valor sem "R$"/espaços. Não altera o que foi salvo em nf_dia_relatorios — a limpeza acontece só na hora de gerar a planilha. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -4231,6 +4231,14 @@
 
   /* Extrai as linhas (já na ordem do NFL_HEADERS) de um nó nf_dia_relatorios/{data},
    * ignorando a chave "_status" (usada só para marcar processado/pendente). */
+  // Higieniza um campo para o padrão que a Sinaxys espera, sem alterar o que foi
+  // digitado no Caixa (essa limpeza acontece só aqui, na hora de montar a planilha
+  // do NF em Lote — o rascunho salvo em nf_dia_relatorios fica como o colaborador digitou).
+  function nflSanitizarCpf(cpf){ return (cpf||'').replace(/\D/g,''); }
+  function nflSanitizarCep(cep){ return (cep||'').replace(/\D/g,''); }
+  function nflSanitizarValor(valor){
+    return (valor||'').toString().replace(/R\$\s*/gi,'').replace(/\s/g,'').trim();
+  }
   function nflMontarLinhasDoCaixa(porColaborador, dateIso){
     var linhas=[], colaboradores=[];
     Object.keys(porColaborador||{}).forEach(function(uid){
@@ -4241,9 +4249,9 @@
         if(!r || !(r.nome||'').trim()) return;
         linhas.push([
           dateIso.split('-').reverse().join('/'), // Data de Consulta
-          r.nome||'', r.cpf||'', r.email||'', r.telefone||'',
-          r.cep||'', r.logradouro||'', r.numero||'', r.complemento||'',
-          r.bairro||'', r.cidade||'', r.uf||'', r.valor||'', r.descricao||''
+          r.nome||'', nflSanitizarCpf(r.cpf), r.email||'', r.telefone||'',
+          nflSanitizarCep(r.cep), r.logradouro||'', r.numero||'', r.complemento||'',
+          r.bairro||'', r.cidade||'', r.uf||'', nflSanitizarValor(r.valor), r.descricao||''
         ]);
       });
     });

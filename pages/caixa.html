@@ -1,4 +1,5 @@
-﻿<!-- VERSION: v1.3 | caixa.html | 25/09/2026 | Preencher NF do Dia virou uma planilha de verdade: tabela com colunas fixas (Nome, CPF, E-mail, Telefone, CEP+busca, Endereço, Valor, Descrição), aceita colar direto do Excel/planilha (tab/quebra de linha vira colunas/linhas), salva sozinho 1,2s depois de parar de digitar (sem botão Salvar), botão "Verificar células" que só avisa o que parece errado sem travar nada, e continua opcional pra gerar o Relatório de Caixa. -->
+﻿<!-- VERSION: v1.6 | caixa.html | 28/09/2026 | Painel Relatório de Caixa na mesma largura do Preencher NF do Dia (remove max-width:640px). --><!-- v1.5: Preencher NF do Dia agora nasce com 100 linhas em branco (grade de planilha de verdade) + botão "+ Adicionar 100 linhas". Colar do Excel/exportação (9 ou 8 colunas: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador) agora ignora automaticamente Pagamento e Operador quando a colagem começa na coluna Nome. Busca de CEP (ViaCEP) ganhou timeout de 6s + 1 retentativa automática antes de avisar erro, pra evitar tela travada quando o serviço está instável. --><!-- VERSION: v1.4 | caixa.html | 25/09/2026 | Corrige bug do Valor duplicando zero (ex: 40,00 virando 40,000 salvo): a máscara agora roda ANTES de guardar o valor da célula, não depois — antes ficava um passo atrasado. Colar de 1 célula só (Excel costuma copiar com \r\n mesmo de uma célula) agora também passa pela máscara da coluna, então colar "40" no Valor já vira "0,40" certinho. Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (cria linha nova se precisar) e Tab anda entre as células (botões de ação saem da ordem do Tab). -->
+<!-- v1.3: Preencher NF do Dia virou uma planilha de verdade: tabela com colunas fixas (Nome, CPF, E-mail, Telefone, CEP+busca, Endereço, Valor, Descrição), aceita colar direto do Excel/planilha (tab/quebra de linha vira colunas/linhas), salva sozinho 1,2s depois de parar de digitar (sem botão Salvar), botão "Verificar células" que só avisa o que parece errado sem travar nada, e continua opcional pra gerar o Relatório de Caixa. -->
 <!-- v1.2: Cartão de cada paciente recolhe (mostra só o nome) ao salvar, clique de novo pra reabrir e editar. Remove o painel "Controle de Caixa" (Fundo/Entradas/Saídas/Sobra) e "Registro de Troco/Vale" da tela; Relatório de Caixa passa a ficar centralizado, sozinho, logo abaixo de Preencher NF do Dia. -->
 <!-- v1.1: Nova seção "Preencher NF do Dia" acima do Relatório de Caixa: colaborador cadastra pacientes que vão precisar de NF (campos liberados em cadeia, CEP via ViaCEP), salva a qualquer momento como rascunho (operacao/{uid}/nf_dia/{data}), e ao Gerar Relatório o sistema compara nome+valor com o copia-e-cola do AMEI, avisa se achar algo fora do comum (confirmar/voltar) e troca a coluna "N° NF" por "Dados NF" (✓/✗). Salva o lote do dia em nf_dia_relatorios/{data}/{uid} para o Dashboard puxar por data em "Gerar Planilha". -->
 <!DOCTYPE html>
@@ -128,29 +129,28 @@
         <div class="info-box" style="margin-bottom:12px;">
           <i class="fas fa-info-circle"></i> Preencha como numa planilha — pode copiar e colar direto do Excel/planilha de notas, célula por célula ou várias de uma vez. Vai <b>salvando sozinho</b> conforme você digita (não precisa clicar em nada). Não é obrigatório preencher isso pra gerar o Relatório de Caixa.
         </div>
-        <div id="nfDiaTableWrap" style="overflow-x:auto;border:1.5px solid var(--gray-200);border-radius:10px;"></div>
+        <div id="nfDiaTableWrap" style="overflow-x:auto;border:1.5px solid var(--gray-200);border-radius:10px;max-height:70vh;"></div>
         <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;">
           <button class="btn-s" onclick="nfDiaAddLinha()"><i class="fas fa-plus"></i> Adicionar linha</button>
+          <button class="btn-s" onclick="nfDiaAdd100()"><i class="fas fa-layer-group"></i> + Adicionar 100 linhas</button>
           <button class="btn-teal" onclick="nfDiaVerificar()"><i class="fas fa-magnifying-glass"></i> Verificar células</button>
           <div id="nfDiaSaveIndicator" style="font-size:11px;color:var(--gray-400);font-weight:600;margin-left:auto;">—</div>
         </div>
         <div id="nfDiaVerificacao" style="margin-top:10px;"></div>
       </div>
 
-      <!-- Gerar Relatório — centralizado abaixo do Preencher NF do Dia -->
-      <div style="max-width:640px;margin:0 auto;">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fas fa-file-lines"></i> Relatório de Caixa</div>
-          </div>
-          <div class="info-box">
-            <i class="fas fa-info-circle"></i> No AMEI: <strong>Caixa → Detalhes → Ctrl+A → Ctrl+C</strong> → cole abaixo e clique em Gerar.
-          </div>
-          <label class="f-label" style="margin-bottom:6px;">Cole os dados do caixa (AMEI)</label>
-          <textarea id="cxPaste" style="width:100%;height:280px;padding:14px;border:1.5px solid var(--gray-200);border-radius:12px;font-family:monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .2s;" placeholder="Cole aqui os dados copiados do sistema AMEI..." onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
-          <div style="margin-top:14px;">
-            <button class="btn-r" id="btnGerar" onclick="gerarRelatorio()" style="width:100%;justify-content:center;padding:14px;font-size:15px;"><i class="fas fa-chart-bar"></i> Gerar Relatório</button>
-          </div>
+      <!-- Gerar Relatório — mesma largura do painel de Preencher NF do Dia -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-file-lines"></i> Relatório de Caixa</div>
+        </div>
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i> No AMEI: <strong>Caixa → Detalhes → Ctrl+A → Ctrl+C</strong> → cole abaixo e clique em Gerar.
+        </div>
+        <label class="f-label" style="margin-bottom:6px;">Cole os dados do caixa (AMEI)</label>
+        <textarea id="cxPaste" style="width:100%;height:280px;padding:14px;border:1.5px solid var(--gray-200);border-radius:12px;font-family:monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .2s;" placeholder="Cole aqui os dados copiados do sistema AMEI..." onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
+        <div style="margin-top:14px;">
+          <button class="btn-r" id="btnGerar" onclick="gerarRelatorio()" style="width:100%;justify-content:center;padding:14px;font-size:15px;"><i class="fas fa-chart-bar"></i> Gerar Relatório</button>
         </div>
       </div>
     </div>
@@ -492,6 +492,11 @@
       nfDiaRender();
       nfDiaAgendarSalvar();
     };
+    window.nfDiaAdd100 = function() {
+      for (let i = 0; i < 100; i++) window._nfDia.push(nfDiaVazio());
+      nfDiaRender();
+      toast('100 linhas adicionadas', 'success');
+    };
     window.nfDiaRemove = function(id) {
       window._nfDia = window._nfDia.filter(r => r.id !== id);
       if (!window._nfDia.length) window._nfDia.push(nfDiaVazio());
@@ -513,31 +518,100 @@
       }
       return false;
     }
+    // Aplica a máscara de uma coluna (ex: mascaraMoeda/mascaraCPF) num valor puro,
+    // sem precisar de um <input> de verdade — as máscaras só leem/escrevem ".value".
+    function nfDiaAplicarMascara(nomeMascara, valor) {
+      if (!nomeMascara || !window[nomeMascara]) return valor;
+      const fake = { value: valor };
+      window[nomeMascara](fake);
+      return fake.value;
+    }
+    // Formato da planilha exportada da Excel/AMEI com colunas Pagamento e Operador,
+    // que devem ser ignoradas ao colar (não têm célula correspondente no sistema).
+    // Ordem assumida: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador.
+    // Ajustar aqui se a ordem real vier diferente.
+    const EXCEL_SINAXYS_MAP = ['nome','cpf',null,'valor','email','telefone','cep','numero',null];
     // Colar tipo planilha (Excel/Google Sheets): tab entre colunas, quebra de linha entre linhas.
     // Preenche a partir da célula onde colou, criando linhas/colunas conforme necessário.
+    // Cada valor colado passa pela máscara da coluna (então colar "40" numa célula de
+    // Valor já vira "0,40" certinho, igual se tivesse sido digitado).
+    // Se colar um bloco de 8-9 colunas começando pela coluna Nome, assume-se que é o
+    // formato de exportação com Pagamento/Operador e essas duas colunas são ignoradas.
     window.nfDiaColar = function(ev, id, campo) {
       const texto = (ev.clipboardData || window.clipboardData).getData('text');
-      if (!texto || (!texto.includes('\t') && !texto.includes('\n'))) return; // colagem normal de 1 célula
-      ev.preventDefault();
-      const linhasColadas = texto.replace(/\r/g,'').split('\n').filter((l,i,arr)=> !(i===arr.length-1 && l===''));
-      const colsEditaveis = NFDIA_COLS.filter(c => !c.campo.startsWith('_')).map(c => c.campo);
+      if (!texto) return;
+      ev.preventDefault(); // sempre tratamos a colagem nós mesmos, mesmo de 1 célula só
+      // Excel/Sheets costuma copiar até 1 célula com \r\n no final — ignora linhas vazias nas pontas.
+      const linhasColadas = texto.replace(/\r/g,'').split('\n').filter((l,i,arr)=> !(l==='' && (i===0 || i===arr.length-1)));
+      if (!linhasColadas.length) return;
+      const colsEditaveis = NFDIA_COLS.filter(c => !c.campo.startsWith('_'));
+      const nomesColunas = colsEditaveis.map(c => c.campo);
       let rowIdx = window._nfDia.findIndex(r => r.id === id);
-      let colIdx = colsEditaveis.indexOf(campo);
+      let colIdx = nomesColunas.indexOf(campo);
       if (rowIdx === -1 || colIdx === -1) return;
+      // Garante linhas suficientes de antemão (colar 150 linhas cria as que faltarem).
+      const linhasFaltando = (rowIdx + linhasColadas.length) - window._nfDia.length;
+      for (let f = 0; f < linhasFaltando; f++) window._nfDia.push(nfDiaVazio());
       linhasColadas.forEach((linhaTxt, li) => {
         const valores = linhaTxt.split('\t');
         let r = window._nfDia[rowIdx + li];
         if (!r) { r = nfDiaVazio(); window._nfDia.push(r); }
+        const usarMapaExcel = colIdx === 0 && (valores.length === 8 || valores.length === 9);
         valores.forEach((v, ci) => {
-          const campoAlvo = colsEditaveis[colIdx + ci];
-          if (campoAlvo) r[campoAlvo] = v.trim();
+          let col;
+          if (usarMapaExcel) {
+            const destCampo = EXCEL_SINAXYS_MAP[ci];
+            if (!destCampo) return; // pula Pagamento/Operador
+            col = colsEditaveis.find(c => c.campo === destCampo);
+          } else {
+            col = colsEditaveis[colIdx + ci];
+          }
+          if (col) r[col.campo] = nfDiaAplicarMascara(col.mascara, v.trim());
         });
       });
       nfDiaGarantirLinhaExtra();
       nfDiaRender();
       nfDiaAgendarSalvar();
-      toast('Colado ✓', 'success');
+      // Devolve o foco pra célula equivalente na última linha colada, como no Excel.
+      const ultimoId = window._nfDia[Math.min(rowIdx + linhasColadas.length - 1, window._nfDia.length - 1)].id;
+      const alvo = document.getElementById('nfDiaCel_' + ultimoId + '_' + campo);
+      if (alvo) alvo.focus();
     };
+    // Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (criando
+    // linha nova se for a última). Tab/Shift+Tab usam a ordem natural do navegador
+    // entre os campos (os botões de ação ficam fora da ordem via tabindex="-1").
+    window.nfDiaKeydown = function(ev, id, campo) {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      const rowIdx = window._nfDia.findIndex(r => r.id === id);
+      if (rowIdx === -1) return;
+      let proximaLinha = window._nfDia[rowIdx + 1];
+      if (!proximaLinha) {
+        proximaLinha = nfDiaVazio();
+        window._nfDia.push(proximaLinha);
+        nfDiaRender();
+      }
+      const alvo = document.getElementById('nfDiaCel_' + proximaLinha.id + '_' + campo);
+      if (alvo) { alvo.focus(); alvo.select(); }
+    };
+    // Busca um CEP no ViaCEP com timeout (evita travar esperando) e 1 retentativa
+    // automática antes de avisar o colaborador que deu erro.
+    async function nfDiaFetchCep(cepDigits, tentativa) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      try {
+        const resp = await fetch('https://viacep.com.br/ws/' + cepDigits + '/json/', { signal: ctrl.signal });
+        return await resp.json();
+      } catch (e) {
+        if (!tentativa) { // 1ª falha: espera 1s e tenta de novo, silenciosamente
+          await new Promise(r => setTimeout(r, 1000));
+          return nfDiaFetchCep(cepDigits, 1);
+        }
+        throw e;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
     window.nfDiaBuscarCep = async function(id) {
       const row = window._nfDia.find(r => r.id === id);
       if (!row) return;
@@ -546,8 +620,7 @@
       const btn = document.getElementById('nfDiaBtnCep_' + id);
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
       try {
-        const resp = await fetch('https://viacep.com.br/ws/' + cepDigits + '/json/');
-        const d = await resp.json();
+        const d = await nfDiaFetchCep(cepDigits, 0);
         if (d.erro) { toast('CEP não encontrado', 'error'); return; }
         row.logradouro = d.logradouro || '';
         row.bairro      = d.bairro || '';
@@ -555,7 +628,7 @@
         row.uf            = d.uf || '';
         toast('Endereço encontrado ✓', 'success');
       } catch (e) {
-        toast('Não consegui consultar o CEP agora — tente de novo', 'error');
+        toast('CEP indisponível no momento — tente novamente em instantes', 'error');
       } finally {
         nfDiaRender();
         nfDiaAgendarSalvar();
@@ -565,7 +638,7 @@
       const wrap = document.getElementById('nfDiaTableWrap');
       const st = document.getElementById('nfDiaStatus');
       if (!wrap) return;
-      if (!window._nfDia.length) window._nfDia.push(nfDiaVazio());
+      if (!window._nfDia.length) for (let i = 0; i < 100; i++) window._nfDia.push(nfDiaVazio());
       const preenchidas = window._nfDia.filter(r => (r.nome||'').trim()).length;
       if (st) st.textContent = preenchidas ? preenchidas + ' paciente(s) preenchido(s)' : '—';
 
@@ -577,22 +650,25 @@
       window._nfDia.forEach((row, i) => {
         html += '<tr>';
         NFDIA_COLS.forEach(c => {
-          if (c.campo === '_del') {
+    if (c.campo === '_del') {
             html += '<td style="border:1px solid var(--gray-200);text-align:center;background:' + (i%2===0?'#fff':'var(--gray-50)') + ';">' +
-              '<button onclick="nfDiaRemove(\'' + row.id + '\')" style="width:22px;height:22px;background:rgba(198,40,40,.08);border:none;border-radius:5px;cursor:pointer;color:var(--red);font-size:9px;"><i class="fas fa-trash"></i></button>' +
+              '<button tabindex="-1" onclick="nfDiaRemove(\'' + row.id + '\')" style="width:22px;height:22px;background:rgba(198,40,40,.08);border:none;border-radius:5px;cursor:pointer;color:var(--red);font-size:9px;"><i class="fas fa-trash"></i></button>' +
               '</td>';
             return;
           }
           if (c.campo === '_cepBtn') {
             html += '<td style="border:1px solid var(--gray-200);text-align:center;background:' + (i%2===0?'#fff':'var(--gray-50)') + ';">' +
-              '<button id="nfDiaBtnCep_' + row.id + '" onclick="nfDiaBuscarCep(\'' + row.id + '\')" title="Buscar endereço pelo CEP" style="width:22px;height:22px;background:var(--teal);border:none;border-radius:5px;cursor:pointer;color:white;font-size:9px;"><i class="fas fa-magnifying-glass-location"></i></button>' +
+              '<button tabindex="-1" id="nfDiaBtnCep_' + row.id + '" onclick="nfDiaBuscarCep(\'' + row.id + '\')" title="Buscar endereço pelo CEP" style="width:22px;height:22px;background:var(--teal);border:none;border-radius:5px;cursor:pointer;color:white;font-size:9px;"><i class="fas fa-magnifying-glass-location"></i></button>' +
               '</td>';
             return;
           }
           const val = esc(row[c.campo] || '');
-          const oninput = "nfDiaCel('" + row.id + "','" + c.campo + "',this.value)" + (c.mascara ? ";" + c.mascara + "(this)" : '');
+          // A máscara tem que rodar ANTES de guardar o valor na linha — senão o que
+          // é salvo fica um passo atrasado em relação ao que aparece na tela (ex:
+          // "40,00" vira "4,000" guardado, mesmo mostrando certo na hora).
+          const oninput = (c.mascara ? c.mascara + "(this);" : '') + "nfDiaCel('" + row.id + "','" + c.campo + "',this.value)";
           html += '<td style="border:1px solid var(--gray-200);padding:0;background:' + (i%2===0?'#fff':'var(--gray-50)') + ';">' +
-            '<input value="' + val + '" oninput="' + oninput + '" onpaste="nfDiaColar(event,\'' + row.id + '\',\'' + c.campo + '\')" ' +
+            '<input id="nfDiaCel_' + row.id + '_' + c.campo + '" value="' + val + '" oninput="' + oninput + '" onpaste="nfDiaColar(event,\'' + row.id + '\',\'' + c.campo + '\')" onkeydown="nfDiaKeydown(event,\'' + row.id + '\',\'' + c.campo + '\')" ' +
             'style="width:100%;min-width:' + c.w + ';border:none;background:transparent;padding:7px 8px;font-size:12px;font-family:inherit;outline:none;" ' +
             'onfocus="this.style.background=\'#eff6ff\'" onblur="this.style.background=\'transparent\'">' +
             '</td>';
@@ -620,8 +696,14 @@
         .catch(e => { console.error('[nfDia] erro ao salvar:', e); if (ind) ind.innerHTML = '<span style="color:var(--red)">erro ao salvar</span>'; });
     }
     window.nfDiaCarregar = function(dados) {
-      window._nfDia = Array.isArray(dados) && dados.length ? dados.map(r => Object.assign(nfDiaVazio(), r)) : [];
-      nfDiaGarantirLinhaExtra();
+      if (Array.isArray(dados) && dados.length) {
+        window._nfDia = dados.map(r => Object.assign(nfDiaVazio(), r));
+        nfDiaGarantirLinhaExtra();
+      } else {
+        // sem rascunho salvo ainda: começa já com a grade de 100 linhas em branco
+        window._nfDia = [];
+        for (let i = 0; i < 100; i++) window._nfDia.push(nfDiaVazio());
+      }
       nfDiaRender();
     };
     /* Verificar células — checagem informativa (não bloqueia nada), destaca
