@@ -1,4 +1,4 @@
-﻿<!-- VERSION: v1.7 | caixa.html | 28/09/2026 | Preencher NF do Dia ganha Ctrl+Z (desfaz a última mudança: digitar, colar, adicionar/remover linha) e seleção de células em bloco arrastando o mouse (Shift+clique também estende a seleção) — Delete/Backspace com bloco selecionado limpa todas as células de uma vez. --><!-- VERSION: v1.6 | caixa.html | 28/09/2026 | Painel Relatório de Caixa na mesma largura do Preencher NF do Dia (remove max-width:640px). --><!-- v1.5: Preencher NF do Dia agora nasce com 100 linhas em branco (grade de planilha de verdade) + botão "+ Adicionar 100 linhas". Colar do Excel/exportação (9 ou 8 colunas: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador) agora ignora automaticamente Pagamento e Operador quando a colagem começa na coluna Nome. Busca de CEP (ViaCEP) ganhou timeout de 6s + 1 retentativa automática antes de avisar erro, pra evitar tela travada quando o serviço está instável. --><!-- VERSION: v1.4 | caixa.html | 25/09/2026 | Corrige bug do Valor duplicando zero (ex: 40,00 virando 40,000 salvo): a máscara agora roda ANTES de guardar o valor da célula, não depois — antes ficava um passo atrasado. Colar de 1 célula só (Excel costuma copiar com \r\n mesmo de uma célula) agora também passa pela máscara da coluna, então colar "40" no Valor já vira "0,40" certinho. Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (cria linha nova se precisar) e Tab anda entre as células (botões de ação saem da ordem do Tab). -->
+﻿<!-- VERSION: v1.9 | caixa.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — inverte a ordem: agora tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console e agiliza a busca. --><!-- VERSION: v1.8 | caixa.html | 28/09/2026 | Busca de CEP fica mais rápida e resiliente: dispara ViaCEP e BrasilAPI EM PARALELO (timeout de 4s cada) e usa a que responder primeiro — se um dos dois serviços estiver fora do ar (ViaCEP andou dando ERR_CONNECTION_TIMED_OUT), o outro ainda resolve rápido, sem esperar a rodada de retry no mesmo serviço que caiu. --><!-- VERSION: v1.7 | caixa.html | 28/09/2026 | Preencher NF do Dia ganha Ctrl+Z (desfaz a última mudança: digitar, colar, adicionar/remover linha) e seleção de células em bloco arrastando o mouse (Shift+clique também estende a seleção) — Delete/Backspace com bloco selecionado limpa todas as células de uma vez. --><!-- VERSION: v1.6 | caixa.html | 28/09/2026 | Painel Relatório de Caixa na mesma largura do Preencher NF do Dia (remove max-width:640px). --><!-- v1.5: Preencher NF do Dia agora nasce com 100 linhas em branco (grade de planilha de verdade) + botão "+ Adicionar 100 linhas". Colar do Excel/exportação (9 ou 8 colunas: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador) agora ignora automaticamente Pagamento e Operador quando a colagem começa na coluna Nome. Busca de CEP (ViaCEP) ganhou timeout de 6s + 1 retentativa automática antes de avisar erro, pra evitar tela travada quando o serviço está instável. --><!-- VERSION: v1.4 | caixa.html | 25/09/2026 | Corrige bug do Valor duplicando zero (ex: 40,00 virando 40,000 salvo): a máscara agora roda ANTES de guardar o valor da célula, não depois — antes ficava um passo atrasado. Colar de 1 célula só (Excel costuma copiar com \r\n mesmo de uma célula) agora também passa pela máscara da coluna, então colar "40" no Valor já vira "0,40" certinho. Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (cria linha nova se precisar) e Tab anda entre as células (botões de ação saem da ordem do Tab). -->
 <!-- v1.3: Preencher NF do Dia virou uma planilha de verdade: tabela com colunas fixas (Nome, CPF, E-mail, Telefone, CEP+busca, Endereço, Valor, Descrição), aceita colar direto do Excel/planilha (tab/quebra de linha vira colunas/linhas), salva sozinho 1,2s depois de parar de digitar (sem botão Salvar), botão "Verificar células" que só avisa o que parece errado sem travar nada, e continua opcional pra gerar o Relatório de Caixa. -->
 <!-- v1.2: Cartão de cada paciente recolhe (mostra só o nome) ao salvar, clique de novo pra reabrir e editar. Remove o painel "Controle de Caixa" (Fundo/Entradas/Saídas/Sobra) e "Registro de Troco/Vale" da tela; Relatório de Caixa passa a ficar centralizado, sozinho, logo abaixo de Preencher NF do Dia. -->
 <!-- v1.1: Nova seção "Preencher NF do Dia" acima do Relatório de Caixa: colaborador cadastra pacientes que vão precisar de NF (campos liberados em cadeia, CEP via ViaCEP), salva a qualquer momento como rascunho (operacao/{uid}/nf_dia/{data}), e ao Gerar Relatório o sistema compara nome+valor com o copia-e-cola do AMEI, avisa se achar algo fora do comum (confirmar/voltar) e troca a coluna "N° NF" por "Dados NF" (✓/✗). Salva o lote do dia em nf_dia_relatorios/{data}/{uid} para o Dashboard puxar por data em "Gerar Planilha". -->
@@ -703,23 +703,29 @@
       const alvo = document.getElementById('nfDiaCel_' + proximaLinha.id + '_' + campo);
       if (alvo) { alvo.focus(); alvo.select(); }
     };
-    // Busca um CEP no ViaCEP com timeout (evita travar esperando) e 1 retentativa
-    // automática antes de avisar o colaborador que deu erro.
-    async function nfDiaFetchCep(cepDigits, tentativa) {
+    // Busca de CEP: o ViaCEP está com ERR_CONNECTION_TIMED_OUT constante nessa rede
+    // (bloqueio, não instabilidade pontual) — então a BrasilAPI vira a 1ª tentativa,
+    // rápida (timeout de 3s). Só recorre ao ViaCEP se a BrasilAPI falhar por algum motivo.
+    function nfDiaFetchComTimeout(url, ms) {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 6000);
-      try {
-        const resp = await fetch('https://viacep.com.br/ws/' + cepDigits + '/json/', { signal: ctrl.signal });
-        return await resp.json();
-      } catch (e) {
-        if (!tentativa) { // 1ª falha: espera 1s e tenta de novo, silenciosamente
-          await new Promise(r => setTimeout(r, 1000));
-          return nfDiaFetchCep(cepDigits, 1);
-        }
-        throw e;
-      } finally {
-        clearTimeout(timer);
-      }
+      const timer = setTimeout(() => ctrl.abort(), ms);
+      return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+    }
+    async function nfDiaBuscarBrasilApi(cepDigits) {
+      const resp = await nfDiaFetchComTimeout('https://brasilapi.com.br/api/cep/v2/' + cepDigits, 3000);
+      if (!resp.ok) throw new Error('nao encontrado');
+      const d = await resp.json();
+      return { logradouro: d.street||'', bairro: d.neighborhood||'', cidade: d.city||'', uf: d.state||'' };
+    }
+    async function nfDiaBuscarViaCep(cepDigits) {
+      const resp = await nfDiaFetchComTimeout('https://viacep.com.br/ws/' + cepDigits + '/json/', 4000);
+      const d = await resp.json();
+      if (d.erro) throw new Error('nao encontrado');
+      return { logradouro: d.logradouro||'', bairro: d.bairro||'', cidade: d.localidade||'', uf: d.uf||'' };
+    }
+    async function nfDiaFetchCep(cepDigits) {
+      try { return await nfDiaBuscarBrasilApi(cepDigits); }
+      catch (e) { return await nfDiaBuscarViaCep(cepDigits); }
     }
     window.nfDiaBuscarCep = async function(id) {
       const row = window._nfDia.find(r => r.id === id);
@@ -729,15 +735,14 @@
       const btn = document.getElementById('nfDiaBtnCep_' + id);
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
       try {
-        const d = await nfDiaFetchCep(cepDigits, 0);
-        if (d.erro) { toast('CEP não encontrado', 'error'); return; }
+        const d = await nfDiaFetchCep(cepDigits);
         row.logradouro = d.logradouro || '';
         row.bairro      = d.bairro || '';
-        row.cidade       = d.localidade || '';
+        row.cidade       = d.cidade || '';
         row.uf            = d.uf || '';
         toast('Endereço encontrado ✓', 'success');
       } catch (e) {
-        toast('CEP indisponível no momento — tente novamente em instantes', 'error');
+        toast('CEP não encontrado ou indisponível no momento', 'error');
       } finally {
         nfDiaRender();
         nfDiaAgendarSalvar();

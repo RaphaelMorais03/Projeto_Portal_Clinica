@@ -1,4 +1,4 @@
-<!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
+<!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -3524,19 +3524,38 @@
     return rows.map(function(r){ return r.map(nflCleanCell); });
   }
 
-  /* --- ViaCEP --- */
+  /* --- CEP: o ViaCEP está com ERR_CONNECTION_TIMED_OUT constante nessa rede (bloqueio,
+   * não instabilidade pontual) — então a BrasilAPI vira a 1ª tentativa (timeout 3s).
+   * Só recorre ao ViaCEP se a BrasilAPI falhar por algum motivo. --- */
   var nflViaCepCache={};
+  function nflFetchComTimeout(url,ms){
+    var ctrl=new AbortController();
+    var timer=setTimeout(function(){ctrl.abort();},ms);
+    return fetch(url,{signal:ctrl.signal}).finally(function(){clearTimeout(timer);});
+  }
+  async function nflBuscarBrasilApiUm(cep){
+    var resp=await nflFetchComTimeout('https://brasilapi.com.br/api/cep/v2/'+cep,3000);
+    if(!resp.ok) throw new Error('erro HTTP '+resp.status);
+    var data=await resp.json();
+    return {logradouro:data.street||'',bairro:data.neighborhood||'',cidade:data.city||'',uf:data.state||''};
+  }
+  async function nflBuscarViaCepUm(cep){
+    var resp=await nflFetchComTimeout('https://viacep.com.br/ws/'+cep+'/json/',4000);
+    if(!resp.ok) throw new Error('erro HTTP '+resp.status);
+    var data=await resp.json();
+    if(data.erro) throw new Error('CEP não existe na base do ViaCEP');
+    return {logradouro:data.logradouro||'',bairro:data.bairro||'',cidade:data.localidade||'',uf:data.uf||''};
+  }
   async function nflFetchViaCep(cep){
     if(nflViaCepCache[cep]!==undefined) return nflViaCepCache[cep];
     try{
-      var resp=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
-      if(!resp.ok){var r={ok:false,reason:'erro HTTP '+resp.status};nflViaCepCache[cep]=r;return r;}
-      var data=await resp.json();
-      if(data.erro){var r={ok:false,reason:'CEP não existe na base do ViaCEP'};nflViaCepCache[cep]=r;return r;}
-      var r={ok:true,logradouro:data.logradouro||'',bairro:data.bairro||'',cidade:data.localidade||'',uf:data.uf||''};
+      var d;
+      try { d=await nflBuscarBrasilApiUm(cep); }
+      catch(e1) { d=await nflBuscarViaCepUm(cep); }
+      var r={ok:true,logradouro:d.logradouro,bairro:d.bairro,cidade:d.cidade,uf:d.uf};
       nflViaCepCache[cep]=r;return r;
     }catch(e){
-      var r={ok:false,reason:'erro de conexão ('+( e.message||'desconhecido')+')'};
+      var r={ok:false,reason:'CEP não encontrado ou indisponível no momento'};
       nflViaCepCache[cep]=r;return r;
     }
   }
