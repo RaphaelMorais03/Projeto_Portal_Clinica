@@ -1,4 +1,4 @@
-﻿<!-- VERSION: v1.6 | caixa.html | 28/09/2026 | Painel Relatório de Caixa na mesma largura do Preencher NF do Dia (remove max-width:640px). --><!-- v1.5: Preencher NF do Dia agora nasce com 100 linhas em branco (grade de planilha de verdade) + botão "+ Adicionar 100 linhas". Colar do Excel/exportação (9 ou 8 colunas: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador) agora ignora automaticamente Pagamento e Operador quando a colagem começa na coluna Nome. Busca de CEP (ViaCEP) ganhou timeout de 6s + 1 retentativa automática antes de avisar erro, pra evitar tela travada quando o serviço está instável. --><!-- VERSION: v1.4 | caixa.html | 25/09/2026 | Corrige bug do Valor duplicando zero (ex: 40,00 virando 40,000 salvo): a máscara agora roda ANTES de guardar o valor da célula, não depois — antes ficava um passo atrasado. Colar de 1 célula só (Excel costuma copiar com \r\n mesmo de uma célula) agora também passa pela máscara da coluna, então colar "40" no Valor já vira "0,40" certinho. Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (cria linha nova se precisar) e Tab anda entre as células (botões de ação saem da ordem do Tab). -->
+﻿<!-- VERSION: v1.7 | caixa.html | 28/09/2026 | Preencher NF do Dia ganha Ctrl+Z (desfaz a última mudança: digitar, colar, adicionar/remover linha) e seleção de células em bloco arrastando o mouse (Shift+clique também estende a seleção) — Delete/Backspace com bloco selecionado limpa todas as células de uma vez. --><!-- VERSION: v1.6 | caixa.html | 28/09/2026 | Painel Relatório de Caixa na mesma largura do Preencher NF do Dia (remove max-width:640px). --><!-- v1.5: Preencher NF do Dia agora nasce com 100 linhas em branco (grade de planilha de verdade) + botão "+ Adicionar 100 linhas". Colar do Excel/exportação (9 ou 8 colunas: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador) agora ignora automaticamente Pagamento e Operador quando a colagem começa na coluna Nome. Busca de CEP (ViaCEP) ganhou timeout de 6s + 1 retentativa automática antes de avisar erro, pra evitar tela travada quando o serviço está instável. --><!-- VERSION: v1.4 | caixa.html | 25/09/2026 | Corrige bug do Valor duplicando zero (ex: 40,00 virando 40,000 salvo): a máscara agora roda ANTES de guardar o valor da célula, não depois — antes ficava um passo atrasado. Colar de 1 célula só (Excel costuma copiar com \r\n mesmo de uma célula) agora também passa pela máscara da coluna, então colar "40" no Valor já vira "0,40" certinho. Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (cria linha nova se precisar) e Tab anda entre as células (botões de ação saem da ordem do Tab). -->
 <!-- v1.3: Preencher NF do Dia virou uma planilha de verdade: tabela com colunas fixas (Nome, CPF, E-mail, Telefone, CEP+busca, Endereço, Valor, Descrição), aceita colar direto do Excel/planilha (tab/quebra de linha vira colunas/linhas), salva sozinho 1,2s depois de parar de digitar (sem botão Salvar), botão "Verificar células" que só avisa o que parece errado sem travar nada, e continua opcional pra gerar o Relatório de Caixa. -->
 <!-- v1.2: Cartão de cada paciente recolhe (mostra só o nome) ao salvar, clique de novo pra reabrir e editar. Remove o painel "Controle de Caixa" (Fundo/Entradas/Saídas/Sobra) e "Registro de Troco/Vale" da tela; Relatório de Caixa passa a ficar centralizado, sozinho, logo abaixo de Preencher NF do Dia. -->
 <!-- v1.1: Nova seção "Preencher NF do Dia" acima do Relatório de Caixa: colaborador cadastra pacientes que vão precisar de NF (campos liberados em cadeia, CEP via ViaCEP), salva a qualquer momento como rascunho (operacao/{uid}/nf_dia/{data}), e ao Gerar Relatório o sistema compara nome+valor com o copia-e-cola do AMEI, avisa se achar algo fora do comum (confirmar/voltar) e troca a coluna "N° NF" por "Dados NF" (✓/✗). Salva o lote do dia em nf_dia_relatorios/{data}/{uid} para o Dashboard puxar por data em "Gerar Planilha". -->
@@ -66,6 +66,8 @@
     .preview-wrap{flex:1;overflow-y:auto;padding:24px;}
     .print-doc{width:210mm;min-height:297mm;padding:1.5cm;background:white;margin:0 auto;box-shadow:0 10px 40px rgba(0,0,0,.15);font-family:system-ui,-apple-system,sans-serif;}
     .info-box{background:#eff6ff;border:1px solid #c7d2fe;border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;color:#3730a3;line-height:1.6;}
+    .nfdia-focus{background:#eff6ff!important;}
+    .nfdia-sel{background:#bfdbfe!important;}
     .vale-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--gray-100);}
     .vale-item:last-child{border-bottom:none;}
     @media(max-width:900px){.caixa-nums{grid-template-columns:repeat(2,1fr);}}
@@ -487,17 +489,104 @@
       return { id: Date.now() + '_' + Math.random().toString(36).slice(2,7),
         nome:'', cpf:'', email:'', telefone:'', cep:'', logradouro:'', numero:'', complemento:'', bairro:'', cidade:'', uf:'', valor:'', descricao:'' };
     }
+
+    /* ── DESFAZER (Ctrl+Z) — guarda um "retrato" da planilha antes de cada mudança
+     * (adicionar/remover linha, colar, editar uma célula, limpar seleção). ── */
+    window._nfDiaUndo = [];
+    const NFDIA_UNDO_MAX = 60;
+    function nfDiaSnapshot() {
+      try {
+        window._nfDiaUndo.push(JSON.stringify(window._nfDia));
+        if (window._nfDiaUndo.length > NFDIA_UNDO_MAX) window._nfDiaUndo.shift();
+      } catch (e) {}
+    }
+    window.nfDiaUndo = function() {
+      if (!window._nfDiaUndo.length) { toast('Nada para desfazer', 'info'); return; }
+      window._nfDia = JSON.parse(window._nfDiaUndo.pop());
+      nfDiaRender();
+      nfDiaAgendarSalvar();
+      toast('Desfeito', 'info');
+    };
+    // Ctrl+Z só age quando o foco está dentro da planilha do NF do Dia, pra não
+    // atropelar o undo normal do navegador em outros campos da página (ex: textarea do AMEI).
+    document.addEventListener('keydown', function(ev) {
+      if (!(ev.ctrlKey || ev.metaKey) || ev.shiftKey) return;
+      if (ev.key !== 'z' && ev.key !== 'Z') return;
+      const ativo = document.activeElement;
+      if (ativo && ativo.id && ativo.id.indexOf('nfDiaCel_') === 0) {
+        ev.preventDefault();
+        window.nfDiaUndo();
+      }
+    });
+
+    /* ── SELEÇÃO DE CÉLULAS EM BLOCO (arrastar o mouse) — pra poder limpar várias
+     * células de uma vez com Delete/Backspace, igual planilha. ── */
+    window._nfDiaSel = null; // {r1,c1,r2,c2} — índices de linha (array) e coluna (colunas editáveis)
+    let _nfDiaSelecting = false;
+    function nfDiaColsEditaveis() { return NFDIA_COLS.filter(c => !c.campo.startsWith('_')); }
+    function nfDiaColIndex(campo) { return nfDiaColsEditaveis().findIndex(c => c.campo === campo); }
+    function nfDiaRenderSelecao() {
+      document.querySelectorAll('.nfdia-sel').forEach(el => el.classList.remove('nfdia-sel'));
+      if (!window._nfDiaSel) return;
+      const {r1,c1,r2,c2} = window._nfDiaSel;
+      const rMin=Math.min(r1,r2), rMax=Math.max(r1,r2), cMin=Math.min(c1,c2), cMax=Math.max(c1,c2);
+      const cols = nfDiaColsEditaveis();
+      for (let r=rMin; r<=rMax; r++) {
+        const row = window._nfDia[r]; if (!row) continue;
+        for (let c=cMin; c<=cMax; c++) {
+          const col = cols[c]; if (!col) continue;
+          const el = document.getElementById('nfDiaCel_' + row.id + '_' + col.campo);
+          if (el) el.classList.add('nfdia-sel');
+        }
+      }
+    }
+    window.nfDiaCellDown = function(ev, id, campo) {
+      const rowIdx = window._nfDia.findIndex(r => r.id === id);
+      const colIdx = nfDiaColIndex(campo);
+      if (rowIdx === -1 || colIdx === -1) return;
+      if (ev.shiftKey && window._nfDiaSel) {
+        window._nfDiaSel.r2 = rowIdx; window._nfDiaSel.c2 = colIdx;
+      } else {
+        window._nfDiaSel = {r1:rowIdx, c1:colIdx, r2:rowIdx, c2:colIdx};
+      }
+      _nfDiaSelecting = true;
+      nfDiaRenderSelecao();
+    };
+    window.nfDiaCellEnter = function(ev, id, campo) {
+      if (!_nfDiaSelecting || !window._nfDiaSel) return;
+      const rowIdx = window._nfDia.findIndex(r => r.id === id);
+      const colIdx = nfDiaColIndex(campo);
+      if (rowIdx === -1 || colIdx === -1) return;
+      window._nfDiaSel.r2 = rowIdx; window._nfDiaSel.c2 = colIdx;
+      nfDiaRenderSelecao();
+    };
+    document.addEventListener('mouseup', function() { _nfDiaSelecting = false; });
+    // Marca no rascunho de edição pra não empilhar 1 snapshot por tecla digitada —
+    // só guarda o estado de ANTES de começar a editar aquela célula.
+    let _nfDiaEditSnapshotted = false;
+    window.nfDiaCellFocus = function(ev) {
+      if (!_nfDiaEditSnapshotted) { nfDiaSnapshot(); _nfDiaEditSnapshotted = true; }
+      ev.target.classList.add('nfdia-focus');
+    };
+    window.nfDiaCellBlur = function(ev) {
+      _nfDiaEditSnapshotted = false;
+      ev.target.classList.remove('nfdia-focus');
+    };
+
     window.nfDiaAddLinha = function() {
+      nfDiaSnapshot();
       window._nfDia.push(nfDiaVazio());
       nfDiaRender();
       nfDiaAgendarSalvar();
     };
     window.nfDiaAdd100 = function() {
+      nfDiaSnapshot();
       for (let i = 0; i < 100; i++) window._nfDia.push(nfDiaVazio());
       nfDiaRender();
       toast('100 linhas adicionadas', 'success');
     };
     window.nfDiaRemove = function(id) {
+      nfDiaSnapshot();
       window._nfDia = window._nfDia.filter(r => r.id !== id);
       if (!window._nfDia.length) window._nfDia.push(nfDiaVazio());
       nfDiaRender();
@@ -541,6 +630,7 @@
       const texto = (ev.clipboardData || window.clipboardData).getData('text');
       if (!texto) return;
       ev.preventDefault(); // sempre tratamos a colagem nós mesmos, mesmo de 1 célula só
+      nfDiaSnapshot();
       // Excel/Sheets costuma copiar até 1 célula com \r\n no final — ignora linhas vazias nas pontas.
       const linhasColadas = texto.replace(/\r/g,'').split('\n').filter((l,i,arr)=> !(l==='' && (i===0 || i===arr.length-1)));
       if (!linhasColadas.length) return;
@@ -580,7 +670,26 @@
     // Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (criando
     // linha nova se for a última). Tab/Shift+Tab usam a ordem natural do navegador
     // entre os campos (os botões de ação ficam fora da ordem via tabindex="-1").
+    // Delete/Backspace com um BLOCO de células selecionado (arrastando o mouse) limpa
+    // todas de uma vez, em vez de só apagar 1 caractere da célula focada.
     window.nfDiaKeydown = function(ev, id, campo) {
+      if (ev.key === 'Delete' || ev.key === 'Backspace') {
+        const sel = window._nfDiaSel;
+        if (sel && (sel.r1 !== sel.r2 || sel.c1 !== sel.c2)) {
+          ev.preventDefault();
+          nfDiaSnapshot();
+          const rMin=Math.min(sel.r1,sel.r2), rMax=Math.max(sel.r1,sel.r2);
+          const cMin=Math.min(sel.c1,sel.c2), cMax=Math.max(sel.c1,sel.c2);
+          const cols = nfDiaColsEditaveis();
+          for (let r=rMin; r<=rMax; r++) {
+            const row = window._nfDia[r]; if (!row) continue;
+            for (let c=cMin; c<=cMax; c++) { const col = cols[c]; if (col) row[col.campo] = ''; }
+          }
+          nfDiaRender();
+          nfDiaAgendarSalvar();
+          return;
+        }
+      }
       if (ev.key !== 'Enter') return;
       ev.preventDefault();
       const rowIdx = window._nfDia.findIndex(r => r.id === id);
@@ -669,14 +778,16 @@
           const oninput = (c.mascara ? c.mascara + "(this);" : '') + "nfDiaCel('" + row.id + "','" + c.campo + "',this.value)";
           html += '<td style="border:1px solid var(--gray-200);padding:0;background:' + (i%2===0?'#fff':'var(--gray-50)') + ';">' +
             '<input id="nfDiaCel_' + row.id + '_' + c.campo + '" value="' + val + '" oninput="' + oninput + '" onpaste="nfDiaColar(event,\'' + row.id + '\',\'' + c.campo + '\')" onkeydown="nfDiaKeydown(event,\'' + row.id + '\',\'' + c.campo + '\')" ' +
-            'style="width:100%;min-width:' + c.w + ';border:none;background:transparent;padding:7px 8px;font-size:12px;font-family:inherit;outline:none;" ' +
-            'onfocus="this.style.background=\'#eff6ff\'" onblur="this.style.background=\'transparent\'">' +
+            'onmousedown="nfDiaCellDown(event,\'' + row.id + '\',\'' + c.campo + '\')" onmouseenter="nfDiaCellEnter(event,\'' + row.id + '\',\'' + c.campo + '\')" ' +
+            'onfocus="nfDiaCellFocus(event)" onblur="nfDiaCellBlur(event)" ' +
+            'style="width:100%;min-width:' + c.w + ';border:none;background:transparent;padding:7px 8px;font-size:12px;font-family:inherit;outline:none;">' +
             '</td>';
         });
         html += '</tr>';
       });
       html += '</tbody></table>';
       wrap.innerHTML = html;
+      nfDiaRenderSelecao();
     };
     // Salvamento automático — debounce de 1.2s depois da última tecla, pra não
     // gravar no Firebase a cada caractere digitado.
