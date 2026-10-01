@@ -1,4 +1,4 @@
-﻿<!-- VERSION: v1.9 | caixa.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — inverte a ordem: agora tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console e agiliza a busca. --><!-- VERSION: v1.8 | caixa.html | 28/09/2026 | Busca de CEP fica mais rápida e resiliente: dispara ViaCEP e BrasilAPI EM PARALELO (timeout de 4s cada) e usa a que responder primeiro — se um dos dois serviços estiver fora do ar (ViaCEP andou dando ERR_CONNECTION_TIMED_OUT), o outro ainda resolve rápido, sem esperar a rodada de retry no mesmo serviço que caiu. --><!-- VERSION: v1.7 | caixa.html | 28/09/2026 | Preencher NF do Dia ganha Ctrl+Z (desfaz a última mudança: digitar, colar, adicionar/remover linha) e seleção de células em bloco arrastando o mouse (Shift+clique também estende a seleção) — Delete/Backspace com bloco selecionado limpa todas as células de uma vez. --><!-- VERSION: v1.6 | caixa.html | 28/09/2026 | Painel Relatório de Caixa na mesma largura do Preencher NF do Dia (remove max-width:640px). --><!-- v1.5: Preencher NF do Dia agora nasce com 100 linhas em branco (grade de planilha de verdade) + botão "+ Adicionar 100 linhas". Colar do Excel/exportação (9 ou 8 colunas: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador) agora ignora automaticamente Pagamento e Operador quando a colagem começa na coluna Nome. Busca de CEP (ViaCEP) ganhou timeout de 6s + 1 retentativa automática antes de avisar erro, pra evitar tela travada quando o serviço está instável. --><!-- VERSION: v1.4 | caixa.html | 25/09/2026 | Corrige bug do Valor duplicando zero (ex: 40,00 virando 40,000 salvo): a máscara agora roda ANTES de guardar o valor da célula, não depois — antes ficava um passo atrasado. Colar de 1 célula só (Excel costuma copiar com \r\n mesmo de uma célula) agora também passa pela máscara da coluna, então colar "40" no Valor já vira "0,40" certinho. Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (cria linha nova se precisar) e Tab anda entre as células (botões de ação saem da ordem do Tab). -->
+﻿<!-- VERSION: v2.3 | caixa.html | 01/10/2026 | "Descrição padrão" (Colar e mapear) passa a usar o campo "departamento" que JÁ existe no cadastro do colaborador (Admin → Cadastros), em vez de um seletor novo: Recepção Medicina → REF A CONSULTA REALIZADA, Pós Consulta → REF A EXAMES REALIZADOS, Odontologia → REF A PROCEDIMENTO ODONTOLÓGICO REALIZADO. Departamentos que não emitem NF (Financeiro, Call Center, Administrativo) ficam de fora de propósito — o botão avisa e não faz nada pra eles. --><!-- VERSION: v2.2 | caixa.html | 01/10/2026 | "Colar e mapear" ganha fluxo completo: seletor de departamento (Consulta/Exames) salvo por colaborador, validação automática ao mapear (Nome + CPF com dígito verificador + Valor — bloqueia "Enviar" e lista linha a linha o que falta corrigir), botão "Buscar CEP" com barra de progresso que preenche Logradouro/Bairro/Cidade/UF sozinho (reaproveita a busca BrasilAPI/ViaCEP que já existe), e botão "Descrição padrão" que aplica o texto certo (REF A CONSULTA REALIZADA / REF A EXAMES REALIZADOS) conforme o departamento do colaborador logado — editável linha a linha depois. E-mail vazio já entra como naotememail@gmail.com ao enviar, sem precisar digitar. --><!-- VERSION: v2.1 | caixa.html | 01/10/2026 | Nova caixa "Colar e mapear" dentro de Preencher NF do Dia: o colaborador cola qualquer bloco (ex: só CPF + Valor, um por linha, copiado de outra planilha) e escolhe em dropdowns o que é cada coluna — igual ao "Gerar Planilha" do Dashboard — antes de confirmar. Ao clicar "Adicionar à planilha", as linhas entram nas células em branco da grade principal, ficam salvas sozinhas, e a caixa de colar limpa e já fica pronta pro próximo lote (lembra o mapeamento usado pra colagens do mesmo formato, então nas próximas vezes já vem pré-selecionado). Pensada pra quem cola os dados aos poucos o dia inteiro ou só no fim do dia de uma vez. --><!-- VERSION: v2.0 | caixa.html | 01/10/2026 | Preencher NF do Dia ganha mapeamento automático de colunas ao colar: em vez de depender da ordem/posição das colunas (só funcionava certo colando o bloco inteiro de 8-9 colunas a partir do Nome), agora reconhece o tipo de cada valor colado pelo formato (CPF, CEP, telefone, e-mail, "R$ valor", UF, número da casa, texto livre) e manda pra célula certa — então colar só "CPF + Valor" (ou qualquer combinação, fora de ordem, com coluna em branco no meio) cai no lugar certo sem precisar ajustar manualmente depois. --><!-- VERSION: v1.9 | caixa.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — inverte a ordem: agora tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console e agiliza a busca. --><!-- VERSION: v1.8 | caixa.html | 28/09/2026 | Busca de CEP fica mais rápida e resiliente: dispara ViaCEP e BrasilAPI EM PARALELO (timeout de 4s cada) e usa a que responder primeiro — se um dos dois serviços estiver fora do ar (ViaCEP andou dando ERR_CONNECTION_TIMED_OUT), o outro ainda resolve rápido, sem esperar a rodada de retry no mesmo serviço que caiu. --><!-- VERSION: v1.7 | caixa.html | 28/09/2026 | Preencher NF do Dia ganha Ctrl+Z (desfaz a última mudança: digitar, colar, adicionar/remover linha) e seleção de células em bloco arrastando o mouse (Shift+clique também estende a seleção) — Delete/Backspace com bloco selecionado limpa todas as células de uma vez. --><!-- VERSION: v1.6 | caixa.html | 28/09/2026 | Painel Relatório de Caixa na mesma largura do Preencher NF do Dia (remove max-width:640px). --><!-- v1.5: Preencher NF do Dia agora nasce com 100 linhas em branco (grade de planilha de verdade) + botão "+ Adicionar 100 linhas". Colar do Excel/exportação (9 ou 8 colunas: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador) agora ignora automaticamente Pagamento e Operador quando a colagem começa na coluna Nome. Busca de CEP (ViaCEP) ganhou timeout de 6s + 1 retentativa automática antes de avisar erro, pra evitar tela travada quando o serviço está instável. --><!-- VERSION: v1.4 | caixa.html | 25/09/2026 | Corrige bug do Valor duplicando zero (ex: 40,00 virando 40,000 salvo): a máscara agora roda ANTES de guardar o valor da célula, não depois — antes ficava um passo atrasado. Colar de 1 célula só (Excel costuma copiar com \r\n mesmo de uma célula) agora também passa pela máscara da coluna, então colar "40" no Valor já vira "0,40" certinho. Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (cria linha nova se precisar) e Tab anda entre as células (botões de ação saem da ordem do Tab). -->
 <!-- v1.3: Preencher NF do Dia virou uma planilha de verdade: tabela com colunas fixas (Nome, CPF, E-mail, Telefone, CEP+busca, Endereço, Valor, Descrição), aceita colar direto do Excel/planilha (tab/quebra de linha vira colunas/linhas), salva sozinho 1,2s depois de parar de digitar (sem botão Salvar), botão "Verificar células" que só avisa o que parece errado sem travar nada, e continua opcional pra gerar o Relatório de Caixa. -->
 <!-- v1.2: Cartão de cada paciente recolhe (mostra só o nome) ao salvar, clique de novo pra reabrir e editar. Remove o painel "Controle de Caixa" (Fundo/Entradas/Saídas/Sobra) e "Registro de Troco/Vale" da tela; Relatório de Caixa passa a ficar centralizado, sozinho, logo abaixo de Preencher NF do Dia. -->
 <!-- v1.1: Nova seção "Preencher NF do Dia" acima do Relatório de Caixa: colaborador cadastra pacientes que vão precisar de NF (campos liberados em cadeia, CEP via ViaCEP), salva a qualquer momento como rascunho (operacao/{uid}/nf_dia/{data}), e ao Gerar Relatório o sistema compara nome+valor com o copia-e-cola do AMEI, avisa se achar algo fora do comum (confirmar/voltar) e troca a coluna "N° NF" por "Dados NF" (✓/✗). Salva o lote do dia em nf_dia_relatorios/{data}/{uid} para o Dashboard puxar por data em "Gerar Planilha". -->
@@ -131,6 +131,40 @@
         <div class="info-box" style="margin-bottom:12px;">
           <i class="fas fa-info-circle"></i> Preencha como numa planilha — pode copiar e colar direto do Excel/planilha de notas, célula por célula ou várias de uma vez. Vai <b>salvando sozinho</b> conforme você digita (não precisa clicar em nada). Não é obrigatório preencher isso pra gerar o Relatório de Caixa.
         </div>
+
+        <!-- Colar e mapear: pra quem tem dificuldade/pressa — cola um bloco qualquer
+             (CPF + valor, nome + CPF, etc, em qualquer ordem) e escolhe o que é cada
+             coluna, igual no "Gerar Planilha" do Dashboard. Depois de mapear, dá pra
+             buscar o CEP de todo mundo de uma vez (preenche Logradouro/Bairro/Cidade/UF
+             sozinho) e aplicar a Descrição padrão do departamento do colaborador.
+             Ao confirmar ("Enviar"), as linhas entram na planilha abaixo, já ficam
+             salvas, e a caixa de colar limpa e fica pronta pro próximo lote. -->
+        <div style="background:#f7f9fc;border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <div style="font-weight:800;font-size:12.5px;color:var(--navy);"><i class="fas fa-paste"></i>&nbsp; Colar e mapear</div>
+            <div style="font-size:11px;color:var(--gray-400);" id="nfDiaDepartamentoInfo">Departamento: —</div>
+          </div>
+          <textarea id="nfDiaMapInput" rows="3" placeholder="Cole aqui (CPF, valor, nome... em qualquer ordem) e clique em Mapear colunas" style="width:100%;margin-top:8px;font-family:monospace;font-size:12px;padding:8px;border:1.5px solid var(--gray-200);border-radius:8px;resize:vertical;box-sizing:border-box;"></textarea>
+          <div style="margin-top:8px;">
+            <button class="btn-teal" onclick="nfDiaMapDetectar()"><i class="fas fa-wand-magic-sparkles"></i> Mapear colunas</button>
+          </div>
+          <div id="nfDiaMapPreview" style="margin-top:10px;display:none;">
+            <div style="overflow-x:auto;"><table id="nfDiaMapTable" style="width:100%;border-collapse:collapse;"></table></div>
+            <div id="nfDiaMapErros" style="margin-top:8px;display:none;"></div>
+            <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn-s" onclick="nfDiaMapBuscarCep()"><i class="fas fa-map-location-dot"></i> Buscar CEP</button>
+              <button class="btn-s" onclick="nfDiaMapDescricaoPadrao()"><i class="fas fa-file-pen"></i> Descrição padrão</button>
+              <button class="btn-teal" id="nfDiaMapBtnEnviar" onclick="nfDiaMapAplicar()"><i class="fas fa-check"></i> Enviar</button>
+              <button class="btn-s" onclick="nfDiaMapCancelar()">Cancelar</button>
+            </div>
+            <div id="nfDiaMapCepProgressWrap" style="display:none;margin-top:8px;">
+              <div style="height:6px;background:var(--gray-200);border-radius:4px;overflow:hidden;"><div id="nfDiaMapCepProgressBar" style="height:100%;width:0%;background:var(--teal);transition:width .2s;"></div></div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:4px;" id="nfDiaMapCepProgressLabel">Buscando CEP...</div>
+            </div>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:6px;" id="nfDiaMapHint"></div>
+          </div>
+        </div>
+
         <div id="nfDiaTableWrap" style="overflow-x:auto;border:1.5px solid var(--gray-200);border-radius:10px;max-height:70vh;"></div>
         <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;">
           <button class="btn-s" onclick="nfDiaAddLinha()"><i class="fas fa-plus"></i> Adicionar linha</button>
@@ -620,12 +654,57 @@
     // Ordem assumida: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador.
     // Ajustar aqui se a ordem real vier diferente.
     const EXCEL_SINAXYS_MAP = ['nome','cpf',null,'valor','email','telefone','cep','numero',null];
+    // Mapeamento automático de colunas por CONTEÚDO — usado sempre que a colagem não
+    // bate com os formatos fixos conhecidos (8/9 colunas a partir do Nome). Assim, colar
+    // só "CPF + Valor", ou colunas fora de ordem, ou com uma coluna vazia no meio, ainda
+    // cai na célula certa — sem precisar que a colagem comece exatamente na coluna certa.
+    // Ordem de checagem importa: dos sinais mais específicos (email, CEP, telefone) pros
+    // mais genéricos (texto livre), pra não confundir CPF com telefone, por exemplo.
+    function nfDiaClassificarValor(v) {
+      const t = (v || '').trim();
+      if (!t) return null;
+      if (/@/.test(t)) return 'email';
+      const digitos = t.replace(/\D/g, '');
+      if (/^r\$/i.test(t) || /^\d+[.,]\d{2}$/.test(t)) return 'valor'; // "R$ 235,50" ou "235,50"
+      if (/^\(\d{2}\)/.test(t)) return 'telefone';                     // "(11) 98865-0848"
+      if (/^\d{5}-?\d{3}$/.test(t) && digitos.length === 8) return 'cep'; // "02444-080"
+      if (/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(t)) return 'cpf';          // "321.651.828-08"
+      if (digitos.length === 11) {
+        // 11 dígitos sem máscara: CPF e celular se confundem — celular costuma ter o
+        // nono dígito logo após o DDD (ex: 11987654321); CPF não segue esse padrão.
+        return /^\d{2}9\d{8}$/.test(digitos) ? 'telefone' : 'cpf';
+      }
+      if (/^[A-Za-zÀ-ÿ\s]{2}$/.test(t)) return 'uf';                    // "SP"
+      if (/^\d{1,5}$/.test(t)) return 'numero';                         // número da casa
+      if (/^[\p{L}\s.'-]+$/u.test(t) && t.length > 2) return 'texto';    // nome/endereço/descrição
+      return null;
+    }
+    // Pastas de campos de texto livre (sem padrão numérico) na ordem em que vão sendo
+    // preenchidas numa linha — a 1ª célula de texto vira Nome, a 2ª Logradouro, etc.
+    const NFDIA_FILA_TEXTO = ['nome', 'logradouro', 'bairro', 'cidade', 'descricao'];
+    function nfDiaColarLinhaInteligente(r, valores) {
+      valores.forEach(v => {
+        const val = v.trim();
+        if (!val) return; // célula vazia na colagem não sobrescreve nada
+        const tipo = nfDiaClassificarValor(val);
+        if (tipo === 'texto') {
+          const destino = NFDIA_FILA_TEXTO.find(campo => !r[campo]);
+          if (destino) r[destino] = val;
+          return;
+        }
+        if (!tipo) return; // não reconhecido — não arrisca colocar no lugar errado
+        const col = NFDIA_COLS.find(c => c.campo === tipo);
+        r[tipo] = nfDiaAplicarMascara(col && col.mascara, val);
+      });
+    }
     // Colar tipo planilha (Excel/Google Sheets): tab entre colunas, quebra de linha entre linhas.
     // Preenche a partir da célula onde colou, criando linhas/colunas conforme necessário.
     // Cada valor colado passa pela máscara da coluna (então colar "40" numa célula de
     // Valor já vira "0,40" certinho, igual se tivesse sido digitado).
     // Se colar um bloco de 8-9 colunas começando pela coluna Nome, assume-se que é o
     // formato de exportação com Pagamento/Operador e essas duas colunas são ignoradas.
+    // Qualquer outro formato (menos colunas, fora de ordem, coluna em branco no meio)
+    // usa o mapeamento automático por conteúdo (nfDiaColarLinhaInteligente).
     window.nfDiaColar = function(ev, id, campo) {
       const texto = (ev.clipboardData || window.clipboardData).getData('text');
       if (!texto) return;
@@ -642,22 +721,27 @@
       // Garante linhas suficientes de antemão (colar 150 linhas cria as que faltarem).
       const linhasFaltando = (rowIdx + linhasColadas.length) - window._nfDia.length;
       for (let f = 0; f < linhasFaltando; f++) window._nfDia.push(nfDiaVazio());
+      // Colagem de 1 única célula (sem tab nenhum) continua indo só pra célula clicada,
+      // sem passar pelo mapeamento automático — é o caso normal de digitar/colar 1 valor.
+      const colagemSimples = linhasColadas.every(l => l.split('\t').length === 1);
       linhasColadas.forEach((linhaTxt, li) => {
         const valores = linhaTxt.split('\t');
         let r = window._nfDia[rowIdx + li];
         if (!r) { r = nfDiaVazio(); window._nfDia.push(r); }
         const usarMapaExcel = colIdx === 0 && (valores.length === 8 || valores.length === 9);
-        valores.forEach((v, ci) => {
-          let col;
-          if (usarMapaExcel) {
+        if (usarMapaExcel) {
+          valores.forEach((v, ci) => {
             const destCampo = EXCEL_SINAXYS_MAP[ci];
             if (!destCampo) return; // pula Pagamento/Operador
-            col = colsEditaveis.find(c => c.campo === destCampo);
-          } else {
-            col = colsEditaveis[colIdx + ci];
-          }
-          if (col) r[col.campo] = nfDiaAplicarMascara(col.mascara, v.trim());
-        });
+            const col = colsEditaveis.find(c => c.campo === destCampo);
+            if (col) r[col.campo] = nfDiaAplicarMascara(col.mascara, v.trim());
+          });
+        } else if (colagemSimples) {
+          const col = colsEditaveis[colIdx];
+          if (col) r[col.campo] = nfDiaAplicarMascara(col.mascara, valores[0].trim());
+        } else {
+          nfDiaColarLinhaInteligente(r, valores);
+        }
       });
       nfDiaGarantirLinhaExtra();
       nfDiaRender();
@@ -667,6 +751,267 @@
       const alvo = document.getElementById('nfDiaCel_' + ultimoId + '_' + campo);
       if (alvo) alvo.focus();
     };
+
+    /* ── "COLAR E MAPEAR" — caixa separada pra quem tem pressa/dificuldade: cola
+     * qualquer bloco (ex: só CPF + Valor, um por linha) e escolhe manualmente o que
+     * é cada coluna antes de confirmar, igual ao "Gerar Planilha" do Dashboard.
+     * Depois de mapear dá pra buscar o CEP de todo mundo (preenche Logradouro/
+     * Bairro/Cidade/UF sozinho) e aplicar a Descrição padrão do departamento do
+     * colaborador — ou deixar em branco pra escrever uma descrição própria depois,
+     * direto na planilha principal (ela tem lápis de editar célula a célula).
+     * Ao confirmar ("Enviar"), entra na planilha principal (nas linhas em branco),
+     * fica salvo, e a caixa de colar limpa e fica pronta pro próximo lote — pra
+     * repetir o dia inteiro sem perder o que já foi colado antes. ── */
+    window._nfDiaMapLinhas = [];
+    window._nfDiaMapNumCols = 0;
+    // CPF com dígito verificador válido — mesma conta usada no "Comparativo Sinaxys"
+    // do Dashboard, só que repetida aqui porque caixa.html e dashboard.html não
+    // compartilham código entre si.
+    function nfDiaIsValidCPF(digitos) {
+      if (digitos.length !== 11 || /^(\d)\1{10}$/.test(digitos)) return false;
+      let soma = 0;
+      for (let i = 0; i < 9; i++) soma += parseInt(digitos[i], 10) * (10 - i);
+      let resto = 11 - (soma % 11); if (resto >= 10) resto = 0;
+      if (resto !== parseInt(digitos[9], 10)) return false;
+      soma = 0;
+      for (let i = 0; i < 10; i++) soma += parseInt(digitos[i], 10) * (11 - i);
+      resto = 11 - (soma % 11); if (resto >= 10) resto = 0;
+      return resto === parseInt(digitos[10], 10);
+    }
+    // Descrição padrão por departamento — usa o MESMO campo "departamento" que já
+    // existe no cadastro do colaborador (Admin → cadastros), sem precisar de
+    // nenhum campo novo. Departamentos que não emitem NF do dia (Financeiro, Call
+    // Center, Administrativo) ficam de fora de propósito — "Descrição padrão"
+    // não faz nada pra eles, o colaborador escreve manualmente se precisar.
+    const NFDIA_DESCRICAO_POR_DEPARTAMENTO = {
+      'Recepção Medicina': 'REF A CONSULTA REALIZADA',
+      'Pós Consulta':      'REF A EXAMES REALIZADOS',
+      'Odontologia':       'REF A PROCEDIMENTO ODONTOLÓGICO REALIZADO'
+    };
+    // Preenchido no onAuthStateChanged (mais abaixo) a partir de
+    // admin/usuarios/{uid}/departamento — o cadastro que o colaborador já tem.
+    window._nfDiaDepartamentoReal = '';
+    // Quebra o texto colado em linhas/colunas: usa Tab se vier do Excel/Sheets,
+    // senão assume que colunas foram separadas por 2+ espaços (copiar de PDF/sistema).
+    function nfDiaMapParseTexto(raw) {
+      return raw.replace(/\r/g, '').split('\n')
+        .map(l => l.trim())
+        .filter(l => l !== '')
+        .map(l => (l.indexOf('\t') >= 0 ? l.split('\t') : l.split(/\s{2,}/)).map(c => c.trim()));
+    }
+    // Olha os valores de uma coluna inteira (várias linhas) e vota no tipo mais comum,
+    // usando o mesmo classificador do colar inteligente da planilha principal.
+    function nfDiaMapAdivinharColuna(valores) {
+      const contagem = {};
+      let temTexto = false;
+      valores.forEach(v => {
+        const t = nfDiaClassificarValor(v);
+        if (t === 'texto') { temTexto = true; return; }
+        if (t) contagem[t] = (contagem[t] || 0) + 1;
+      });
+      const melhor = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a])[0];
+      return melhor || (temTexto ? 'texto' : '');
+    }
+    window.nfDiaMapDetectar = function() {
+      const raw = document.getElementById('nfDiaMapInput').value;
+      if (!raw.trim()) { toast('Cole os dados primeiro', 'info'); return; }
+      const linhas = nfDiaMapParseTexto(raw);
+      if (!linhas.length) { toast('Não consegui ler nenhuma linha', 'info'); return; }
+      window._nfDiaMapLinhas = linhas;
+      window._nfDiaMapNumCols = Math.max.apply(null, linhas.map(l => l.length));
+      nfDiaMapRenderTabela();
+      document.getElementById('nfDiaMapPreview').style.display = '';
+      document.getElementById('nfDiaMapCepProgressWrap').style.display = 'none';
+    };
+    function nfDiaMapRenderTabela() {
+      const linhas = window._nfDiaMapLinhas;
+      const numCols = window._nfDiaMapNumCols;
+      const cols = nfDiaColsEditaveis();
+      let lembrado = null;
+      try { lembrado = JSON.parse(localStorage.getItem('nfDiaMapUltimo_' + numCols) || 'null'); } catch (e) {}
+      const usados = {};
+      let headHtml = '<tr>';
+      for (let i = 0; i < numCols; i++) {
+        const valoresCol = linhas.map(l => l[i] || '').filter(v => v);
+        let guess = (lembrado && lembrado[i]) ? lembrado[i] : nfDiaMapAdivinharColuna(valoresCol);
+        if (guess === 'texto') guess = usados['nome'] ? '' : 'nome';
+        if (guess && usados[guess]) guess = '';
+        if (guess) usados[guess] = true;
+        let opts = '<option value="">— Ignorar —</option>';
+        cols.forEach(c => { opts += '<option value="' + c.campo + '"' + (c.campo === guess ? ' selected' : '') + '>' + esc(c.label) + '</option>'; });
+        headHtml += '<th style="padding:3px;min-width:110px;"><select id="nfDiaMapSel_' + i + '" onchange="nfDiaMapRevalidar()" style="width:100%;font-size:11px;padding:4px;border:1px solid var(--gray-200);border-radius:6px;">' + opts + '</select></th>';
+      }
+      headHtml += '</tr>';
+      let bodyHtml = '';
+      linhas.slice(0, 5).forEach(l => {
+        bodyHtml += '<tr>';
+        for (let i = 0; i < numCols; i++) {
+          const v = (l[i] || '').toString().slice(0, 28);
+          bodyHtml += '<td style="padding:4px 3px;border-top:1px solid var(--gray-200);font-size:11px;color:var(--gray-500);font-style:italic;">' + (esc(v) || '(vazio)') + '</td>';
+        }
+        bodyHtml += '</tr>';
+      });
+      document.getElementById('nfDiaMapTable').innerHTML = '<thead>' + headHtml + '</thead><tbody>' + bodyHtml + '</tbody>';
+      const hint = document.getElementById('nfDiaMapHint');
+      hint.textContent = linhas.length + ' linha(s) encontrada(s)' + (linhas.length > 5 ? ' — mostrando as 5 primeiras' : '');
+      hint.style.color = '';
+      nfDiaMapRevalidar();
+    }
+    // Lê o mapeamento atual dos dropdowns e monta um objeto por linha, no mesmo
+    // formato das linhas da planilha principal (nfDiaVazio) — isso é refeito a
+    // cada clique (mapeamento pode ter sido ajustado), então sempre reflete o
+    // que está selecionado na hora, incluindo o que "Buscar CEP"/"Descrição
+    // padrão" guardaram antes (eles escrevem direto nos objetos já montados).
+    window._nfDiaMapObjetos = [];
+    function nfDiaMapLerMapeamento() {
+      const numCols = window._nfDiaMapNumCols;
+      const mapping = [];
+      for (let i = 0; i < numCols; i++) {
+        const sel = document.getElementById('nfDiaMapSel_' + i);
+        mapping.push(sel ? sel.value : '');
+      }
+      return mapping;
+    }
+    function nfDiaMapConstruirObjetos(mapping) {
+      const linhas = window._nfDiaMapLinhas || [];
+      const cols = nfDiaColsEditaveis();
+      const anteriores = window._nfDiaMapObjetos || [];
+      const objetos = [];
+      linhas.forEach((linha, li) => {
+        if (!linha.some(v => (v || '').trim())) return; // linha inteiramente vazia, ignora
+        // preserva o que já tinha sido preenchido por "Buscar CEP"/"Descrição padrão"
+        // nessa mesma linha, se o usuário só ajustou o mapeamento depois.
+        const obj = (anteriores[li] && anteriores.length === linhas.length) ? Object.assign({}, anteriores[li]) : nfDiaVazio();
+        mapping.forEach((campo, i) => {
+          if (!campo) return;
+          const valor = (linha[i] || '').trim();
+          if (!valor) return;
+          const col = cols.find(c => c.campo === campo);
+          obj[campo] = nfDiaAplicarMascara(col && col.mascara, valor);
+        });
+        objetos.push(obj);
+      });
+      return objetos;
+    }
+    // Valida Nome + CPF (dígito verificador) + Valor em cada linha — é o mínimo
+    // pra Sinaxys aceitar. Email/Telefone/CEP/endereço podem ficar em branco.
+    function nfDiaMapValidar(objetos) {
+      const erros = [];
+      objetos.forEach((o, i) => {
+        const problemas = [];
+        if (!(o.nome || '').trim()) problemas.push('sem nome');
+        const cpfDigitos = (o.cpf || '').replace(/\D/g, '');
+        if (!nfDiaIsValidCPF(cpfDigitos)) problemas.push('CPF inválido ou incompleto');
+        if (!(o.valor || '').toString().trim()) problemas.push('sem valor');
+        if (problemas.length) erros.push('Linha ' + (i + 1) + ' (' + (o.nome || o.cpf || '—') + '): ' + problemas.join(', '));
+      });
+      return erros;
+    }
+    // Revalida a cada troca de dropdown: reconstrói os objetos, mostra os erros
+    // (se tiver) e só libera o botão "Enviar" quando não houver nenhum.
+    window.nfDiaMapRevalidar = function() {
+      const mapping = nfDiaMapLerMapeamento();
+      const contagem = {};
+      mapping.forEach(m => { if (m) contagem[m] = (contagem[m] || 0) + 1; });
+      const dupes = Object.keys(contagem).filter(k => contagem[k] > 1);
+      const errosDiv = document.getElementById('nfDiaMapErros');
+      const btnEnviar = document.getElementById('nfDiaMapBtnEnviar');
+      if (dupes.length) {
+        errosDiv.style.display = '';
+        errosDiv.innerHTML = '<div style="font-size:12px;color:var(--red);background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;"><i class="fas fa-triangle-exclamation"></i> Mais de uma coluna mapeada pra "' + esc(dupes.join(', ')) + '" — ajuste antes de enviar.</div>';
+        btnEnviar.disabled = true;
+        return;
+      }
+      window._nfDiaMapObjetos = nfDiaMapConstruirObjetos(mapping);
+      const erros = nfDiaMapValidar(window._nfDiaMapObjetos);
+      if (erros.length) {
+        errosDiv.style.display = '';
+        errosDiv.innerHTML = '<div style="font-size:12px;color:var(--red);background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;"><i class="fas fa-triangle-exclamation"></i> Corrija antes de enviar:<ul style="margin:6px 0 0 18px;padding:0;">' + erros.map(e => '<li>' + esc(e) + '</li>').join('') + '</ul></div>';
+        btnEnviar.disabled = true;
+      } else {
+        errosDiv.style.display = 'none';
+        btnEnviar.disabled = false;
+      }
+    };
+    window.nfDiaMapCancelar = function() {
+      document.getElementById('nfDiaMapPreview').style.display = 'none';
+      window._nfDiaMapObjetos = [];
+    };
+    // Busca o CEP de cada linha mapeada (uma por vez, com barra de progresso) e
+    // preenche Logradouro/Bairro/Cidade/UF sozinho — reaproveita nfDiaFetchCep
+    // (BrasilAPI primeiro, ViaCEP como reserva) que já existe pra planilha principal.
+    window.nfDiaMapBuscarCep = async function() {
+      window.nfDiaMapRevalidar(); // garante que _nfDiaMapObjetos está atualizado com o mapeamento atual
+      const objetos = window._nfDiaMapObjetos || [];
+      const comCep = objetos.filter(o => (o.cep || '').replace(/\D/g, '').length === 8 && !o.logradouro);
+      if (!comCep.length) { toast('Nenhum CEP pra buscar (ou já preenchidos)', 'info'); return; }
+      const wrap = document.getElementById('nfDiaMapCepProgressWrap');
+      const bar = document.getElementById('nfDiaMapCepProgressBar');
+      const label = document.getElementById('nfDiaMapCepProgressLabel');
+      wrap.style.display = '';
+      let feitos = 0, falhas = 0;
+      for (const o of comCep) {
+        try {
+          const cepDigitos = (o.cep || '').replace(/\D/g, '');
+          const dados = await nfDiaFetchCep(cepDigitos);
+          o.logradouro = dados.logradouro || '';
+          o.bairro = dados.bairro || '';
+          o.cidade = dados.cidade || '';
+          o.uf = dados.uf || '';
+        } catch (e) { falhas++; }
+        feitos++;
+        bar.style.width = Math.round((feitos / comCep.length) * 100) + '%';
+        label.textContent = feitos + '/' + comCep.length + ' endereço(s) buscado(s)' + (falhas ? ' — ' + falhas + ' não encontrado(s)' : '');
+      }
+      label.textContent = 'Pronto — ' + (comCep.length - falhas) + ' de ' + comCep.length + ' endereço(s) preenchido(s)' + (falhas ? ', ' + falhas + ' não encontrado(s) (completar manualmente depois)' : '');
+      toast('Busca de CEP concluída', 'success');
+    };
+    // Preenche a Descrição do Procedimento de todas as linhas com o texto padrão
+    // do departamento do colaborador logado (editável depois, linha a linha, na
+    // planilha principal).
+    window.nfDiaMapDescricaoPadrao = function() {
+      window.nfDiaMapRevalidar();
+      const objetos = window._nfDiaMapObjetos || [];
+      if (!objetos.length) { toast('Mapeie as colunas primeiro', 'info'); return; }
+      const texto = NFDIA_DESCRICAO_POR_DEPARTAMENTO[window._nfDiaDepartamentoReal];
+      if (!texto) {
+        toast('Seu departamento (' + (window._nfDiaDepartamentoReal || 'não cadastrado') + ') não tem descrição padrão — escreva manualmente', 'info');
+        return;
+      }
+      objetos.forEach(o => { o.descricao = texto; });
+      toast('Descrição padrão aplicada (' + window._nfDiaDepartamentoReal + ')', 'success');
+    };
+    window.nfDiaMapAplicar = function() {
+      window.nfDiaMapRevalidar();
+      const objetos = window._nfDiaMapObjetos || [];
+      const mapping = nfDiaMapLerMapeamento();
+      if (!mapping.some(m => m)) { toast('Escolha pelo menos uma coluna antes de enviar', 'info'); return; }
+      const erros = nfDiaMapValidar(objetos);
+      if (erros.length) { toast('Ainda tem linha(s) com problema — corrija antes de enviar', 'info'); return; }
+      try { localStorage.setItem('nfDiaMapUltimo_' + window._nfDiaMapNumCols, JSON.stringify(mapping)); } catch (e) {}
+      nfDiaSnapshot();
+      // E-mail em branco entra com o texto padrão combinado, pra não travar a
+      // importação na Sinaxys (ela exige e-mail preenchido).
+      objetos.forEach(o => { if (!(o.email || '').trim()) o.email = 'naotememail@gmail.com'; });
+      let inseridas = 0;
+      objetos.forEach(obj => {
+        let destino = window._nfDia.find(r => !r.nome && !r.cpf && !r.valor && !r.email);
+        if (!destino) { destino = nfDiaVazio(); window._nfDia.push(destino); }
+        Object.assign(destino, obj, { id: destino.id }); // mantém o id da linha de destino
+        inseridas++;
+      });
+      nfDiaGarantirLinhaExtra();
+      nfDiaRender();
+      nfDiaAgendarSalvar();
+      // Limpa e já deixa pronto pro próximo lote, do começo ao fim do dia.
+      document.getElementById('nfDiaMapInput').value = '';
+      document.getElementById('nfDiaMapPreview').style.display = 'none';
+      document.getElementById('nfDiaMapCepProgressWrap').style.display = 'none';
+      window._nfDiaMapObjetos = [];
+      document.getElementById('nfDiaMapInput').focus();
+      toast(inseridas + ' linha(s) adicionada(s) à planilha', 'success');
+    };
+
     // Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (criando
     // linha nova se for a última). Tab/Shift+Tab usam a ordem natural do navegador
     // entre os campos (os botões de ação ficam fora da ordem via tabindex="-1").
@@ -1495,6 +1840,16 @@
 
       // Identificador único do usuário — separa dados de caixa por login
       window.USER_UID = user.uid;
+
+      // Departamento do colaborador — usa o MESMO campo já cadastrado no Admin
+      // (admin/usuarios/{uid}/departamento), pra "Descrição padrão" em "Colar e
+      // mapear" saber se é Consulta/Exames/Odontologia sem precisar de nenhum
+      // cadastro novo.
+      get(ref(_db, 'admin/usuarios/' + user.uid + '/departamento')).then(snap => {
+        window._nfDiaDepartamentoReal = snap.val() || '';
+        const info = document.getElementById('nfDiaDepartamentoInfo');
+        if (info) info.textContent = 'Departamento: ' + (window._nfDiaDepartamentoReal || 'não cadastrado');
+      }).catch(() => {});
 
       // Se sessionStorage não tem o nome (nova aba, favorito, acesso direto),
       // busca do Firebase para não salvar fechamentos com colaborador "—"
