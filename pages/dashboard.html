@@ -1,4 +1,4 @@
-<!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
+<!-- VERSION: v4.6 | dashboard.html | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -3202,6 +3202,7 @@
         <div class="card">
           <div class="hint">
             Aqui ficam guardadas as datas em que colaboradores preencheram <b>"Preencher NF do Dia"</b> no fechamento de Caixa. Use isto para as datas <b>novas</b> daqui pra frente — as retroativas continuam pelo fluxo normal de "Gerar planilha".
+            Clique em <b>"👥 Colaboradores"</b> pra ver o lote de cada um que fechou caixa naquele dia. <b>"🗂️ Gerar lote Consulta"</b> e <b>"🩺 Gerar lote Exame"</b> baixam direto o .xlsx já separado por tipo (mesmo formato de importação da Sinaxys) — linha com problema (CPF, nome ou valor faltando) entra também, mas listada à parte numa segunda aba "Pendências", pra não travar a importação.
             Quando terminar de emitir na Sinaxys, marque a data como "Processada" pra ela sair da lista de pendentes.
           </div>
           <div class="row" style="align-items:center;">
@@ -4271,6 +4272,7 @@
 
   /* ===== NF DO DIA — lista de datas vindas do Caixa, para os lotes novos
    * (as retroativas continuam pelo fluxo de "Gerar planilha" já existente) ===== */
+  window._nfDiaPorData={}; // cache do último fbGet('nf_dia_relatorios'), usado pra expandir/gerar sem buscar de novo
   async function nflNfDiaCarregarLista(){
     var tbl=document.getElementById('nfDiaTabela');
     if(!window.fbGet){ tbl.innerHTML='<tr><td>Firebase não disponível — recarregue a página.</td></tr>'; return; }
@@ -4278,6 +4280,7 @@
     try{
       var snap=await window.fbGet('nf_dia_relatorios');
       var porData=(snap && snap.exists()) ? snap.val() : null;
+      window._nfDiaPorData=porData||{};
       if(!porData || !Object.keys(porData).length){
         tbl.innerHTML='<tr><td>Nenhuma data salva ainda. Assim que um colaborador salvar "Preencher NF do Dia" no Caixa, a data aparece aqui.</td></tr>';
         return;
@@ -4293,20 +4296,119 @@
         nMostradas++;
         var extraido=nflMontarLinhasDoCaixa(bloco, dateIso);
         var dataBr=dateIso.split('-').reverse().join('/');
+        var idSeguro=dateIso.replace(/-/g,'_');
         linhasHtml += '<tr' + (processado?' style="opacity:.55;"':'') + '>' +
           '<td>'+dataBr+'</td>' +
           '<td>'+(extraido.colaboradores.join(', ')||'—')+'</td>' +
           '<td>'+extraido.linhas.length+'</td>' +
           '<td>'+(processado?'✓ Processada':'⏳ Pendente')+'</td>' +
           '<td>' +
+            '<button class="secondary" onclick="nflNfDiaToggleDetalhe(\''+dateIso+'\')">👥 Colaboradores</button> ' +
+            '<button class="secondary" onclick="nflNfDiaGerarLotePorTipo(\''+dateIso+'\',\'Consulta\')">🗂️ Gerar lote Consulta</button> ' +
+            '<button class="secondary" onclick="nflNfDiaGerarLotePorTipo(\''+dateIso+'\',\'Exame\')">🩺 Gerar lote Exame</button> ' +
             '<button class="secondary" onclick="nflNfDiaProcessar(\''+dateIso+'\')">📄 Processar / gerar planilha</button> ' +
             '<button class="secondary" onclick="nflNfDiaMarcar(\''+dateIso+'\','+(processado?'false':'true')+')">'+(processado?'↩ Reabrir':'✓ Marcar processada')+'</button>' +
           '</td>' +
-        '</tr>';
+        '</tr>' +
+        '<tr id="nfDiaDetalhe_'+idSeguro+'" style="display:none;"><td colspan="5" style="background:var(--bg-soft,#f7f9fc);padding:10px 14px;"></td></tr>';
       });
       tbl.innerHTML = nMostradas ? linhasHtml : '<tr><td>Nenhuma data pendente — tudo processado. Marque "Mostrar também as já processadas" pra ver o histórico.</td></tr>';
     }catch(e){
       tbl.innerHTML='<tr><td style="color:var(--red)">Erro ao carregar: '+e.message+'</td></tr>';
+    }
+  }
+
+  /* Agrupa por colaborador (uid) quantos pacientes ele lançou naquele dia e
+   * quantos são Consulta/Exame/Sem Descrição, pra mostrar na linha expandida. */
+  function nflNfDiaDetalhePorColaborador(bloco, dateIso){
+    var linhas=[];
+    Object.keys(bloco||{}).forEach(function(uid){
+      if(uid==='_status') return;
+      var registro=bloco[uid]||{};
+      var nome=registro.colaborador||uid;
+      var consultas=0, exames=0, outros=0;
+      (registro.linhas||[]).forEach(function(r){
+        if(!r || !(r.nome||'').trim()) return;
+        var tipo=nflNfDiaClassificar(r.descricao||'');
+        if(tipo==='Consulta') consultas++; else if(tipo==='Exame') exames++; else outros++;
+      });
+      var total=consultas+exames+outros;
+      if(total) linhas.push({nome:nome, total:total, consultas:consultas, exames:exames, outros:outros});
+    });
+    return linhas;
+  }
+  window.nflNfDiaToggleDetalhe = function(dateIso){
+    var idSeguro=dateIso.replace(/-/g,'_');
+    var tr=document.getElementById('nfDiaDetalhe_'+idSeguro);
+    if(!tr) return;
+    if(tr.style.display!=='none'){ tr.style.display='none'; return; }
+    var bloco=window._nfDiaPorData[dateIso]||{};
+    var porColaborador=nflNfDiaDetalhePorColaborador(bloco, dateIso);
+    var html='<b>Lote por colaborador — '+dateIso.split('-').reverse().join('/')+'</b>';
+    if(!porColaborador.length){
+      html+='<div style="margin-top:6px;color:var(--gray-500,#777);">Nenhum paciente com nome preenchido.</div>';
+    } else {
+      html+='<table style="margin-top:8px;width:100%;"><tr><th>Colaborador</th><th>Consultas</th><th>Exames</th><th>Sem descrição</th><th>Total</th></tr>' +
+        porColaborador.map(function(c){
+          return '<tr><td>'+c.nome+'</td><td>'+c.consultas+'</td><td>'+c.exames+'</td><td>'+c.outros+'</td><td><b>'+c.total+'</b></td></tr>';
+        }).join('') + '</table>';
+    }
+    tr.querySelector('td').innerHTML=html;
+    tr.style.display='';
+  };
+
+  /* Classifica pela Descrição do Procedimento (mesmo critério usado nos lotes
+   * manuais: contém "CONSULTA" ou "EXAME"; sem nenhum dos dois, fica sem tipo). */
+  function nflNfDiaClassificar(descricao){
+    var d=(descricao||'').toUpperCase();
+    if(d.indexOf('CONSULTA')>=0) return 'Consulta';
+    if(d.indexOf('EXAME')>=0) return 'Exame';
+    return '';
+  }
+  // Mesmas checagens mínimas da validação do "Colar e mapear" no Caixa: Nome,
+  // CPF com dígito verificador válido e Valor — o resto pode ficar em branco.
+  function nflNfDiaPendencias(vals){
+    var problemas=[];
+    if(!(vals[1]||'').toString().trim()) problemas.push('sem nome');
+    if(!nflIsValidCPF(nflOnlyDigits(vals[2]))) problemas.push('CPF inválido/incompleto');
+    if(!(vals[12]||'').toString().trim()) problemas.push('sem valor');
+    return problemas;
+  }
+  /* Gera e baixa direto o .xlsx de um tipo (Consulta/Exame) daquele dia — sem
+   * passar pelo fluxo manual de "Gerar Planilha". Linha completa entra na aba
+   * principal "Modelo Importação" (pronta pra Sinaxys); linha com problema
+   * entra também (pra não se perder), mas some listada com o motivo numa 2ª
+   * aba "Pendências (não importar)", que não deve ser importada. */
+  async function nflNfDiaGerarLotePorTipo(dateIso, tipoAlvo){
+    if(!window.fbGet){ toast('Firebase não disponível', 'error'); return; }
+    try{
+      var snap=await window.fbGet('nf_dia_relatorios/'+dateIso);
+      var porColaborador=(snap && snap.exists()) ? snap.val() : null;
+      var extraido=nflMontarLinhasDoCaixa(porColaborador||{}, dateIso);
+      if(!extraido.linhas.length){ toast('Nada preenchido nessa data', 'error'); return; }
+      var prontas=[], pendentes=[];
+      extraido.linhas.forEach(function(vals){
+        var v=vals.slice();
+        v[1]=nflFmtNome(v[1]); v[2]=nflFmtCPF(v[2]); v[4]=nflFmtTel(v[4]); v[5]=nflFmtCEP(v[5]);
+        v[6]=nflFmtNome(v[6]); v[9]=nflFmtNome(v[9]); v[10]=nflFmtNome(v[10]);
+        if(nflNfDiaClassificar(v[13])!==tipoAlvo) return;
+        var problemas=nflNfDiaPendencias(v);
+        if(problemas.length) pendentes.push({v:v,problemas:problemas}); else prontas.push(v);
+      });
+      if(!prontas.length && !pendentes.length){ toast('Nenhuma linha de "'+tipoAlvo+'" nessa data', 'info'); return; }
+      var wb=XLSX.utils.book_new();
+      var todasLinhas=prontas.concat(pendentes.map(function(p){ return p.v; }));
+      var ws=XLSX.utils.aoa_to_sheet([NFL_HEADERS].concat(todasLinhas));
+      XLSX.utils.book_append_sheet(wb,ws,'Modelo Importação');
+      if(pendentes.length){
+        var ws2=XLSX.utils.aoa_to_sheet([['Paciente','CPF','Falta ajustar']].concat(pendentes.map(function(p){ return [p.v[1],p.v[2],p.problemas.join(', ')]; })));
+        XLSX.utils.book_append_sheet(wb,ws2,'Pendências (não importar)');
+      }
+      var sufixo=tipoAlvo==='Consulta'?'CONSULTAS':'EXAMES';
+      XLSX.writeFile(wb,'nf_lote_'+sufixo+'_'+dateIso+'.xlsx');
+      toast(prontas.length+' pronta(s)'+(pendentes.length?', '+pendentes.length+' pendente(s)':'')+' — arquivo baixado', 'success');
+    }catch(e){
+      toast('Erro: '+e.message, 'error');
     }
   }
 
@@ -5117,6 +5219,6 @@
     })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.3 · 24/09/2026</span>
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.6 · 01/10/2026</span>
 </body>
 </html>
