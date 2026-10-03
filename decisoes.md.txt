@@ -1,0 +1,33 @@
+# Decisões do Projeto
+
+## 03/10/2026 — Login
+- Fundo dark com card branco
+- Só o logo (favicon), sem texto "amor saúde"
+- Sem "esqueci minha senha" (usuário contata admin)
+- Sem "lembrar de mim"
+
+## 03/10/2026 — Caixa
+- Segmented Fechar Turno | Preencher NF
+- TK_FB dinâmico (recalcula a cada save)
+- Validação inline na grade
+- Recibos unificados com histórico no Firebase
+- Odonto integrado com nf_dia_relatorios
+
+## 03/10/2026 — Dashboard
+- Sidebar agrupada: Hoje / Operação / Análises / Gestão
+- Página "Hoje" como landing (não mais "Produção")
+- Top produtores = dia anterior
+- Alertas dinâmicos com badge na sidebar
+
+## 02/10/2026 — Regras gerais
+- Nunca mexer em IDs de elementos HTML existentes
+- Nunca trocar paths do Firebase
+- Sempre comentar mudanças com [vX.Y]
+- Preservar integrações: AMEI, Sinaxys, BrasilAPI, ViaCEP, Apps Script
+
+## 03/10/2026 — Segurança (roadmap)
+- Firestore Rules estão abertas → corrigir
+- RTDB Rules parcialmente corrigidas
+- Custom Claims em implantação
+- Sem App Check ainda
+- LGPD pendente
