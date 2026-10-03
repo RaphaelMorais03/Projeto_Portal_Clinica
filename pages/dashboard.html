@@ -1,7 +1,7 @@
 <!-- VERSION: v4.9.1 | dashboard.html | 03/10/2026 | Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
 <!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
 <!-- v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
-<!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
+<!-- VERSION: v5.1 | dashboard.html | 03/10/2026 | Hoje blindado (try/catch + fallback para Produção), badges em Hoje / NF em Lote / Fechamentos (somem se a leitura falhar), sidebar com atalhos externos NPS / Cadastros / Admin. Só adições. --><!-- VERSION: v5.0 | dashboard.html | 03/10/2026 | Nova página "Hoje" (landing): alertas (NF pendente / fechamentos sem pagamento), KPIs de ontem, gráfico de 7 dias, top produtores, últimas atividades e ações rápidas. Sidebar: item solo "Hoje" (com badge de pendências) + Operação/Análises/Gestão. Só adições — nenhuma função/ID existente alterado. --><!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -351,6 +351,71 @@
       .content{margin-left:0 !important; padding:20px 16px 60px !important;}
       .s-header{padding-left:64px !important;}
     }
+  
+    /* ═══ v5.0 — página "Hoje" + badge da sidebar ═══ */
+    .side-badge{margin-left:auto;background:#C62828;color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:none;align-items:center;justify-content:center;line-height:1;}
+    .saas-nav.active .side-badge{background:#C62828;}
+    #viewHoje{max-width:1200px;}
+    .hoje-greet{margin-bottom:18px;}
+    .hoje-greet h2{font-size:24px;font-weight:900;color:#0A1F44;letter-spacing:-.5px;margin:0;}
+    .hoje-greet p{font-size:13px;color:#6b7280;margin:4px 0 0;}
+    .hoje-alerts{background:linear-gradient(180deg,#fff7ed 0%,#fff 100%);border:1.5px solid #fed7aa;border-radius:14px;padding:16px 20px;margin-bottom:20px;}
+    .hoje-alerts.ok{background:linear-gradient(180deg,#f0fdf4 0%,#fff 100%);border-color:#bbf7d0;}
+    .hoje-alerts-h{display:flex;align-items:center;gap:9px;margin-bottom:12px;font-size:12px;font-weight:800;color:#9a3412;text-transform:uppercase;letter-spacing:.5px;}
+    .hoje-alerts.ok .hoje-alerts-h{color:#166534;}
+    .hoje-alert-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(0,0,0,.05);}
+    .hoje-alert-item:first-child{border-top:none;padding-top:0;}
+    .hoje-ai-ic{width:32px;height:32px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#b45309;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+    .hoje-ai-txt{flex:1;min-width:0;}
+    .hoje-ai-t{font-size:12.5px;font-weight:700;color:#0A1F44;}
+    .hoje-ai-s{font-size:11px;color:#6b7280;margin-top:1px;}
+    .hoje-ai-btn{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:5px 12px;font-size:11.5px;font-weight:700;color:#0A1F44;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+    .hoje-ai-btn:hover{background:#f3f4f6;}
+    .hoje-ok-msg{font-size:12.5px;color:#166534;font-weight:600;}
+    .hoje-kpis{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:11px;margin-bottom:20px;}
+    .hoje-kpi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;}
+    .hoje-kpi.big .hoje-val{font-size:28px;}
+    .hoje-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af;margin-bottom:7px;display:flex;align-items:center;gap:5px;}
+    .hoje-lbl i{color:#cbd5e1;font-size:10px;}
+    .hoje-val{font-size:22px;font-weight:900;letter-spacing:-.8px;color:#0A1F44;font-variant-numeric:tabular-nums;line-height:1;}
+    .hoje-val.green{color:#15803d;}.hoje-val.blue{color:#1d4ed8;}.hoje-val.purple{color:#7c3aed;}
+    .hoje-delta{font-size:11px;color:#6b7280;margin-top:6px;}
+    .hoje-delta.up{color:#15803d;}.hoje-delta.dn{color:#C62828;}
+    .hoje-grid-2{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;margin-bottom:18px;}
+    .hoje-card{background:#fff;border:1px solid #e5e7eb;border-radius:13px;padding:18px 20px;min-width:0;}
+    .hoje-card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .hoje-card-h h3{font-size:13px;font-weight:800;color:#0A1F44;display:flex;align-items:center;gap:7px;margin:0;}
+    .hoje-link{background:none;border:none;font-family:inherit;font-size:11.5px;font-weight:700;color:#6b7280;cursor:pointer;}
+    .hoje-link:hover{color:#0A1F44;}
+    .hoje-chart{display:flex;align-items:flex-end;gap:8px;height:160px;padding:22px 0 22px;}
+    .hoje-bar{flex:1;background:linear-gradient(180deg,#e5e7eb 0%,#cbd5e1 100%);border-radius:7px 7px 3px 3px;position:relative;min-height:4px;}
+    .hoje-bar.active{background:linear-gradient(180deg,#0d9488 0%,#0f766e 100%);}
+    .hoje-bar span{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;color:#9ca3af;}
+    .hoje-bar .hoje-vtip{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;color:#0A1F44;white-space:nowrap;}
+    .hoje-producers{display:flex;flex-direction:column;gap:8px;}
+    .hoje-producer{display:flex;align-items:center;gap:11px;padding:7px 0;}
+    .hoje-rank{width:22px;font-size:11px;font-weight:800;color:#9ca3af;text-align:center;flex-shrink:0;}
+    .hoje-rank.top{color:#d97706;font-size:15px;}
+    .hoje-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;}
+    .hoje-pnome{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:#0A1F44;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .hoje-pdept{font-size:10px;color:#9ca3af;font-weight:600;}
+    .hoje-pval{font-size:13px;font-weight:800;color:#15803d;font-variant-numeric:tabular-nums;}
+    .hoje-feed{display:flex;flex-direction:column;}
+    .hoje-feed-item{display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid #f3f4f6;}
+    .hoje-feed-item:last-child{border-bottom:none;padding-bottom:0;}
+    .hoje-fi-ic{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;background:#dcfce7;color:#15803d;}
+    .hoje-fi-ic.b{background:#dbeafe;color:#1d4ed8;}
+    .hoje-fi-txt{flex:1;font-size:12px;color:#374151;min-width:0;}
+    .hoje-fi-time{font-size:10.5px;color:#9ca3af;flex-shrink:0;}
+    .hoje-empty{font-size:12px;color:#9ca3af;padding:6px 0;}
+    .hoje-quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+    .hoje-quick-btn{background:#fff;border:1px solid #e5e7eb;border-radius:11px;padding:12px 14px;cursor:pointer;font-family:inherit;text-align:left;transition:all .15s;}
+    .hoje-quick-btn:hover{border-color:#0A1F44;transform:translateY(-1px);box-shadow:0 4px 14px rgba(10,31,68,.06);}
+    .hoje-qi{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;margin-bottom:8px;}
+    .hoje-qt{font-size:12px;font-weight:800;color:#0A1F44;}
+    .hoje-qs{font-size:10.5px;color:#9ca3af;margin-top:1px;}
+    @media(max-width:900px){.hoje-kpis{grid-template-columns:1fr 1fr;}.hoje-grid-2{grid-template-columns:1fr;}}
+    @media(max-width:480px){.hoje-kpis{grid-template-columns:1fr;}.hoje-alert-item{flex-wrap:wrap;}}
   </style>
 
   <!-- ═══════════ NF EM LOTE — estilos nativos com tokens do dashboard ═══════════ -->
@@ -918,8 +983,77 @@
       <button class="btn-lancamento" id="btnLancProd" onclick="abrirLancamento()"><i class="fas fa-plus"></i> Lançamento Manual</button>
     </div>
 
+    <!-- PAINEL HOJE (landing) -->
+    <div class="view-panel active" id="viewHoje">
+      <div class="hoje-greet">
+        <h2><span id="hojeSaud">Bom dia</span>, <span id="hojeNome">—</span> 👋</h2>
+        <p>Aqui está o que precisa de você hoje.</p>
+      </div>
+
+      <div class="hoje-alerts" id="hojeAlerts">
+        <div class="hoje-alerts-h"><i class="fas fa-bell"></i> Precisa de você</div>
+        <div id="hojeAlertsList"></div>
+      </div>
+
+      <div class="hoje-kpis">
+        <div class="hoje-kpi big">
+          <div class="hoje-lbl"><i class="fas fa-coins"></i> Faturamento (ontem)</div>
+          <div class="hoje-val" id="hojeFat">R$ 0,00</div>
+          <div class="hoje-delta" id="hojeFatDelta"></div>
+        </div>
+        <div class="hoje-kpi">
+          <div class="hoje-lbl"><i class="fas fa-money-bill-wave"></i> À Vista</div>
+          <div class="hoje-val green" id="hojeAvista">R$ 0,00</div>
+          <div class="hoje-delta">PIX + débito + dinheiro</div>
+        </div>
+        <div class="hoje-kpi">
+          <div class="hoje-lbl"><i class="fas fa-credit-card"></i> Crédito</div>
+          <div class="hoje-val purple" id="hojeCredito">R$ 0,00</div>
+          <div class="hoje-delta">Cartão de crédito</div>
+        </div>
+        <div class="hoje-kpi">
+          <div class="hoje-lbl"><i class="fas fa-users"></i> Colaboradores</div>
+          <div class="hoje-val blue" id="hojeColabs">0</div>
+          <div class="hoje-delta">com caixa fechado ontem</div>
+        </div>
+      </div>
+
+      <div class="hoje-grid-2">
+        <div class="hoje-card">
+          <div class="hoje-card-h">
+            <h3><i class="fas fa-chart-bar" style="color:#0d9488;"></i> Faturamento · últimos 7 dias</h3>
+            <button class="hoje-link" onclick="hojeIr('prod')">Ver produção →</button>
+          </div>
+          <div class="hoje-chart" id="hojeChart"></div>
+        </div>
+        <div class="hoje-card">
+          <div class="hoje-card-h">
+            <h3><i class="fas fa-trophy" style="color:#d97706;"></i> Top produtores (ontem)</h3>
+            <button class="hoje-link" onclick="hojeIr('ranking')">Ver tudo →</button>
+          </div>
+          <div class="hoje-producers" id="hojeProducers"></div>
+        </div>
+      </div>
+
+      <div class="hoje-grid-2">
+        <div class="hoje-card">
+          <div class="hoje-card-h"><h3><i class="fas fa-clock-rotate-left" style="color:#6b7280;"></i> Últimas atividades</h3></div>
+          <div class="hoje-feed" id="hojeFeed"></div>
+        </div>
+        <div class="hoje-card">
+          <div class="hoje-card-h"><h3><i class="fas fa-bolt" style="color:#d97706;"></i> Ações rápidas</h3></div>
+          <div class="hoje-quick">
+            <button class="hoje-quick-btn" onclick="hojeIr('nflote','nfdia')"><div class="hoje-qi" style="background:#ccfbf1;color:#0d9488;"><i class="fas fa-calendar-day"></i></div><div class="hoje-qt">NF do Dia</div><div class="hoje-qs" id="hojeQsNf">—</div></button>
+            <button class="hoje-quick-btn" onclick="hojeIr('caixa')"><div class="hoje-qi" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-cash-register"></i></div><div class="hoje-qt">Caixa</div><div class="hoje-qs" id="hojeQsCaixa">—</div></button>
+            <button class="hoje-quick-btn" onclick="hojeIr('fech')"><div class="hoje-qi" style="background:#fef3c7;color:#b45309;"><i class="fas fa-file-invoice-dollar"></i></div><div class="hoje-qt">Fechamentos</div><div class="hoje-qs" id="hojeQsFech">—</div></button>
+            <button class="hoje-quick-btn" onclick="hojeIr('ranking')"><div class="hoje-qi" style="background:#ede9fe;color:#6d28d9;"><i class="fas fa-trophy"></i></div><div class="hoje-qt">Ranking</div><div class="hoje-qs">produção por colaborador</div></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- PAINEL PRODUÇÃO -->
-    <div class="view-panel active" id="viewProd">
+    <div class="view-panel" id="viewProd">
       <div class="metrics-grid" id="metricsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div></div>
       <div class="filters-bar">
         <span class="filter-label"><i class="fas fa-filter"></i> Período</span>
@@ -1450,7 +1584,7 @@
     var _cxEditUID = null, _cxEditDT = null;
 
     window.switchMainTab = function(tab) {
-      var tabs = ['prod','caixa','fech','visao','contratos','odonto','ranking','nflote'];
+      var tabs = ['hoje','prod','caixa','fech','visao','contratos','odonto','ranking','nflote'];
       tabs.forEach(function(t) {
         var cap = t.charAt(0).toUpperCase() + t.slice(1);
         var vp = document.getElementById('view' + cap);
@@ -1471,6 +1605,13 @@
       if (tab === 'odonto')   { dshOdPreencherMes(); }
       if (tab === 'ranking')  { rankInitDatas(); renderRanking(); }
       if (tab === 'nflote')   { /* painel nativo — sem ação extra */ }
+      /* v5.0 — Hoje + título do topo */
+      var _tn = document.querySelector('.s-header .s-logo-name'), _ts = document.querySelector('.s-header .s-logo-sub');
+      if (_tn && !_tn.getAttribute('data-orig')) { _tn.setAttribute('data-orig', _tn.textContent); }
+      if (_ts && !_ts.getAttribute('data-orig')) { _ts.setAttribute('data-orig', _ts.textContent); }
+      if (_tn) _tn.textContent = tab === 'hoje' ? 'Hoje' : _tn.getAttribute('data-orig');
+      if (_ts) _ts.textContent = tab === 'hoje' ? 'Visão geral do dia' : _ts.getAttribute('data-orig');
+      if (tab === 'hoje')     { if (typeof window.renderHoje === 'function') window.renderHoje(); }
     };
 
     function preencherMesContratos() {
@@ -2940,6 +3081,195 @@
       window._openDetail = null;
     };
 
+    /* ═══════════ v5.0 — Página "Hoje" (somente leitura; não altera nenhuma função existente) ═══════════ */
+    var _hojeCacheNf = { t: 0, v: null };
+    function _hojeISO(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+    function _hojeBR(iso) { var p = iso.split('-'); return p[2] + '/' + p[1]; }
+    function _hojeK(v) { return v >= 1000 ? 'R$ ' + (v/1000).toFixed(v >= 10000 ? 0 : 1).replace('.',',') + 'k' : 'R$ ' + Math.round(v); }
+    function _hojeIni(n) { var p = (n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : '')).toUpperCase(); }
+    function _hojeAgo(ms) {
+      var m = Math.round((Date.now() - ms) / 60000);
+      if (m < 1) return 'agora';
+      if (m < 60) return 'há ' + m + 'min';
+      var h = Math.round(m / 60);
+      if (h < 24) return 'há ' + h + 'h';
+      return 'ontem';
+    }
+    window.hojeIr = function(tab, sub) {
+      if (typeof window.switchMainTab === 'function') window.switchMainTab(tab);
+      document.querySelectorAll('.saas-nav').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab') === tab); });
+      if (sub && tab === 'nflote' && typeof window.nflShowTab === 'function') { try { window.nflShowTab(sub); } catch(e) {} }
+    };
+
+    var _renderHojeInner = async function() {
+      var $h = function(id){ return document.getElementById(id); };
+      if (!$h('viewHoje')) return;
+      var dados = (typeof _dados !== 'undefined' && _dados) ? _dados : {};
+      var hoje = new Date(), hojeIso = _hojeISO(hoje);
+      var dIdx = function(n){ var d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - n); return _hojeISO(d); };
+      var ontem = dIdx(1), anteontem = dIdx(2);
+
+      /* saudação + nome */
+      var hr = hoje.getHours();
+      if ($h('hojeSaud')) $h('hojeSaud').textContent = hr < 12 ? 'Bom dia' : (hr < 18 ? 'Boa tarde' : 'Boa noite');
+      var nome = '';
+      try { nome = sessionStorage.getItem('primeiroNome') || sessionStorage.getItem('usuario') || ''; } catch(e) {}
+      if (!nome && window._usuarios && window._hojeUid && window._usuarios[window._hojeUid]) nome = window._usuarios[window._hojeUid].nomeCompleto || '';
+      if (nome && $h('hojeNome')) $h('hojeNome').textContent = primeiroNome(nome);
+
+      /* totais por dia */
+      function totDia(iso) {
+        var t = { fat:0, avista:0, credito:0, colabs:0, porUid:[] };
+        Object.keys(dados).forEach(function(uid){
+          var snap = (dados[uid] || {})[iso];
+          if (!snap || typeof snap !== 'object') return;
+          var c = calcRow(snap.totForma, uid);
+          var fat = c.avista + c.credito;
+          t.fat += fat; t.avista += c.avista; t.credito += c.credito; t.colabs++;
+          t.porUid.push({ uid: uid, nome: snap.colaborador || uid, fat: fat, avista: c.avista, credito: c.credito });
+        });
+        return t;
+      }
+      var tOntem = totDia(ontem), tAnte = totDia(anteontem);
+      if ($h('hojeFat'))     $h('hojeFat').textContent     = fmtBRL(tOntem.fat);
+      if ($h('hojeAvista'))  $h('hojeAvista').textContent  = fmtBRL(tOntem.avista);
+      if ($h('hojeCredito')) $h('hojeCredito').textContent = fmtBRL(tOntem.credito);
+      if ($h('hojeColabs'))  $h('hojeColabs').textContent  = String(tOntem.colabs);
+      var dEl = $h('hojeFatDelta');
+      if (dEl) {
+        if (tAnte.fat > 0) {
+          var pct = Math.round((tOntem.fat - tAnte.fat) / tAnte.fat * 100);
+          dEl.className = 'hoje-delta ' + (pct >= 0 ? 'up' : 'dn');
+          dEl.textContent = (pct >= 0 ? '▲ +' : '▼ ') + pct + '% vs. anteontem';
+        } else { dEl.className = 'hoje-delta'; dEl.textContent = tOntem.colabs ? '' : 'sem lançamentos ontem'; }
+      }
+
+      /* gráfico 7 dias (termina ontem) */
+      var ch = $h('hojeChart');
+      if (ch) {
+        var dias = [], max = 0, ini = ['D','S','T','Q','Q','S','S'];
+        for (var i = 6; i >= 0; i--) {
+          var iso = dIdx(i + 1), tt = totDia(iso);
+          dias.push({ iso: iso, v: tt.fat, l: ini[new Date(iso + 'T12:00:00').getDay()] });
+          if (tt.fat > max) max = tt.fat;
+        }
+        ch.innerHTML = dias.map(function(d, k){
+          var h = max > 0 ? Math.max(3, Math.round(d.v / max * 100)) : 3;
+          return '<div class="hoje-bar' + (k === 6 ? ' active' : '') + '" style="height:' + h + '%" title="' + _hojeBR(d.iso) + ' · ' + fmtBRL(d.v) + '">'
+               + (d.v > 0 ? '<span class="hoje-vtip">' + _hojeK(d.v) + '</span>' : '') + '<span>' + d.l + '</span></div>';
+        }).join('');
+      }
+
+      /* top 5 produtores de ontem */
+      var pr = $h('hojeProducers');
+      if (pr) {
+        var top = tOntem.porUid.slice().sort(function(a,b){ return b.fat - a.fat; }).slice(0, 5);
+        var cores = ['#0A1F44','#0d9488','#b45309','#6d28d9','#64748b'], med = ['🥇','🥈','🥉'];
+        pr.innerHTML = top.length ? top.map(function(p, k){
+          return '<div class="hoje-producer"><div class="hoje-rank' + (k < 3 ? ' top' : '') + '">' + (k < 3 ? med[k] : (k+1) + '.') + '</div>'
+               + '<div class="hoje-av" style="background:' + cores[k] + ';">' + esc(_hojeIni(p.nome)) + '</div>'
+               + '<div class="hoje-pnome">' + esc(p.nome) + '<div class="hoje-pdept">à vista ' + fmtBRL(p.avista) + ' · crédito ' + fmtBRL(p.credito) + '</div></div>'
+               + '<div class="hoje-pval">' + fmtBRL(p.fat) + '</div></div>';
+        }).join('') : '<div class="hoje-empty">Nenhum caixa fechado ontem.</div>';
+      }
+
+      /* NF do Dia (Firebase) — cache de 45s */
+      var nfRel = {}, nfOk = false;
+      try {
+        if (Date.now() - _hojeCacheNf.t > 45000 && window.fbGet) {
+          var sn = await window.fbGet('nf_dia_relatorios');
+          _hojeCacheNf = { t: Date.now(), v: (sn && sn.exists()) ? sn.val() : {} };
+        }
+      } catch(e) { console.warn('[Hoje] leitura de nf_dia_relatorios falhou:', e); }
+      if (_hojeCacheNf.v) { nfRel = _hojeCacheNf.v; nfOk = true; }
+      var ready = !!window._hojeReady;
+
+      var datasPend = !nfOk ? [] : Object.keys(nfRel).filter(function(d){
+        var n = nfRel[d];
+        return /^\d{4}-\d{2}-\d{2}$/.test(d) && d < hojeIso && n && typeof n === 'object' && n._status !== 'processado';
+      }).sort().reverse();
+
+      var fechPend = Object.keys(typeof _fechDados !== 'undefined' ? _fechDados : {}).map(function(k){ return _fechDados[k]; })
+        .filter(function(r){ return r && !r.pagoHoje; });
+
+      /* alertas */
+      var alerts = [];
+      if (datasPend.length) {
+        var lst = datasPend.slice(0, 3).map(_hojeBR).join(', ') + (datasPend.length > 3 ? ' e +' + (datasPend.length - 3) : '');
+        alerts.push({ ic: 'fa-calendar-day', t: datasPend.length + (datasPend.length === 1 ? ' data com NF pendente' : ' datas com NF pendente'), s: lst + ' — aguardando geração de lote', b: 'Resolver', go: "hojeIr('nflote','nfdia')" });
+      }
+      if (fechPend.length) {
+        var nomes = fechPend.slice(0, 2).map(function(r){ return (r.profissional && r.profissional.nome) || '—'; }).join(' · ') + (fechPend.length > 2 ? ' · +' + (fechPend.length - 2) : '');
+        alerts.push({ ic: 'fa-file-invoice-dollar', t: fechPend.length + (fechPend.length === 1 ? ' fechamento sem pagamento' : ' fechamentos sem pagamento'), s: nomes, b: 'Ver', go: "hojeIr('fech')" });
+      }
+      var al = $h('hojeAlerts'), alL = $h('hojeAlertsList');
+      if (al && alL) {
+        al.classList.toggle('ok', !alerts.length);
+        alL.innerHTML = alerts.length ? alerts.map(function(a){
+          return '<div class="hoje-alert-item"><div class="hoje-ai-ic"><i class="fas ' + a.ic + '"></i></div>'
+               + '<div class="hoje-ai-txt"><div class="hoje-ai-t">' + esc(a.t) + '</div><div class="hoje-ai-s">' + esc(a.s) + '</div></div>'
+               + '<button class="hoje-ai-btn" onclick="' + a.go + '">' + a.b + ' →</button></div>';
+        }).join('') : (!ready ? '<div class="hoje-empty">Carregando pendências…</div>'
+                    : (!nfOk ? '<div class="hoje-empty">Não foi possível verificar as NFs pendentes agora.</div>'
+                             : '<div class="hoje-ok-msg">✅ Tudo em dia — nada pendente por aqui.</div>'));
+        if (!alerts.length && (!ready || !nfOk)) al.classList.remove('ok');
+      }
+
+      /* badge da sidebar */
+      function setBadge(id, n, ok) {
+        var el = $h(id); if (!el) return;
+        if (ok && n > 0) { el.textContent = String(n); el.style.display = 'inline-flex'; } else { el.style.display = 'none'; }
+      }
+      setBadge('badgeHoje',   datasPend.length + fechPend.length, ready && nfOk);
+      setBadge('badgeNflote', datasPend.length,                   ready && nfOk);
+      setBadge('badgeFech',   fechPend.length,                    ready);
+
+      /* ações rápidas */
+      if ($h('hojeQsNf'))    $h('hojeQsNf').textContent    = datasPend.length ? datasPend.length + ' pendentes' : 'tudo em dia';
+      if ($h('hojeQsCaixa')) $h('hojeQsCaixa').textContent = tOntem.colabs + (tOntem.colabs === 1 ? ' fechamento ontem' : ' fechamentos ontem');
+      if ($h('hojeQsFech'))  $h('hojeQsFech').textContent  = fechPend.length ? fechPend.length + ' sem pagamento' : 'tudo pago';
+
+      /* últimas atividades (hoje/ontem) */
+      var ev = [];
+      [hojeIso, ontem].forEach(function(iso){
+        Object.keys(dados).forEach(function(uid){
+          var s = (dados[uid] || {})[iso];
+          if (s && s.geradoEm) ev.push({ ms: new Date(s.geradoEm).getTime(), ic: 'fa-check', c: '', h: '<b>' + esc(s.colaborador || uid) + '</b> fechou o caixa' });
+        });
+        var nd = nfRel[iso];
+        if (nd && typeof nd === 'object') Object.keys(nd).forEach(function(uid){
+          if (uid === '_status' || !nd[uid] || typeof nd[uid] !== 'object') return;
+          var b = nd[uid], n = (b.linhas || []).length;
+          if (b.geradoEm) ev.push({ ms: new Date(b.geradoEm).getTime(), ic: 'fa-calendar-day', c: 'b', h: '<b>' + esc(b.colaborador || uid) + '</b> preencheu NF do Dia · <b>' + n + (n === 1 ? ' paciente' : ' pacientes') + '</b>' });
+        });
+      });
+      ev = ev.filter(function(e){ return !isNaN(e.ms); }).sort(function(a,b){ return b.ms - a.ms; }).slice(0, 5);
+      var fd = $h('hojeFeed');
+      if (fd) fd.innerHTML = ev.length ? ev.map(function(e){
+        return '<div class="hoje-feed-item"><div class="hoje-fi-ic ' + e.c + '"><i class="fas ' + e.ic + '"></i></div><div class="hoje-fi-txt">' + e.h + '</div><div class="hoje-fi-time">' + _hojeAgo(e.ms) + '</div></div>';
+      }).join('') : '<div class="hoje-empty">Sem atividades de hoje/ontem ainda.</div>';
+    };
+
+    /* wrapper blindado: qualquer erro cai num aviso discreto; se for a 1ª renderização (landing), cai em Produção */
+    window.renderHoje = async function() {
+      try {
+        await _renderHojeInner();
+        window._hojeLanded = true;
+      } catch (e) {
+        console.error('[Hoje] falha ao renderizar:', e);
+        try {
+          var l = document.getElementById('hojeAlertsList');
+          if (l) l.innerHTML = '<div class="hoje-empty">Não foi possível carregar o resumo agora.</div>';
+          ['badgeHoje','badgeNflote','badgeFech'].forEach(function(id){ var b = document.getElementById(id); if (b) b.style.display = 'none'; });
+          if (!window._hojeLanded) {
+            window._hojeLanded = true;
+            var v = document.getElementById('viewHoje');
+            if (v && v.classList.contains('active') && typeof window.hojeIr === 'function') window.hojeIr('prod');
+          }
+        } catch (e2) { /* nunca propaga */ }
+      }
+    };
+
     function initDashboard(db, ref, get, onValue, remove) {
       carregarLogoGlobal(['#headerLogo']);
       window.fbRemove = path => remove(ref(db, path));
@@ -3033,6 +3363,7 @@
         const snapUser = await get(ref(_db, 'admin/usuarios/' + user.uid));
         const perms    = (snapUser.val() || {}).perms || {};
         const isAdmin  = !!perms.admin;
+        window._hojeUid = user.uid;
         if (!isAdmin) { irPara('../login.html'); return; }
       } catch(e) {
         irPara('../login.html'); return;
@@ -5468,6 +5799,9 @@
       'use strict';
 
       var TABS = [
+        {group:'', items:[
+          {id:'hoje',      icon:'fa-house',        label:'Hoje', badge:'hoje'}
+        ]},
         {group:'Operação', items:[
           {id:'caixa',     icon:'fa-cash-register',       label:'Caixa'},
           {id:'fech',      icon:'fa-file-invoice-dollar', label:'Fechamentos'},
@@ -5493,11 +5827,12 @@
 
       var html = '<div class="saas-logo"><img src="' + logoUrl + '" class="saas-logo-img" alt=""><div>amor<span>saúde</span></div></div>';
       TABS.forEach(function(section, idx){
-        html += '<div class="saas-nav-section"' + (idx>0 ? ' style="margin-top:10px;"' : '') + '>' + section.group + '</div>';
+        if (section.group) html += '<div class="saas-nav-section"' + (idx>0 ? ' style="margin-top:10px;"' : '') + '>' + section.group + '</div>';
         section.items.forEach(function(t){
-          var active = (t.id === 'prod') ? ' active' : '';
+          var active = (t.id === 'hoje') ? ' active' : '';
           html += '<button class="saas-nav' + active + '" data-tab="' + t.id + '">'
                 + '<i class="fas ' + t.icon + '"></i> ' + t.label
+                + (t.badge ? '<span class="side-badge" id="badge' + t.badge.charAt(0).toUpperCase() + t.badge.slice(1) + '">0</span>' : '')
                 + '</button>';
         });
       });
@@ -6087,6 +6422,69 @@
   })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.9.1 · 03/10/2026</span>
+  <!-- ═══════════ v5.1 — sidebar: atalhos externos (NPS / Cadastros / Admin) + badges NF em Lote e Fechamentos ═══════════ -->
+  <script>
+  (function(){
+    try {
+      var sb = document.getElementById('saasSidebar'); if (!sb) return;
+      function go(h){ return function(){ try { if (typeof irPara === 'function') irPara(h); else location.href = h; } catch(e) { location.href = h; } }; }
+      function mk(label, icon, href){
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'saas-nav'; b.setAttribute('data-href', href);
+        b.innerHTML = '<i class="fas ' + icon + '"></i> ' + label + '<i class="fas fa-arrow-up-right-from-square" style="margin-left:auto;width:auto;font-size:9px;opacity:.45;"></i>';
+        b.addEventListener('click', go(href)); return b;
+      }
+      function sec(t){ var d = document.createElement('div'); d.className = 'saas-nav-section'; d.style.marginTop = '10px'; d.textContent = t; return d; }
+      /* NPS no fim de Análises (logo depois de Visão Geral) */
+      var visao = sb.querySelector('.saas-nav[data-tab="visao"]');
+      if (visao && visao.parentNode) visao.parentNode.insertBefore(mk('NPS', 'fa-star', 'nps.html'), visao.nextSibling);
+      /* Cadastros e Admin */
+      sb.appendChild(sec('Cadastros')); sb.appendChild(mk('Cadastros', 'fa-database', 'cadastros.html'));
+      sb.appendChild(sec('Admin'));     sb.appendChild(mk('Administração', 'fa-gear', 'admin.html'));
+      /* badges */
+      [['nflote','badgeNflote'],['fech','badgeFech']].forEach(function(p){
+        var btn = sb.querySelector('.saas-nav[data-tab="' + p[0] + '"]');
+        if (btn && !document.getElementById(p[1])) { var s = document.createElement('span'); s.className = 'side-badge'; s.id = p[1]; s.textContent = '0'; btn.appendChild(s); }
+      });
+    } catch(e) { console.warn('[sidebar v5.1]', e); }
+  })();
+  </script>
+
+  <!-- ═══════════ v5.0 — landing "Hoje": atualização automática + aba inicial ═══════════ -->
+  <script>
+  (function(){
+    var VALID = ['hoje','prod','caixa','fech','visao','contratos','odonto','ranking','nflote'];
+    var tm = null;
+    setTimeout(function(){ window._hojeReady = true; refresh(); }, 6000); /* garante saída do "carregando" mesmo com base vazia */
+    function refresh(){ clearTimeout(tm); tm = setTimeout(function(){ try{ if (typeof window.renderHoje==='function') window.renderHoje(); }catch(e){} }, 400); }
+    /* envolve (não reescreve) as funções que mudam os dados usados pela página Hoje */
+    ['renderDashboard','renderFechTab'].forEach(function(n){
+      var orig = window[n];
+      if (typeof orig !== 'function') return;
+      window[n] = function(){
+        var r = orig.apply(this, arguments);
+        try { if (n === 'renderDashboard' && typeof _dados !== 'undefined' && _dados && Object.keys(_dados).length) window._hojeReady = true; } catch(e) {}
+        refresh(); return r;
+      };
+    });
+    function syncSide(tab){ document.querySelectorAll('.saas-nav').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab') === tab); }); }
+    var last = null;
+    try { last = localStorage.getItem('dsh_lastTab'); } catch(e) {}
+    var landing = (last && VALID.indexOf(last) >= 0) ? last : 'hoje';
+    if (landing !== 'hoje') {
+      /* mostra já o painel certo; renders pesados esperam o Firebase ficar pronto */
+      VALID.forEach(function(t){ var v = document.getElementById('view' + t.charAt(0).toUpperCase() + t.slice(1)); if (v) v.classList.toggle('active', t === landing); });
+      var tries = 0, iv = setInterval(function(){
+        tries++;
+        if (window.fbGet || tries > 100) { clearInterval(iv); try { window.switchMainTab(landing); } catch(e) {} syncSide(landing); }
+      }, 150);
+    } else {
+      try { window.switchMainTab('hoje'); }
+      catch(e) { console.error('[Hoje] landing falhou, usando Produção:', e); try { window.switchMainTab('prod'); landing = 'prod'; } catch(e2) {} }
+    }
+    syncSide(landing);
+  })();
+  </script>
+
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v5.1 · 03/10/2026</span>
 </body>
 </html>
