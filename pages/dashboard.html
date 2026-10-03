@@ -1,4 +1,5 @@
-<!-- VERSION: v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
+<!-- VERSION: v4.9.1 | dashboard.html | 03/10/2026 | Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
+<!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
 <!-- v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
 <!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
@@ -3372,7 +3373,27 @@
         </div>
 
                 <button type="button" class="nflx-big purple" id="nflxSinCont" onclick="nflxSinGo(2)" disabled><div class="bi"><i class="fas fa-arrow-right"></i></div><div class="txt" id="nflxSinContTxt">Escolha um lote acima<div class="sub">Depois é só continuar</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
-<div class="card">
+<div class="card" id="nflxSinPlanCard">
+          <div class="nflx-tl" style="font-size:16px;margin-bottom:4px;"><i class="fas fa-file-lines" style="color:#6d28d9;"></i> Comparar direto com a planilha</div>
+          <div class="nflx-ts" style="margin-bottom:14px;">Escolha o dia: a ferramenta lê a aba dessa data na <b>NOTAS FISCAIS 3.0</b> (mesma conexão do NF do Dia) e já segue pro retorno da Sinaxys. Você só anexa o arquivo da Sinaxys.</div>
+          <div class="nflx-datepick">
+            <label for="nflxSinDia"><i class="fas fa-calendar" style="color:#6d28d9;"></i> Data</label>
+            <input type="date" id="nflxSinDia">
+          </div>
+          <button type="button" class="nflx-big purple" id="nflxSinUsarBtn" onclick="nflxSinUsarPlanilha()"><div class="bi"><i class="fas fa-magnifying-glass"></i></div><div class="txt">Buscar na planilha e continuar<div class="sub">Lê a aba do dia e vai direto pro retorno da Sinaxys</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+          <div id="nflxSinUsarMsg" style="display:none;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;line-height:1.5;"></div>
+          <details class="nflx-det"><summary>Salvar lotes de vários dias de uma vez (opcional)</summary>
+            <div class="nflx-datepick" style="flex-wrap:wrap;">
+              <label for="nflxSinDe" style="margin-right:6px;">De</label><input type="date" id="nflxSinDe">
+              <label for="nflxSinAte" style="margin:0 6px;">até</label><input type="date" id="nflxSinAte">
+            </div>
+            <button type="button" class="nflx-big ghost" id="nflxSinPlanBtn" onclick="nflxSinBuscarPlanilha()"><div class="bi" style="background:#e5e7eb"><i class="fas fa-floppy-disk"></i></div><div class="txt">Buscar e salvar lotes<div class="sub">Um lote por dia que tiver aba — ficam na lista acima pra usar depois</div></div></button>
+            <div id="nflxSinPlanBanner" style="display:none;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;line-height:1.5;"></div>
+          </details>
+        </div>
+
+        <details class="nflx-det"><summary>Ou importar de um arquivo Excel</summary>
+        <div class="card">
           <label>➕ Importar lote(s) direto de um Excel (sem passar por "Gerar planilha")</label>
           <div class="hint">Sobe a planilha "NOTAS FISCAIS 3.0" (com Nome, CPF, Valor — uma aba por dia) e salva um lote no Firebase pra <b>cada aba com data</b> de uma vez, pra depois comparar aqui.</div>
           <input type="file" id="sinImportarLoteFile" accept=".xlsx,.xls">
@@ -3382,6 +3403,7 @@
           <div id="sinImportarBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
         </div>
 
+        </details>
                   <details class="nflx-det"><summary>Como funciona</summary>
 <div class="card" style="margin-bottom:16px;">
           <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">S</span><p class="step-title">Comparativo Sinaxys</p></div>
@@ -5934,6 +5956,137 @@
   })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.9 · 03/10/2026</span>
+  <!-- ═══════════ v4.9.1 — Comparativo: buscar lote direto da planilha conectada ═══════════ -->
+  <script>
+  (function(){
+    var $=function(id){return document.getElementById(id);};
+    function iso(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+    var ontem=new Date(); ontem.setDate(ontem.getDate()-1);
+    $('nflxSinDe').value=iso(ontem); $('nflxSinAte').value=iso(ontem);
+    $('nflxSinDe').addEventListener('change',function(){ if(!$('nflxSinAte').value||$('nflxSinAte').value<this.value) $('nflxSinAte').value=this.value; });
+    function banner(txt,tipo){
+      var b=$('nflxSinPlanBanner'); b.style.display='block'; b.innerHTML=txt;
+      var c={ok:['var(--purple-bg)','var(--purple)'],warn:['var(--amber-bg)','var(--amber)'],err:['#fee2e2','var(--red)']}[tipo||'ok'];
+      b.style.background=c[0]; b.style.color=c[1];
+    }
+    var BR=function(i){return i.split('-').reverse().join('/');};
+
+    /* Lê UMA aba da planilha publicada (mesma conexão do "Puxar dados desse dia") e devolve as linhas do lote.
+       Retorna null se não existir aba para a data. */
+    var _abas=null;
+    async function listarAbas(){
+      if(_abas) return _abas;
+      var r=await nflFetchComTimeout(NFL_SHEET_PUBHTML,15000);
+      if(!r.ok) throw new Error('HTTP '+r.status+' ao abrir a planilha');
+      var htxt=await r.text(), abas=[];
+      [/items\.push\(\{name:\s*"((?:[^"\\]|\\.)*)",\s*pageUrl:\s*"([^"]+)"/g,
+       /"name"\s*:\s*"([^"]+)"[^}]{0,200}"pageUrl"\s*:\s*"([^"]+)"/g,
+       /data-sheet-id="(\d+)"[^>]*>([^<]+)</g].forEach(function(re,ri){
+        if(abas.length) return; var m; re.lastIndex=0;
+        while((m=re.exec(htxt))!==null){
+          var nome=(ri===2?m[2]:m[1]).replace(/\\\//g,'/').trim();
+          var gid=ri===2?m[1]:((m[2].match(/gid=(-?\d+)/)||[])[1]);
+          if(nome&&gid) abas.push({nome:nome,gid:gid});
+        }
+      });
+      if(!abas.length) throw new Error('Não consegui listar as abas da planilha — confira se ela está publicada.');
+      _abas=abas; return abas;
+    }
+    async function lerAba(dia){
+      var abas=await listarAbas();
+      var vars=new Set(nflIsoParaVariacoesAba(dia).map(nflNormNomeAba));
+      var aba=abas.filter(function(a){return vars.has(nflNormNomeAba(a.nome));})[0];
+      if(!aba) return null;
+      var csvBase=NFL_SHEET_PUBHTML.replace(/pubhtml.*$/,'pub?output=csv');
+      var r2=await nflFetchComTimeout(csvBase+'&gid='+aba.gid,15000);
+      if(!r2.ok) throw new Error('HTTP '+r2.status+' ao baixar a aba "'+aba.nome+'"');
+      var csv=await r2.text();
+      if(csv.trim().startsWith('<')) throw new Error('A planilha devolveu HTML — confira se está publicada como CSV.');
+      var linhas=nflParseCsvRFC4180(csv).filter(function(row){return row.some(function(c){return c!=='';});});
+      var ex=nflExtrairTipoDoSheet(linhas), rows=ex.linhasLimpas;
+      if(!rows.length) return {aba:aba.nome,linhas:[]};
+      /* colunas: pelo cabeçalho da aba; se faltar, cai no palpite por conteúdo */
+      var head=rows[0], hasHead=!/\d{11}/.test(head.join('').replace(/\D/g,'')) ;
+      var iN=-1,iC=-1,iV=-1;
+      if(hasHead) head.forEach(function(h,i){
+        var k=nflNormTxt(h);
+        if((k==='nome'||k==='paciente')&&iN<0) iN=i; else if(k==='cpf'&&iC<0) iC=i; else if(/^valor/.test(k)&&iV<0) iV=i;
+      });
+      var data=hasHead?rows.slice(1):rows, out=[];
+      data.forEach(function(row,di){
+        var cpf=nflOnlyDigits(iC>=0?row[iC]:(row.filter(function(c){return nflOnlyDigits(c).length===11;})[0]||''));
+        if(cpf.length!==11) return;
+        var val=nflPreencherToFloat(iV>=0?row[iV]:null);
+        if(val===null) return;
+        out.push({idx:out.length,nome:(iN>=0?row[iN]:(row[0]||'')).trim(),cpf:cpf,valor:val,tipo:ex.tiposPorIndice[di]||''});
+      });
+      return {aba:aba.nome,linhas:out};
+    }
+
+
+    $('nflxSinDia').value=iso(ontem);
+    function msgUsar(txt,tipo){ var b=$('nflxSinUsarMsg'); b.style.display='block'; b.innerHTML=txt; var c={ok:['var(--purple-bg)','var(--purple)'],warn:['var(--amber-bg)','var(--amber)'],err:['#fee2e2','var(--red)']}[tipo]; b.style.background=c[0]; b.style.color=c[1]; }
+    /* Usa a aba da planilha como "lote" em memória (sem salvar nada) e vai direto pro retorno da Sinaxys */
+    window.nflxSinUsarPlanilha=async function(){
+      var dia=$('nflxSinDia').value; if(!dia){ msgUsar('⚠ Escolha a data.','warn'); return; }
+      var btn=$('nflxSinUsarBtn'), sub=btn.querySelector('.sub'), old=sub.textContent;
+      btn.disabled=true; sub.textContent='Lendo a aba de '+BR(dia)+'…'; $('nflxSinUsarMsg').style.display='none'; _abas=null;
+      try{
+        var res=await lerAba(dia);
+        if(!res){ msgUsar('Não achei uma aba para '+BR(dia)+' na planilha.','warn'); return; }
+        if(!res.linhas.length){ msgUsar('A aba "'+res.aba+'" não tem pacientes com CPF e valor válidos.','warn'); return; }
+        window.nflSinLoteAtivo={key:null,fonte:'planilha',dados:{data:dia,ts:Date.now(),total:res.linhas.length,linhas:res.linhas}};
+        document.querySelectorAll('#sinLotesList .sin-lote-card').forEach(function(c){c.classList.remove('sel');});
+        $('sinLoteInfo').innerHTML='Lote da planilha: <b>'+BR(dia)+'</b> (aba "'+res.aba+'") — '+res.linhas.length+' paciente(s).';
+        $('sinComparativoCard').style.display='block'; $('sinResultadoCard').style.display='none';
+        $('sinRetornoInput').value=''; $('sinRetornoFile').value=''; $('sinRetornoMapTable').innerHTML=''; nflSinRetornoData=null;
+        nflxSinGo(2);
+      }catch(e){ msgUsar('❌ '+e.message,'err'); }
+      finally{ btn.disabled=false; sub.textContent=old; }
+    };
+    var _exc=window.nflSinExcluirLote;
+    window.nflSinExcluirLote=function(){
+      if(window.nflSinLoteAtivo&&!window.nflSinLoteAtivo.key){ alert('Este lote veio direto da planilha e não está salvo — não há o que excluir.'); return; }
+      return _exc.apply(this,arguments);
+    };
+
+    window.nflxSinBuscarPlanilha=async function(){
+      var de=$('nflxSinDe').value, ate=$('nflxSinAte').value||de;
+      if(!de){ banner('⚠ Escolha a data.','warn'); return; }
+      if(ate<de){ var x=de; de=ate; ate=x; }
+      if(!window.fbSet||!window.fbGet){ banner('⚠ Firebase não disponível — recarregue a página.','warn'); return; }
+      var dias=[], d=new Date(de+'T12:00:00'), fim=new Date(ate+'T12:00:00');
+      while(d<=fim&&dias.length<62){ dias.push(iso(d)); d.setDate(d.getDate()+1); }
+      var btn=$('nflxSinPlanBtn'), sub=btn.querySelector('.sub'), old=sub.textContent;
+      btn.disabled=true; _abas=null;
+      var salvos=[], semAba=[], semDados=[], pulados=[], erros=[];
+      try{
+        var snap=await window.fbGet('nfl_sinaxys_lotes'), existentes=(snap&&snap.val())||{};
+        for(var i=0;i<dias.length;i++){
+          var dia=dias[i]; sub.textContent='Lendo '+BR(dia)+' ('+(i+1)+'/'+dias.length+')…';
+          var res; try{ res=await lerAba(dia); }catch(er){ erros.push(BR(dia)+': '+er.message); continue; }
+          if(!res){ semAba.push(BR(dia)); continue; }
+          if(!res.linhas.length){ semDados.push(BR(dia)); continue; }
+          var chave=Object.keys(existentes).filter(function(k){return (existentes[k]||{}).data===dia;})[0];
+          if(chave && !confirm('Já existe um lote salvo para '+BR(dia)+' ('+(existentes[chave].total||0)+' paciente(s)).\n\nSubstituir pelo que está na planilha agora ('+res.linhas.length+' paciente(s))?')){ pulados.push(BR(dia)); continue; }
+          var ts=Date.now(), key=chave?('nfl_sinaxys_lotes/'+chave):('nfl_sinaxys_lotes/'+dia+'_'+ts);
+          await window.fbSet(key,{data:dia,ts:ts,total:res.linhas.length,linhas:res.linhas});
+          salvos.push(BR(dia)+' ('+res.linhas.length+')');
+        }
+        var msg='';
+        if(salvos.length) msg+='✓ '+salvos.length+' lote(s) salvo(s): '+salvos.join(', ')+'. ';
+        if(pulados.length) msg+='Mantidos como estavam: '+pulados.join(', ')+'. ';
+        if(semAba.length) msg+='Sem aba na planilha: '+semAba.slice(0,10).join(', ')+(semAba.length>10?'…':'')+'. ';
+        if(semDados.length) msg+='Aba sem pacientes com CPF/valor válidos: '+semDados.join(', ')+'. ';
+        if(erros.length) msg+='Erros: '+erros.join(' | ')+'. ';
+        banner(msg||'Nada encontrado.', salvos.length&&!semDados.length&&!erros.length?'ok':'warn');
+        if(salvos.length) await nflSinCarregarLotes();
+      }catch(e){ banner('❌ '+e.message,'err'); }
+      finally{ btn.disabled=false; sub.textContent=old; }
+    };
+  })();
+  </script>
+
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.9.1 · 03/10/2026</span>
 </body>
 </html>
