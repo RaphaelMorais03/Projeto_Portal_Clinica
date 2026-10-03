@@ -1,3 +1,4 @@
+<!-- VERSION: v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
 <!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
@@ -618,6 +619,106 @@
        os botões continuam no DOM porque o switchMainTab os referencia) */
     .s-header .header-right .main-tab{display:none !important;}
     .main-tabs{display:none !important;}
+    /* ===== v4.8 — fluxos guiados (Mockup NF do Dia + Comparativo Sinaxys) ===== */
+    #viewNflote .nflx-steps{display:flex;align-items:center;margin-bottom:22px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 18px;}
+    #viewNflote .nflx-step{display:flex;align-items:center;gap:8px;flex:1;min-width:0;position:relative;}
+    #viewNflote .nflx-step:not(:last-child)::after{content:'';position:absolute;right:8px;top:50%;width:16px;height:1px;background:#e5e7eb;}
+    #viewNflote .nflx-dot{width:24px;height:24px;border-radius:50%;background:#f3f4f6;color:#9ca3af;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;transition:all .25s;}
+    #viewNflote .nflx-lbl{font-size:11.5px;font-weight:700;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    #viewNflote .nflx-step.active .nflx-dot{background:#0d9488;color:#fff;}
+    #viewNflote .nflx-steps.sin .nflx-step.active .nflx-dot{background:#6d28d9;}
+    #viewNflote .nflx-step.active .nflx-lbl{color:#0A1F44;}
+    #viewNflote .nflx-step.done .nflx-dot{background:#dcfce7;color:#15803d;}
+    #viewNflote .nflx-step.done .nflx-lbl{color:#15803d;}
+    #viewNflote .step-overlay>.card,#viewNflote .nflx-card{border-radius:18px;padding:28px;}
+    #viewNflote .nflx-card.high{border-color:#0d9488;box-shadow:0 4px 20px rgba(13,148,136,.08);}
+    #viewNflote .nflx-card.purple{border-color:#6d28d9;box-shadow:0 4px 20px rgba(109,40,217,.08);}
+    #viewNflote .nflx-center{text-align:center;}
+    #viewNflote .nflx-ic{width:56px;height:56px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px;background:#f0fdfa;color:#0d9488;}
+    #viewNflote .nflx-ic.amber{background:#fffbeb;color:#b45309;}
+    #viewNflote .nflx-ic.purple{background:#f5f3ff;color:#6d28d9;}
+    #viewNflote .nflx-ic.green{background:#f0fdf4;color:#15803d;}
+    #viewNflote .nflx-tl{font-size:19px;font-weight:800;color:#0A1F44;letter-spacing:-.3px;margin-bottom:6px;}
+    #viewNflote .nflx-ts{font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px;}
+    #viewNflote .nflx-back{background:none;border:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;padding:4px 0;}
+    #viewNflote .nflx-back:hover{color:#0A1F44;}
+    #viewNflote .nflx-big{width:100%;padding:16px 20px;border-radius:14px;border:none;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .15s;margin-bottom:12px;text-align:left;color:#fff;}
+    #viewNflote .nflx-big:hover{transform:translateY(-1px);}
+    #viewNflote .nflx-big:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    #viewNflote .nflx-big .bi{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;background:rgba(255,255,255,.2);}
+    #viewNflote .nflx-big .txt{flex:1;}
+    #viewNflote .nflx-big .txt .sub{font-size:11.5px;font-weight:600;opacity:.85;margin:2px 0 0;color:inherit;}
+    #viewNflote .nflx-big.teal{background:#0d9488;} #viewNflote .nflx-big.teal:hover{background:#0f766e;}
+    #viewNflote .nflx-big.blue{background:#1d4ed8;} #viewNflote .nflx-big.blue:hover{background:#1e40af;}
+    #viewNflote .nflx-big.amber{background:#b45309;} #viewNflote .nflx-big.amber:hover{background:#92400e;}
+    #viewNflote .nflx-big.purple{background:#6d28d9;} #viewNflote .nflx-big.purple:hover{background:#5b21b6;}
+    #viewNflote .nflx-big.red{background:#C62828;} #viewNflote .nflx-big.red:hover{background:#ad1f1f;}
+    #viewNflote .nflx-big.ghost{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;} #viewNflote .nflx-big.ghost:hover{background:#e5e7eb;}
+    #viewNflote .nflx-result{padding:22px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:14px;margin-bottom:20px;text-align:center;}
+    #viewNflote .nflx-result .num{font-size:42px;font-weight:900;color:#0d9488;letter-spacing:-2px;line-height:1;}
+    #viewNflote .nflx-result .lbl{font-size:13px;color:#115e59;font-weight:600;margin-top:6px;}
+    #viewNflote .nflx-result .aba{font-size:11.5px;color:#0f766e;font-weight:700;margin-top:8px;background:#fff;display:inline-block;padding:3px 10px;border-radius:20px;}
+    #viewNflote .nflx-link,#viewNflote .nflx-back{box-shadow:none;}
+    #viewNflote .nflx-link{background:none;border:none;font-family:inherit;font-size:12.5px;font-weight:600;color:#6b7280;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 8px;}
+    #viewNflote .nflx-link:hover{color:#0A1F44;}
+    #viewNflote .nflx-det{margin-top:14px;border-top:1px solid #f3f4f6;padding-top:12px;}
+    #viewNflote .nflx-det>summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#6b7280;margin-bottom:10px;}
+    #viewNflote .nflx-inc{background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:16px 18px;margin-bottom:18px;}
+    #viewNflote .nflx-inc .ht{display:flex;align-items:center;gap:10px;margin-bottom:6px;color:#b45309;}
+    #viewNflote .nflx-inc .t{font-size:14px;font-weight:800;flex:1;}
+    #viewNflote .nflx-inc .n{font-size:11px;font-weight:800;background:#fef3c7;border-radius:20px;padding:2px 10px;}
+    #viewNflote .nflx-inc .ds{font-size:12.5px;color:#92400e;line-height:1.6;}
+    #viewNflote .nflx-fixlist{display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow-y:auto;padding-right:2px;}
+    #viewNflote .nflx-fix{border:1.5px solid #fecaca;border-radius:12px;padding:14px 16px;background:#fff;}
+    #viewNflote .nflx-fix-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+    #viewNflote .nflx-fix-h .nome{font-size:13.5px;font-weight:800;color:#0A1F44;}
+    #viewNflote .nflx-fix-h .badge{font-size:10px;font-weight:800;background:#fef2f2;color:#C62828;border-radius:20px;padding:3px 10px;text-align:right;}
+    #viewNflote .nflx-fix-f{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    #viewNflote .nflx-fix-f .full{grid-column:1/-1;}
+    #viewNflote .nflx-fix-f label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:3px;}
+    #viewNflote .nflx-fix-f .req{color:#C62828;}
+    #viewNflote .nflx-fix-f input,#viewNflote .nflx-fix-f select{width:100%;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:13px;outline:none;}
+    #viewNflote .nflx-fix-f input:focus,#viewNflote .nflx-fix-f select:focus{border-color:#0d9488;}
+    #viewNflote .nflx-fix-f .missing{border-color:#C62828;background:#fef2f2;}
+    #viewNflote .nflx-bulk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 14px;font-size:12.5px;color:#475569;}
+    #viewNflote .nflx-bulk select{width:auto;padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:12.5px;}
+    #viewNflote .nflx-bulk button{padding:7px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;font-size:12px;cursor:pointer;}
+    /* Comparativo */
+    #viewNflote .nflx-sscreen{display:none;}
+    #viewNflote .nflx-sscreen.active{display:block;}
+    #viewNflote .sin-lote-card.sel{border-color:#6d28d9;background:#f5f3ff;}
+    #viewNflote .nflx-res3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;}
+    #viewNflote .nflx-res3 .rc{border-radius:14px;padding:16px 10px;text-align:center;}
+    #viewNflote .nflx-res3 .rc .n{font-size:30px;font-weight:900;line-height:1;}
+    #viewNflote .nflx-res3 .rc .l{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-top:6px;}
+    #viewNflote .nflx-res3 .g{background:#f0fdf4;border:1.5px solid #bbf7d0;color:#15803d;}
+    #viewNflote .nflx-res3 .r{background:#fef2f2;border:1.5px solid #fecaca;color:#C62828;}
+    #viewNflote .nflx-res3 .a{background:#fffbeb;border:1.5px solid #fde68a;color:#b45309;}
+    #viewNflote .nflx-refazer{background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;padding:18px;margin-bottom:18px;}
+    #viewNflote .nflx-refazer .top{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;}
+    #viewNflote .nflx-refazer .top .ic{width:38px;height:38px;border-radius:10px;background:#C62828;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    #viewNflote .nflx-refazer .t{font-size:14px;font-weight:800;color:#7f1d1d;}
+    #viewNflote .nflx-refazer .s{font-size:12px;color:#991b1b;line-height:1.5;margin-top:2px;}
+    #viewNflote .nflx-refazer .info{font-size:11px;color:#991b1b;margin-top:8px;opacity:.85;}
+    #viewNflote .nflx-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+    #viewNflote .nflx-chip{border:1.5px solid #e5e7eb;background:#fff;border-radius:20px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;color:#475569;cursor:pointer;}
+    #viewNflote .nflx-chip.on{background:#6d28d9;border-color:#6d28d9;color:#fff;}
+    #viewNflote .nflx-chip .n{opacity:.7;margin-left:4px;}
+    #viewNflote .nflx-lista{display:flex;flex-direction:column;border:1px solid #e5e7eb;border-radius:12px;max-height:46vh;overflow-y:auto;margin-bottom:16px;}
+    #viewNflote .nflx-ln{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:12.5px;}
+    #viewNflote .nflx-ln:last-child{border-bottom:none;}
+    #viewNflote .nflx-ln.err{background:#fef2f2;} #viewNflote .nflx-ln.warn{background:#fffbeb;}
+    #viewNflote .nflx-ln .st{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;color:#fff;}
+    #viewNflote .nflx-ln .st.g{background:#15803d;} #viewNflote .nflx-ln .st.r{background:#C62828;} #viewNflote .nflx-ln .st.a{background:#b45309;}
+    #viewNflote .nflx-ln .info{flex:1;min-width:0;}
+    #viewNflote .nflx-ln .info b{display:block;color:#0A1F44;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    #viewNflote .nflx-ln .info span{font-size:11px;color:#6b7280;}
+    #viewNflote .nflx-ln .nf{text-align:right;font-size:11.5px;color:#475569;}
+    #viewNflote .nflx-rodape{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+    #viewNflote .nflx-m{padding:10px 16px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
+    #viewNflote .nflx-m:hover{background:#f3f4f6;}
+    #viewNflote .nflx-box{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px;font-size:12px;color:#475569;line-height:1.7;margin-bottom:18px;text-align:left;}
+    @media(max-width:640px){#viewNflote .nflx-lbl{display:none;}#viewNflote .nflx-res3{grid-template-columns:1fr;}#viewNflote .nflx-fix-f{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
@@ -2891,6 +2992,14 @@
 
       <!-- ===== GERAR PLANILHA ===== -->
       <div class="page active" id="nfl-page-gerar">
+        <!-- Barra de passos (v4.8) -->
+        <div class="nflx-steps" id="nflxSteps">
+          <div class="nflx-step" data-s="1"><div class="nflx-dot">1</div><div class="nflx-lbl">Buscar</div></div>
+          <div class="nflx-step" data-s="2"><div class="nflx-dot">2</div><div class="nflx-lbl">Mapear</div></div>
+          <div class="nflx-step" data-s="3"><div class="nflx-dot">3</div><div class="nflx-lbl">CEP</div></div>
+          <div class="nflx-step" data-s="4"><div class="nflx-dot">4</div><div class="nflx-lbl">Corrigir</div></div>
+          <div class="nflx-step" data-s="5"><div class="nflx-dot">5</div><div class="nflx-lbl">Baixar</div></div>
+        </div>
         <div class="step-overlay open" id="ov-intro">
           <div class="card">
             <div class="step-kicker"><span class="step-badge">i</span><p class="step-title">Como funciona esta ferramenta</p></div>
@@ -2949,7 +3058,8 @@
               <button class="secondary" onclick="nflReorganizeColumns()">🔄 Organizar automaticamente</button>
             </div>
             <div class="row">
-              <button onclick="nflGoToAgendStep()">Avançar → Cruzar com agendados</button>
+              <button onclick="nflGoToAgendStep()">Avançar → Verificar CEP</button>
+              <button class="secondary" onclick="nflxAbrirAgendados()">🔗 Cruzar com agendados (opcional)</button>
               <button class="secondary" onclick="nflCloseStep('ov-map'); nflOpenStep('ov-paste');">Voltar</button>
             </div>
           </div>
@@ -3004,7 +3114,42 @@
             <ul class="err-list" id="cepErrList"></ul>
             <div class="row">
               <button id="genBtn" onclick="nflProcessData()">Gerar planilha</button>
-              <button class="secondary" onclick="nflCloseStep('ov-cep'); nflOpenStep('ov-agend');">Voltar</button>
+              <button class="secondary" onclick="nflxCepVoltar()">Voltar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-found">
+          <div class="card nflx-center nflx-card high">
+            <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflCloseStep('ov-found');nflOpenStep('ov-paste');"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+            <div class="nflx-ic"><i class="fas fa-file-circle-check"></i></div>
+            <div class="nflx-tl">Encontrei notas</div>
+            <div class="nflx-ts">Todas prontas pra próxima etapa</div>
+            <div class="nflx-result"><div class="num" id="nflxFoundN">0</div><div class="lbl">notas para emitir</div><div class="aba" id="nflxFoundAba"></div></div>
+            <button type="button" class="nflx-big teal" onclick="nflxIrMapear()"><div class="bi"><i class="fas fa-table-columns"></i></div><div class="txt">Mapear colunas<div class="sub">Diz o que é cada coluna antes de continuar</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+          </div>
+        </div>
+
+        <div class="step-overlay" id="ov-fix">
+          <div class="card nflx-card">
+            <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflCloseStep('ov-fix');nflOpenStep('ov-cep');"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+            <div id="nflxFixAsk">
+              <div class="nflx-inc">
+                <div class="ht"><i class="fas fa-triangle-exclamation"></i><div class="t" id="nflxIncT">0 pacientes com dados faltando</div><div class="n" id="nflxIncN">0 de 0</div></div>
+                <div class="ds">Alguns pacientes ficaram sem CPF válido, tipo, endereço ou valor. Você pode corrigir antes de gerar os lotes, ou seguir sem eles.</div>
+              </div>
+              <div class="nflx-tl" style="font-size:15px;margin-bottom:12px;">Deseja corrigir antes de baixar?</div>
+              <button type="button" class="nflx-big teal" onclick="nflxAbrirCorrecao()"><div class="bi"><i class="fas fa-pen"></i></div><div class="txt" id="nflxBtnSim">Sim, corrigir<div class="sub">Preenche o que falta, um por um</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+              <button type="button" class="nflx-big ghost" onclick="nflxSeguirSem()"><div class="bi" style="background:#e5e7eb"><i class="fas fa-forward"></i></div><div class="txt" id="nflxBtnNao">Não, seguir com os prontos<div class="sub">Os incompletos saem numa planilha separada, sem travar</div></div><i class="fas fa-arrow-right" style="opacity:.4"></i></button>
+            </div>
+            <div id="nflxFixForm" style="display:none;">
+              <div class="nflx-tl" style="margin-bottom:4px;">Corrigir pacientes</div>
+              <div class="nflx-ts" style="margin-bottom:14px;">Campos em vermelho são os que faltam. Preenche e segue.</div>
+              <div class="nflx-bulk" id="nflxBulk" style="display:none;">Definir tipo de todos os que estão sem tipo:
+                <select id="nflxBulkTipo"><option value="Consulta">Consulta</option><option value="Exame">Exame</option></select>
+                <button type="button" onclick="nflxBulkTipo()">Aplicar</button></div>
+              <div class="nflx-fixlist" id="nflxFixList"></div>
+              <button type="button" class="nflx-big teal" style="margin-top:18px;" onclick="nflxAplicarCorrecao()"><div class="bi"><i class="fas fa-check"></i></div><div class="txt">Concluir correções<div class="sub">Confere de novo e separa Consulta / Exame automaticamente</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
             </div>
           </div>
         </div>
@@ -3012,6 +3157,17 @@
         <div class="step-overlay" id="ov-result">
           <div class="card" id="resultCard">
             <div class="step-kicker"><span class="step-badge">✓</span><p class="step-title">Resultado</p></div>
+            <div class="nflx-center" id="nflxResTop">
+              <div class="nflx-result"><div class="num" id="nflxResN">0</div><div class="lbl">pacientes prontos pra emitir</div></div>
+              <button type="button" class="nflx-big teal" id="nflxBtnCons" onclick="nflxBaixar('Consulta')"><div class="bi"><i class="fas fa-stethoscope"></i></div><div class="txt">Baixar lote Consulta<div class="sub" id="nflxSubCons">—</div></div><i class="fas fa-download" style="opacity:.6"></i></button>
+              <button type="button" class="nflx-big blue" id="nflxBtnExa" onclick="nflxBaixar('Exame')"><div class="bi"><i class="fas fa-flask"></i></div><div class="txt">Baixar lote Exame<div class="sub" id="nflxSubExa">—</div></div><i class="fas fa-download" style="opacity:.6"></i></button>
+              <button type="button" class="nflx-big amber" id="nflxBtnInc" onclick="nflxBaixar('Incompletos')" style="display:none"><div class="bi"><i class="fas fa-triangle-exclamation"></i></div><div class="txt">Baixar incompletos<div class="sub" id="nflxSubInc">—</div></div><i class="fas fa-download" style="opacity:.6"></i></button>
+              <div style="display:flex;gap:16px;justify-content:center;margin-top:16px;padding-top:16px;border-top:1px solid #f3f4f6;flex-wrap:wrap;">
+                <button type="button" class="nflx-link" onclick="nflxVerPacientes()"><i class="fas fa-users"></i> Ver pacientes</button>
+                <button type="button" class="nflx-link" id="nflxBtnProc" onclick="nflxMarcarProcessado()"><i class="fas fa-check-double"></i> Marcar como processado</button>
+              </div>
+            </div>
+            <details class="nflx-det" id="nflxDetRes"><summary>Ver pacientes, editar e mais ações</summary>
             <div class="tablewrap"><table id="resultTable"></table></div>
             <div class="summary" id="nflSummary"></div>
             <ul class="err-list" id="errList"></ul>
@@ -3025,6 +3181,7 @@
             </div>
             <div class="saved-banner" id="savedBanner">✓ Registrado no histórico!</div>
             <div id="sinaxySaveBanner" style="display:none;background:var(--purple-bg);color:var(--purple);border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;margin-top:8px;"></div>
+            </details>
           </div>
         </div>
       </div><!-- /page gerar -->
@@ -3096,7 +3253,36 @@
 
       <!-- ===== COMPARATIVO SINAXYS ===== -->
       <div class="page" id="nfl-page-sinaxys">
-        <div class="card" style="margin-bottom:16px;">
+        <div class="nflx-steps sin" id="nflxSinSteps">
+          <div class="nflx-step" data-s="1"><div class="nflx-dot">1</div><div class="nflx-lbl">Lote</div></div>
+          <div class="nflx-step" data-s="2"><div class="nflx-dot">2</div><div class="nflx-lbl">Retorno</div></div>
+          <div class="nflx-step" data-s="3"><div class="nflx-dot">3</div><div class="nflx-lbl">Comparar</div></div>
+          <div class="nflx-step" data-s="4"><div class="nflx-dot">4</div><div class="nflx-lbl">Enviar NF</div></div>
+        </div>
+        <div class="nflx-sscreen active" id="nflxS1">
+          <div class="nflx-tl" style="margin-bottom:4px;">Escolher o lote</div>
+          <div class="nflx-ts" style="margin-bottom:14px;">Estes são os lotes que você gerou e salvou. Escolha o que vai comparar.</div>
+<div class="card">
+          <label>1. Lotes salvos no Firebase</label>
+          <div id="sinLotesList"><div class="empty-state">Carregando lotes...</div></div>
+          <div class="row" style="margin-top:8px;">
+            <button class="secondary" onclick="nflSinCarregarLotes()">🔄 Recarregar lotes</button>
+          </div>
+        </div>
+
+                <button type="button" class="nflx-big purple" id="nflxSinCont" onclick="nflxSinGo(2)" disabled><div class="bi"><i class="fas fa-arrow-right"></i></div><div class="txt" id="nflxSinContTxt">Escolha um lote acima<div class="sub">Depois é só continuar</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+<div class="card">
+          <label>➕ Importar lote(s) direto de um Excel (sem passar por "Gerar planilha")</label>
+          <div class="hint">Sobe a planilha "NOTAS FISCAIS 3.0" (com Nome, CPF, Valor — uma aba por dia) e salva um lote no Firebase pra <b>cada aba com data</b> de uma vez, pra depois comparar aqui.</div>
+          <input type="file" id="sinImportarLoteFile" accept=".xlsx,.xls">
+          <div class="row" style="margin-top:10px;">
+            <button onclick="nflSinImportarLotesDeExcel()">➕ Importar lote(s) desse Excel</button>
+          </div>
+          <div id="sinImportarBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
+        </div>
+
+                  <details class="nflx-det"><summary>Como funciona</summary>
+<div class="card" style="margin-bottom:16px;">
           <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">S</span><p class="step-title">Comparativo Sinaxys</p></div>
           <div class="hint">Salve o lote gerado na aba <b>Gerar Planilha</b> clicando em "💾 Salvar lote no Comparativo Sinaxys". Depois, carregue o retorno do Sinaxys (exportação de NFs emitidas) abaixo para ver o que passou e o que deu erro.</div>
           <div class="hint" style="background:var(--purple-bg); color:var(--purple); border:1px solid var(--purple);">
@@ -3104,7 +3290,76 @@
           </div>
         </div>
 
-        <div class="card">
+                  </details>
+        </div>
+        <div class="nflx-sscreen" id="nflxS2">
+        <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflxSinGo(1)"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+<div class="card" id="sinComparativoCard" style="display:none;">
+          <label>2. Comparar lote selecionado com retorno Sinaxys</label>
+          <div class="hint" id="sinLoteInfo"></div>
+          <div class="hint" style="margin-top:8px;">Carregue a exportação do Sinaxys (NFs emitidas) para este lote:</div>
+          <input type="file" id="sinRetornoFile" accept=".xlsx,.xls,.csv" onchange="nflSinHandleRetorno(event)">
+          <div class="hint" style="margin-top:8px;">Ou cole os dados (separados por TAB):</div>
+          <textarea id="sinRetornoInput" placeholder="Cole aqui o retorno do Sinaxys..."></textarea>
+          <div class="row">
+            <button onclick="nflSinDetectarRetorno()">Detectar colunas do retorno</button>
+          </div>
+          <div class="tablewrap" style="margin-top:10px;"><table id="sinRetornoMapTable"></table></div>
+          <div class="row" style="margin-top:6px;">
+            <button onclick="nflSinConferir()" style="background:var(--purple);">📊 Comparar lote × retorno Sinaxys</button>
+          </div>
+        </div>
+
+                </div>
+        <div class="nflx-sscreen" id="nflxS3">
+        <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflxSinGo(2)"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+<div class="card" id="sinResultadoCard" style="display:none;">
+          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">✓</span><p class="step-title">Resultado do comparativo</p></div>
+          <div class="nflx-res3"><div class="rc g"><div class="n" id="nflxSinOk">0</div><div class="l">Emitidas</div></div><div class="rc r"><div class="n" id="nflxSinRec">0</div><div class="l">Recusadas</div></div><div class="rc a"><div class="n" id="nflxSinNao">0</div><div class="l">Não emitida</div></div></div>
+          <div class="nflx-refazer" id="nflxSinRefazer" style="display:none">
+            <div class="top"><div class="ic"><i class="fas fa-rotate-right"></i></div><div><div class="t" id="nflxSinRefT">—</div><div class="s" id="nflxSinRefS">—</div></div></div>
+            <button type="button" class="nflx-big red" onclick="nflxBaixarErros()" style="margin-bottom:0"><div class="bi"><i class="fas fa-file-excel"></i></div><div class="txt" id="nflxSinRefBtn">Baixar para corrigir<div class="sub">Arquivo .xlsx pronto pra reenviar ou ajustar</div></div><i class="fas fa-download" style="opacity:.7"></i></button>
+            <div class="info"><i class="fas fa-circle-info"></i> Nome · CPF · Valor · Tipo · Motivo · Protocolo — um por linha, em ordem alfabética</div>
+          </div>
+          <div class="nflx-chips" id="nflxSinChips">
+            <button type="button" class="nflx-chip on" data-f="todos" onclick="nflxSinFiltro('todos')">Todos <span class="n" id="nflxCnTodos">0</span></button>
+            <button type="button" class="nflx-chip" data-f="ok" onclick="nflxSinFiltro('ok')">Emitidas <span class="n" id="nflxCnOk">0</span></button>
+            <button type="button" class="nflx-chip" data-f="rec" onclick="nflxSinFiltro('rec')">Recusadas <span class="n" id="nflxCnRec">0</span></button>
+            <button type="button" class="nflx-chip" data-f="falta" onclick="nflxSinFiltro('falta')">Não emitidas <span class="n" id="nflxCnNao">0</span></button>
+          </div>
+          <div class="nflx-lista" id="nflxSinLista"></div>
+          <div class="nflx-rodape">
+            <button type="button" class="nflx-m" onclick="nflxBaixarCompleto()"><i class="fas fa-file-excel"></i> Baixar comparativo completo</button>
+            <button type="button" class="nflx-m" onclick="nflxSinGo(2)"><i class="fas fa-rotate"></i> Refazer comparação</button>
+          </div>
+          <button type="button" class="nflx-big purple" onclick="nflxSinGo(4)"><div class="bi"><i class="fas fa-arrow-right"></i></div><div class="txt" id="nflxSinEnvBtn">Enviar Nº NF pro Sheets<div class="sub">Escreve o Nº das emitidas direto na planilha</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+          <details class="nflx-det"><summary>Ver tabela completa e outras ações</summary>
+          <div class="summary" id="sinResultSummary"></div>
+          <div class="tablewrap" style="margin-top:10px;"><table id="sinResultTable"></table></div>
+          <div class="row">
+            <button onclick="nflSinDownloadXlsx()" style="background:var(--purple);">⬇ Baixar comparativo (.xlsx)</button>
+            <button class="secondary" onclick="nflSinExcluirLote()" style="color:var(--red); border-color:var(--red);">🗑 Excluir lote selecionado</button>
+          </div>
+        </details>
+        </div>
+
+                </div>
+        <div class="nflx-sscreen" id="nflxS4">
+        <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflxSinGo(3)"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+          <div class="card nflx-card purple" style="margin-bottom:16px;">
+            <div class="nflx-center"><div class="nflx-ic purple"><i class="fas fa-file-export"></i></div><div class="nflx-tl">Enviar Nº NF pro Sheets</div></div>
+            <div class="nflx-box" id="nflxSinEnvInfo">—</div>
+          </div>
+<div class="card" id="sinWebhookCard" style="display:none;">
+          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">📤</span><p class="step-title">Enviar Nº NF direto pro Google Sheets</p></div>
+          <div class="hint">Escreve o Nº NF das notas <b>emitidas</b> deste comparativo direto na aba do dia, na planilha "NOTAS FISCAIS 3.0" — sem precisar copiar/colar. Usa a URL/token configurados acima.</div>
+          <div class="row" style="margin-top:8px;">
+            <button onclick="nflEnviarNfsParaSheet()" style="background:var(--purple);">📤 Enviar Nº NF pro Sheets</button>
+          </div>
+          <div id="sinWebhookBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
+        </div>
+          <details class="nflx-det" id="nflxSinCfg"><summary>⚙️ Conexão com o Google Sheets (configurar 1 vez)</summary>
+<div class="card">
           <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">📤</span><p class="step-title">Conexão com o Google Sheets (Apps Script)</p></div>
           <div class="hint">Configure uma vez a URL e o token do script instalado na planilha. Isso libera o botão de manutenção abaixo e o botão "Enviar Nº NF pro Sheets" no resultado do comparativo.</div>
           <div class="formrow" style="margin-top:8px;">
@@ -3126,57 +3381,7 @@
           <div id="sinSetupBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
         </div>
 
-        <div class="card">
-          <label>1. Lotes salvos no Firebase</label>
-          <div id="sinLotesList"><div class="empty-state">Carregando lotes...</div></div>
-          <div class="row" style="margin-top:8px;">
-            <button class="secondary" onclick="nflSinCarregarLotes()">🔄 Recarregar lotes</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <label>➕ Importar lote(s) direto de um Excel (sem passar por "Gerar planilha")</label>
-          <div class="hint">Sobe a planilha "NOTAS FISCAIS 3.0" (com Nome, CPF, Valor — uma aba por dia) e salva um lote no Firebase pra <b>cada aba com data</b> de uma vez, pra depois comparar aqui.</div>
-          <input type="file" id="sinImportarLoteFile" accept=".xlsx,.xls">
-          <div class="row" style="margin-top:10px;">
-            <button onclick="nflSinImportarLotesDeExcel()">➕ Importar lote(s) desse Excel</button>
-          </div>
-          <div id="sinImportarBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
-        </div>
-
-        <div class="card" id="sinComparativoCard" style="display:none;">
-          <label>2. Comparar lote selecionado com retorno Sinaxys</label>
-          <div class="hint" id="sinLoteInfo"></div>
-          <div class="hint" style="margin-top:8px;">Carregue a exportação do Sinaxys (NFs emitidas) para este lote:</div>
-          <input type="file" id="sinRetornoFile" accept=".xlsx,.xls,.csv" onchange="nflSinHandleRetorno(event)">
-          <div class="hint" style="margin-top:8px;">Ou cole os dados (separados por TAB):</div>
-          <textarea id="sinRetornoInput" placeholder="Cole aqui o retorno do Sinaxys..."></textarea>
-          <div class="row">
-            <button onclick="nflSinDetectarRetorno()">Detectar colunas do retorno</button>
-          </div>
-          <div class="tablewrap" style="margin-top:10px;"><table id="sinRetornoMapTable"></table></div>
-          <div class="row" style="margin-top:6px;">
-            <button onclick="nflSinConferir()" style="background:var(--purple);">📊 Comparar lote × retorno Sinaxys</button>
-          </div>
-        </div>
-
-        <div class="card" id="sinResultadoCard" style="display:none;">
-          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">✓</span><p class="step-title">Resultado do comparativo</p></div>
-          <div class="summary" id="sinResultSummary"></div>
-          <div class="tablewrap" style="margin-top:10px;"><table id="sinResultTable"></table></div>
-          <div class="row">
-            <button onclick="nflSinDownloadXlsx()" style="background:var(--purple);">⬇ Baixar comparativo (.xlsx)</button>
-            <button class="secondary" onclick="nflSinExcluirLote()" style="color:var(--red); border-color:var(--red);">🗑 Excluir lote selecionado</button>
-          </div>
-        </div>
-
-        <div class="card" id="sinWebhookCard" style="display:none;">
-          <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">📤</span><p class="step-title">Enviar Nº NF direto pro Google Sheets</p></div>
-          <div class="hint">Escreve o Nº NF das notas <b>emitidas</b> deste comparativo direto na aba do dia, na planilha "NOTAS FISCAIS 3.0" — sem precisar copiar/colar. Usa a URL/token configurados acima.</div>
-          <div class="row" style="margin-top:8px;">
-            <button onclick="nflEnviarNfsParaSheet()" style="background:var(--purple);">📤 Enviar Nº NF pro Sheets</button>
-          </div>
-          <div id="sinWebhookBanner" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;"></div>
+                  </details>
         </div>
       </div><!-- /page sinaxys -->
 
@@ -5224,6 +5429,303 @@
     })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.7 · 03/10/2026</span>
+  <!-- ═══════════ v4.8 — fluxos guiados: NF do Dia + Comparativo Sinaxys (envolvem as funções nfl*, não reescrevem) ═══════════ -->
+  <script>
+  (function(){
+    var $=function(id){return document.getElementById(id);};
+    var E=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+    function T(m,k){ try{ if(typeof toast==='function') toast(m,k||'success'); else alert(m);}catch(e){} }
+
+    /* ---------- barra de passos (NF do Dia) acompanha os overlays existentes ---------- */
+    var MAP={'ov-intro':1,'ov-paste':1,'ov-found':1,'ov-map':2,'ov-agend':2,'ov-cep':3,'ov-fix':4,'ov-result':5};
+    function syncSteps(){
+      var cur=1;
+      Object.keys(MAP).forEach(function(id){var e=$(id); if(e&&e.classList.contains('open')) cur=MAP[id];});
+      document.querySelectorAll('#nflxSteps .nflx-step').forEach(function(s){
+        var n=+s.getAttribute('data-s'); s.classList.remove('active','done');
+        if(n<cur) s.classList.add('done'); else if(n===cur) s.classList.add('active');
+      });
+    }
+    var mo=new MutationObserver(syncSteps);
+    Object.keys(MAP).forEach(function(id){var e=$(id); if(e) mo.observe(e,{attributes:true,attributeFilter:['class']});});
+    /* abre direto em "Buscar" (a explicação continua no texto da aba) */
+    nflCloseStep('ov-intro'); nflOpenStep('ov-paste');
+    var pd=$('puxarDataInput'); if(pd&&!pd.value){ var d=new Date(); pd.value=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+    syncSteps();
+
+    /* ---------- 1 · Buscar → tela "Encontrei notas" ---------- */
+    function contarNotas(){
+      var linhas=($('nflInput').value||'').split('\n').filter(function(l){return l.trim();});
+      var comCpf=linhas.filter(function(l){return /\d{3}\.?\d{3}\.?\d{3}-?\d{2}/.test(l);}).length;
+      return comCpf||linhas.length;
+    }
+    function wrapBuscar(nome,statusId,rotulo){
+      var o=window[nome]; if(typeof o!=='function') return;
+      window[nome]=async function(){
+        var r=await o.apply(this,arguments);
+        var st=$(statusId), ok=st&&st.innerHTML.indexOf('var(--green)')>=0&&($('nflInput').value||'').trim();
+        if(ok){
+          var iso=$('puxarDataInput').value||'', br=iso?iso.split('-').reverse().join('/'):'';
+          $('nflxFoundN').textContent=contarNotas();
+          $('nflxFoundAba').innerHTML='<i class="fas fa-file-lines" style="margin-right:5px;"></i> '+E(rotulo+(br?' '+br:''));
+          nflCloseStep('ov-paste'); nflOpenStep('ov-found');
+        }
+        return r;
+      };
+    }
+    /* O fluxo trata a 1ª linha como cabeçalho. Os dados vindos do Caixa não trazem cabeçalho,
+       então o 1º paciente era descartado — aqui garantimos a linha de cabeçalho. */
+    function garantirCabecalho(){
+      var el=$('nflInput'), v=(el.value||'');
+      if(!v.trim()) return;
+      var primeira=v.split('\n')[0];
+      if(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/.test(primeira)) el.value=NFL_HEADERS.join('\t')+'\n'+v;
+    }
+    var _pc=window.nflPuxarDoCaixa;
+    window.nflPuxarDoCaixa=async function(){ var r=await _pc.apply(this,arguments); garantirCabecalho(); return r; };
+    var _np=window.nflNfDiaProcessar;
+    if(typeof _np==='function') window.nflNfDiaProcessar=async function(){ var r=await _np.apply(this,arguments); garantirCabecalho(); return r; };
+    wrapBuscar('nflPuxarDoSheet','puxarStatus','aba');
+    wrapBuscar('nflPuxarDoCaixa','puxarCaixaStatus','do Caixa ·');
+    window.nflxIrMapear=function(){
+      nflCloseStep('ov-found'); nflDetectColumns();
+      if(!$('ov-map').classList.contains('open')) nflOpenStep('ov-paste');
+    };
+
+    /* ---------- 2/3 · Mapear → CEP (agendados passa a ser opcional) ---------- */
+    window._nflxUsouAgend=false; var _abrindoAgend=false;
+    var _goAgend=window.nflGoToAgendStep;
+    window.nflGoToAgendStep=function(){
+      _goAgend.apply(this,arguments);
+      if(!_abrindoAgend){ nflCloseStep('ov-agend'); nflOpenStep('ov-cep'); window._nflxUsouAgend=false; }
+    };
+    window.nflxAbrirAgendados=function(){ _abrindoAgend=true; try{ window.nflGoToAgendStep(); }finally{ _abrindoAgend=false; } window._nflxUsouAgend=true; };
+    window.nflxCepVoltar=function(){ nflCloseStep('ov-cep'); nflOpenStep(window._nflxUsouAgend?'ov-agend':'ov-map'); };
+    var _clear=window.nflClearAll;
+    window.nflClearAll=function(){ var r=_clear.apply(this,arguments); nflCloseStep('ov-found'); nflCloseStep('ov-fix'); return r; };
+
+    /* ---------- 4 · Corrigir ---------- */
+    var W2F={'CPF inválido':'CPF','Paciente em branco':'Paciente','Telefone em branco':'Telefone','Logradouro em branco':'Logradouro','Número em branco':'Número','Bairro em branco':'Bairro','Cidade em branco':'Cidade','UF em branco':'UF','Valor inválido':'Valor'};
+    function H(n){return NFL_HEADERS.indexOf(n);}
+    function incompletos(){ var o=[]; (window.nflCurrentRows||[]).forEach(function(r,i){ if(!r.tipo||r.hasWarning) o.push(i); }); return o; }
+    function nomeDe(r){ return (r.values[H('Paciente')]||'').trim()||'—'; }
+    var _skip=false;
+    var _render=window.nflRenderResultTable;
+    window.nflRenderResultTable=function(){
+      _render.apply(this,arguments);
+      montarResultado();
+      if(_skip) return;
+      var inc=incompletos();
+      if(inc.length){
+        nflCloseStep('ov-result');
+        var tot=nflCurrentRows.length, prontos=tot-inc.length;
+        $('nflxIncT').textContent=inc.length+(inc.length===1?' paciente com dados faltando':' pacientes com dados faltando');
+        $('nflxIncN').textContent=inc.length+' de '+tot;
+        $('nflxBtnSim').innerHTML='Sim, corrigir '+inc.length+'<div class="sub">Preenche o que falta, um por um</div>';
+        $('nflxBtnNao').innerHTML='Não, seguir com '+prontos+' pronto'+(prontos===1?'':'s')+'<div class="sub">Os incompletos saem numa planilha separada, sem travar</div>';
+        $('nflxFixAsk').style.display=''; $('nflxFixForm').style.display='none';
+        nflOpenStep('ov-fix');
+      }
+    };
+    window.nflxSeguirSem=function(){ nflCloseStep('ov-fix'); nflOpenStep('ov-result'); };
+    function fieldHtml(ri,campo,r,missing,full,warnAbs){
+      var ci=H(campo), cell=$('nflcell_'+ri+'_'+ci), v=cell?cell.value:(r.values[ci]||'');
+      return '<div class="'+(full?'full':'')+'"><label>'+E(campo)+(missing?' <span class="req">*</span>':'')+'</label><input id="nflxfix_'+ri+'_'+ci+'" class="'+(missing?'missing':'')+'" value="'+E(v)+'" oninput="nflxFixSync('+ri+','+ci+',this)"></div>';
+    }
+    window.nflxAbrirCorrecao=function(){
+      var inc=incompletos(), html='', semTipo=false;
+      inc.forEach(function(ri){
+        var r=nflCurrentRows[ri], falt={};
+        (r.warns||[]).forEach(function(w){ if(W2F[w]) falt[W2F[w]]=1; });
+        var rev=(r.warns||[]).filter(function(w){return !W2F[w];});
+        var badge=(r.warns||[]).concat(r.tipo?[]:['Sem tipo']).join(' + ');
+        var campos=['Paciente','CPF'].concat(['Telefone','Logradouro','Número','Bairro','Cidade','UF','Valor'].filter(function(c){return falt[c];}));
+        var f=campos.map(function(c){ return fieldHtml(ri,c,r,!!falt[c],(c==='Logradouro'||c==='Valor'),false); }).join('');
+        if(!r.tipo){ semTipo=true; f+='<div class="full"><label>Tipo <span class="req">*</span></label><select id="nflxfixtipo_'+ri+'" class="missing" onchange="this.classList.remove(\'missing\')"><option value="">— escolha —</option><option value="Consulta">Consulta</option><option value="Exame">Exame</option></select></div>'; }
+        if(rev.length) f+='<div class="full" style="font-size:11.5px;color:#92400e;">⚠ '+E(rev.join('; '))+' (revisão manual)</div>';
+        html+='<div class="nflx-fix"><div class="nflx-fix-h"><div class="nome">'+E(nomeDe(r))+'</div><span class="badge">'+E(badge)+'</span></div><div class="nflx-fix-f">'+f+'</div></div>';
+      });
+      $('nflxFixList').innerHTML=html;
+      $('nflxBulk').style.display=semTipo?'':'none';
+      $('nflxFixAsk').style.display='none'; $('nflxFixForm').style.display='';
+    };
+    window.nflxFixSync=function(ri,ci,el){
+      var cell=$('nflcell_'+ri+'_'+ci); if(!cell) return;
+      cell.value=el.value;
+      try{ cell.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
+      if(cell.value!==el.value) el.value=cell.value; /* máscara aplicada pela célula original */
+      el.classList.remove('missing');
+    };
+    window.nflxBulkTipo=function(){
+      var v=$('nflxBulkTipo').value;
+      document.querySelectorAll('#nflxFixList select[id^="nflxfixtipo_"]').forEach(function(s){ s.value=v; s.classList.remove('missing'); });
+    };
+    window.nflxAplicarCorrecao=function(){
+      /* tipo escolhido → select original da tabela */
+      document.querySelectorAll('#nflxFixList select[id^="nflxfixtipo_"]').forEach(function(s){
+        var ri=s.id.split('_')[1], o=$('nfltipo_'+ri); if(o&&s.value) o.value=s.value;
+      });
+      nflCollectEditedRows();
+      var iCpf=H('CPF');
+      nflCurrentRows.forEach(function(r){
+        var v=r.values, w=[];
+        var cpf=nflOnlyDigits(v[iCpf]);
+        if(!cpf||cpf.length!==11||!nflIsValidCPF(cpf)) w.push('CPF inválido');
+        if(!v[H('Paciente')]) w.push('Paciente em branco');
+        if(!v[H('Telefone')]) w.push('Telefone em branco');
+        if(!v[H('Logradouro')]) w.push('Logradouro em branco');
+        if(!v[H('Número')]) w.push('Número em branco');
+        if(!v[H('Bairro')]) w.push('Bairro em branco');
+        if(!v[H('Cidade')]) w.push('Cidade em branco');
+        if(!v[H('UF')]) w.push('UF em branco');
+        var vr=nflCleanValor(v[H('Valor')]||''); if(!v[H('Valor')]||!vr.ok) w.push('Valor inválido');
+        /* mantém avisos de duplicata/conflito: continuam exigindo revisão manual */
+        (r.warns||[]).forEach(function(x){ if(/Duplicata|CPF associado/.test(x)) w.push(x); });
+        r.warns=w; r.hasWarning=w.length>0;
+      });
+      _skip=true; try{ nflRenderResultTable(); } finally{ _skip=false; }
+      nflCloseStep('ov-fix'); nflOpenStep('ov-result');
+      var rest=incompletos().length;
+      T(rest?('Correções aplicadas — ainda restam '+rest+' incompleto(s), vão numa planilha separada'):'Tudo certo — nenhum incompleto!', rest?'error':'success');
+    };
+
+    /* ---------- 5 · Baixar ---------- */
+    function grupos(){
+      var rows=window.nflCurrentRows||[];
+      return {
+        Consulta:rows.filter(function(r){return r.tipo==='Consulta'&&!r.hasWarning;}),
+        Exame:rows.filter(function(r){return r.tipo==='Exame'&&!r.hasWarning;}),
+        Incompletos:rows.filter(function(r){return !r.tipo||r.hasWarning;})
+      };
+    }
+    function montarResultado(){
+      var g=grupos(), prontos=g.Consulta.length+g.Exame.length;
+      $('nflxResN').textContent=prontos;
+      $('nflxSubCons').textContent=g.Consulta.length+' paciente(s) · .xlsx pronto pra Sinaxys';
+      $('nflxSubExa').textContent=g.Exame.length+' paciente(s) · .xlsx pronto pra Sinaxys';
+      $('nflxBtnCons').disabled=!g.Consulta.length; $('nflxBtnExa').disabled=!g.Exame.length;
+      var bi=$('nflxBtnInc'); bi.style.display=g.Incompletos.length?'':'none';
+      $('nflxSubInc').textContent=g.Incompletos.length+' paciente(s) pra revisar · .xlsx separado';
+      var pr=$('nflxBtnProc'); if(pr) pr.style.display=($('dataConsulta').value?'':'none');
+    }
+    window.nflxBaixar=function(tipo){
+      if(!(window.nflCurrentRows||[]).length){ T('Gere a planilha primeiro.','error'); return; }
+      nflCollectEditedRows();
+      var rows=grupos()[tipo]; if(!rows.length){ T('Nenhuma linha neste lote.','error'); return; }
+      var nome=tipo==='Consulta'?'CONSULTAS':tipo==='Exame'?'EXAMES':'INCOMPLETOS';
+      if(tipo==='Incompletos'){ XLSX.writeFile(nflBuildWorkbookFor(rows),'nf_lote_INCOMPLETOS.xlsx'); }
+      else nflSplitChunks(rows,NFL_MAX_LOTE).forEach(function(chunk,i){
+        var suf=rows.length>NFL_MAX_LOTE?'_parte'+(i+1):'';
+        XLSX.writeFile(nflBuildWorkbookFor(chunk),'nf_lote_'+nome+suf+'.xlsx');
+      });
+      nflAddEntry($('dataConsulta').value||nflTodayISO(), rows.length, 'Gerado ('+rows.length+' '+tipo+(tipo==='Incompletos'?'':'(s)')+')');
+      var sb=$('savedBanner'); if(sb) sb.style.display='block';
+      T(rows.length+' paciente(s) baixados — '+tipo,'success');
+    };
+    window.nflxVerPacientes=function(){ var d=$('nflxDetRes'); d.open=!d.open; if(d.open) d.scrollIntoView({behavior:'smooth',block:'start'}); };
+    window.nflxMarcarProcessado=function(){
+      var d=$('dataConsulta').value; if(!d){ T('Sem data definida.','error'); return; }
+      if(typeof nflNfDiaMarcar==='function') nflNfDiaMarcar(d,true).then(function(){ T('Data marcada como processada','success'); });
+    };
+
+    /* ================= Comparativo Sinaxys ================= */
+    var SM={}; /* telas */
+    window.nflxSinGo=function(n){
+      [1,2,3,4].forEach(function(i){ var e=$('nflxS'+i); if(e) e.classList.toggle('active',i===n); });
+      document.querySelectorAll('#nflxSinSteps .nflx-step').forEach(function(s){
+        var k=+s.getAttribute('data-s'); s.classList.remove('active','done');
+        if(k<n) s.classList.add('done'); else if(k===n) s.classList.add('active');
+      });
+      if(n===4) montarEnvio();
+      try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){}
+    };
+    function resetCont(){
+      var b=$('nflxSinCont'); if(!b) return; b.disabled=true;
+      $('nflxSinContTxt').innerHTML='Escolha um lote acima<div class="sub">Depois é só continuar</div>';
+    }
+    var _carr=window.nflSinCarregarLotes;
+    window.nflSinCarregarLotes=function(){ nflxSinGo(1); resetCont(); return _carr.apply(this,arguments); };
+    var _sel=window.nflSinSelecionarLote;
+    window.nflSinSelecionarLote=async function(key){
+      var r=await _sel.apply(this,arguments);
+      if(window.nflSinLoteAtivo&&window.nflSinLoteAtivo.key===key){
+        document.querySelectorAll('#sinLotesList .sin-lote-card').forEach(function(c){
+          var b=c.querySelector('button'), on=b&&(b.getAttribute('onclick')||'').indexOf("'"+key+"'")>=0;
+          c.classList.toggle('sel',!!on);
+        });
+        var l=window.nflSinLoteAtivo.dados||{};
+        $('nflxSinCont').disabled=false;
+        $('nflxSinContTxt').innerHTML='Continuar com o lote de '+E(nflFormatDateBR(l.data||'—'))+'<div class="sub">'+E(l.total||0)+' paciente(s) · próximo: retorno da Sinaxys</div>';
+      }
+      return r;
+    };
+    var _conf=window.nflSinConferir;
+    window.nflSinConferir=function(){
+      window._nflSinOrdered=null;
+      var r=_conf.apply(this,arguments);
+      if(window._nflSinOrdered){ montarComparativo(window._nflSinOrdered); nflxSinGo(3); }
+      return r;
+    };
+    var FILTRO='todos';
+    function montarComparativo(ord){
+      var ok=ord.filter(function(r){return r.status==='emitida';}), rec=ord.filter(function(r){return r.status==='recusada';}), nao=ord.filter(function(r){return r.status==='nao_emitida';});
+      $('nflxSinOk').textContent=ok.length; $('nflxSinRec').textContent=rec.length; $('nflxSinNao').textContent=nao.length;
+      $('nflxCnTodos').textContent=ord.length; $('nflxCnOk').textContent=ok.length; $('nflxCnRec').textContent=rec.length; $('nflxCnNao').textContent=nao.length;
+      var err=rec.length+nao.length, bx=$('nflxSinRefazer');
+      bx.style.display=err?'':'none';
+      if(err){
+        $('nflxSinRefT').textContent=err+(err===1?' paciente precisa ser reemitido':' pacientes precisam ser reemitidos');
+        var partes=[]; if(rec.length) partes.push(rec.length+' recusada(s) pela Sinaxys'); if(nao.length) partes.push(nao.length+' que não apareceu(ram) no retorno');
+        $('nflxSinRefS').textContent=partes.join(' + ')+'. Baixe a lista pra corrigir e reenviar.';
+        $('nflxSinRefBtn').innerHTML='Baixar os '+err+' pra corrigir<div class="sub">Arquivo .xlsx pronto pra reenviar ou ajustar</div>';
+      }
+      $('nflxSinEnvBtn').innerHTML='Enviar Nº NF pro Sheets<div class="sub">Escreve os '+ok.length+' Nº das emitidas direto na planilha</div>';
+      $('nflxSinLista').innerHTML=ord.map(function(r){
+        var cls=r.status==='emitida'?'':(r.status==='recusada'?'err':'warn');
+        var ic=r.status==='emitida'?'<div class="st g"><i class="fas fa-check"></i></div>':(r.status==='recusada'?'<div class="st r"><i class="fas fa-xmark"></i></div>':'<div class="st a"><i class="fas fa-minus"></i></div>');
+        var nf=r.status==='emitida'?'<b>NF '+E(r.nfNumero)+'</b>':(r.status==='recusada'?'<b style="color:#C62828">Recusada</b><br>protocolo '+E(r.nfNumero):'<b style="color:#b45309">Não achada</b>');
+        return '<div class="nflx-ln '+cls+'" data-st="'+r.status+'">'+ic+'<div class="info"><b>'+E(r.nome)+'</b><span>'+E(r.cpf)+' · R$ '+E(r.valor)+(r.tipo?' · '+E(r.tipo):'')+'</span></div><div class="nf">'+nf+'</div></div>';
+      }).join('');
+      nflxSinFiltro('todos');
+    }
+    window.nflxSinFiltro=function(f){
+      FILTRO=f;
+      document.querySelectorAll('#nflxSinChips .nflx-chip').forEach(function(c){ c.classList.toggle('on',c.getAttribute('data-f')===f); });
+      document.querySelectorAll('#nflxSinLista .nflx-ln').forEach(function(l){
+        var s=l.getAttribute('data-st'), show=f==='todos'||(f==='ok'&&s==='emitida')||(f==='rec'&&s==='recusada')||(f==='falta'&&s==='nao_emitida');
+        l.style.display=show?'':'none';
+      });
+    };
+    function montarEnvio(){
+      var ord=window._nflSinOrdered||[], ok=ord.filter(function(r){return r.status==='emitida';}).length, pend=ord.length-ok;
+      var l=(window.nflSinLoteAtivo&&window.nflSinLoteAtivo.dados)||{};
+      $('nflxSinEnvInfo').innerHTML='<div style="font-weight:800;color:#0A1F44;margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Vai escrever</div>'
+        +'<div>✓ <b>'+ok+' linha(s)</b> — Nº NF das emitidas, na aba <b>'+E(nflFormatDateBR(l.data||'—'))+'</b> da planilha NOTAS FISCAIS 3.0</div>'
+        +'<div style="color:#94a3b8;">— Linhas com valor já preenchido não são mexidas</div>'
+        +'<div style="color:#94a3b8;">— Recusadas e não achadas ficam em branco ('+pend+' pra reemitir)</div>';
+    }
+    function dataArq(){ var l=(window.nflSinLoteAtivo&&window.nflSinLoteAtivo.dados)||{}; return (l.data||nflTodayISO()).split('-').reverse().join('-'); }
+    function gravar(aoa,nome){ var ws=XLSX.utils.aoa_to_sheet(aoa), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Planilha1'); XLSX.writeFile(wb,nome); }
+    var ROT={emitida:'Emitida',recusada:'Recusada',nao_emitida:'Não emitida'};
+    window.nflxBaixarErros=function(){
+      var ord=(window._nflSinOrdered||[]).filter(function(r){return r.status!=='emitida';});
+      if(!ord.length){ T('Nenhum erro para baixar.','error'); return; }
+      ord.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'); });
+      var aoa=[['Nome','CPF','Valor','Tipo','Motivo','Protocolo']].concat(ord.map(function(r){
+        return [r.nome||'',r.cpf||'',r.valor||'',r.tipo||'',r.status==='recusada'?'Recusada pela Sinaxys':'Não consta no retorno',r.status==='recusada'?(r.nfNumero||''):'—'];
+      }));
+      gravar(aoa,'nf_erros_para_corrigir_'+dataArq()+'.xlsx');
+      T(ord.length+' paciente(s) no arquivo de correção','success');
+    };
+    window.nflxBaixarCompleto=function(){
+      var ord=window._nflSinOrdered||[]; if(!ord.length) return;
+      var aoa=[['Nome','CPF','Valor','Tipo','Status','Nº NF']].concat(ord.map(function(r){ return [r.nome||'',r.cpf||'',r.valor||'',r.tipo||'',ROT[r.status]||r.status,r.status==='emitida'?(r.nfNumero||''):'']; }));
+      gravar(aoa,'comparativo_sinaxys_'+dataArq()+'.xlsx');
+    };
+    nflxSinGo(1);
+  })();
+  </script>
+
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.8 · 03/10/2026</span>
 </body>
 </html>
