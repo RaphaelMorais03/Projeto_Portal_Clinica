@@ -122,7 +122,22 @@
         <div class="user-banner-icon"><i class="fas fa-cash-register"></i></div>
       </div>
 
-      <!-- Preencher NF do Dia — layout de planilha, com salvamento automático -->
+      <!-- Relatório de Caixa — primeira tela: é o fechamento do turno -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-file-lines"></i> Relatório de Caixa</div>
+        </div>
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i> No AMEI: <strong>Caixa → Detalhes → Ctrl+A → Ctrl+C</strong> → cole abaixo e clique em Gerar.
+        </div>
+        <label class="f-label" style="margin-bottom:6px;">Cole os dados do caixa (AMEI)</label>
+        <textarea id="cxPaste" style="width:100%;height:280px;padding:14px;border:1.5px solid var(--gray-200);border-radius:12px;font-family:monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .2s;" placeholder="Cole aqui os dados copiados do sistema AMEI..." onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
+        <div style="margin-top:14px;">
+          <button class="btn-r" id="btnGerar" onclick="gerarRelatorio()" style="width:100%;justify-content:center;padding:14px;font-size:15px;"><i class="fas fa-chart-bar"></i> Gerar Relatório</button>
+        </div>
+      </div>
+
+      <!-- Preencher NF do Dia — apoio durante o dia (layout de planilha, salvamento automático) -->
       <div class="panel" id="panelNfDia">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-file-invoice-dollar"></i> Preencher NF do Dia</div>
@@ -175,20 +190,6 @@
         <div id="nfDiaVerificacao" style="margin-top:10px;"></div>
       </div>
 
-      <!-- Gerar Relatório — mesma largura do painel de Preencher NF do Dia -->
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title"><i class="fas fa-file-lines"></i> Relatório de Caixa</div>
-        </div>
-        <div class="info-box">
-          <i class="fas fa-info-circle"></i> No AMEI: <strong>Caixa → Detalhes → Ctrl+A → Ctrl+C</strong> → cole abaixo e clique em Gerar.
-        </div>
-        <label class="f-label" style="margin-bottom:6px;">Cole os dados do caixa (AMEI)</label>
-        <textarea id="cxPaste" style="width:100%;height:280px;padding:14px;border:1.5px solid var(--gray-200);border-radius:12px;font-family:monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .2s;" placeholder="Cole aqui os dados copiados do sistema AMEI..." onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
-        <div style="margin-top:14px;">
-          <button class="btn-r" id="btnGerar" onclick="gerarRelatorio()" style="width:100%;justify-content:center;padding:14px;font-size:15px;"><i class="fas fa-chart-bar"></i> Gerar Relatório</button>
-        </div>
-      </div>
     </div>
   </div>
 

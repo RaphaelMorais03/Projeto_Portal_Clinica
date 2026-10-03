@@ -1,4 +1,4 @@
-<!-- VERSION: v4.6 | dashboard.html | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
+<!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -613,6 +613,11 @@
       color: var(--gray-400); font-size: 0.78rem; text-align: center; margin-top: 30px;
     }
     #viewNflote input[type="file"] { margin-bottom: 10px; }
+
+    /* v4.7 — organização: a navegação passa a ser só pelo menu lateral (abas duplicadas no topo ficam ocultas;
+       os botões continuam no DOM porque o switchMainTab os referencia) */
+    .s-header .header-right .main-tab{display:none !important;}
+    .main-tabs{display:none !important;}
   </style>
 </head>
 <body>
@@ -5135,19 +5140,19 @@
       'use strict';
 
       var TABS = [
-        {group:'Painéis', items:[
-          {id:'prod',      icon:'fa-chart-bar',           label:'Produção'},
+        {group:'Operação', items:[
           {id:'caixa',     icon:'fa-cash-register',       label:'Caixa'},
-          {id:'fech',      icon:'fa-file-invoice-dollar', label:'Fechamentos'}
+          {id:'fech',      icon:'fa-file-invoice-dollar', label:'Fechamentos'},
+          {id:'nflote',    icon:'fa-file-invoice',        label:'NF em Lote'}
         ]},
         {group:'Análises', items:[
-          {id:'visao',     icon:'fa-gauge-high',   label:'Visão Geral'},
+          {id:'prod',      icon:'fa-chart-bar',    label:'Produção'},
           {id:'ranking',   icon:'fa-trophy',       label:'Ranking'},
+          {id:'visao',     icon:'fa-gauge-high',   label:'Visão Geral'}
+        ]},
+        {group:'Gestão', items:[
           {id:'contratos', icon:'fa-file-contract',label:'Contratos'},
           {id:'odonto',    icon:'fa-tooth',        label:'Caixa Odonto'}
-        ]},
-        {group:'Ferramentas', items:[
-          {id:'nflote',    icon:'fa-file-invoice', label:'NF em Lote'}
         ]}
       ];
 
@@ -5219,6 +5224,6 @@
     })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.6 · 01/10/2026</span>
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.7 · 03/10/2026</span>
 </body>
 </html>
