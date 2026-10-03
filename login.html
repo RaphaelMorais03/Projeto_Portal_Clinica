@@ -1,496 +1,288 @@
-﻿<!-- VERSION: v1.1 | login.html | 14/07/2026 | feat: card Contratos + botão de novidades com changelog -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <link rel="icon" href="assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Pirituba</title>
+  <title>Portal Interno</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="js/firebase-config.js"></script>
   <script src="js/shared-utils.js"></script>
   <style>
-    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-800:#1e293b;}
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    html,body{height:100%;font-family:'Inter',sans-serif;}
-    #telaLogin{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;
-               background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;}
-    .login-right{display:flex;align-items:center;justify-content:center;width:100%;}
-    .login-form-box{width:100%;max-width:440px;background:#202b54;border-radius:18px;
-                    padding:2.5rem;box-shadow:0 10px 25px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.05);}
-    .lf-tag{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#ffffff;margin-bottom:10px;}
-    .lf-title{font-size:28px;font-weight:900;color:#ffffff;letter-spacing:-.8px;margin-bottom:6px;}
-    .lf-sub{font-size:13px;color:#8496bf;margin-bottom:32px;}
-    .lf-field{margin-bottom:1.25rem;}
-    .lf-field label{display:block;font-size:0.95rem;font-weight:600;color:#a3c2e6;margin-bottom:0.5rem;}
-    .lf-wrap{position:relative;display:flex;align-items:center;border:1px solid #384b80;border-radius:10px;background:#293866;transition:border-color .2s,box-shadow .2s;}
-    .lf-wrap:focus-within{border-color:#00c9b7;box-shadow:0 0 0 3px rgba(0,201,183,.2);}
-    .lf-wrap.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(198,40,40,.2);}
-    .lf-ico{padding:0 14px;color:#a3c2e6;font-size:14px;flex-shrink:0;}
-    .lf-input{flex:1;padding:0.85rem 0;border:none;background:transparent;font-family:inherit;font-size:0.95rem;color:#ffffff;outline:none;}
-    .lf-input::placeholder{color:#8496bf;}
-    .eye-btn{padding:0 14px;background:none;border:none;cursor:pointer;color:#a3c2e6;font-size:13px;transition:color .15s;}
-    .eye-btn:hover{color:#ffffff;}
-    .err-box{display:none;align-items:center;gap:9px;background:rgba(198,40,40,.15);border:1px solid rgba(198,40,40,.4);border-radius:10px;padding:11px 14px;margin-bottom:18px;font-size:13px;color:#ff8a8a;font-weight:500;}
-    .err-box.show{display:flex;animation:shake .38s ease;}
-    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
-    .btn-entrar{width:100%;padding:0.95rem;background:var(--red);color:white;border:none;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:1rem;transition:background .2s,transform .1s;}
-    .btn-entrar:hover:not(:disabled){background:var(--red-h);transform:scale(.99);}
-    .btn-entrar:disabled{opacity:.6;cursor:not-allowed;}
-    .b-spin{display:none;width:17px;height:17px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:rot .65s linear infinite;}
-    @keyframes rot{to{transform:rotate(360deg)}}
-    #telaPortal{display:none;min-height:100vh;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;}
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+    html,body{height:100%;}
+    body{background:#0a1429;color:#fff;overflow-x:hidden;}
 
-    /* ── Splash ── */
-    #splashScreen{position:fixed;inset:0;background:#f0f4f8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:10000;transition:opacity .45s ease;}
-    #splashScreen.fade-out{opacity:0;pointer-events:none;}
-    .sp-logo{width:72px;height:72px;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;animation:spPop .5s cubic-bezier(.34,1.56,.64,1) both;}
-    .sp-logo img{width:100%;height:100%;object-fit:contain;}
-    .sp-title{font-size:24px;font-weight:900;color:white;letter-spacing:-.5px;animation:spFu .4s .15s ease both;}
-    .sp-sub{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:1.5px;text-transform:uppercase;animation:spFu .4s .25s ease both;}
-    .sp-dots{display:flex;gap:8px;margin-top:8px;animation:spFu .4s .35s ease both;}
-    .sp-dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);}
-    .sp-dots span:nth-child(1){animation:spDot 1.2s .0s ease-in-out infinite;}
+    /* SPLASH */
+    #splash{position:fixed;inset:0;background:#0a1429;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;z-index:1000;transition:opacity .5s ease;}
+    #splash.fade{opacity:0;pointer-events:none;}
+    .sp-logo{width:72px;height:72px;border-radius:18px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:spPop .55s cubic-bezier(.34,1.56,.64,1) both;}
+    .sp-logo img{width:100%;height:100%;object-fit:contain;padding:10px;}
+    .sp-s{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:1.8px;text-transform:uppercase;font-weight:700;animation:spFu .4s .15s ease both;}
+    .sp-dots{display:flex;gap:7px;animation:spFu .4s .25s ease both;}
+    .sp-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15);}
+    .sp-dots span:nth-child(1){animation:spDot 1.2s 0s ease-in-out infinite;}
     .sp-dots span:nth-child(2){animation:spDot 1.2s .2s ease-in-out infinite;}
     .sp-dots span:nth-child(3){animation:spDot 1.2s .4s ease-in-out infinite;}
-    @keyframes spPop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
-    @keyframes spFu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes spDot{0%,80%,100%{background:rgba(255,255,255,.2);transform:scale(.8)}40%{background:rgba(255,255,255,.9);transform:scale(1.2)}}
-    .p-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.05);}
-    .p-logo{display:flex;align-items:center;gap:12px;}
-    .p-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-    .p-logo-icon img{width:100%;height:100%;object-fit:contain;}
-    .p-logo-name{font-size:17px;font-weight:800;color:var(--navy);letter-spacing:-.3px;}
-    .p-logo-sub{font-size:10px;color:var(--gray-400);}
-    .p-header-right{display:flex;align-items:center;gap:12px;}
-    .p-user{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:6px;}
-    .btn-sair{background:var(--red);color:white;border:none;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
-    .btn-sair:hover{background:var(--red-h);}
-    #telaPortal{background:#161b36;}
-    .p-content{max-width:1100px;margin:0 auto;padding:3rem 1.5rem;}
-    .p-greeting{margin-bottom:2.5rem;}
-    .p-greeting-sub{font-size:0.95rem;font-weight:500;color:#8496bf;margin-bottom:0.25rem;display:block;}
-    .p-greeting-title{font-size:2.2rem;font-weight:800;color:#c73a4b;margin:0;letter-spacing:-.5px;}
-    .portal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;}
-    .portal-card{background:white;border-radius:16px;padding:1.75rem;cursor:pointer;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;gap:0;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);}
-    .portal-card:hover{transform:translateY(-3px);box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);}
-    .pc-icon{width:48px;height:48px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;margin-bottom:1rem;color:#94a3b8;}
-    .pc-icon i{color:#94a3b8;}
-    .pc-name{font-size:1.25rem;font-weight:700;color:#0f172a;margin:0 0 0.5rem 0;}
-    .pc-desc{font-size:0.95rem;color:#64748b;line-height:1.5;margin:0 0 1.5rem 0;flex-grow:1;}
-    .pc-arrow{margin-top:auto;font-size:0.95rem;font-weight:700;color:#c73a4b;display:flex;align-items:center;gap:5px;transition:gap .18s;}
-    .portal-card:hover .pc-arrow{gap:9px;}
-    .s-overlay{position:fixed;inset:0;background:var(--navy);display:none;align-items:center;justify-content:center;flex-direction:column;gap:13px;z-index:9999;}
-    .s-overlay.show{display:flex;}
-    .s-icon{font-size:54px;animation:pop .38s cubic-bezier(.34,1.56,.64,1) both;}
-    .s-sys{font-size:12px;color:rgba(255,255,255,.35);letter-spacing:1.8px;text-transform:uppercase;animation:fu .3s .22s ease both;}
-    @keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
-    @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    @media(max-width:860px){.portal-grid{grid-template-columns:1fr;}.p-header{padding:0 20px;}.p-greeting-title{font-size:1.8rem;}}
+    @keyframes spPop{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:scale(1);}}
+    @keyframes spFu{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes spDot{0%,80%,100%{background:rgba(255,255,255,.15);transform:scale(.85);}40%{background:#818cf8;transform:scale(1.2);}}
 
-    /* ── BOTÃO NOVIDADES ── */
-    .novidades-fab{position:fixed;bottom:24px;right:24px;z-index:1000;}
-    .novidades-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0A1F44,#122b5e);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:0 6px 24px rgba(10,31,68,.35);transition:all .2s;position:relative;}
-    .novidades-btn:hover{transform:scale(1.1);box-shadow:0 8px 32px rgba(10,31,68,.45);}
-    .novidades-dot{position:absolute;top:4px;right:4px;width:14px;height:14px;background:#C62828;border-radius:50%;border:2.5px solid white;animation:pulse-dot 1.8s ease-in-out infinite;}
-    @keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.3);opacity:.8;}}
-    .novidades-panel{position:fixed;bottom:88px;right:24px;width:340px;max-height:480px;background:white;border-radius:18px;box-shadow:0 16px 56px rgba(10,31,68,.22);border:1.5px solid #e2e8f0;z-index:1000;overflow:hidden;flex-direction:column;display:none;}
-    .novidades-panel.aberto{display:flex;}
-    .nov-head{padding:16px 18px 12px;border-bottom:1.5px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-    .nov-head-title{font-size:14px;font-weight:800;color:#0A1F44;display:flex;align-items:center;gap:8px;}
-    .nov-head-title i{color:#C62828;}
-    .nov-close{background:#f1f5f9;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;color:#64748b;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-    .nov-close:hover{background:#e2e8f0;color:#0A1F44;}
-    .nov-lista{overflow-y:auto;flex:1;padding:8px 0;}
-    .nov-lista::-webkit-scrollbar{width:4px;}
-    .nov-lista::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
-    .nov-item{padding:12px 18px;border-bottom:1px solid #f8fafc;}
-    .nov-item:last-child{border-bottom:none;}
-    .nov-item-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
-    .nov-modulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:8px;}
-    .nov-data{font-size:10px;color:#94a3b8;font-weight:600;}
-    .nov-desc{font-size:12px;color:#475569;line-height:1.5;}
-    .nov-rodape{padding:10px 18px;border-top:1.5px solid #f1f5f9;font-size:11px;color:#94a3b8;text-align:center;flex-shrink:0;}
+    /* LOGIN */
+    .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;}
+    .login-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(99,102,241,.12) 0%,transparent 45%),radial-gradient(circle at 80% 70%,rgba(13,148,136,.08) 0%,transparent 45%);pointer-events:none;}
+    .card{width:100%;max-width:400px;background:#fff;border-radius:20px;padding:42px 34px 34px;position:relative;z-index:2;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+    .brand{display:flex;flex-direction:column;align-items:center;margin-bottom:30px;}
+    .brand-logo{width:64px;height:64px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;}
+    .brand-logo img{width:100%;height:100%;object-fit:contain;padding:10px;}
+    .brand-tag{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:#6366f1;}
+    .title-block{margin-bottom:26px;}
+    .title{font-size:22px;font-weight:800;color:#0A1F44;letter-spacing:-.5px;margin-bottom:5px;}
+    .subtitle{font-size:13px;color:#64748b;line-height:1.55;}
+    .field{margin-bottom:15px;}
+    .field label{display:block;font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+    .input-wrap{position:relative;display:flex;align-items:center;border:1.5px solid #e2e8f0;border-radius:11px;background:#f8fafc;transition:all .18s;}
+    .input-wrap:focus-within{border-color:#6366f1;background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+    .input-wrap.err{border-color:#C62828;background:#fef2f2;box-shadow:0 0 0 3px rgba(198,40,40,.1);animation:shake .4s ease;}
+    @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+    .input-ic{padding:0 13px;color:#94a3b8;font-size:13px;flex-shrink:0;}
+    .input-wrap:focus-within .input-ic{color:#6366f1;}
+    .input-wrap input{flex:1;padding:12px 0;border:none;background:transparent;font-family:inherit;font-size:13.5px;color:#1e293b;outline:none;}
+    .input-wrap input::placeholder{color:#94a3b8;}
+    .eye{padding:0 13px;background:none;border:none;cursor:pointer;color:#94a3b8;font-size:13px;transition:color .15s;}
+    .eye:hover{color:#475569;}
+    .err-box{display:none;align-items:center;gap:9px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:11px 14px;margin-bottom:15px;font-size:12.5px;color:#991b1b;font-weight:600;line-height:1.5;}
+    .err-box.show{display:flex;animation:shake .4s ease;}
+    .btn{width:100%;padding:13px;background:#0A1F44;color:#fff;border:none;border-radius:11px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:18px;transition:all .18s;letter-spacing:-.2px;}
+    .btn:hover:not(:disabled){background:#122b5e;transform:translateY(-1px);}
+    .btn:disabled{opacity:.6;cursor:not-allowed;}
+    .btn .spin{display:none;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;}
+    @keyframes rot{to{transform:rotate(360deg);}}
+    .btn.loading .spin{display:block;}
+    .footer{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:10.5px;color:rgba(255,255,255,.28);z-index:3;letter-spacing:.3px;}
+    .footer b{color:rgba(255,255,255,.45);font-weight:700;}
 
+    /* PORTAL (após login) */
+    #telaPortal{display:none;min-height:100vh;}
+    .hd{background:#fff;border-bottom:1px solid #e5e7eb;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+    .hd-l{display:flex;align-items:center;gap:12px;}
+    .hd-logo{width:36px;height:36px;border-radius:9px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+    .hd-logo img{width:100%;height:100%;object-fit:contain;padding:5px;}
+    .hd-name{font-size:13.5px;font-weight:800;color:#0A1F44;letter-spacing:-.2px;}
+    .hd-tag{font-size:9.5px;color:#6366f1;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;}
+    .hd-r{display:flex;align-items:center;gap:10px;}
+    .user-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:20px;padding:6px 14px 6px 6px;font-size:11.5px;font-weight:700;color:#374151;display:flex;align-items:center;gap:8px;}
+    .user-chip .av{width:22px;height:22px;border-radius:50%;background:#0A1F44;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;}
+    .btn-sair{background:#C62828;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+    .btn-sair:hover{background:#ad1f1f;}
+    .wrap{max-width:1160px;margin:0 auto;padding:38px 26px 80px;position:relative;z-index:1;}
+    .greet{margin-bottom:26px;}
+    .greet-sub{font-size:11.5px;color:#8496bf;font-weight:600;letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;}
+    .greet-h{font-size:26px;font-weight:900;color:#fff;letter-spacing:-.7px;line-height:1.15;}
+    .greet-h span{color:#818cf8;}
+    .alert{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);border-radius:11px;padding:11px 16px;margin-bottom:24px;display:flex;align-items:center;gap:11px;font-size:12.5px;color:#fbbf24;font-weight:600;}
+    .alert i{font-size:13px;flex-shrink:0;}
+    .alert a{color:#fde68a;text-decoration:none;margin-left:auto;font-weight:800;cursor:pointer;font-size:11.5px;letter-spacing:.2px;}
+    .alert a:hover{color:#fff;}
+    .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+    .grid.density-compact {grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+    .grid.density-normal  {grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
+    .grid.density-large   {grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+    .grid.density-hero    {grid-template-columns:minmax(0,520px);justify-content:center;}
+    .mc{background:#fff;border-radius:14px;padding:20px 18px 16px;cursor:pointer;transition:all .18s ease;position:relative;display:flex;flex-direction:column;box-shadow:0 4px 14px rgba(0,0,0,.08);text-decoration:none;color:inherit;overflow:hidden;}
+    .mc:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.22);}
+    .mc:hover .mc-go i{transform:translateX(3px);}
+    .mc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cat-color,#94a3b8);opacity:.9;}
+    .mc-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+    .mc-ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--cat-bg,#f1f5f9);color:var(--cat-color,#475569);}
+    .mc-badge{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:10px;letter-spacing:.3px;background:#fef3c7;color:#b45309;}
+    .mc-badge.r{background:#fee2e2;color:#C62828;}
+    .mc-title{font-size:14.5px;font-weight:800;color:#0A1F44;letter-spacing:-.3px;margin-bottom:5px;}
+    .mc-desc{font-size:11.5px;color:#64748b;line-height:1.55;flex:1;}
+    .mc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid #f3f4f6;}
+    .mc-status{font-size:10.5px;color:#9ca3af;font-weight:600;}
+    .mc-go{font-size:11.5px;font-weight:800;color:#0A1F44;display:flex;align-items:center;gap:5px;}
+    .mc-go i{font-size:10px;transition:transform .18s;}
+    .mc.hero{padding:28px 26px 22px;}
+    .mc.hero .mc-ic{width:52px;height:52px;border-radius:13px;font-size:20px;}
+    .mc.hero .mc-title{font-size:20px;letter-spacing:-.5px;margin-bottom:8px;}
+    .mc.hero .mc-desc{font-size:13px;line-height:1.6;}
+    .mc.hl{border:1.5px solid #0d9488;background:linear-gradient(180deg,#f0fdfa 0%,#fff 40%);}
+    .mc.hl .mc-ic{background:#ccfbf1;color:#0d9488;}
+    .mc.hl::before{background:#0d9488;}
+    .mc.navy{background:linear-gradient(135deg,#0A1F44 0%,#122b5e 100%);border:1px solid #122b5e;}
+    .mc.navy::before{background:#818cf8;}
+    .mc.navy .mc-ic{background:rgba(255,255,255,.12);color:#fff;}
+    .mc.navy .mc-title,.mc.navy .mc-desc,.mc.navy .mc-go,.mc.navy .mc-status{color:#fff;}
+    .mc.navy .mc-desc{color:rgba(255,255,255,.65);}
+    .mc.navy .mc-foot{border-top-color:rgba(255,255,255,.1);}
+    .mc.navy .mc-badge{background:rgba(255,255,255,.15);color:#fff;}
+    @media(max-width:768px){.wrap{padding:24px 16px 80px;}.greet-h{font-size:21px;}.hd{padding:0 16px;}.hd-name,.hd-tag{display:none;}}
   </style>
 </head>
 <body>
-  <!-- ── Splash de carregamento ── -->
-  <div id="splashScreen">
-    <div class="sp-logo"><img src="assets/favicon.png" alt="Logo"></div>
-    <div class="sp-title">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>
-    <div class="sp-sub">Carregando portal</div>
-    <div class="sp-dots"><span></span><span></span><span></span></div>
-  </div>
 
-  <div class="s-overlay" id="sOverlay">
-    <div class="s-icon">🏥</div>
-    <div class="s-sys" id="sSys"></div>
-  </div>
+<!-- ═════════ SPLASH ═════════ -->
+<div id="splash">
+  <div class="sp-logo"><img src="assets/favicon.png" alt=""></div>
+  <div class="sp-s">Carregando portal</div>
+  <div class="sp-dots"><span></span><span></span><span></span></div>
+</div>
 
-  <div id="telaLogin" style="display:none;">
-    <div class="login-right">
-      <div class="login-form-box">
-        <div style="margin-bottom:32px;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#ffffff;letter-spacing:-.5px;margin-bottom:4px;">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>
-          <div class="lf-tag" style="margin-bottom:0;">Acesso ao sistema</div>
-        </div>
-        <h2 class="lf-title">Entrar no Portal</h2>
-        <div class="lf-field">
-          <label>E-mail</label>
-          <div class="lf-wrap" id="wrapEmail">
-            <span class="lf-ico"><i class="fas fa-envelope"></i></span>
-            <input class="lf-input" type="email" id="fEmail" placeholder="seu@email.com" autocomplete="email">
-          </div>
-        </div>
-        <div class="lf-field">
-          <label>Senha</label>
-          <div class="lf-wrap" id="wrapSenha">
-            <span class="lf-ico"><i class="fas fa-lock"></i></span>
-            <input class="lf-input" type="password" id="fSenha" placeholder="••••••••" autocomplete="current-password">
-            <button class="eye-btn" type="button" onclick="toggleOlho()"><i class="fas fa-eye" id="eyeIco"></i></button>
-          </div>
-        </div>
-        <div class="err-box" id="errBox">
-          <i class="fas fa-exclamation-circle"></i>
-          <span id="errMsg">E-mail ou senha incorretos.</span>
-        </div>
-        <button class="btn-entrar" id="btnEntrar" onclick="entrar()">
-          <div class="b-spin" id="bSpin"></div>
-          <span id="bTxt">Entrar no Portal</span>
-        </button>
+<!-- ═════════ LOGIN ═════════ -->
+<div class="login-wrap" id="telaLogin" style="display:none;">
+  <div class="card">
+    <div class="brand">
+      <div class="brand-logo"><img src="assets/favicon.png" alt=""></div>
+      <div class="brand-tag">Portal Interno</div>
+    </div>
+    <div class="title-block">
+      <div class="title">Bem-vindo de volta</div>
+      <div class="subtitle">Entre com sua conta pra acessar o portal.</div>
+    </div>
+    <div class="err-box" id="errBox">
+      <i class="fas fa-circle-exclamation"></i>
+      <span id="errMsg">E-mail ou senha incorretos.</span>
+    </div>
+    <div class="field">
+      <label>E-mail</label>
+      <div class="input-wrap" id="wrapEmail">
+        <span class="input-ic"><i class="fas fa-envelope"></i></span>
+        <input type="email" id="fEmail" placeholder="seu@email.com" autocomplete="email" autofocus>
       </div>
     </div>
-  </div>
-
-  <div id="telaPortal">
-    <div class="p-header">
-      <div class="p-logo">
-        <div class="p-logo-icon"><img src="assets/favicon.png" alt="Logo" id="logoHeader"></div>
-        <div>
-          <div class="p-logo-name">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div>
-          <div class="p-logo-sub">Portal Interno · Pirituba</div>
-        </div>
-      </div>
-      <div class="p-header-right">
-        <div class="p-user"><i class="fas fa-user"></i> <span id="pUserNome">—</span></div>
-        <button class="btn-sair" onclick="sair()"><i class="fas fa-right-from-bracket"></i> Sair</button>
+    <div class="field">
+      <label>Senha</label>
+      <div class="input-wrap" id="wrapSenha">
+        <span class="input-ic"><i class="fas fa-lock"></i></span>
+        <input type="password" id="fSenha" placeholder="••••••••" autocomplete="current-password">
+        <button class="eye" type="button" onclick="toggleEye()"><i class="fas fa-eye" id="eyeIco"></i></button>
       </div>
     </div>
-    <div class="p-content">
-      <div class="p-greeting">
-        <div class="p-greeting-sub">Bem-vindo(a) ao portal</div>
-        <div class="p-greeting-title">O que deseja acessar?</div>
-      </div>
-      <div class="portal-grid">
-        <div class="portal-card" id="cardOrcamentos" style="display:none;" onclick="abrirSistema('pages/orcamentos.html','Sistema de Orçamentos')">
-          <div class="pc-icon"><i class="fas fa-file-invoice-dollar"></i></div>
-          <div><div class="pc-name">Orçamentos</div><div class="pc-desc">Consulte exames, valores, parceiros e preparos. Gere mensagens para WhatsApp.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-        <div class="portal-card" id="cardFechamento" style="display:none;" onclick="abrirSistema('pages/fechamento.html','Sistema de Fechamento')">
-          <div class="pc-icon"><i class="fas fa-receipt"></i></div>
-          <div><div class="pc-name">Fechamento Médico</div><div class="pc-desc">Cálculo de repasse, impostos PJ e geração de recibo consolidado para impressão.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-        <div class="portal-card" id="cardFinanceiro" style="display:none;" onclick="abrirSistema('pages/financeiro.html','Sistema Financeiro')">
-          <div class="pc-icon"><i class="fas fa-coins"></i></div>
-          <div><div class="pc-name">Financeiro</div><div class="pc-desc">Geração de recibos em lote para colaboradores. Cadastro e controle de equipe.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-        <div class="portal-card" id="cardExames" style="display:none;" onclick="abrirSistema('pages/exames.html','Retirada de Exames')">
-          <div class="pc-icon"><i class="fas fa-vials"></i></div>
-          <div><div class="pc-name">Retirada de Exames</div><div class="pc-desc">Gaveta digital de exames. Cadastre, dê baixa e consulte o histórico completo.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-        <div class="portal-card" id="cardCronograma" style="display:none;" onclick="abrirSistema('pages/cronograma.html','Cronograma')">
-          <div class="pc-icon"><i class="fas fa-calendar-week"></i></div>
-          <div><div class="pc-name">Cronograma</div><div class="pc-desc">Agenda diária por sala, checklist de abertura, notas e controle de caixa.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-        <div class="portal-card" id="cardCaixa" style="display:none;" onclick="abrirSistema('pages/caixa.html','Caixa')">
-          <div class="pc-icon"><i class="fas fa-cash-register"></i></div>
-          <div><div class="pc-name">Caixa</div><div class="pc-desc">Controle diário de caixa, vales e relatório de produção gerado pelo AMEI.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-        <div class="portal-card" id="cardAdmin" style="display:none;" onclick="abrirSistema('pages/admin.html','Painel Admin')">
-          <div class="pc-icon"><i class="fas fa-shield-halved"></i></div>
-          <div><div class="pc-name">Painel Admin</div><div class="pc-desc">Gerenciar usuários, clínica, atendentes e permissões de acesso.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Gerenciar</div>
-        </div>
-        <div class="portal-card" id="cardDashboard" style="display:none;" onclick="abrirSistema('pages/dashboard.html','Dashboard de Produção')">
-          <div class="pc-icon"><i class="fas fa-chart-line"></i></div>
-          <div><div class="pc-name">Dashboard</div><div class="pc-desc">Produção, recebimentos e comissões de todos os colaboradores.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-        <div class="portal-card" id="cardNps" style="display:none;" onclick="abrirSistema('pages/nps.html','NPS Atendimento')">
-          <div class="pc-icon"><i class="fas fa-star"></i></div>
-          <div><div class="pc-name">NPS</div><div class="pc-desc">Pesquisa de satisfação e ranking do atendimento do call center.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-
-        <div class="portal-card" id="cardContratos" style="display:none;" onclick="abrirSistema('pages/contratos.html','Contratos')">
-          <div class="pc-icon"><i class="fas fa-file-contract"></i></div>
-          <div><div class="pc-name">Contratos</div><div class="pc-desc">Gerador de contrato de neuropsicologia e guia de encaminhamento manual.</div></div>
-          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp }           from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
-      from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getDatabase, ref, get }   from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
-
-    const app  = initializeApp(window.FIREBASE_CONFIG);
-    const auth = getAuth(app);
-    const db   = getDatabase(app);
-    window.initFirebaseUtils(db, ref, get);
-
-    /* Carrega logo e dados da clínica */
-    carregarLogoGlobal(['#logoHeader']);
-    carregarClinica();
-
-    const TODOS_CARDS = ['cardOrcamentos','cardFechamento','cardFinanceiro','cardExames','cardCronograma','cardCaixa','cardAdmin','cardDashboard','cardNps'];
-
-    function esconderSplash() {
-      const s = document.getElementById('splashScreen');
-      s.classList.add('fade-out');
-      setTimeout(() => { s.style.display = 'none'; }, 450);
-    }
-
-    function mostrarSplash(texto) {
-      const s = document.getElementById('splashScreen');
-      const sub = s.querySelector('.sp-sub');
-      if (sub && texto) sub.textContent = texto;
-      s.style.display = 'flex';
-      s.classList.remove('fade-out');
-    }
-
-    let _portando = false; // evita chamadas duplas de onAuthStateChanged
-    onAuthStateChanged(auth, async user => {
-      if (user) {
-        if (_portando) return;
-        _portando = true;
-        clearTimeout(_loginTimeout); // cancela timeout de segurança (login ok)
-        setLoad(false);              // reseta botão imediatamente, sem esperar Firebase
-        mostrarSplash('Carregando portal');
-        await abrirPortal(user);
-        esconderSplash();
-        _portando = false;
-      } else {
-        _portando = false;
-        setLoad(false);          // garante reset se login falhou silenciosamente
-        document.getElementById('telaLogin').style.display  = 'flex';
-        document.getElementById('telaPortal').style.display = 'none';
-        esconderSplash();
-      }
-    });
-
-    async function abrirPortal(user) {
-      let nomeCompleto = user.email.split('@')[0];
-      let perms = {};
-      try {
-        const snap = await get(ref(db, `admin/usuarios/${user.uid}`));
-        if (snap.exists()) {
-          const dados = snap.val();
-          if (dados.nomeCompleto) nomeCompleto = dados.nomeCompleto;
-          perms = dados.perms || {};
-          if (dados.acessoFinanceiro) perms.financeiro = true;
-        }
-      } catch(e) { console.warn('[abrirPortal] permissões:', e.message); }
-
-      // Monta UI completa antes de revelar
-      const primeiroNome = nomeCompleto.split(' ')[0];
-      document.getElementById('pUserNome').textContent = primeiroNome;
-      sessionStorage.setItem('usuario',      nomeCompleto);
-      sessionStorage.setItem('primeiroNome', primeiroNome);
-      sessionStorage.setItem('uid',          user.uid);
-      sessionStorage.setItem('email',        user.email);
-      sessionStorage.setItem('perms',        JSON.stringify(perms));
-
-      const isAdmin = !!perms.admin;
-      if (isAdmin || perms.orcamento)  document.getElementById('cardOrcamentos').style.display = 'flex';
-      if (isAdmin || perms.fechamento) document.getElementById('cardFechamento').style.display = 'flex';
-      if (isAdmin || perms.financeiro) document.getElementById('cardFinanceiro').style.display = 'flex';
-      if (isAdmin || perms.exames)     document.getElementById('cardExames').style.display     = 'flex';
-      if (isAdmin || perms.cronograma) document.getElementById('cardCronograma').style.display = 'flex';
-      // Caixa: visível para todos os usuários autenticados
-      document.getElementById('cardCaixa').style.display = 'flex';
-      iniciarNovidades();
-      if (isAdmin)                     document.getElementById('cardAdmin').style.display      = 'flex';
-      if (isAdmin)                     document.getElementById('cardDashboard').style.display  = 'flex';
-      if (isAdmin || perms.nps)        document.getElementById('cardNps').style.display         = 'flex';
-      if (isAdmin)                     document.getElementById('cardContratos').style.display = 'flex';
-
-      // Revela o portal já montado
-      document.getElementById('telaLogin').style.display  = 'none';
-      document.getElementById('telaPortal').style.display = 'block';
-    }
-
-    let _loginTimeout = null;
-
-    window.entrar = function() {
-      const email = document.getElementById('fEmail').value.trim();
-      const senha = document.getElementById('fSenha').value;
-      limparErro();
-      if (!email) { erro('Informe o e-mail.'); return; }
-      if (!senha)  { erro('Informe a senha.');  return; }
-      setLoad(true);
-
-      // Segurança: se nada acontecer em 12s, desbloqueia o botão
-      clearTimeout(_loginTimeout);
-      _loginTimeout = setTimeout(() => {
-        setLoad(false);
-        erro('Tempo esgotado. Verifique sua conexão e tente novamente.');
-      }, 12000);
-
-      signInWithEmailAndPassword(auth, email, senha).catch(e => {
-        clearTimeout(_loginTimeout);
-        setLoad(false);
-        if (['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(e.code))
-          erro('E-mail ou senha incorretos.');
-        else if (e.code === 'auth/too-many-requests')
-          erro('Muitas tentativas. Aguarde alguns minutos.');
-        else erro('Erro de conexão. Tente novamente.');
-      });
-    };
-
-    window.sair = function() {
-      signOut(auth).then(() => {
-        sessionStorage.clear();
-        // Reseta TODOS os cards para o próximo usuário não ver cards errados
-        TODOS_CARDS.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.style.display = 'none';
-        });
-        document.getElementById('telaPortal').style.display = 'none';
-        document.getElementById('telaLogin').style.display  = 'flex';
-        document.getElementById('fEmail').value = '';
-        document.getElementById('fSenha').value = '';
-        limparErro();
-      });
-    };
-
-    window.abrirSistema = function(arquivo, nome) {
-      sessionStorage.setItem('sistema', nome);
-      document.getElementById('sSys').textContent = nome;
-      document.getElementById('sOverlay').classList.add('show');
-      setTimeout(() => irPara(arquivo), 900);
-    };
-
-    window.toggleOlho = function() {
-      const i = document.getElementById('fSenha');
-      const e = document.getElementById('eyeIco');
-      if (i.type === 'password') { i.type = 'text'; e.className = 'fas fa-eye-slash'; }
-      else                       { i.type = 'password'; e.className = 'fas fa-eye'; }
-    };
-
-    function erro(msg) {
-      const b = document.getElementById('errBox');
-      document.getElementById('errMsg').textContent = msg;
-      document.getElementById('wrapEmail').classList.add('err');
-      document.getElementById('wrapSenha').classList.add('err');
-      b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
-    }
-    function limparErro() {
-      document.getElementById('errBox').classList.remove('show');
-      document.getElementById('wrapEmail').classList.remove('err');
-      document.getElementById('wrapSenha').classList.remove('err');
-    }
-    function setLoad(on) {
-      document.getElementById('btnEntrar').disabled    = on;
-      document.getElementById('bSpin').style.display   = on ? 'block' : 'none';
-      document.getElementById('bTxt').textContent      = on ? 'Autenticando...' : 'Entrar no Portal';
-    }
-
-    document.addEventListener('keydown', e => { if (e.key === 'Enter') window.entrar(); });
-  
-    // ── CHANGELOG / NOVIDADES ──
-    const CHANGELOG = [
-      { id:'2026-07-14-contratos', data:'14/07/2026', modulo:'Contratos', cor:'#0A1F44', bg:'#eff6ff',
-        desc:'Novo módulo: gerador de contrato de neuropsicologia (com importação do AMEI) e guia de encaminhamento manual.' },
-      { id:'2026-07-14-caixa-recibos', data:'14/07/2026', modulo:'Caixa', cor:'#7c3aed', bg:'#f5f3ff',
-        desc:'Novos recibos: Ressarcimento (devolução ao paciente) e Erro de Sistema (divergência de caixa para o líder).' },
-      { id:'2026-07-14-dashboard-contratos', data:'14/07/2026', modulo:'Dashboard', cor:'#15803d', bg:'#f0fdf4',
-        desc:'Nova aba "Contratos" para controle mensal de repasse da Dra. Lauriana Garcia Pinto.' },
-      { id:'2026-07-07-dashboard-visao', data:'07/07/2026', modulo:'Dashboard', cor:'#15803d', bg:'#f0fdf4',
-        desc:'Nova aba "Visão Geral" com resumo do caixa, NPS, gaveta de exames e comissões do mês.' },
-      { id:'2026-07-07-orcamentos-preparo', data:'07/07/2026', modulo:'Orçamentos', cor:'#b45309', bg:'#fef3c7',
-        desc:'Pop-up de preparo: ao copiar o orçamento, exibe os preparos e pede que copie antes de fechar.' },
-      { id:'2026-06-30-preparos-usg', data:'30/06/2026', modulo:'Orçamentos', cor:'#b45309', bg:'#fef3c7',
-        desc:'Preparos de ultrassom revisados contra o guia oficial (48 tipos). Doppler agora distingue exames com/sem protocolo Luftal.' },
-      { id:'2026-06-30-financeiro-recibo', data:'30/06/2026', modulo:'Financeiro', cor:'#7c3aed', bg:'#f5f3ff',
-        desc:'Recibo: novo modo Manual (descrição livre). Linha de assinatura ajusta ao tamanho do nome do colaborador.' },
-      { id:'2026-06-30-orcamentos-duplic', data:'30/06/2026', modulo:'Orçamentos', cor:'#b45309', bg:'#fef3c7',
-        desc:'Duplicatas removidas: exames com nomes equivalentes (ex: ABDOME TOTAL / US ABDOME TOTAL) agora aparecem como um único card.' },
-    ];
-    const NOV_KEY = 'rclinich_changelog_visto';
-
-    function iniciarNovidades() {
-      const lista = document.getElementById('novidadesLista');
-      if (!lista) return;
-      lista.innerHTML = CHANGELOG.map(item =>
-        '<div class="nov-item">' +
-          '<div class="nov-item-head">' +
-            '<span class="nov-modulo" style="color:'+item.cor+';background:'+item.bg+';">'+item.modulo+'</span>' +
-            '<span class="nov-data">'+item.data+'</span>' +
-          '</div>' +
-          '<div class="nov-desc">'+item.desc+'</div>' +
-        '</div>'
-      ).join('');
-
-      const visto = localStorage.getItem(NOV_KEY);
-      const temNovo = visto !== CHANGELOG[0].id;
-      const fab = document.getElementById('novidadesFab');
-      const dot = document.getElementById('novidadesDot');
-      if (fab) fab.style.display = 'block';
-      if (dot) dot.style.display = temNovo ? 'block' : 'none';
-    }
-
-    const btnNov = document.getElementById('novidadesBtn');
-    const panel  = document.getElementById('novidadesPanel');
-    const btnFch = document.getElementById('novidadesFechar');
-
-    if (btnNov) {
-      btnNov.addEventListener('click', () => {
-        const aberto = panel.classList.toggle('aberto');
-        if (aberto) {
-          localStorage.setItem(NOV_KEY, CHANGELOG[0].id);
-          const dot = document.getElementById('novidadesDot');
-          if (dot) dot.style.display = 'none';
-        }
-      });
-    }
-    if (btnFch) btnFch.addEventListener('click', () => panel.classList.remove('aberto'));
-    document.addEventListener('click', e => {
-      if (panel && btnNov && !panel.contains(e.target) && !btnNov.contains(e.target)) {
-        panel.classList.remove('aberto');
-      }
-    });
-
-  </script>
-
-  <!-- BOTÃO NOVIDADES -->
-  <div class="novidades-fab" id="novidadesFab" style="display:none;">
-    <button class="novidades-btn" id="novidadesBtn" title="O que há de novo?">
-      <i class="fas fa-sparkles"></i>
-      <span class="novidades-dot" id="novidadesDot" style="display:none;"></span>
+    <button class="btn" id="btnLogin" onclick="doLogin()">
+      <div class="spin"></div>
+      <span id="btnTxt">Entrar no Portal</span>
     </button>
   </div>
-  <div class="novidades-panel" id="novidadesPanel">
-    <div class="nov-head">
-      <div class="nov-head-title"><i class="fas fa-sparkles"></i> O que há de novo</div>
-      <button class="nov-close" id="novidadesFechar">✕</button>
+</div>
+
+<!-- ═════════ PORTAL ═════════ -->
+<div id="telaPortal">
+  <header class="hd">
+    <div class="hd-l">
+      <div class="hd-logo"><img src="assets/favicon.png" alt=""></div>
+      <div>
+        <div class="hd-name">Portal</div>
+        <div class="hd-tag">Interno</div>
+      </div>
     </div>
-    <div class="nov-lista" id="novidadesLista"></div>
-    <div class="nov-rodape">Atualizado em 14/07/2026</div>
+    <div class="hd-r">
+      <div class="user-chip"><span class="av" id="userAv">--</span><span id="userName">—</span></div>
+      <button class="btn-sair" onclick="sair()"><i class="fas fa-right-from-bracket"></i> Sair</button>
+    </div>
+  </header>
+  <div class="wrap">
+    <div class="greet">
+      <div class="greet-sub">Bem-vindo de volta</div>
+      <div class="greet-h">Olá, <span id="greetName">—</span>.</div>
+    </div>
+    <div class="alert" id="alertStrip" style="display:none;">
+      <i class="fas fa-bell"></i>
+      <span id="alertText"></span>
+      <a onclick="irParaDashboard()" id="alertLink">Ver →</a>
+    </div>
+    <div class="grid" id="cardsGrid"></div>
   </div>
+</div>
 
-</body>
-</html>
+<div class="footer"><b>v5.0</b> · Portal Interno</div>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+  const app  = initializeApp(window.FIREBASE_CONFIG);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+  window.initFirebaseUtils(db, ref, get);
+
+  /* Catálogo de módulos — ordem define a exibição */
+  const MODULOS = [
+    { key:'dashboard',  nome:'Dashboard',           desc:'Produção, NPS, ranking, comissões, contratos e visão geral.', href:'pages/dashboard.html', icon:'fa-chart-line', cor:'#818cf8', bg:'rgba(255,255,255,.12)', navy:true, perm:'admin', badge:'principal' },
+    { key:'caixa',      nome:'Caixa',               desc:'Fechamento de turno, relatório AMEI, recibos e caixa odonto.', href:'pages/caixa.html', icon:'fa-cash-register', cor:'#1d4ed8', bg:'#dbeafe', perm:'caixa' },
+    { key:'nf',         nome:'NF em Lote',          desc:'Gera lote do dia, compara com Sinaxys e envia Nº NF pro Sheets.', href:'pages/dashboard.html#nf', icon:'fa-file-invoice', cor:'#0d9488', bg:'#ccfbf1', perm:'admin', hl:true },
+    { key:'fech',       nome:'Fechamentos',         desc:'Repasse por profissional, impostos PJ e recibos consolidados.', href:'pages/fechamento.html', icon:'fa-file-invoice-dollar', cor:'#6d28d9', bg:'#ede9fe', perm:'fechamento' },
+    { key:'crono',      nome:'Cronograma',          desc:'Agenda por sala, checklist de abertura e controle de caixa.', href:'pages/cronograma.html', icon:'fa-calendar-week', cor:'#b45309', bg:'#fef3c7', perm:'cronograma' },
+    { key:'orcamentos', nome:'Orçamentos',          desc:'Catálogo de exames, valores, parceiros e preparos.', href:'pages/orcamentos.html', icon:'fa-file-invoice-dollar', cor:'#C62828', bg:'#fee2e2', perm:'orcamento' },
+    { key:'exames',     nome:'Retirada de Exames',  desc:'Gaveta digital de exames — cadastro, baixa e histórico.', href:'pages/exames.html', icon:'fa-vials', cor:'#0d9488', bg:'#ccfbf1', perm:'exames' },
+    { key:'financeiro', nome:'Financeiro',          desc:'Recibos em lote e cadastro da equipe.', href:'pages/financeiro.html', icon:'fa-coins', cor:'#b45309', bg:'#fef3c7', perm:'financeiro' },
+    { key:'nps',        nome:'NPS',                 desc:'Pesquisa de satisfação, ranking e histórico por período.', href:'pages/nps.html', icon:'fa-star', cor:'#a855f7', bg:'#f5f3ff', perm:'nps' },
+    { key:'contratos',  nome:'Contratos',           desc:'Gerador de contrato de neuropsicologia e encaminhamento.', href:'pages/contratos.html', icon:'fa-file-contract', cor:'#15803d', bg:'#dcfce7', perm:'contratos' },
+    { key:'cadastros',  nome:'Cadastros',           desc:'Parceiros, exames e profissionais.', href:'pages/cadastros.html', icon:'fa-database', cor:'#475569', bg:'#f1f5f9', perm:'admin' },
+    { key:'admin',      nome:'Painel Admin',        desc:'Usuários, clínica e permissões de acesso.', href:'pages/admin.html', icon:'fa-shield-halved', cor:'#b45309', bg:'#fef3c7', perm:'admin' }
+  ];
+
+  function esconderSplash(){ const s=document.getElementById('splash'); s.classList.add('fade'); setTimeout(()=>{s.style.display='none';},450); }
+
+  function toggleEye(){
+    const i=document.getElementById('fSenha'), ic=document.getElementById('eyeIco');
+    if(i.type==='password'){i.type='text';ic.className='fas fa-eye-slash';}
+    else{i.type='password';ic.className='fas fa-eye';}
+  }
+  window.toggleEye = toggleEye;
+
+  function showError(msg){
+    const box=document.getElementById('errBox');
+    document.getElementById('errMsg').textContent=msg;
+    document.getElementById('wrapEmail').classList.add('err');
+    document.getElementById('wrapSenha').classList.add('err');
+    box.classList.remove('show'); void box.offsetWidth; box.classList.add('show');
+    setTimeout(()=>{
+      document.getElementById('wrapEmail').classList.remove('err');
+      document.getElementById('wrapSenha').classList.remove('err');
+    },600);
+  }
+  function clearError(){
+    document.getElementById('errBox').classList.remove('show');
+    document.getElementById('wrapEmail').classList.remove('err');
+    document.getElementById('wrapSenha').classList.remove('err');
+  }
+
+  function setLoad(on){
+    const b=document.getElementById('btnLogin');
+    b.disabled=on; b.classList.toggle('loading',on);
+    document.getElementById('btnTxt').textContent = on ? 'Autenticando...' : 'Entrar no Portal';
+  }
+
+  window.doLogin = function(){
+    const email=document.getElementById('fEmail').value.trim();
+    const senha=document.getElementById('fSenha').value;
+    clearError();
+    if(!email){ showError('Informe o e-mail.'); return; }
+    if(!senha){ showError('Informe a senha.'); return; }
+    setLoad(true);
+    signInWithEmailAndPassword(auth,email,senha).catch(e=>{
+      setLoad(false);
+      if(['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(e.code)) showError('E-mail ou senha incorretos.');
+      else if(e.code==='auth/too-many-requests') showError('Muitas tentativas. Aguarde alguns minutos.');
+      else showError('Erro de conexão. Tente novamente.');
+    });
+  };
+
+  window.sair = function(){
+    signOut(auth).then(()=>{ sessionStorage.clear(); location.reload(); });
+  };
+
+  document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.getElementById('telaLogin').style.display!=='none') window.doLogin(); });
+
+  /* Renderização dos cards */
+  function renderCards(perms, nome){
+    const isAdmin = !!perms.admin;
+    const visiveis = MODULOS.filter(m => isAdmin || perms[m.perm] || m.key==='caixa');
+    const grid = document.getElementById('cardsGrid');
+    grid.className = 'grid ' + (visiveis.length<=1?'density-hero':visiveis.length<=2?'density-large':visiveis.length<=5?'density-normal':'density-compact');
+    grid.innerHTML = visiveis.map(m=>`
+      <a class="mc ${m.navy?'navy':''} ${m.hl?'hl':''}" style="--cat-color:${m.cor};--cat-bg:${m.bg};" onclick="abrirModulo('${m.href}','${m.nome}')">
+  
