@@ -1,4 +1,5 @@
-<!-- VERSION: v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
+<!-- VERSION: v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
+<!-- v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
 <!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
 <!DOCTYPE html>
@@ -718,6 +719,70 @@
     #viewNflote .nflx-m{padding:10px 16px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
     #viewNflote .nflx-m:hover{background:#f3f4f6;}
     #viewNflote .nflx-box{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px;font-size:12px;color:#475569;line-height:1.7;margin-bottom:18px;text-align:left;}
+    /* ===== v4.9 — NF em Lote no desenho do mockup (coluna central, tela por tela) ===== */
+    #viewNflote{background:#f9fafb;}
+    #viewNflote .wrap{max-width:720px;}
+    #viewNflote h1,#nflWrap>.sub,#viewNflote .tabs{display:none !important;}
+    #viewNflote .nflx-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;min-height:34px;}
+    #viewNflote .nflx-more{margin-left:auto;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:20px;padding:7px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;box-shadow:none;display:inline-flex;gap:6px;align-items:center;}
+    #viewNflote .nflx-more:hover{background:#e5e7eb;}
+    .nflx-drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:3000;display:none;align-items:flex-start;justify-content:flex-end;}
+    .nflx-drawer-bg.open{display:flex;}
+    .nflx-drawer{background:#fff;width:100%;max-width:340px;height:100vh;padding:22px;overflow-y:auto;box-shadow:-8px 0 24px rgba(0,0,0,.12);font-family:'Inter',sans-serif;}
+    .nflx-drawer .dr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #e5e7eb;}
+    .nflx-drawer .dr-t{font-size:15px;font-weight:800;color:#0A1F44;}
+    .nflx-drawer .dr-x{background:none;border:none;font-size:18px;color:#9ca3af;cursor:pointer;padding:4px 8px;border-radius:6px;}
+    .nflx-drawer .dr-x:hover{background:#f3f4f6;color:#374151;}
+    .nflx-drawer .dr-section{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;padding:12px 0 6px;}
+    .nflx-drawer .dr-item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:9px;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:600;color:#374151;background:none;border:none;text-align:left;width:100%;}
+    .nflx-drawer .dr-item:hover{background:#f3f4f6;color:#0A1F44;}
+    .nflx-drawer .dr-item i{width:18px;text-align:center;color:#9ca3af;font-size:14px;}
+    .nflx-drawer .dr-item:hover i{color:#0d9488;}
+    #viewNflote .step-overlay>.card.nflx-card,#viewNflote .nflx-card{padding:32px 28px;box-shadow:none;border:1px solid #e5e7eb;margin-bottom:16px;}
+    #viewNflote .nflx-card.high{border-color:#0d9488;box-shadow:0 4px 20px rgba(13,148,136,.08);}
+    #viewNflote .nflx-datebl{text-align:center;margin-bottom:22px;}
+    #viewNflote .nflx-datebl .d1{font-size:13px;font-weight:700;color:#6b7280;margin-bottom:4px;}
+    #viewNflote .nflx-datebl .d2{font-size:26px;font-weight:900;color:#0A1F44;letter-spacing:-1px;}
+    #viewNflote .nflx-sheetinfo{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12px;color:#475569;display:flex;align-items:center;gap:10px;}
+    #viewNflote .nflx-sheetinfo i{color:#0d9488;font-size:15px;}
+    #viewNflote .nflx-sheetinfo b{color:#0A1F44;}
+    #viewNflote .nflx-datepick{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:12px 14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;color:#475569;}
+    #viewNflote .nflx-datepick label{font-weight:700;color:#0A1F44;margin:0 auto 0 0;display:flex;align-items:center;gap:8px;}
+    #viewNflote .nflx-datepick input[type=date]{width:auto;max-width:170px;padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:13px;color:#374151;outline:none;background:#fff;margin:0;}
+    #viewNflote .nflx-st{font-size:12px;line-height:1.5;margin:0 0 10px;text-align:center;}
+    #viewNflote .nflx-st:empty{display:none;}
+    #viewNflote .nflx-maprev{border:1px solid #e5e7eb;border-radius:10px;overflow-x:auto;background:#fff;margin-bottom:6px;}
+    #viewNflote .nflx-maprev table{width:100%;border-collapse:collapse;font-size:11.5px;margin:0;}
+    #viewNflote #mapTable tr:first-child{display:none;}
+    #viewNflote #mapTable tr:nth-child(2) td{background:#0A1F44;padding:8px 6px;border:none;}
+    #viewNflote #mapTable select{width:100%;min-width:92px;font-size:11px;padding:4px 6px;border:1px solid rgba(255,255,255,.3);border-radius:5px;background:rgba(255,255,255,.1);color:#fff;font-family:inherit;cursor:pointer;outline:none;margin:0;}
+    #viewNflote #mapTable select option{color:#1e293b;background:#fff;}
+    #viewNflote #mapTable tr:nth-child(n+3) td{padding:6px 8px;border-bottom:1px solid #f1f5f9;color:#94a3b8;font-size:11px;white-space:nowrap;}
+    #viewNflote #mapTable tr:last-child td{border-bottom:none;}
+    #viewNflote .nflx-hint{font-size:11.5px;color:#9ca3af;text-align:center;margin:14px 0 20px;}
+    #viewNflote .nflx-spin{position:relative;width:80px;height:80px;margin:0 auto 18px;}
+    #viewNflote .nflx-spin .ring{position:absolute;inset:0;border-radius:50%;border:3px solid #f0fdfa;border-top-color:#0d9488;animation:nflxspin 1s linear infinite;}
+    #viewNflote .nflx-spin .ico{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;animation:nflxpulse 1.2s ease-in-out infinite;}
+    @keyframes nflxspin{to{transform:rotate(360deg);}} @keyframes nflxpulse{0%,100%{transform:scale(1);}50%{transform:scale(.9);}}
+    #viewNflote .nflx-bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px;}
+    #viewNflote .nflx-bar .fill{height:100%;width:0%;background:linear-gradient(90deg,#0d9488,#14b8a6);border-radius:4px;transition:width .3s ease;}
+    #viewNflote .nflx-cnt{font-size:12.5px;color:#475569;font-weight:600;}
+    #viewNflote #nflxResTop .nflx-result{padding:20px 22px;margin-bottom:22px;border-radius:14px;}
+    #viewNflote #nflxResTop .nflx-result .num{font-size:52px;letter-spacing:-2.5px;}
+    #viewNflote .nflx-det label{display:block;margin:10px 0 4px;}
+    #viewNflote .nflx-link:hover,#viewNflote .nflx-back:hover{background:#f3f4f6;color:#0A1F44;}
+    #viewNflote .nflx-fix.err,#viewNflote .nflx-fix{background:#fef2f2;border-color:#fecaca;}
+    #viewNflote .nflx-fix-f input,#viewNflote .nflx-fix-f select{background:#fff;}
+    /* Comparativo Sinaxys — mesmo desenho */
+    #viewNflote #nfl-page-sinaxys .card{border-radius:18px;padding:28px;box-shadow:none;border:1px solid #e5e7eb;}
+    #viewNflote .sin-lote-card{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1.5px solid #e5e7eb;border-radius:12px;background:#fff;margin-bottom:8px;}
+    #viewNflote .sin-lote-card:hover{border-color:#6d28d9;background:#f5f3ff;}
+    #viewNflote .sin-lote-card .sin-meta{flex:1;}
+    #viewNflote .sin-lote-card button{background:#fff;color:#6d28d9;border:1.5px solid #6d28d9;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;box-shadow:none;}
+    #viewNflote .sin-lote-card.sel button{background:#6d28d9;color:#fff;}
+    #viewNflote #nfl-page-sinaxys input[type=file]{width:100%;border:2px dashed #cbd5e1;border-radius:14px;padding:26px 20px;background:#fafbfc;font-family:inherit;font-size:13px;color:#475569;cursor:pointer;}
+    #viewNflote #nfl-page-sinaxys input[type=file]:hover{border-color:#6d28d9;background:#f5f3ff;}
+    #viewNflote #nfl-page-sinaxys input[type=file]::file-selector-button{background:#6d28d9;color:#fff;border:none;border-radius:8px;padding:8px 14px;margin-right:12px;font-weight:700;cursor:pointer;}
     @media(max-width:640px){#viewNflote .nflx-lbl{display:none;}#viewNflote .nflx-res3{grid-template-columns:1fr;}#viewNflote .nflx-fix-f{grid-template-columns:1fr;}}
   </style>
 </head>
@@ -2978,6 +3043,26 @@
   <!-- ═══════════ NF EM LOTE — painel nativo (sem iframe) ═══════════ -->
   <div class="view-panel" id="viewNflote">
     <div class="wrap" id="nflWrap">
+      <div class="nflx-topbar">
+        <button type="button" class="nflx-link" id="nflxBtnHome" style="display:none" onclick="nflShowTab('gerar')"><i class="fas fa-arrow-left"></i> NF do Dia</button>
+        <button type="button" class="nflx-more" onclick="nflxDrawer(true)"><i class="fas fa-ellipsis"></i> Mais opções</button>
+      </div>
+      <div class="nflx-drawer-bg" id="nflxDrawerBg" onclick="if(event.target===this)nflxDrawer(false)">
+        <div class="nflx-drawer">
+          <div class="dr-head"><div class="dr-t">Mais opções</div><button type="button" class="dr-x" onclick="nflxDrawer(false)"><i class="fas fa-times"></i></button></div>
+          <div class="dr-section">NF do Dia</div>
+          <button type="button" class="dr-item" onclick="nflxIr('gerar')"><i class="fas fa-file-invoice-dollar"></i> Fluxo guiado (início)</button>
+          <button type="button" class="dr-item" onclick="nflxIr('nfdia')"><i class="fas fa-list"></i> Todas as datas</button>
+          <div class="dr-section">Emissão manual</div>
+          <button type="button" class="dr-item" onclick="nflxIr('manual')"><i class="fas fa-file-export"></i> Gerar planilha colando dados</button>
+          <div class="dr-section">Conferência</div>
+          <button type="button" class="dr-item" onclick="nflxIr('conferir')"><i class="fas fa-check-double"></i> Conferir NF</button>
+          <button type="button" class="dr-item" onclick="nflxIr('sinaxys')"><i class="fas fa-chart-column"></i> Comparativo Sinaxys</button>
+          <button type="button" class="dr-item" onclick="nflxIr('preencher')"><i class="fas fa-link"></i> Preencher Nº NF</button>
+          <div class="dr-section">Registro</div>
+          <button type="button" class="dr-item" onclick="nflxIr('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico de lotes</button>
+        </div>
+      </div>
       <h1>NF em Lote</h1>
       <p class="sub">Gere a planilha a partir dos dados colados, confira as NFs emitidas e compare com o Sinaxys — tudo em um só lugar.</p>
 
@@ -3018,49 +3103,42 @@
         </div>
 
         <div class="step-overlay" id="ov-paste">
-          <div class="card">
-            <div class="step-kicker"><span class="step-badge">1</span><p class="step-title">Etapa 1 — dados dos pacientes</p></div>
-            <div class="hint" style="background:var(--teal-bg); border:1px solid var(--teal); border-radius:8px; padding:10px 12px;">
-              <b>🔎 Puxar direto da planilha "NOTAS FISCAIS 3.0"</b> — escolha a data e a ferramenta busca as linhas daquela aba automaticamente.
-            </div>
-            <div class="row" style="align-items:center; margin-top:8px;">
-              <input type="date" id="puxarDataInput" style="max-width:170px;">
-              <button id="puxarBtn" class="secondary" onclick="nflPuxarDoSheet()">🔎 Puxar dados desse dia da planilha</button>
-            </div>
-            <div class="hint" id="puxarStatus"></div>
-            <div class="hint" style="background:var(--teal-bg); border:1px solid var(--teal); border-radius:8px; padding:10px 12px; margin-top:10px;">
-              <b>📥 Puxar do Caixa — "Preencher NF do Dia"</b> — traz o que os colaboradores já preencheram no fechamento de caixa daquele dia (todos que fecharam caixa naquela data), sem precisar de planilha nenhuma.
-            </div>
-            <div class="row" style="align-items:center; margin-top:8px;">
-              <button id="puxarCaixaBtn" class="secondary" onclick="nflPuxarDoCaixa()">📥 Puxar do Caixa nessa data</button>
-            </div>
-            <div class="hint" id="puxarCaixaStatus"></div>
-            <label for="dataConsulta" style="margin-top:18px;">Data (opcional — preenche linhas sem data própria)</label>
-            <input type="date" id="dataConsulta" style="margin-bottom:16px;">
-            <label for="nflInput">Ou cole aqui os dados (separados por TAB, como ao copiar do Excel)</label>
-            <textarea id="nflInput" placeholder="Cole aqui os dados que você tiver, em qualquer ordem..."></textarea>
-            <div class="hint">Não precisa ter todos os campos nem estar na ordem do modelo — você mapeia as colunas no próximo passo.</div>
-            <div class="row">
-              <button onclick="nflDetectColumns()">Avançar → Mapear colunas</button>
-              <button class="secondary" onclick="nflLoadExample()">Ver exemplo</button>
-              <button class="secondary" onclick="nflClearAll()">Limpar</button>
-            </div>
+          <div class="nflx-datebl"><div class="d1" id="nflxDia">—</div><div class="d2">NF do Dia</div></div>
+          <div class="card nflx-card">
+            <div class="nflx-sheetinfo"><i class="fas fa-file-lines"></i><div>Conectado à planilha <b>NOTAS FISCAIS 3.0</b> · uma aba por dia</div></div>
+            <div class="nflx-datepick"><label for="puxarDataInput"><i class="fas fa-calendar" style="color:#0d9488;"></i> Data</label><input type="date" id="puxarDataInput" onchange="nflxAtualizaDia()"></div>
+            <button type="button" class="nflx-big teal" id="nflxBtnSheet" onclick="nflxBuscar('sheet')"><div class="bi"><i class="fas fa-magnifying-glass"></i></div><div class="txt">Buscar notas fiscais na planilha<div class="sub">Acha a aba da data escolhida e lê as notas</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+            <button type="button" class="nflx-big ghost" id="nflxBtnCaixa" onclick="nflxBuscar('caixa')"><div class="bi"><i class="fas fa-inbox"></i></div><div class="txt">Puxar do Caixa nessa data<div class="sub">Traz o que os colaboradores preencheram em "Preencher NF do Dia"</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+            <div class="nflx-st" id="puxarStatus"></div>
+            <div class="nflx-st" id="puxarCaixaStatus"></div>
+            <div style="display:none;"><button type="button" id="puxarBtn" onclick="nflPuxarDoSheet()">🔎 Puxar dados desse dia da planilha</button><button type="button" id="puxarCaixaBtn" onclick="nflPuxarDoCaixa()">📥 Puxar do Caixa nessa data</button></div>
+            <details class="nflx-det" id="nflxManual"><summary>Ou colar os dados manualmente</summary>
+              <label for="dataConsulta">Data (opcional — preenche linhas sem data própria)</label>
+              <input type="date" id="dataConsulta" style="margin-bottom:14px;">
+              <label for="nflInput">Cole aqui os dados (separados por TAB, como ao copiar do Excel)</label>
+              <textarea id="nflInput" placeholder="Cole aqui os dados que você tiver, em qualquer ordem..."></textarea>
+              <div class="hint">Não precisa ter todos os campos nem estar na ordem do modelo — você mapeia as colunas no próximo passo.</div>
+              <div class="row">
+                <button onclick="nflDetectColumns()">Avançar → Mapear colunas</button>
+                <button class="secondary" onclick="nflLoadExample()">Ver exemplo</button>
+                <button class="secondary" onclick="nflClearAll()">Limpar</button>
+              </div>
+            </details>
           </div>
         </div>
 
         <div class="step-overlay" id="ov-map">
-          <div class="card" id="mapCard">
-            <div class="step-kicker"><span class="step-badge">2</span><p class="step-title">Etapa 2 — diga o que é cada coluna</p></div>
-            <div class="hint">Prévia mostra até 3 linhas. O campo sugerido é escolhido olhando várias linhas. Escolha "Não usar" para colunas que não quer importar.</div>
+          <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflxVoltarMapa()"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+          <div class="card nflx-card" id="mapCard">
+            <div class="nflx-tl">O que é cada coluna?</div>
+            <div class="nflx-ts" style="margin-bottom:20px;">Já adivinhei a maioria pelo formato dos dados. Só ajuste o que estiver errado.</div>
             <div id="mapDupeWarning" class="dupe-warning" style="display:none;"></div>
-            <div class="tablewrap"><table id="mapTable"></table></div>
-            <div class="row">
-              <button class="secondary" onclick="nflReorganizeColumns()">🔄 Organizar automaticamente</button>
-            </div>
-            <div class="row">
-              <button onclick="nflGoToAgendStep()">Avançar → Verificar CEP</button>
-              <button class="secondary" onclick="nflxAbrirAgendados()">🔗 Cruzar com agendados (opcional)</button>
-              <button class="secondary" onclick="nflCloseStep('ov-map'); nflOpenStep('ov-paste');">Voltar</button>
+            <div class="nflx-maprev"><table id="mapTable"></table></div>
+            <div class="nflx-hint" id="nflxMapHint"></div>
+            <button type="button" class="nflx-big teal" onclick="nflGoToAgendStep()"><div class="bi"><i class="fas fa-check"></i></div><div class="txt">Confirmar mapeamento<div class="sub">Avançar para busca de CEP</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+            <div class="nflx-center" style="margin-top:6px;">
+              <button type="button" class="nflx-link" onclick="nflReorganizeColumns()"><i class="fas fa-rotate"></i> Organizar automaticamente</button>
+              <button type="button" class="nflx-link" onclick="nflxAbrirAgendados()"><i class="fas fa-link"></i> Cruzar com agendados (opcional)</button>
             </div>
           </div>
         </div>
@@ -3087,7 +3165,29 @@
         </div>
 
         <div class="step-overlay" id="ov-cep">
-          <div class="card" id="cepCard">
+          <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflxCepVoltar()"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+          <div class="card nflx-card nflx-center" id="cepCard">
+            <div id="nflxCepIdle">
+              <div class="nflx-ic"><i class="fas fa-map-location-dot"></i></div>
+              <div class="nflx-tl">Completar endereços</div>
+              <div class="nflx-ts">Vou buscar o CEP de cada paciente e preencher<br>Logradouro, Bairro, Cidade e UF automaticamente.</div>
+              <button type="button" class="nflx-big teal" onclick="nflxCepRun()" style="margin-bottom:6px;"><div class="bi">🗺️</div><div class="txt" id="nflxCepBtnTxt">Buscar CEP dos pacientes<div class="sub">Costuma levar uns 15 segundos</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+              <button type="button" class="nflx-link" onclick="nflxCepSeguir()">Pular a busca e gerar mesmo assim</button>
+            </div>
+            <div id="nflxCepRunning" style="display:none;">
+              <div class="nflx-spin"><div class="ring"></div><div class="ico">🔍</div></div>
+              <div class="nflx-tl">Buscando CEP…</div>
+              <div class="nflx-ts" style="margin-bottom:20px;">Preenchendo endereço dos pacientes</div>
+              <div class="nflx-bar"><div class="fill" id="nflxCepBar"></div></div>
+              <div class="nflx-cnt" id="nflxCepCount">0 / 0 endereços</div>
+            </div>
+            <div id="nflxCepDone" style="display:none;">
+              <div class="nflx-ic"><i class="fas fa-circle-check"></i></div>
+              <div class="nflx-tl">Endereços completados</div>
+              <div class="nflx-ts" id="nflxCepRes" style="margin-bottom:22px;"></div>
+              <button type="button" class="nflx-big teal" onclick="nflxCepSeguir()"><div class="bi"><i class="fas fa-arrow-right"></i></div><div class="txt">Verificar próximos passos<div class="sub"></div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+            </div>
+            <details class="nflx-det" style="text-align:left;"><summary>Opções e detalhes do CEP</summary>
             <div class="step-kicker"><span class="step-badge">4</span><p class="step-title">Etapa 4 — completar endereço pelo CEP (opcional)</p></div>
             <div class="hint" id="cepHint">Se faltar endereço, use o botão para completar Logradouro, Bairro, Cidade e UF via ViaCEP. Se já estiver preenchido, clique direto em "Gerar planilha".</div>
             <div class="row" style="align-items:center;">
@@ -3116,6 +3216,7 @@
               <button id="genBtn" onclick="nflProcessData()">Gerar planilha</button>
               <button class="secondary" onclick="nflxCepVoltar()">Voltar</button>
             </div>
+            </details>
           </div>
         </div>
 
@@ -3123,7 +3224,7 @@
           <div class="card nflx-center nflx-card high">
             <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflCloseStep('ov-found');nflOpenStep('ov-paste');"><i class="fas fa-arrow-left"></i> Voltar</button></div>
             <div class="nflx-ic"><i class="fas fa-file-circle-check"></i></div>
-            <div class="nflx-tl">Encontrei notas</div>
+            <div class="nflx-tl" id="nflxFoundT">Encontrei notas na planilha</div>
             <div class="nflx-ts">Todas prontas pra próxima etapa</div>
             <div class="nflx-result"><div class="num" id="nflxFoundN">0</div><div class="lbl">notas para emitir</div><div class="aba" id="nflxFoundAba"></div></div>
             <button type="button" class="nflx-big teal" onclick="nflxIrMapear()"><div class="bi"><i class="fas fa-table-columns"></i></div><div class="txt">Mapear colunas<div class="sub">Diz o que é cada coluna antes de continuar</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
@@ -3155,8 +3256,8 @@
         </div>
 
         <div class="step-overlay" id="ov-result">
-          <div class="card" id="resultCard">
-            <div class="step-kicker"><span class="step-badge">✓</span><p class="step-title">Resultado</p></div>
+          <div class="card nflx-card high" id="resultCard">
+            <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflxVoltarResultado()"><i class="fas fa-arrow-left"></i> Voltar</button></div>
             <div class="nflx-center" id="nflxResTop">
               <div class="nflx-result"><div class="num" id="nflxResN">0</div><div class="lbl">pacientes prontos pra emitir</div></div>
               <button type="button" class="nflx-big teal" id="nflxBtnCons" onclick="nflxBaixar('Consulta')"><div class="bi"><i class="fas fa-stethoscope"></i></div><div class="txt">Baixar lote Consulta<div class="sub" id="nflxSubCons">—</div></div><i class="fas fa-download" style="opacity:.6"></i></button>
@@ -5443,7 +5544,7 @@
       Object.keys(MAP).forEach(function(id){var e=$(id); if(e&&e.classList.contains('open')) cur=MAP[id];});
       document.querySelectorAll('#nflxSteps .nflx-step').forEach(function(s){
         var n=+s.getAttribute('data-s'); s.classList.remove('active','done');
-        if(n<cur) s.classList.add('done'); else if(n===cur) s.classList.add('active');
+        var fim=$('ov-result')&&$('ov-result').classList.contains('open'); if(fim||n<cur) s.classList.add('done'); else if(n===cur) s.classList.add('active');
       });
     }
     var mo=new MutationObserver(syncSteps);
@@ -5726,6 +5827,113 @@
   })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.8 · 03/10/2026</span>
+  <!-- ═══════════ v4.9 — tela por tela do mockup (NF do Dia) ═══════════ -->
+  <script>
+  (function(){
+    var $=function(id){return document.getElementById(id);};
+    /* ---- menu "Mais opções" no lugar das abas ---- */
+    window.nflxDrawer=function(on){ $('nflxDrawerBg').classList.toggle('open',!!on); };
+    window.nflxIr=function(dest){
+      nflxDrawer(false);
+      if(dest==='manual'){
+        nflShowTab('gerar'); ['ov-map','ov-agend','ov-cep','ov-found','ov-fix','ov-result'].forEach(nflCloseStep); nflOpenStep('ov-paste');
+        var d=$('nflxManual'); if(d){ d.open=true; d.scrollIntoView({behavior:'smooth',block:'center'}); }
+        return;
+      }
+      nflShowTab(dest);
+    };
+    var _tab=window.nflShowTab;
+    window.nflShowTab=function(name){
+      var r=_tab.apply(this,arguments);
+      var h=$('nflxBtnHome'); if(h) h.style.display=(name==='gerar')?'none':'';
+      nflxDrawer(false);
+      return r;
+    };
+
+    /* ---- 1 · Buscar ---- */
+    window.nflxAtualizaDia=function(){
+      var v=($('puxarDataInput')||{}).value, el=$('nflxDia'); if(!el) return;
+      if(!v){ el.textContent='Escolha a data'; return; }
+      var p=v.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]);
+      el.textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+    };
+    nflxAtualizaDia();
+    window.nflxBuscar=async function(qual){
+      var btn=$(qual==='sheet'?'nflxBtnSheet':'nflxBtnCaixa'), sub=btn.querySelector('.sub'), old=sub.textContent;
+      $('puxarStatus').innerHTML=''; $('puxarCaixaStatus').innerHTML='';
+      btn.disabled=true; sub.textContent='Buscando…';
+      try{ await (qual==='sheet'?window.nflPuxarDoSheet():window.nflPuxarDoCaixa()); }
+      finally{ btn.disabled=false; sub.textContent=old; }
+    };
+    /* título da tela "Encontrei notas" conforme a origem */
+    var _found=null;
+    new MutationObserver(function(){
+      var f=$('ov-found'); if(f&&f.classList.contains('open')){
+        var daCaixa=($('nflxFoundAba').textContent||'').indexOf('Caixa')>=0;
+        $('nflxFoundT').textContent=daCaixa?'Encontrei notas no Caixa':'Encontrei notas na planilha';
+      }
+    }).observe($('ov-found'),{attributes:true,attributeFilter:['class']});
+
+    /* ---- 3 · Mapear ---- */
+    var _bm=window.nflBuildMapTable;
+    window.nflBuildMapTable=function(){
+      var r=_bm.apply(this,arguments);
+      var n=window.nflNumCols||0, h=$('nflxMapHint');
+      if(h) h.textContent=n+' colunas detectadas · mostrando '+Math.min(3,Math.max(0,(window.nflParsedLines||[]).length-1))+' primeiras linhas';
+      return r;
+    };
+    window.nflxVoltarMapa=function(){
+      nflCloseStep('ov-map');
+      nflOpenStep(($('nflxFoundN').textContent!=='0' && window._nflxViaBusca)?'ov-found':'ov-paste');
+    };
+    window._nflxViaBusca=false;
+    var _ir=window.nflxIrMapear; window.nflxIrMapear=function(){ window._nflxViaBusca=true; return _ir.apply(this,arguments); };
+    var _dc=window.nflDetectColumns; window.nflDetectColumns=function(){ if(!($('ov-found').classList.contains('open'))) window._nflxViaBusca=false; return _dc.apply(this,arguments); };
+
+    /* ---- 4 · CEP (tela com lupa + barra, usando a busca existente) ---- */
+    function cepEstado(s){ ['Idle','Running','Done'].forEach(function(k){ $('nflxCep'+k).style.display=(k===s)?'':'none'; }); }
+    function totalCep(){
+      var lines=(window.nflParsedLines||[]).slice(1), cepIdx=(window._nflCurrentMapping||[]).indexOf('CEP');
+      if(cepIdx<0) return {n:lines.length,comCep:0};
+      return {n:lines.length,comCep:lines.filter(function(r){return nflNormCEPDigits(r[cepIdx]||'').length===8;}).length};
+    }
+    new MutationObserver(function(){
+      var c=$('ov-cep'); if(c&&c.classList.contains('open')){
+        cepEstado('Idle');
+        var t=totalCep(); $('nflxCepBtnTxt').innerHTML='Buscar CEP de '+t.n+' paciente'+(t.n===1?'':'s')+'<div class="sub">Costuma levar uns 15 segundos</div>';
+      }
+    }).observe($('ov-cep'),{attributes:true,attributeFilter:['class']});
+    window.nflxCepRun=async function(){
+      var t=totalCep();
+      if(!t.comCep){ alert('Mapeie a coluna CEP (e confira se há CEPs válidos) para buscar os endereços.'); return; }
+      window._nflCepResults=null;
+      $('nflxCepBar').style.width='0%'; $('nflxCepCount').textContent='0 / '+t.n+' endereços';
+      cepEstado('Running');
+      var iv=setInterval(function(){
+        var lb=($('cepProgressLabel').textContent||'').split('/'), w=$('cepProgressBar').style.width||'0%';
+        $('nflxCepBar').style.width=w;
+        if(lb.length===2) $('nflxCepCount').textContent=lb[0]+' / '+lb[1]+' endereços';
+      },120);
+      try{ await nflBuscarCeps(); } finally{ clearInterval(iv); }
+      var res=window._nflCepResults;
+      if(!res){ cepEstado('Idle'); return; }
+      $('nflxCepBar').style.width='100%'; $('nflxCepCount').textContent=t.n+' / '+t.n+' endereços';
+      var ok=res.filter(function(r){return r&&r.ok;}).length, inc=res.length-ok;
+      $('nflxCepRes').innerHTML='<b style="color:#15803d;">'+ok+' OK</b> &nbsp;·&nbsp; <b style="color:#b45309;">'+inc+' incompleto'+(inc===1?'':'s')+'</b>';
+      setTimeout(function(){ cepEstado('Done'); },450);
+    };
+    window.nflxCepSeguir=function(){ nflProcessData(); };
+
+    /* ---- 6 · voltar do resultado ---- */
+    window.nflxVoltarResultado=function(){
+      nflCloseStep('ov-result');
+      var inc=(window.nflCurrentRows||[]).some(function(r){return !r.tipo||r.hasWarning;});
+      if(inc){ $('nflxFixAsk').style.display=''; $('nflxFixForm').style.display='none'; nflOpenStep('ov-fix'); }
+      else nflOpenStep('ov-cep');
+    };
+  })();
+  </script>
+
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v4.9 · 03/10/2026</span>
 </body>
 </html>
