@@ -1,4 +1,4 @@
-<!-- VERSION: v4.9.1 | dashboard.html | 03/10/2026 | Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
+<!-- VERSION: v4.9.2 | dashboard.html | 05/10/2026 | Comparativo Sinaxys: "Falta emitir no período" (planilha × exportação Sinaxys Splitadas/De pacientes; somente leitura). v4.9.1: Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
 <!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
 <!-- v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
 <!-- VERSION: v5.1 | dashboard.html | 03/10/2026 | Hoje blindado (try/catch + fallback para Produção), badges em Hoje / NF em Lote / Fechamentos (somem se a leitura falhar), sidebar com atalhos externos NPS / Cadastros / Admin. Só adições. --><!-- VERSION: v5.0 | dashboard.html | 03/10/2026 | Nova página "Hoje" (landing): alertas (NF pendente / fechamentos sem pagamento), KPIs de ontem, gráfico de 7 dias, top produtores, últimas atividades e ações rápidas. Sidebar: item solo "Hoje" (com badge de pendências) + Operação/Análises/Gestão. Só adições — nenhuma função/ID existente alterado. --><!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
@@ -3723,6 +3723,21 @@
           </details>
         </div>
 
+<!-- [v4.9.2] Falta emitir no período (somente leitura) -->
+<div class="card" id="nflxSinPerCard">
+          <div class="nflx-tl" style="font-size:16px;margin-bottom:4px;"><i class="fas fa-list-check" style="color:#6d28d9;"></i> Falta emitir no período</div>
+          <div class="nflx-ts" style="margin-bottom:14px;">Escolha o período e anexe a exportação da Sinaxys (aba <b>Splitadas</b> ou <b>De pacientes</b>). A ferramenta lê todas as abas dessas datas na <b>NOTAS FISCAIS 3.0</b> e mostra o que ainda falta emitir. <b>Não grava nada.</b></div>
+          <div class="nflx-datepick" style="flex-wrap:wrap;">
+            <label for="nflxSinPerDe" style="margin-right:6px;">De</label><input type="date" id="nflxSinPerDe">
+            <label for="nflxSinPerAte" style="margin:0 6px;">até</label><input type="date" id="nflxSinPerAte">
+          </div>
+          <label for="nflxSinPerFile">Exportação da Sinaxys (.xlsx)</label>
+          <input type="file" id="nflxSinPerFile" accept=".xlsx,.xls" multiple>
+          <button type="button" class="nflx-big purple" id="nflxSinPerBtn" onclick="nflSinPerBuscar()" style="margin-top:12px;"><div class="bi"><i class="fas fa-magnifying-glass"></i></div><div class="txt">Levantar o que falta emitir<div class="sub">Lê as abas do período e cruza com a Sinaxys</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+          <div id="nflxSinPerMsg" style="display:none;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;line-height:1.5;"></div>
+          <div id="nflxSinPerOut" style="display:none;margin-top:14px;"></div>
+        </div>
+
         <details class="nflx-det"><summary>Ou importar de um arquivo Excel</summary>
         <div class="card">
           <label>➕ Importar lote(s) direto de um Excel (sem passar por "Gerar planilha")</label>
@@ -6420,6 +6435,483 @@
       finally{ btn.disabled=false; sub.textContent=old; }
     };
   })();
+  </script>
+
+  <script>
+/* ═══════════ v4.9.2 — Comparativo: "Falta emitir no período" (planilha NOTAS FISCAIS 3.0 × exportação Sinaxys) ═══════════
+   [v4.9.2] SOMENTE LEITURA. Não grava no Firebase (nfl_sinaxys_lotes fica intacto) nem na planilha.
+   Depende só do que já existe neste arquivo: nflFetchComTimeout, NFL_SHEET_PUBHTML, nflParseCsvRFC4180,
+   nflExtrairTipoDoSheet, nflNormTxt, nflOnlyDigits, nflPreencherToFloat, nflReadXlsxFile, nflIsValidCPF (opcional) e XLSX.js.
+   Aceita a exportação da Sinaxys nos dois formatos: aba "Splitadas" (com Status) e aba "De pacientes" (sem Status). */
+(function(){
+  var $=function(id){ return (typeof document!=='undefined')?document.getElementById(id):null; };
+  var E=function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  var p2=function(n){ return ('0'+n).slice(-2); };
+  var BR=function(iso){ return iso?String(iso).split('-').reverse().join('/'):'—'; };
+  var BRL=function(c){ if(c==null) return '—'; return 'R$ '+(c/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+  var isoLocal=function(d){ return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()); };
+
+  /* ───────── datas ───────── */
+  function isoValido(y,m,d){
+    y=+y; m=+m; d=+d;
+    if(!(y>=2000&&y<=2100&&m>=1&&m<=12&&d>=1&&d<=31)) return null;
+    var dt=new Date(Date.UTC(y,m-1,d));
+    if(dt.getUTCFullYear()!==y||dt.getUTCMonth()!==m-1||dt.getUTCDate()!==d) return null;
+    return y+'-'+p2(m)+'-'+p2(d);
+  }
+
+  /* Data de uma célula da Sinaxys. IMPORTANTE: texto ISO ("2026-10-01T00:00:00.000Z") é lido pelos 10 primeiros
+     caracteres, sem passar por new Date() — senão o fuso de São Paulo (UTC-3) empurra a data para o dia anterior. */
+  function parseDataCell(v){
+    if(v==null||v==='') return null;
+    if(typeof v==='number'){
+      if(!(v>20000&&v<80000)) return null;
+      var d=new Date(Math.round((Math.floor(v)-25569)*86400000));
+      return isoValido(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate());
+    }
+    if(Object.prototype.toString.call(v)==='[object Date]'){ if(isNaN(v)) return null; return isoValido(v.getFullYear(),v.getMonth()+1,v.getDate()); }
+    var s=String(v).trim(), m;
+    if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return isoValido(m[1],m[2],m[3]);
+    if((m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/))) return isoValido(m[3],m[2],m[1]);
+    return null;
+  }
+
+  /* Nome de aba → data. Tolera: / - . espaço (inclusive repetidos, ex "22/09//2026"), dia/mês sem zero, ano com 2 ou 4
+     dígitos, ordem AAAA-MM-DD, compacto (05102026), texto antes/depois ("05/10/2026 - exames") e nome sem ano ("05/10",
+     que usa o ano do período escolhido). Retorna {iso,semAno} | {iso:null,fora:true} (sem ano e fora do período) | null. */
+  function abaParaIso(nome,de,ate){
+    var s=String(nome==null?'':nome).trim(), m, iso;
+    if(!s) return null;
+    if((m=s.match(/(^|\D)(\d{4})\s*[\/.\-]\s*(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?!\d)/))){ iso=isoValido(m[2],m[3],m[4]); if(iso) return {iso:iso,semAno:false}; }
+    if((m=s.match(/(^|\D)(\d{1,2})\s*[\/.\-\s]+\s*(\d{1,2})\s*[\/.\-\s]+\s*(\d{4}|\d{2})(?!\d)/))){
+      var y=m[4].length===2?2000+(+m[4]):+m[4]; iso=isoValido(y,m[3],m[2]); if(iso) return {iso:iso,semAno:false};
+    }
+    if((m=s.match(/^\D*(\d{2})(\d{2})(\d{4})\D*$/))){ iso=isoValido(m[3],m[2],m[1]); if(iso) return {iso:iso,semAno:false}; }
+    if((m=s.match(/^\D*(\d{2})(\d{2})(\d{2})\D*$/))){ iso=isoValido(2000+(+m[3]),m[2],m[1]); if(iso) return {iso:iso,semAno:false}; }
+    if((m=s.match(/(^|\D)(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?![\d\/.\-])/)) && de && ate){
+      var y0=+String(de).slice(0,4), y1=+String(ate).slice(0,4), achou=false;
+      for(var yy=y0;yy<=y1;yy++){ var i2=isoValido(yy,m[3],m[2]); if(i2){ achou=true; if(i2>=de&&i2<=ate) return {iso:i2,semAno:true}; } }
+      if(achou) return {iso:null,fora:true};
+    }
+    return null;
+  }
+
+  /* ───────── aba da planilha (CSV) → linhas do dia ─────────
+     Usa o mesmo extrator que o resto do dashboard (nflExtrairTipoDoSheet), mas NÃO descarta em silêncio:
+     linha com CPF/valor inválido vai para "problemas", e linha com cara de paciente sem CPF também. */
+  function csvParaLinhas(csv,dia,abaNome){
+    var todas=nflParseCsvRFC4180(csv).filter(function(row){ return row.some(function(c){ return c!==''; }); });
+    var out={linhas:[],problemas:[],totalBruto:todas.length,semColunas:false};
+    var ex=nflExtrairTipoDoSheet(todas), rows=ex.linhasLimpas;
+    if(!rows.length) return out;
+    var head=rows[0], hasHead=!/\d{11}/.test(head.join('').replace(/\D/g,''));
+    var iN=-1,iC=-1,iV=-1;
+    if(hasHead) head.forEach(function(h,i){
+      var k=nflNormTxt(h);
+      if((k==='nome'||k==='paciente')&&iN<0) iN=i; else if(k==='cpf'&&iC<0) iC=i; else if(/^valor/.test(k)&&iV<0) iV=i;
+    });
+    if(!hasHead||iV<0){ out.semColunas=true; return out; }
+    var data=rows.slice(1);
+    data.forEach(function(row,di){
+      var cpf=nflOnlyDigits(iC>=0?row[iC]:(row.filter(function(c){ return nflOnlyDigits(c).length===11; })[0]||''));
+      var val=nflPreencherToFloat(row[iV]);
+      var nome=String(iN>=0?(row[iN]||''):(row[0]||'')).trim();
+      if(cpf.length!==11||val===null){
+        out.problemas.push({dia:dia,aba:abaNome,nome:nome,cpf:cpf,cents:val===null?null:Math.round(val*100),motivo:cpf.length!==11?'CPF ausente ou incompleto':'Valor ausente ou inválido'});
+        return;
+      }
+      out.linhas.push({dia:dia,aba:abaNome,nome:nome,cpf:cpf,cents:Math.round(val*100),tipo:ex.tiposPorIndice[di]||'',
+        cpfInvalido:(typeof nflIsValidCPF==='function')?!nflIsValidCPF(cpf):false});
+    });
+    /* linhas que o extrator ignorou (sem CPF de 11 dígitos) mas que parecem paciente: nome com 2+ palavras, valor e 3+ células */
+    if(iN>=0){
+      var incl=new Set(rows);
+      todas.forEach(function(row){
+        if(incl.has(row)) return;
+        var nome=String(row[iN]||'').trim(), val=nflPreencherToFloat(row[iV]);
+        var cheias=row.filter(function(c){ return String(c||'').trim()!==''; }).length;
+        if(!nome||nome.indexOf(' ')<0||!/[a-zà-ú]{2}/i.test(nome)) return;
+        if(/^(total|subtotal|soma|resumo|planilha)\b/.test(nflNormTxt(nome))) return;
+        if(val===null||!(val>0)||cheias<3) return;
+        out.problemas.push({dia:dia,aba:abaNome,nome:nome,cpf:'',cents:Math.round(val*100),motivo:'Parece paciente, mas sem CPF de 11 dígitos (conferir)'});
+      });
+    }
+    return out;
+  }
+
+  /* ───────── exportação da Sinaxys (xlsx) → registros ───────── */
+  var ALIAS={
+    cpf:['cpf','cpf cliente','cpf paciente','cpf do cliente','cpf do paciente'],
+    nome:['nome','paciente','nome cliente','nome paciente','nome do paciente'],
+    data:['consulta','data de atendimento','data atendimento','data da consulta','data'],
+    cad:['cadastrada em','data de cadastro','data cadastro'],
+    nf:['sequencial','numero nf','numero da nf','n nota fiscal','no nota fiscal','nota fiscal','n nf','no nf','numero'],
+    status:['status','situacao']
+  };
+  function mapaColunas(header,amostra){
+    var c={cpf:-1,nome:-1,valor:-1,data:-1,cad:-1,nf:-1,status:-1,cliente:-1};
+    (header||[]).forEach(function(h,i){
+      var k=nflNormTxt(h);
+      if(!k) return;
+      if(ALIAS.cpf.indexOf(k)>=0&&c.cpf<0) c.cpf=i;
+      else if(ALIAS.nome.indexOf(k)>=0&&c.nome<0) c.nome=i;
+      else if(k==='cliente'&&c.cliente<0) c.cliente=i;
+      else if(/^valor/.test(k)&&c.valor<0) c.valor=i;
+      else if(ALIAS.data.indexOf(k)>=0&&c.data<0) c.data=i;
+      else if(ALIAS.cad.indexOf(k)>=0&&c.cad<0) c.cad=i;
+      else if(ALIAS.nf.indexOf(k)>=0&&c.nf<0) c.nf=i;
+      else if(ALIAS.status.indexOf(k)>=0&&c.status<0) c.status=i;
+    });
+    /* "Cliente" pode ser o CPF (aba Splitadas) ou o nome (aba De pacientes): decide pelo conteúdo */
+    if(c.cliente>=0){
+      var n=0,cp=0;
+      (amostra||[]).forEach(function(r){ var v=r&&r[c.cliente]; if(v===''||v==null) return; n++; if(nflOnlyDigits(v).length===11) cp++; });
+      var ehCpf=n>0&&cp/n>=0.9;
+      if(ehCpf&&c.cpf<0) c.cpf=c.cliente; else if(!ehCpf&&c.nome<0) c.nome=c.cliente;
+    }
+    return c;
+  }
+
+  function classificarStatus(statusTxt,nfDigitos){
+    if(statusTxt!=null&&String(statusTxt).trim()!==''){
+      var k=nflNormTxt(statusTxt);
+      if(/^emitid/.test(k)) return {st:'emitida',motivo:''};
+      if(/recusad|rejeitad|negad/.test(k)){ var mm=String(statusTxt).match(/\(([^)]*)\)/); return {st:'recusada',motivo:mm?mm[1].trim():''}; }
+      if(/cancelad/.test(k)) return {st:'cancelada',motivo:''};
+      return {st:'outro',motivo:String(statusTxt).trim()};
+    }
+    /* sem coluna Status: número longo (13 dígitos) = protocolo de nota recusada; 6 dígitos = NF emitida */
+    if(nfDigitos.length>=10) return {st:'recusada',motivo:'protocolo '+nfDigitos};
+    if(nfDigitos.length>0) return {st:'emitida',motivo:''};
+    return {st:'outro',motivo:'sem número de NF'};
+  }
+
+  function lerSinaxysWB(wb,nomeArq){
+    var out={registros:[],abas:[],ignoradas:[],semStatus:false};
+    wb.SheetNames.forEach(function(sn){
+      var ws=wb.Sheets[sn], rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true}), hi=-1, cols=null;
+      for(var i=0;i<Math.min(rows.length,10);i++){
+        var c=mapaColunas(rows[i]||[],rows.slice(i+1,i+51));
+        if(c.valor>=0&&c.cpf>=0){ hi=i; cols=c; break; }
+      }
+      if(hi<0){ out.ignoradas.push({arquivo:nomeArq,aba:sn,motivo:'sem colunas de CPF/Cliente e Valor'}); return; }
+      var tabDia=(abaParaIso(sn,null,null)||{}).iso||null;
+      if(cols.data<0&&!tabDia){ out.ignoradas.push({arquivo:nomeArq,aba:sn,motivo:'sem coluna de data (Consulta / Data de atendimento) e o nome da aba não é uma data'}); return; }
+      if(cols.status<0) out.semStatus=true;
+      var n=0,semCpf=0,semValor=0,semData=0;
+      for(var r=hi+1;r<rows.length;r++){
+        var row=rows[r];
+        if(!row||!row.some(function(c){ return String(c==null?'':c).trim()!==''; })) continue;
+        var cpf=nflOnlyDigits(row[cols.cpf]);
+        if(cpf.length!==11){ semCpf++; continue; }
+        var valor=nflPreencherToFloat(row[cols.valor]);
+        if(valor===null||isNaN(valor)){ semValor++; continue; }
+        var dia=cols.data>=0?parseDataCell(row[cols.data]):null;
+        if(!dia) dia=tabDia;
+        if(!dia){ semData++; continue; }
+        var nfD=nflOnlyDigits(cols.nf>=0?row[cols.nf]:'');
+        var cl=classificarStatus(cols.status>=0?row[cols.status]:null,nfD);
+        out.registros.push({dia:dia,cad:cols.cad>=0?parseDataCell(row[cols.cad]):null,cpf:cpf,cents:Math.round(valor*100),
+          nf:nfD,st:cl.st,motivo:cl.motivo,nome:cols.nome>=0?String(row[cols.nome]||'').trim():'',aba:sn,arq:nomeArq,usado:false});
+        n++;
+      }
+      out.abas.push({arquivo:nomeArq,aba:sn,formato:cols.status>=0?'com Status':'sem Status',linhas:n,semCpf:semCpf,semValor:semValor,semData:semData});
+    });
+    return out;
+  }
+
+  async function lerSinaxysArquivos(files){
+    var all={registros:[],abas:[],ignoradas:[],semStatus:false}, vistos={};
+    for(var i=0;i<files.length;i++){
+      var wb=await nflReadXlsxFile(files[i]);
+      var one=lerSinaxysWB(wb,files[i].name);
+      one.registros.forEach(function(r){
+        if(r.nf){ var k=r.st+'|'+r.nf+'|'+r.cpf+'|'+r.cents+'|'+r.dia; if(vistos[k]) return; vistos[k]=1; } /* mesma NF em 2 arquivos = 1 só */
+        all.registros.push(r);
+      });
+      all.abas=all.abas.concat(one.abas); all.ignoradas=all.ignoradas.concat(one.ignoradas);
+      if(one.semStatus) all.semStatus=true;
+    }
+    return all;
+  }
+
+  /* Dias que a exportação cobre: do 1º dia de atendimento até a data em que foi exportada (maior "Cadastrada em"). */
+  function cobertura(regs){
+    var mn=null,mx=null,mc=null;
+    regs.forEach(function(r){ if(!mn||r.dia<mn) mn=r.dia; if(!mx||r.dia>mx) mx=r.dia; if(r.cad&&(!mc||r.cad>mc)) mc=r.cad; });
+    return {min:mn,max:(mc&&mx&&mc>mx)?mc:mx,maxConsulta:mx,exportadoEm:mc};
+  }
+
+  /* ───────── cruzamento ─────────
+     Chave: CPF + valor (em centavos) + data. Cada nota da Sinaxys é usada UMA vez (2 linhas iguais exigem 2 notas).
+     Passo 1: Emitida exata → emitida. Passo 2: Recusada/Cancelada exata. Passo 3 (sobras): mesmo CPF+dia com valor
+     diferente → "valor divergente"; mesmo CPF+valor em outro dia → "data divergente". Resto → "não consta". */
+  function cruzar(linhas,regs,cob,de,ate){
+    var porKey={},porCpfDia={},porCpfCents={};
+    regs.forEach(function(r){
+      r.usado=false;
+      var k=r.cpf+'|'+r.cents+'|'+r.dia; (porKey[k]=porKey[k]||[]).push(r);
+      if(r.st==='emitida'){
+        (porCpfDia[r.cpf+'|'+r.dia]=porCpfDia[r.cpf+'|'+r.dia]||[]).push(r);
+        (porCpfCents[r.cpf+'|'+r.cents]=porCpfCents[r.cpf+'|'+r.cents]||[]).push(r);
+      }
+    });
+    var res=linhas.map(function(l,i){
+      return {ord:i,dia:l.dia,aba:l.aba,nome:l.nome,cpf:l.cpf,cents:l.cents,tipo:l.tipo,cpfInvalido:!!l.cpfInvalido,sit:null,nf:'',obs:'',regCents:null,regDia:null};
+    });
+    function livre(arr,st){ if(!arr) return null; for(var i=0;i<arr.length;i++) if(!arr[i].usado&&(!st||arr[i].st===st)) return arr[i]; return null; }
+    res.forEach(function(x){ if(cob&&cob.min&&(x.dia<cob.min||x.dia>cob.max)) x.sit='fora'; });
+    res.forEach(function(x){
+      if(x.sit) return;
+      var r=livre(porKey[x.cpf+'|'+x.cents+'|'+x.dia],'emitida');
+      if(r){ r.usado=true; x.sit='emitida'; x.nf=r.nf; }
+    });
+    res.forEach(function(x){
+      if(x.sit) return;
+      var arr=porKey[x.cpf+'|'+x.cents+'|'+x.dia], r=livre(arr,'recusada')||livre(arr,'cancelada')||livre(arr,'outro');
+      if(r){ r.usado=true; x.sit=r.st; x.nf=r.nf; x.obs=r.motivo; }
+    });
+    res.forEach(function(x){
+      if(x.sit) return;
+      var r=livre(porCpfDia[x.cpf+'|'+x.dia]);
+      if(r){ r.usado=true; x.sit='valor_div'; x.nf=r.nf; x.regCents=r.cents; return; }
+      var arr=porCpfCents[x.cpf+'|'+x.cents]; r=null;
+      if(arr) for(var i=0;i<arr.length;i++){ if(!arr[i].usado&&arr[i].dia!==x.dia){ r=arr[i]; break; } }
+      if(r){ r.usado=true; x.sit='data_div'; x.nf=r.nf; x.regDia=r.dia; return; }
+      x.sit='nao_consta';
+    });
+    res.sort(function(a,b){ return a.dia<b.dia?-1:a.dia>b.dia?1:a.ord-b.ord; });
+    var sobras=regs.filter(function(r){ return r.st==='emitida'&&!r.usado&&r.dia>=de&&r.dia<=ate; })
+      .sort(function(a,b){ return a.dia<b.dia?-1:a.dia>b.dia?1:0; });
+    return {res:res,sobras:sobras};
+  }
+
+  var PEND={nao_consta:1,recusada:1,cancelada:1,outro:1}, DIV={valor_div:1,data_div:1};
+  function contagens(res,problemas,sobras){
+    var c={emitida:0,pend:0,div:0,fora:0,problemas:(problemas||[]).length,sobras:(sobras||[]).length,total:res.length,nao_consta:0,recusada:0,cancelada:0,outro:0};
+    res.forEach(function(x){
+      if(x.sit==='emitida') c.emitida++; else if(PEND[x.sit]){ c.pend++; c[x.sit]++; } else if(DIV[x.sit]) c.div++; else if(x.sit==='fora') c.fora++;
+    });
+    return c;
+  }
+  function resumoPorDia(res){
+    var m={}, ordem=[];
+    res.forEach(function(x){
+      if(!m[x.dia]){ m[x.dia]={dia:x.dia,aba:x.aba,total:0,emitida:0,pend:0,div:0,fora:0}; ordem.push(x.dia); }
+      var d=m[x.dia]; d.total++;
+      if(x.sit==='emitida') d.emitida++; else if(PEND[x.sit]) d.pend++; else if(DIV[x.sit]) d.div++; else if(x.sit==='fora') d.fora++;
+    });
+    return ordem.map(function(k){ return m[k]; });
+  }
+
+  /* ───────── planilha publicada: lista de abas e leitura de uma aba ───────── */
+  async function listarAbas(){
+    var r=await nflFetchComTimeout(NFL_SHEET_PUBHTML,20000);
+    if(!r.ok) throw new Error('HTTP '+r.status+' ao abrir a planilha');
+    var htxt=await r.text(), abas=[], vistos={};
+    [/items\.push\(\{name:\s*"((?:[^"\\]|\\.)*)",\s*pageUrl:\s*"([^"]+)"/g,
+     /"name"\s*:\s*"([^"]+)"[^}]{0,200}"pageUrl"\s*:\s*"([^"]+)"/g,
+     /data-sheet-id="(\d+)"[^>]*>([^<]+)</g].forEach(function(re,ri){
+      if(abas.length) return; var m; re.lastIndex=0;
+      while((m=re.exec(htxt))!==null){
+        var nome=(ri===2?m[2]:m[1]).replace(/\\\//g,'/').trim();
+        var gid=ri===2?m[1]:((m[2].match(/gid=(-?\d+)/)||[])[1]);
+        if(nome&&gid&&!vistos[gid]){ vistos[gid]=1; abas.push({nome:nome,gid:gid}); }
+      }
+    });
+    if(!abas.length) throw new Error('Não consegui listar as abas da planilha — confira se ela está publicada.');
+    return abas;
+  }
+  async function lerAbaPorGid(aba,dia){
+    var url=NFL_SHEET_PUBHTML.replace(/pubhtml.*$/,'pub?output=csv')+'&gid='+aba.gid, r2=null, ultimo=null;
+    for(var t=0;t<2;t++){ /* 1 nova tentativa: o Google às vezes recusa pedidos em sequência */
+      try{ r2=await nflFetchComTimeout(url,20000); if(r2.ok) break; ultimo=new Error('HTTP '+r2.status); }catch(e){ ultimo=e; }
+      await new Promise(function(ok){ setTimeout(ok,1500); });
+    }
+    if(!r2||!r2.ok) throw new Error((ultimo&&ultimo.message)||'falha ao baixar');
+    var csv=await r2.text();
+    if(csv.trim().startsWith('<')) throw new Error('a planilha devolveu HTML — confira se está publicada como CSV');
+    return csvParaLinhas(csv,dia,aba.nome);
+  }
+
+  /* ───────── interface ───────── */
+  var ST={busy:false,res:[],problemas:[],sobras:[],filtro:'pend',de:'',ate:'',cob:null,lidas:[],naoReconhecidas:[],erros:[],avisos:[],sinAbas:[],sinIgnoradas:[]};
+
+  function msg(txt,tipo){
+    var b=$('nflxSinPerMsg'); if(!b) return;
+    b.style.display='block'; b.innerHTML=txt;
+    var c={ok:['var(--purple-bg)','var(--purple)'],warn:['var(--amber-bg)','var(--amber)'],err:['#fee2e2','var(--red)']}[tipo||'ok'];
+    b.style.background=c[0]; b.style.color=c[1];
+  }
+  var SIT={
+    emitida:['ok','Emitida'],nao_consta:['err','Não consta na Sinaxys'],recusada:['err','Recusada'],cancelada:['err','Cancelada'],outro:['err','Outro status'],
+    valor_div:['warn','Valor divergente'],data_div:['warn','Data divergente'],fora:['warn','Fora da exportação']
+  };
+  function detalhe(x){
+    if(x.sit==='emitida') return 'NF '+E(x.nf);
+    if(x.sit==='nao_consta') return 'Não achei nota com esse CPF + valor + data'+(x.cpfInvalido?' · <b style="color:#C62828">CPF com dígito verificador inválido (provável causa)</b>':'');
+    if(x.sit==='recusada') return 'Recusada'+(x.obs?' ('+E(x.obs)+')':'')+(x.nf?' · '+E(x.nf):'');
+    if(x.sit==='cancelada') return 'Cancelada · NF '+E(x.nf);
+    if(x.sit==='outro') return E(x.obs||'—');
+    if(x.sit==='valor_div') return 'Sinaxys tem '+E(BRL(x.regCents))+' (NF '+E(x.nf)+')';
+    if(x.sit==='data_div') return 'Sinaxys tem esse CPF e valor em '+E(BR(x.regDia))+' (NF '+E(x.nf)+')';
+    if(x.sit==='fora') return 'A exportação cobre '+E(BR(ST.cob&&ST.cob.min))+' a '+E(BR(ST.cob&&ST.cob.max))+' — exporte de novo';
+    return '';
+  }
+  function linhasFiltradas(f){
+    if(f==='pend') return ST.res.filter(function(x){ return PEND[x.sit]; });
+    if(f==='div') return ST.res.filter(function(x){ return DIV[x.sit]; });
+    if(f==='ok') return ST.res.filter(function(x){ return x.sit==='emitida'; });
+    if(f==='fora') return ST.res.filter(function(x){ return x.sit==='fora'; });
+    return [];
+  }
+  var LIM=500;
+  function tabelaHtml(f){
+    var h='<table style="min-width:0"><tr>', tr='', n, lista;
+    if(f==='prob'){
+      lista=ST.problemas; n=lista.length;
+      h+='<th>Data</th><th>Aba</th><th>Paciente</th><th>CPF</th><th>Valor</th><th>Motivo</th></tr>';
+      lista.slice(0,LIM).forEach(function(p){ tr+='<tr class="error"><td>'+E(BR(p.dia))+'</td><td>'+E(p.aba)+'</td><td>'+E(p.nome)+'</td><td>'+E(p.cpf||'—')+'</td><td>'+E(BRL(p.cents))+'</td><td>'+E(p.motivo)+'</td></tr>'; });
+    } else if(f==='sobras'){
+      lista=ST.sobras; n=lista.length;
+      h+='<th>Data</th><th>Paciente (Sinaxys)</th><th>CPF</th><th>Valor</th><th>Nº NF</th></tr>';
+      lista.slice(0,LIM).forEach(function(r){ tr+='<tr><td>'+E(BR(r.dia))+'</td><td>'+E(r.nome||'—')+'</td><td>'+E(r.cpf)+'</td><td>'+E(BRL(r.cents))+'</td><td>'+E(r.nf)+'</td></tr>'; });
+    } else {
+      lista=linhasFiltradas(f); n=lista.length;
+      h+='<th>Data</th><th>Paciente</th><th>CPF</th><th>Valor</th><th>Tipo</th><th>Situação</th><th>Detalhe</th></tr>';
+      lista.slice(0,LIM).forEach(function(x){
+        var s=SIT[x.sit]||['warn',x.sit];
+        tr+='<tr class="'+(s[0]==='err'?'error':'')+'"><td>'+E(BR(x.dia))+'</td><td>'+E(x.nome)+'</td><td>'+E(x.cpf)+'</td><td>'+E(BRL(x.cents))+'</td><td>'+E(x.tipo||'—')+'</td><td><span class="badge '+s[0]+'">'+E(s[1])+'</span></td><td style="white-space:normal">'+detalhe(x)+'</td></tr>';
+      });
+    }
+    if(!n) return '<div class="empty-state">Nada nesta lista.</div>';
+    return '<div class="tablewrap">'+h+tr+'</table></div>'+(n>LIM?'<div class="hint" style="margin-top:6px;">Mostrando '+LIM+' de '+n+'. O arquivo .xlsx traz todas.</div>':'');
+  }
+  window.nflSinPerFiltro=function(f){
+    ST.filtro=f;
+    document.querySelectorAll('#nflxSinPerChips .nflx-chip').forEach(function(c){ c.classList.toggle('on',c.getAttribute('data-f')===f); });
+    var t=$('nflxSinPerTabela'); if(t) t.innerHTML=tabelaHtml(f);
+  };
+
+  function render(){
+    var c=contagens(ST.res,ST.problemas,ST.sobras), dias=resumoPorDia(ST.res), h='';
+    h+='<div class="nflx-res3"><div class="rc g"><div class="n">'+c.emitida+'</div><div class="l">Emitidas</div></div>'
+      +'<div class="rc r"><div class="n">'+c.pend+'</div><div class="l">Falta emitir</div></div>'
+      +'<div class="rc a"><div class="n">'+(c.div+c.problemas)+'</div><div class="l">Conferir</div></div></div>';
+    h+='<div class="hint">'+c.total+' linha(s) da planilha em '+dias.length+' dia(s), de '+E(BR(ST.de))+' a '+E(BR(ST.ate))+'. Sinaxys cobre '+E(BR(ST.cob.min))+' a '+E(BR(ST.cob.max))
+      +'. Falta emitir = '+c.nao_consta+' não consta · '+c.recusada+' recusada(s) · '+c.cancelada+' cancelada(s)'+(c.outro?' · '+c.outro+' outro status':'')+'.</div>';
+    ST.avisos.forEach(function(a){ h+='<div class="hint" style="background:var(--amber-bg);color:var(--amber);">⚠ '+a+'</div>'; });
+    h+='<div class="nflx-chips" id="nflxSinPerChips" style="margin-top:12px;">'
+      +'<button type="button" class="nflx-chip" data-f="pend" onclick="nflSinPerFiltro(\'pend\')">Falta emitir <span class="n">'+c.pend+'</span></button>'
+      +'<button type="button" class="nflx-chip" data-f="div" onclick="nflSinPerFiltro(\'div\')">Divergências <span class="n">'+c.div+'</span></button>'
+      +'<button type="button" class="nflx-chip" data-f="prob" onclick="nflSinPerFiltro(\'prob\')">Linhas com problema <span class="n">'+c.problemas+'</span></button>'
+      +'<button type="button" class="nflx-chip" data-f="sobras" onclick="nflSinPerFiltro(\'sobras\')">NF sem linha na planilha <span class="n">'+c.sobras+'</span></button>'
+      +'<button type="button" class="nflx-chip" data-f="ok" onclick="nflSinPerFiltro(\'ok\')">Emitidas <span class="n">'+c.emitida+'</span></button>'
+      +(c.fora?'<button type="button" class="nflx-chip" data-f="fora" onclick="nflSinPerFiltro(\'fora\')">Fora da exportação <span class="n">'+c.fora+'</span></button>':'')
+      +'</div><div id="nflxSinPerTabela"></div>';
+    h+='<button type="button" class="nflx-big purple" style="margin-top:14px" onclick="nflSinPerBaixar()"><div class="bi"><i class="fas fa-file-excel"></i></div><div class="txt">Baixar levantamento (.xlsx)<div class="sub">Falta emitir, divergências, linhas com problema, sobras e resumo por dia</div></div><i class="fas fa-download" style="opacity:.7"></i></button>';
+    h+='<details class="nflx-det"><summary>Resumo por dia ('+dias.length+')</summary><div class="tablewrap"><table style="min-width:0"><tr><th>Data</th><th>Aba</th><th class="num">Linhas</th><th class="num">Emitidas</th><th class="num">Falta emitir</th><th class="num">Divergências</th><th class="num">Fora</th></tr>';
+    dias.forEach(function(d){ h+='<tr class="'+(d.pend?'error':'')+'"><td>'+E(BR(d.dia))+'</td><td>'+E(d.aba)+'</td><td class="num">'+d.total+'</td><td class="num">'+d.emitida+'</td><td class="num">'+d.pend+'</td><td class="num">'+d.div+'</td><td class="num">'+d.fora+'</td></tr>'; });
+    h+='</table></div></details>';
+    h+='<details class="nflx-det"><summary>Abas lidas e ignoradas</summary><div class="hint">'
+      +'<b>Planilha — lidas ('+ST.lidas.length+'):</b> '+(ST.lidas.map(function(a){ return E(a.nome)+' ('+a.linhas+')'; }).join(', ')||'—')
+      +'<br><b>Planilha — nome não reconhecido como data ('+ST.naoReconhecidas.length+'):</b> '+(ST.naoReconhecidas.map(E).join(', ')||'—')
+      +(ST.erros.length?'<br><b style="color:#C62828">Falha ao ler:</b> '+ST.erros.map(E).join(' | '):'')
+      +'<br><b>Sinaxys — abas lidas:</b> '+(ST.sinAbas.map(function(a){ return E(a.aba)+' ('+a.linhas+' notas, '+E(a.formato)+')'; }).join(', ')||'—')
+      +(ST.sinIgnoradas.length?'<br><b>Sinaxys — abas ignoradas:</b> '+ST.sinIgnoradas.map(function(a){ return E(a.aba)+' ('+E(a.motivo)+')'; }).join(', '):'')
+      +'</div></details>';
+    var out=$('nflxSinPerOut'); out.innerHTML=h; out.style.display='block';
+    window.nflSinPerFiltro(c.pend||!c.div?'pend':'div');
+  }
+
+  window.nflSinPerBuscar=async function(){
+    if(ST.busy) return;
+    var de=$('nflxSinPerDe').value, ate=$('nflxSinPerAte').value, files=$('nflxSinPerFile').files;
+    if(!de||!ate){ msg('⚠ Escolha as duas datas.','warn'); return; }
+    if(ate<de){ var x=de; de=ate; ate=x; $('nflxSinPerDe').value=de; $('nflxSinPerAte').value=ate; }
+    if(!files||!files.length){ msg('⚠ Anexe a exportação da Sinaxys (.xlsx).','warn'); return; }
+    ST.busy=true;
+    var btn=$('nflxSinPerBtn'), sub=btn.querySelector('.sub'), old=sub.textContent;
+    btn.disabled=true; $('nflxSinPerOut').style.display='none'; $('nflxSinPerMsg').style.display='none';
+    try{
+      sub.textContent='Lendo a exportação da Sinaxys…';
+      var sx=await lerSinaxysArquivos(files);
+      if(!sx.registros.length){ msg('Não encontrei notas nesse arquivo.'+(sx.ignoradas.length?' Abas ignoradas: '+sx.ignoradas.map(function(a){ return E(a.aba)+' ('+E(a.motivo)+')'; }).join(', '):''),'warn'); return; }
+      sub.textContent='Listando as abas da planilha…';
+      var abas=await listarAbas(), sel=[], naoRec=[];
+      abas.forEach(function(a){
+        var r=abaParaIso(a.nome,de,ate);
+        if(!r){ naoRec.push(a.nome); return; }
+        if(!r.iso||r.iso<de||r.iso>ate) return;
+        sel.push({nome:a.nome,gid:a.gid,dia:r.iso,semAno:r.semAno});
+      });
+      sel.sort(function(a,b){ return a.dia<b.dia?-1:a.dia>b.dia?1:0; });
+      if(!sel.length){ msg('Nenhuma aba da planilha cai entre '+BR(de)+' e '+BR(ate)+'.'+(naoRec.length?' Abas com nome não reconhecido como data: '+naoRec.slice(0,15).map(E).join(', ')+'.':''),'warn'); return; }
+      var linhas=[], problemas=[], lidas=[], erros=[], avisos=[], semColunas=[], vazias=[];
+      for(var i=0;i<sel.length;i++){
+        sub.textContent='Lendo aba '+sel[i].nome+' ('+(i+1)+'/'+sel.length+')…';
+        try{
+          var rr=await lerAbaPorGid(sel[i],sel[i].dia);
+          if(rr.semColunas){ semColunas.push(sel[i].nome); continue; }
+          if(!rr.linhas.length&&!rr.problemas.length) vazias.push(sel[i].nome);
+          linhas=linhas.concat(rr.linhas); problemas=problemas.concat(rr.problemas);
+          lidas.push({nome:sel[i].nome,dia:sel[i].dia,linhas:rr.linhas.length});
+        }catch(e){ erros.push(sel[i].nome+': '+e.message); }
+      }
+      var cob=cobertura(sx.registros), cr=cruzar(linhas,sx.registros,cob,de,ate);
+      /* avisos */
+      if(sx.semStatus) avisos.push('Exportação <b>sem coluna Status</b>: nota cancelada não é distinguível (conta como emitida). Para ver canceladas e o motivo da recusa, use a aba "Splitadas".');
+      var porDia={}; sel.forEach(function(s){ (porDia[s.dia]=porDia[s.dia]||[]).push(s.nome); });
+      Object.keys(porDia).forEach(function(d){ if(porDia[d].length>1) avisos.push('Mais de uma aba para '+E(BR(d))+': '+porDia[d].map(E).join(', ')+' — todas foram somadas.'); });
+      var semAno=sel.filter(function(s){ return s.semAno; });
+      if(semAno.length) avisos.push(semAno.length+' aba(s) sem ano no nome ('+semAno.slice(0,5).map(function(s){ return E(s.nome); }).join(', ')+') foram lidas com o ano do período.');
+      if(semColunas.length) avisos.push('Aba(s) sem cabeçalho NOME/CPF/VALOR reconhecível, <b>não lidas</b>: '+semColunas.map(E).join(', ')+'.');
+      if(vazias.length) avisos.push('Aba(s) sem nenhum paciente: '+vazias.map(E).join(', ')+'.');
+      if(erros.length) avisos.push('<b>'+erros.length+' aba(s) não foram lidas</b> (os dias delas ficam de fora do levantamento): '+erros.map(E).join(' | '));
+      var dSin={}; sx.registros.forEach(function(r){ if(r.dia>=de&&r.dia<=ate) dSin[r.dia]=1; });
+      var dTab={}; sel.forEach(function(s){ dTab[s.dia]=1; });
+      var semAba=Object.keys(dSin).filter(function(d){ return !dTab[d]; }).sort();
+      if(semAba.length) avisos.push('A Sinaxys tem notas em dia(s) sem aba reconhecida na planilha: '+semAba.map(function(d){ return E(BR(d)); }).join(', ')+'.');
+      var fora=cr.res.filter(function(x){ return x.sit==='fora'; }).length;
+      if(fora) avisos.push(fora+' linha(s) caem fora do período que a exportação cobre ('+E(BR(cob.min))+' a '+E(BR(cob.max))+') — não entram em "falta emitir".');
+      ST.res=cr.res; ST.problemas=problemas; ST.sobras=cr.sobras; ST.de=de; ST.ate=ate; ST.cob=cob; ST.lidas=lidas; ST.naoReconhecidas=naoRec; ST.erros=erros; ST.avisos=avisos;
+      ST.sinAbas=sx.abas; ST.sinIgnoradas=sx.ignoradas;
+      render();
+      msg('✓ '+lidas.length+' aba(s) lida(s) e cruzada(s) com '+sx.registros.length+' registro(s) da Sinaxys. Nada foi gravado.','ok');
+    }catch(e){ msg('❌ '+E(e.message),'err'); }
+    finally{ ST.busy=false; btn.disabled=false; sub.textContent=old; }
+  };
+
+  window.nflSinPerBaixar=function(){
+    if(!ST.res.length&&!ST.problemas.length){ msg('⚠ Rode o levantamento primeiro.','warn'); return; }
+    var wb=XLSX.utils.book_new(), c=contagens(ST.res,ST.problemas,ST.sobras), dias=resumoPorDia(ST.res);
+    var rot=function(x){ return (SIT[x.sit]||['',x.sit])[1]; };
+    var det=function(x){ return detalhe(x).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"'); };
+    var cab=['Data','Paciente','CPF','Valor','Tipo','Situação','Detalhe','Aba'];
+    var linha=function(x){ return [BR(x.dia),x.nome,x.cpf,x.cents/100,x.tipo||'',rot(x),det(x),x.aba]; };
+    var add=function(nome,aoa){ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),nome); };
+    add('Resumo',[['Período',BR(ST.de)+' a '+BR(ST.ate)],['Sinaxys cobre',BR(ST.cob.min)+' a '+BR(ST.cob.max)],[],
+      ['Emitidas',c.emitida],['Falta emitir',c.pend],['  não consta',c.nao_consta],['  recusadas',c.recusada],['  canceladas',c.cancelada],['  outro status',c.outro],
+      ['Divergências (valor/data)',c.div],['Linhas com problema na planilha',c.problemas],['NF da Sinaxys sem linha na planilha',c.sobras],['Fora da exportação',c.fora],[],
+      ['Data','Aba','Linhas','Emitidas','Falta emitir','Divergências','Fora']].concat(dias.map(function(d){ return [BR(d.dia),d.aba,d.total,d.emitida,d.pend,d.div,d.fora]; })));
+    add('Falta emitir',[cab].concat(linhasFiltradas('pend').map(linha)));
+    add('Divergências',[cab].concat(linhasFiltradas('div').map(linha)));
+    add('Linhas com problema',[['Data','Aba','Paciente','CPF','Valor','Motivo']].concat(ST.problemas.map(function(p){ return [BR(p.dia),p.aba,p.nome,p.cpf,p.cents==null?'':p.cents/100,p.motivo]; })));
+    add('NF sem linha na planilha',[['Data','Paciente (Sinaxys)','CPF','Valor','Nº NF']].concat(ST.sobras.map(function(r){ return [BR(r.dia),r.nome,r.cpf,r.cents/100,r.nf]; })));
+    XLSX.writeFile(wb,'falta_emitir_'+ST.de+'_a_'+ST.ate+'.xlsx');
+  };
+
+  /* datas padrão: últimos 7 dias até ontem */
+  if($('nflxSinPerDe')){
+    var ont=new Date(); ont.setDate(ont.getDate()-1); var ini=new Date(ont); ini.setDate(ini.getDate()-6);
+    $('nflxSinPerAte').value=isoLocal(ont); $('nflxSinPerDe').value=isoLocal(ini);
+    $('nflxSinPerDe').addEventListener('change',function(){ if(!$('nflxSinPerAte').value||$('nflxSinPerAte').value<this.value) $('nflxSinPerAte').value=this.value; });
+  }
+
+  /* gancho para teste fora do navegador (não é usado pela página) */
+  window.nflSinPerLogic={abaParaIso:abaParaIso,parseDataCell:parseDataCell,csvParaLinhas:csvParaLinhas,mapaColunas:mapaColunas,classificarStatus:classificarStatus,
+    lerSinaxysWB:lerSinaxysWB,cobertura:cobertura,cruzar:cruzar,contagens:contagens,resumoPorDia:resumoPorDia};
+})();
   </script>
 
   <!-- ═══════════ v5.1 — sidebar: atalhos externos (NPS / Cadastros / Admin) + badges NF em Lote e Fechamentos ═══════════ -->
