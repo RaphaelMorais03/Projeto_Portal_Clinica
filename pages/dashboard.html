@@ -1,4 +1,4 @@
-<!-- VERSION: v4.9.2 | dashboard.html | 05/10/2026 | Comparativo Sinaxys: "Falta emitir no período" (planilha × exportação Sinaxys Splitadas/De pacientes; somente leitura). v4.9.1: Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
+<!-- VERSION: v4.9.4 | dashboard.html | 05/10/2026 | NF em Lote: validações Sinaxys/prefeitura (Número, Bairro, Cidade, CEP, lixo, CPF=telefone) v4.9.4; duplicata (mesmo CPF/data/valor) não bloqueia mais — emite as duas e só avisa. v4.9.2: Comparativo Sinaxys: "Falta emitir no período" (planilha × exportação Sinaxys Splitadas/De pacientes; somente leitura). v4.9.1: Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
 <!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
 <!-- v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
 <!-- VERSION: v5.1 | dashboard.html | 03/10/2026 | Hoje blindado (try/catch + fallback para Produção), badges em Hoje / NF em Lote / Fechamentos (somem se a leitura falhar), sidebar com atalhos externos NPS / Cadastros / Admin. Só adições. --><!-- VERSION: v5.0 | dashboard.html | 03/10/2026 | Nova página "Hoje" (landing): alertas (NF pendente / fechamentos sem pagamento), KPIs de ontem, gráfico de 7 dias, top produtores, últimas atividades e ações rápidas. Sidebar: item solo "Hoje" (com badge de pendências) + Operação/Análises/Gestão. Só adições — nenhuma função/ID existente alterado. --><!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
@@ -4408,6 +4408,70 @@
   }
 
   /* --- Processar dados e gerar result table --- */
+  /* [v4.9.4] Regras de validação da Sinaxys/prefeitura (seção 7 da especificação), aplicadas ANTES de gerar o lote.
+     Função pura sobre o registro (rec: objeto campo→texto). Devolve {fixes:[...], warns:[...]}.
+     - fixes: correções automáticas feitas (só informativas, aparecem na lista de avisos da tela de resultado)
+     - warns: o que NÃO deu para resolver sozinho → a linha vai para INCOMPLETOS/correção manual */
+  var NFL_LIXO_RE=/^(n[aã]o\s*inform(ou|ado|a[cç][aã]o)?|n\/?a|nao\s*tem|sem\s*(informa[cç][aã]o|numero|n[uú]mero)?|ou|-+|\.+|0+|0{5}-?0{3})$/i;
+  function nflIsLixo(v){
+    var s=String(v==null?'':v).replace(/\s+/g,' ').trim();
+    if(!s) return true;
+    return NFL_LIXO_RE.test(s.normalize?s.normalize('NFD').replace(/[̀-ͯ]/g,''):s);
+  }
+  function nflEncurtarBairro(b){
+    var s=String(b||'').replace(/\s+/g,' ').trim();
+    if(s.length<=30) return s;
+    s=s.replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();            // 1) remove sufixo entre parênteses
+    if(s.length<=30) return s;
+    s=s.replace(/\bConjunto\s+Residencial\b/ig,'Cj. Res.').replace(/\bConjunto\s+Habitacional\b/ig,'Cj. Hab.'); // 2) abrevia prefixos
+    if(s.length<=30) return s;
+    return s.slice(0,30).trim();                                                  // 3) último recurso
+  }
+  function nflNormalizarEndereco(rec){
+    var fixes=[], warns=[];
+    /* "lixo" vira vazio (para o CEP poder preencher depois). Número 0/00 vira S/N (sem número) */
+    ['Logradouro','Bairro','Cidade','Complemento'].forEach(function(c){
+      if(rec[c]&&nflIsLixo(rec[c])){ fixes.push(c+' "'+rec[c]+'" tratado como vazio'); rec[c]=''; }
+    });
+    if(rec['Número']){
+      var n0=String(rec['Número']).trim();
+      if(/^0+$/.test(n0)){ rec['Número']='S/N'; fixes.push('Número "'+n0+'" → S/N'); }
+      else if(nflIsLixo(n0)){ fixes.push('Número "'+n0+'" tratado como vazio'); rec['Número']=''; }
+    }
+    if(rec['CEP']&&/^[\s0.\-]*$/.test(rec['CEP'])){ fixes.push('CEP "'+rec['CEP']+'" tratado como vazio'); rec['CEP']=''; }
+    /* Cidade nunca "SP" */
+    if(rec['Cidade']&&/^s\.?\s*p\.?$/i.test(rec['Cidade'].trim())){ rec['Cidade']='São Paulo'; fixes.push('Cidade "SP" → São Paulo'); }
+    /* Número: máx. 10 caracteres; "2.916" (ponto de milhar) → "2916"; excedente vai para Complemento */
+    if(rec['Número']){
+      var num=String(rec['Número']).replace(/\s+/g,' ').trim();
+      if(/^\d{1,3}(\.\d{3})+$/.test(num)){ num=num.replace(/\./g,''); fixes.push('Número "'+rec['Número']+'" → '+num+' (ponto de milhar removido)'); }
+      if(num.length>10){
+        var m=num.match(/^(\S{1,10})\s+(.+)$/);
+        if(m){
+          rec['Complemento']=(m[2]+(rec['Complemento']?' '+rec['Complemento']:'')).trim();
+          fixes.push('Número "'+num+'" → "'+m[1]+'" (resto foi para Complemento)'); num=m[1];
+        } else warns.push('Número com mais de 10 caracteres');
+      }
+      rec['Número']=num;
+    }
+    /* Bairro: 1 a 30 caracteres */
+    if(rec['Bairro']&&rec['Bairro'].length>30){
+      var b0=rec['Bairro']; rec['Bairro']=nflEncurtarBairro(b0);
+      fixes.push('Bairro "'+b0+'" encurtado para "'+rec['Bairro']+'"');
+    }
+    /* CEP: 8 dígitos e faixa real (não começa com 00). Só valida se vier preenchido */
+    if(rec['CEP']){
+      var cd=nflNormCEPDigits(rec['CEP']);
+      if(cd.length!==8||/^00/.test(cd)) warns.push('CEP inválido');
+    }
+    return {fixes:fixes,warns:warns};
+  }
+  /* E-mail da Sinaxys: regex estrita; vazio ou inválido vira o placeholder */
+  function nflEmailSinaxys(s){
+    var e=String(s||'').trim();
+    return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(e)?e:'naotememail@gmail.com';
+  }
+
   function nflProcessData(){
     var mapping=window._nflCurrentMapping||[];
     var dataRows=nflParsedLines.slice(1);
@@ -4432,6 +4496,9 @@
         var ag=nflAgendMatches[cpfDigits];
         NFL_HEADERS.forEach(function(h){ if(!rec[h]&&ag[h]) rec[h]=ag[h]; });
       }
+
+      /* [v4.9.4] 'lixo' (NAO INFORMOU, 0, 00000-000...) vira vazio ANTES do CEP, para a consulta de CEP poder preencher */
+      var _fx=nflNormalizarEndereco(rec).fixes;
 
       // CEP results
       if(cepResults[ri]&&cepResults[ri].ok){
@@ -4461,11 +4528,21 @@
       var tipo=tipoMap[ri]||'';
 
       // Email: regra Sinaxys — vazio ou inválido não bloqueia, vira placeholder automaticamente
-      if(!nflValidEmail(rec['Email'])) rec['Email']='naotememail@gmail.com';
+      /* [v4.9.4] regex estrita da Sinaxys; vazio também vira placeholder */
+      rec['Email']=nflEmailSinaxys(rec['Email']);
 
       // Descrição do Procedimento: preenche automaticamente pelo Tipo quando vier em branco
       if(!rec['Descrição do Procedimento']&&tipo){
         rec['Descrição do Procedimento']= tipo==='Exame' ? 'REF A EXAMES REALIZADOS' : 'REF A CONSULTA REALIZADA';
+      }
+
+      /* [v4.9.4] Número ≤10, Bairro ≤30, Cidade≠SP, CEP 8 dígitos/faixa real (depois do CEP preencher os campos) */
+      var _nr=nflNormalizarEndereco(rec);
+      _fx=_fx.concat(_nr.fixes);
+      if(_fx.length){
+        var _nm=String(rec['Paciente']||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        var _ft=_fx.join('; ').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        nflAlertMsgs.push('Linha '+(ri+1)+' ('+_nm+'): ajuste automático — '+_ft);
       }
 
       // Validações
@@ -4480,6 +4557,10 @@
       if(!rec['Cidade']) warns.push('Cidade em branco');
       if(!rec['UF']) warns.push('UF em branco');
       if(!rec['Valor']||!vr.ok) warns.push('Valor inválido');
+      /* [v4.9.4] */
+      _nr.warns.forEach(function(w){ warns.push(w); });
+      var _telD=nflOnlyDigits(rec['Telefone']);
+      if(cpfDigits&&_telD&&cpfDigits===_telD) warns.push('CPF igual ao telefone');
       if(warns.length) hasWarning=true;
 
       nflCurrentRows.push({ values:NFL_HEADERS.map(function(h){ return rec[h]||''; }), tipo:tipo, hasWarning:hasWarning, warns:warns, _cpf:cpfDigits });
@@ -4501,22 +4582,19 @@
         });
         return;
       }
-      // mesmo CPF e mesmo nome: checa duplicata exata (todos campos iguais) vs parcial (data+valor iguais, resto difere)
-      var seenExact={};
-      group.forEach(function(r){ var k=r.values.join('|'); (seenExact[k]=seenExact[k]||[]).push(r); });
-      Object.keys(seenExact).forEach(function(k){
-        var dups=seenExact[k];
-        if(dups.length>1){
-          // mantém a primeira, marca as demais como duplicata exata (removidas do envio)
-          for(var i=1;i<dups.length;i++){ dups[i]._exactDup=true; dups[i].hasWarning=true; dups[i].warns=(dups[i].warns||[]).concat('Duplicata exata — removida'); }
-        }
-      });
+      /* [v4.9.3] Mesmo CPF + mesmo nome + mesma data/valor NÃO bloqueia mais: a clínica emite as duas notas
+         (paciente que faz 2 pagamentos de 2 consultas, porque o sistema não cobra as duas de uma vez).
+         Antes: a repetição exata era "removida" e a parcial ia para INCOMPLETOS. Agora só avisa na lista
+         de avisos da tela de resultado, para o caso de ter sido digitado em duplicidade por engano.
+         "CPF associado a nomes diferentes" (acima) continua exigindo revisão manual. */
       var byDataValor={};
-      group.forEach(function(r){ if(r._exactDup) return; var k=(r.values[dtIdx]||'')+'|'+(r.values[valIdx]||''); (byDataValor[k]=byDataValor[k]||[]).push(r); });
+      group.forEach(function(r){ var k=(r.values[dtIdx]||'')+'|'+(r.values[valIdx]||''); (byDataValor[k]=byDataValor[k]||[]).push(r); });
       Object.keys(byDataValor).forEach(function(k){
         var arr=byDataValor[k];
         if(arr.length>1){
-          arr.forEach(function(r){ r.hasWarning=true; r.warns=(r.warns||[]).concat('Duplicata suspeita (mesma data/CPF/valor) — revisar'); });
+          var linhasN=arr.map(function(r){ return nflCurrentRows.indexOf(r)+1; }).join(' e ');
+          var nomeD=String(arr[0].values[pacIdx]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          nflAlertMsgs.push('Linhas '+linhasN+' ('+nomeD+'): mesmo CPF, data e valor — as '+arr.length+' serão emitidas. Confira se não foi digitado em duplicidade.');
         }
       });
     });
@@ -5978,7 +6056,7 @@
     window.nflClearAll=function(){ var r=_clear.apply(this,arguments); nflCloseStep('ov-found'); nflCloseStep('ov-fix'); return r; };
 
     /* ---------- 4 · Corrigir ---------- */
-    var W2F={'CPF inválido':'CPF','Paciente em branco':'Paciente','Telefone em branco':'Telefone','Logradouro em branco':'Logradouro','Número em branco':'Número','Bairro em branco':'Bairro','Cidade em branco':'Cidade','UF em branco':'UF','Valor inválido':'Valor'};
+    var W2F={'CPF inválido':'CPF','Paciente em branco':'Paciente','Telefone em branco':'Telefone','Logradouro em branco':'Logradouro','Número em branco':'Número','Bairro em branco':'Bairro','Cidade em branco':'Cidade','UF em branco':'UF','Valor inválido':'Valor','CEP inválido':'CEP','Número com mais de 10 caracteres':'Número','CPF igual ao telefone':'CPF'};
     function H(n){return NFL_HEADERS.indexOf(n);}
     function incompletos(){ var o=[]; (window.nflCurrentRows||[]).forEach(function(r,i){ if(!r.tipo||r.hasWarning) o.push(i); }); return o; }
     function nomeDe(r){ return (r.values[H('Paciente')]||'').trim()||'—'; }
@@ -6012,7 +6090,7 @@
         (r.warns||[]).forEach(function(w){ if(W2F[w]) falt[W2F[w]]=1; });
         var rev=(r.warns||[]).filter(function(w){return !W2F[w];});
         var badge=(r.warns||[]).concat(r.tipo?[]:['Sem tipo']).join(' + ');
-        var campos=['Paciente','CPF'].concat(['Telefone','Logradouro','Número','Bairro','Cidade','UF','Valor'].filter(function(c){return falt[c];}));
+        var campos=['Paciente','CPF'].concat(['Telefone','CEP','Logradouro','Número','Bairro','Cidade','UF','Valor'].filter(function(c){return falt[c];}));
         var f=campos.map(function(c){ return fieldHtml(ri,c,r,!!falt[c],(c==='Logradouro'||c==='Valor'),false); }).join('');
         if(!r.tipo){ semTipo=true; f+='<div class="full"><label>Tipo <span class="req">*</span></label><select id="nflxfixtipo_'+ri+'" class="missing" onchange="this.classList.remove(\'missing\')"><option value="">— escolha —</option><option value="Consulta">Consulta</option><option value="Exame">Exame</option></select></div>'; }
         if(rev.length) f+='<div class="full" style="font-size:11.5px;color:#92400e;">⚠ '+E(rev.join('; '))+' (revisão manual)</div>';
@@ -6042,6 +6120,10 @@
       var iCpf=H('CPF');
       nflCurrentRows.forEach(function(r){
         var v=r.values, w=[];
+        /* [v4.9.4] reaplica as regras de endereço sobre o que foi digitado na correção */
+        var _rec={}; NFL_HEADERS.forEach(function(h,i){ _rec[h]=v[i]||''; });
+        var _nr2=nflNormalizarEndereco(_rec);
+        NFL_HEADERS.forEach(function(h,i){ v[i]=_rec[h]; });
         var cpf=nflOnlyDigits(v[iCpf]);
         if(!cpf||cpf.length!==11||!nflIsValidCPF(cpf)) w.push('CPF inválido');
         if(!v[H('Paciente')]) w.push('Paciente em branco');
@@ -6052,6 +6134,8 @@
         if(!v[H('Cidade')]) w.push('Cidade em branco');
         if(!v[H('UF')]) w.push('UF em branco');
         var vr=nflCleanValor(v[H('Valor')]||''); if(!v[H('Valor')]||!vr.ok) w.push('Valor inválido');
+        _nr2.warns.forEach(function(x){ w.push(x); });
+        if(cpf&&cpf===nflOnlyDigits(v[H('Telefone')])) w.push('CPF igual ao telefone');
         /* mantém avisos de duplicata/conflito: continuam exigindo revisão manual */
         (r.warns||[]).forEach(function(x){ if(/Duplicata|CPF associado/.test(x)) w.push(x); });
         r.warns=w; r.hasWarning=w.length>0;
