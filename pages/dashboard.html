@@ -1,3 +1,4 @@
+<!-- VERSION: v6.0 | dashboard.html | 13/10/2026 | NF em Lote v6.0 — fluxo unificado: 2 abas (Emitir lote / Retorno Sinaxys), seletor de data único no topo (nflx_dia_ativo), layout da planilha por data (NFL_LAYOUTS, fallback na cascata), operador→Consulta/Exame no Mapear (admin/nfl_operadores), escrever Nº NF direto na planilha via Apps Script (fallback .xlsx) + _status processado, fila de incompletos (nfl_incompletos), downloads nomeados DD_MM_AAAA. -->
 <!-- VERSION: v4.9.4 | dashboard.html | 05/10/2026 | NF em Lote: validações Sinaxys/prefeitura (Número, Bairro, Cidade, CEP, lixo, CPF=telefone) v4.9.4; duplicata (mesmo CPF/data/valor) não bloqueia mais — emite as duas e só avisa. v4.9.2: Comparativo Sinaxys: "Falta emitir no período" (planilha × exportação Sinaxys Splitadas/De pacientes; somente leitura). v4.9.1: Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
 <!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
 <!-- v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
@@ -790,6 +791,55 @@
     #viewNflote .wrap{max-width:720px;}
     #viewNflote h1,#nflWrap>.sub,#viewNflote .tabs{display:none !important;}
     #viewNflote .nflx-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;min-height:34px;}
+    /* ═══ [v6.0] NF em Lote unificado — seletor de dia, badge de layout, 2 abas, operadores, fila de incompletos ═══ */
+    #viewNflote .nflx-topbar{gap:10px;flex-wrap:wrap;}
+    #viewNflote .nflx6-ctrls{display:flex;align-items:center;gap:10px;flex:1;justify-content:center;flex-wrap:wrap;}
+    #viewNflote .nflx6-date{display:flex;align-items:center;gap:8px;padding:6px 12px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-weight:600;color:#374151;}
+    #viewNflote .nflx6-date i{color:#0d9488;}
+    #viewNflote .nflx6-date label{margin:0;font-weight:600;}
+    #viewNflote .nflx6-date input{border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:#0A1F44;outline:none;cursor:pointer;width:auto;padding:0;}
+    #viewNflote .nflx6-badge{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:10px;font-size:12px;font-weight:700;transition:all .3s;}
+    #viewNflote .nflx6-badge .dot{width:8px;height:8px;border-radius:50%;}
+    #viewNflote .nflx6-badge.new{background:#f0fdf4;border:1.5px solid #86efac;color:#15803d;} #viewNflote .nflx6-badge.new .dot{background:#15803d;box-shadow:0 0 0 4px rgba(21,128,61,.15);}
+    #viewNflote .nflx6-badge.old{background:#eff6ff;border:1.5px solid #93c5fd;color:#1d4ed8;} #viewNflote .nflx6-badge.old .dot{background:#1d4ed8;box-shadow:0 0 0 4px rgba(29,78,216,.15);}
+    #viewNflote .nflx6-badge.unknown{background:#fef3c7;border:1.5px solid #fcd34d;color:#b45309;} #viewNflote .nflx6-badge.unknown .dot{background:#b45309;}
+    #viewNflote .nflx6-tabs{display:flex;gap:6px;margin:6px 0 16px;}
+    #viewNflote .nflx6-tab{padding:10px 20px;border-radius:10px;border:none;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;background:transparent;color:#6b7280;transition:all .15s;display:inline-flex;align-items:center;gap:8px;}
+    #viewNflote .nflx6-tab:hover{background:#f3f4f6;color:#0A1F44;}
+    #viewNflote .nflx6-tab.active{background:#0A1F44;color:#fff;}
+    #viewNflote .nflx6-pulse{width:7px;height:7px;border-radius:50%;background:#fbbf24;animation:nflx6pulse 1.6s infinite;}
+    @keyframes nflx6pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.7);}}
+    #nflxBtnProc{display:none!important;} /* [v6.0] "Marcar como processado" vira consequência do passo "Escrever Nº NF" (id preservado) */
+    #sinWebhookCard{display:none!important;} /* [v6.0] substituído por "Escrever Nº NF na planilha" (id preservado) */
+    #viewNflote .nflx6-layout{border:1.5px solid #99f6e4;border-radius:14px;padding:14px 16px;margin-bottom:14px;background:linear-gradient(135deg,#f0fdfa,#fff);text-align:left;}
+    #viewNflote .nflx6-layout.old{border-color:#93c5fd;background:linear-gradient(135deg,#eff6ff,#fff);}
+    #viewNflote .nflx6-layout.warn{border-color:#fcd34d;background:linear-gradient(135deg,#fffbeb,#fff);}
+    #viewNflote .nflx6-layout .h{display:flex;align-items:center;gap:10px;}
+    #viewNflote .nflx6-layout .t{font-size:13.5px;font-weight:800;color:#0A1F44;flex:1;}
+    #viewNflote .nflx6-layout .s{font-size:11.5px;color:#6b7280;margin-top:2px;}
+    #viewNflote .nflx6-layout .pct{font-size:22px;font-weight:900;letter-spacing:-1px;color:#15803d;}
+    #viewNflote .nflx6-layout.warn .pct{color:#b45309;}
+    #viewNflote .nflx6-layout .bar{height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;margin-top:10px;}
+    #viewNflote .nflx6-layout .bar i{display:block;height:100%;background:linear-gradient(90deg,#0d9488,#14b8a6);border-radius:3px;}
+    #viewNflote .nflx6-layout.warn .bar i{background:#b45309;}
+    #viewNflote .nflx6-op{border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin:12px 0;text-align:left;background:#fff;}
+    #viewNflote .nflx6-op .ot{font-size:12px;font-weight:800;color:#0A1F44;margin-bottom:8px;}
+    #viewNflote .nflx6-op .ol{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed #f3f4f6;font-size:12.5px;flex-wrap:wrap;}
+    #viewNflote .nflx6-op .ol:last-of-type{border-bottom:none;}
+    #viewNflote .nflx6-op .on{font-weight:700;color:#0A1F44;min-width:130px;}
+    #viewNflote .nflx6-op .oq{color:#9ca3af;font-size:11px;min-width:54px;}
+    #viewNflote .nflx6-op .tag{font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:20px;}
+    #viewNflote .nflx6-op .tag.c{background:#dbeafe;color:#1d4ed8;} #viewNflote .nflx6-op .tag.e{background:#ede9fe;color:#6d28d9;}
+    #viewNflote .nflx6-op label{display:inline-flex;align-items:center;gap:4px;margin:0;font-weight:600;font-size:12px;cursor:pointer;}
+    #viewNflote .nflx6-op input[type=radio],#viewNflote .nflx6-op input[type=checkbox]{width:auto;margin:0;}
+    #viewNflote .nflx6-op button.mini{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:8px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;}
+    #viewNflote .nflx6-op .warnbox{margin-top:8px;font-size:12px;background:#fef3c7;color:#92400e;border-radius:8px;padding:8px 10px;line-height:1.5;}
+    #viewNflote .nflx6-incinfo{font-size:12px;color:#6b7280;text-align:center;margin-top:10px;}
+    #viewNflote .nflx6-inclist .d{display:flex;align-items:flex-start;gap:10px;padding:10px 4px;border-bottom:1px solid #f3f4f6;font-size:13px;}
+    #viewNflote .nflx6-inclist .d input{width:auto;margin-top:3px;}
+    #viewNflote .nflx6-inclist .d b{color:#0A1F44;}
+    #viewNflote .nflx6-inclist .d .nm{font-size:11.5px;color:#6b7280;margin-top:2px;line-height:1.5;}
+    @media(max-width:640px){#viewNflote .nflx6-ctrls{justify-content:flex-start;}}
     #viewNflote .nflx-more{margin-left:auto;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:20px;padding:7px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;box-shadow:none;display:inline-flex;gap:6px;align-items:center;}
     #viewNflote .nflx-more:hover{background:#e5e7eb;}
     .nflx-drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:3000;display:none;align-items:flex-start;justify-content:flex-end;}
@@ -812,6 +862,8 @@
     #viewNflote .nflx-sheetinfo{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12px;color:#475569;display:flex;align-items:center;gap:10px;}
     #viewNflote .nflx-sheetinfo i{color:#0d9488;font-size:15px;}
     #viewNflote .nflx-sheetinfo b{color:#0A1F44;}
+    /* [v6.0] data única no topo (#datePicker) */
+    #ov-paste .nflx-datepick{display:none;}
     #viewNflote .nflx-datepick{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:12px 14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;color:#475569;}
     #viewNflote .nflx-datepick label{font-weight:700;color:#0A1F44;margin:0 auto 0 0;display:flex;align-items:center;gap:8px;}
     #viewNflote .nflx-datepick input[type=date]{width:auto;max-width:170px;padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:13px;color:#374151;outline:none;background:#fff;margin:0;}
@@ -3376,29 +3428,40 @@
   <div class="view-panel" id="viewNflote">
     <div class="wrap" id="nflWrap">
       <div class="nflx-topbar">
-        <button type="button" class="nflx-link" id="nflxBtnHome" style="display:none" onclick="nflShowTab('gerar')"><i class="fas fa-arrow-left"></i> NF do Dia</button>
+        <button type="button" class="nflx-link" id="nflxBtnHome" style="display:none" onclick="nflShowTab('gerar')"><i class="fas fa-arrow-left"></i> Voltar ao fluxo</button>
+        <div class="nflx6-ctrls">
+          <div class="nflx6-date"><i class="fas fa-calendar"></i><label for="datePicker">Dia:</label><input type="date" id="datePicker"></div>
+          <div class="nflx6-badge unknown" id="layoutBadge"><span class="dot"></span><span id="layoutBadgeTxt">Escolha uma data</span></div>
+        </div>
         <button type="button" class="nflx-more" onclick="nflxDrawer(true)"><i class="fas fa-ellipsis"></i> Mais opções</button>
       </div>
       <div class="nflx-drawer-bg" id="nflxDrawerBg" onclick="if(event.target===this)nflxDrawer(false)">
         <div class="nflx-drawer">
           <div class="dr-head"><div class="dr-t">Mais opções</div><button type="button" class="dr-x" onclick="nflxDrawer(false)"><i class="fas fa-times"></i></button></div>
-          <div class="dr-section">NF do Dia</div>
-          <button type="button" class="dr-item" onclick="nflxIr('gerar')"><i class="fas fa-file-invoice-dollar"></i> Fluxo guiado (início)</button>
-          <button type="button" class="dr-item" onclick="nflxIr('nfdia')"><i class="fas fa-list"></i> Todas as datas</button>
-          <div class="dr-section">Emissão manual</div>
-          <button type="button" class="dr-item" onclick="nflxIr('manual')"><i class="fas fa-file-export"></i> Gerar planilha colando dados</button>
-          <div class="dr-section">Conferência</div>
-          <button type="button" class="dr-item" onclick="nflxIr('conferir')"><i class="fas fa-check-double"></i> Conferir NF</button>
-          <button type="button" class="dr-item" onclick="nflxIr('sinaxys')"><i class="fas fa-chart-column"></i> Comparativo Sinaxys</button>
-          <button type="button" class="dr-item" onclick="nflxIr('preencher')"><i class="fas fa-link"></i> Preencher Nº NF</button>
+          <!-- [v6.0] gaveta reorganizada: o fluxo principal agora são as 2 abas (Emitir lote / Retorno Sinaxys) -->
+          <div class="dr-section">Casos fora do padrão</div>
+          <button type="button" class="dr-item" onclick="nflxIr('manual')"><i class="fas fa-paste"></i> Colar dados manualmente</button>
+          <button type="button" class="dr-item" onclick="nflxIr6('importar')"><i class="fas fa-file-excel"></i> Importar .xlsx avulso</button>
+          <div class="dr-section">Conferência avulsa</div>
+          <button type="button" class="dr-item" onclick="nflxIr('conferir')"><i class="fas fa-check-double"></i> Conferir NF (2 arquivos, sem lote salvo)</button>
+          <button type="button" class="dr-item" onclick="nflxIr6('falta')"><i class="fas fa-list-check"></i> Falta emitir no período</button>
+          <button type="button" class="dr-item" onclick="nflxIr('sinaxys')"><i class="fas fa-chart-column"></i> Comparativo por lote salvo</button>
+          <button type="button" class="dr-item" onclick="nflxIr('preencher')"><i class="fas fa-link"></i> Preencher Nº NF (2 arquivos)</button>
           <div class="dr-section">Registro</div>
+          <button type="button" class="dr-item" onclick="nflxIr('nfdia')"><i class="fas fa-list"></i> Todas as datas</button>
+          <button type="button" class="dr-item" onclick="nflxIr('incompletos')"><i class="fas fa-triangle-exclamation"></i> Incompletos pendentes <span id="nflx6IncCnt" style="margin-left:auto;font-size:11px;font-weight:800;color:#b45309;"></span></button>
           <button type="button" class="dr-item" onclick="nflxIr('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico de lotes</button>
         </div>
       </div>
       <h1>NF em Lote</h1>
       <p class="sub">Gere a planilha a partir dos dados colados, confira as NFs emitidas e compare com o Sinaxys — tudo em um só lugar.</p>
 
-      <div class="tabs">
+      <!-- [v6.0] 2 abas: Emitir lote (Fase A) e Retorno Sinaxys (Fase B). As 6 abas antigas ficam ocultas (IDs/handlers preservados). -->
+      <div class="nflx6-tabs" id="nflx6Tabs">
+        <button type="button" class="nflx6-tab active" id="nflx6TabEmitir" onclick="nflxIr6('emitir')"><i class="fas fa-file-invoice-dollar"></i> Emitir lote</button>
+        <button type="button" class="nflx6-tab" id="nflx6TabRetorno" onclick="nflxIr6('retorno')"><i class="fas fa-arrow-rotate-left"></i> Retorno Sinaxys <span class="nflx6-pulse" id="nflx6Pulse" style="display:none;"></span></button>
+      </div>
+      <div class="tabs" id="nflx6OldTabs" style="display:none;">
         <div class="tab active" id="tabGerarBtn" onclick="nflShowTab('gerar')">📄 Gerar planilha</div>
         <div class="tab" id="tabNfDiaBtn" onclick="nflShowTab('nfdia')">🗓️ NF do Dia</div>
         <div class="tab" id="tabConferirBtn" onclick="nflShowTab('conferir')">✅ Conferir NF</div>
@@ -3464,9 +3527,11 @@
           <div class="card nflx-card" id="mapCard">
             <div class="nflx-tl">O que é cada coluna?</div>
             <div class="nflx-ts" style="margin-bottom:20px;">Já adivinhei a maioria pelo formato dos dados. Só ajuste o que estiver errado.</div>
+            <div class="nflx6-layout" id="nflxLayoutCard" style="display:none;"></div>
             <div id="mapDupeWarning" class="dupe-warning" style="display:none;"></div>
             <div class="nflx-maprev"><table id="mapTable"></table></div>
             <div class="nflx-hint" id="nflxMapHint"></div>
+            <div class="nflx6-op" id="nflxOpBlock" style="display:none;"></div>
             <button type="button" class="nflx-big teal" onclick="nflGoToAgendStep()"><div class="bi"><i class="fas fa-check"></i></div><div class="txt">Confirmar mapeamento<div class="sub">Avançar para busca de CEP</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
             <div class="nflx-center" style="margin-top:6px;">
               <button type="button" class="nflx-link" onclick="nflReorganizeColumns()"><i class="fas fa-rotate"></i> Organizar automaticamente</button>
@@ -3594,7 +3659,9 @@
               <div class="nflx-result"><div class="num" id="nflxResN">0</div><div class="lbl">pacientes prontos pra emitir</div></div>
               <button type="button" class="nflx-big teal" id="nflxBtnCons" onclick="nflxBaixar('Consulta')"><div class="bi"><i class="fas fa-stethoscope"></i></div><div class="txt">Baixar lote Consulta<div class="sub" id="nflxSubCons">—</div></div><i class="fas fa-download" style="opacity:.6"></i></button>
               <button type="button" class="nflx-big blue" id="nflxBtnExa" onclick="nflxBaixar('Exame')"><div class="bi"><i class="fas fa-flask"></i></div><div class="txt">Baixar lote Exame<div class="sub" id="nflxSubExa">—</div></div><i class="fas fa-download" style="opacity:.6"></i></button>
-              <button type="button" class="nflx-big amber" id="nflxBtnInc" onclick="nflxBaixar('Incompletos')" style="display:none"><div class="bi"><i class="fas fa-triangle-exclamation"></i></div><div class="txt">Baixar incompletos<div class="sub" id="nflxSubInc">—</div></div><i class="fas fa-download" style="opacity:.6"></i></button>
+              <button type="button" class="nflx-big amber" id="nflxBtnIncFila" onclick="nflIncompletosEnfileirar()" style="display:none"><div class="bi"><i class="fas fa-floppy-disk"></i></div><div class="txt">💾 Guardar incompletos na fila<div class="sub" id="nflxSubIncFila">—</div></div><i class="fas fa-layer-group" style="opacity:.6"></i></button>
+              <button type="button" class="nflx-big ghost" id="nflxBtnInc" onclick="nflxBaixar('Incompletos')" style="display:none"><div class="bi" style="background:#e5e7eb"><i class="fas fa-triangle-exclamation"></i></div><div class="txt">⬇ Baixar só desse dia<div class="sub" id="nflxSubInc">—</div></div><i class="fas fa-download" style="opacity:.6"></i></button>
+              <div class="nflx6-incinfo" id="nflxIncFilaInfo" style="display:none;"></div>
               <div style="display:flex;gap:16px;justify-content:center;margin-top:16px;padding-top:16px;border-top:1px solid #f3f4f6;flex-wrap:wrap;">
                 <button type="button" class="nflx-link" onclick="nflxVerPacientes()"><i class="fas fa-users"></i> Ver pacientes</button>
                 <button type="button" class="nflx-link" id="nflxBtnProc" onclick="nflxMarcarProcessado()"><i class="fas fa-check-double"></i> Marcar como processado</button>
@@ -3618,6 +3685,23 @@
           </div>
         </div>
       </div><!-- /page gerar -->
+
+      <!-- ===== [v6.0] INCOMPLETOS PENDENTES (fila persistente em nfl_incompletos) ===== -->
+      <div class="page" id="nfl-page-incompletos">
+        <div class="nflx-tl" style="margin-bottom:4px;">Incompletos pendentes</div>
+        <div class="nflx-ts" style="margin-bottom:14px;">Pacientes que ficaram sem CPF válido, tipo, endereço ou valor nos lotes que você guardou na fila. Corrija, emita e depois marque o dia como resolvido.</div>
+        <div class="card">
+          <div class="nflx6-inclist" id="nflxIncList"><div class="empty-state">Carregando…</div></div>
+          <div class="row" style="margin-top:10px;flex-wrap:wrap;">
+            <button type="button" class="secondary" onclick="nflIncompletosRender()">🔄 Recarregar</button>
+            <button type="button" onclick="nflIncompletosBaixar('sel')">⬇ Baixar selecionados</button>
+            <button type="button" onclick="nflIncompletosBaixar('todos')">⬇ Baixar TODOS</button>
+            <button type="button" class="secondary" onclick="nflIncompletosResolver()">✓ Marcar selecionados como resolvidos</button>
+          </div>
+          <div id="nflxIncMsg" style="display:none;margin-top:8px;border-radius:8px;padding:10px 14px;font-weight:600;font-size:0.85rem;line-height:1.5;"></div>
+          <div class="hint" style="margin-top:10px;">Estes dados têm CPF, telefone e endereço de pacientes. Marque como resolvido assim que o dia for corrigido.</div>
+        </div>
+      </div>
 
       <!-- ===== CONFERIR NF ===== -->
       <div class="page" id="nfl-page-conferir">
@@ -3816,8 +3900,11 @@
         <div class="nflx-sscreen" id="nflxS4">
         <div style="text-align:left;"><button type="button" class="nflx-back" onclick="nflxSinGo(3)"><i class="fas fa-arrow-left"></i> Voltar</button></div>
           <div class="card nflx-card purple" style="margin-bottom:16px;">
-            <div class="nflx-center"><div class="nflx-ic purple"><i class="fas fa-file-export"></i></div><div class="nflx-tl">Enviar Nº NF pro Sheets</div></div>
+            <div class="nflx-center"><div class="nflx-ic purple"><i class="fas fa-file-export"></i></div><div class="nflx-tl">Escrever Nº NF na planilha</div></div>
             <div class="nflx-box" id="nflxSinEnvInfo">—</div>
+            <!-- [v6.0] botão único: tenta o Apps Script; se falhar, cai no .xlsx local. Sucesso marca o dia como processado. -->
+            <button type="button" class="nflx-big purple" id="nflxV6EscBtn" onclick="escreverNfNaPlanilha()" style="margin-top:14px;"><div class="bi"><i class="fas fa-pen-to-square"></i></div><div class="txt" id="nflxV6EscBtnTxt">Escrever Nº NF na planilha<div class="sub">Direto via Apps Script · se falhar, gera o .xlsx</div></div><i class="fas fa-arrow-right" style="opacity:.5"></i></button>
+            <div id="nflxV6EscRes"></div>
           </div>
 <div class="card" id="sinWebhookCard" style="display:none;">
           <div class="step-kicker"><span class="step-badge" style="background:var(--purple);">📤</span><p class="step-title">Enviar Nº NF direto pro Google Sheets</p></div>
@@ -3969,6 +4056,18 @@
     try{ localStorage.setItem(NFL_STORAGE_KEY, JSON.stringify(nflEntries)); }catch(e){}
   }
   function nflTodayISO(){ return new Date().toISOString().slice(0,10); }
+  /* [v6.0] §G — nomes de arquivo padronizados com a data ativa (DD_MM_AAAA).
+     nflNomeArquivo('consultas','2026-10-08')            -> consultas_08_10_2026.xlsx
+     nflNomeArquivo('consultas','2026-10-08','_parte2')  -> consultas_08_10_2026_parte2.xlsx
+     iso vazio/inválido -> {prefixo}_{YYYY-MM-DD} (data de hoje, horário local; nunca quebra). */
+  function nflxHojeLocalISO(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  function nflNomeArquivo(prefixo, iso, sufixo){
+    var p=String(prefixo||'arquivo'), s=sufixo?String(sufixo):'';
+    var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||'').trim());
+    return p+'_'+(m?(m[3]+'_'+m[2]+'_'+m[1]):nflxHojeLocalISO())+s+'.xlsx';
+  }
+  /* data ativa = seletor do topo (#datePicker); vazio se não existir/definida */
+  function nflxDiaAtivo(){ var el=document.getElementById('datePicker'); return (el&&el.value)||''; }
 
   function nflAddEntry(date, count, note){
     nflEntries.push({ date:date, count:count||null, note:note||null, ts:Date.now() });
@@ -4682,15 +4781,15 @@
     var baixados=[];
     nflSplitChunks(consultas,NFL_MAX_LOTE).forEach(function(chunk,i){
       var suf=consultas.length>NFL_MAX_LOTE?'_parte'+(i+1):'';
-      XLSX.writeFile(nflBuildWorkbookFor(chunk),'nf_lote_CONSULTAS'+suf+'.xlsx');
+      XLSX.writeFile(nflBuildWorkbookFor(chunk),nflNomeArquivo('consultas',nflxDiaAtivo(),suf)); /* [v6.0] §G */
     });
     if(consultas.length) baixados.push(consultas.length+' Consulta(s)'+(consultas.length>NFL_MAX_LOTE?' em '+Math.ceil(consultas.length/NFL_MAX_LOTE)+' arquivo(s) de até '+NFL_MAX_LOTE:''));
     nflSplitChunks(exames,NFL_MAX_LOTE).forEach(function(chunk,i){
       var suf=exames.length>NFL_MAX_LOTE?'_parte'+(i+1):'';
-      XLSX.writeFile(nflBuildWorkbookFor(chunk),'nf_lote_EXAMES'+suf+'.xlsx');
+      XLSX.writeFile(nflBuildWorkbookFor(chunk),nflNomeArquivo('exames',nflxDiaAtivo(),suf)); /* [v6.0] §G */
     });
     if(exames.length) baixados.push(exames.length+' Exame(s)'+(exames.length>NFL_MAX_LOTE?' em '+Math.ceil(exames.length/NFL_MAX_LOTE)+' arquivo(s) de até '+NFL_MAX_LOTE:''));
-    if(incompletos.length){XLSX.writeFile(nflBuildWorkbookFor(incompletos),'nf_lote_INCOMPLETOS.xlsx');baixados.push(incompletos.length+' Incompleto(s)');}
+    if(incompletos.length){XLSX.writeFile(nflBuildWorkbookFor(incompletos),nflNomeArquivo('incompletos',nflxDiaAtivo())); /* [v6.0] §G */baixados.push(incompletos.length+' Incompleto(s)');}
     if(!baixados.length){alert('Nenhuma linha para baixar.');return;}
     var pickedDate=document.getElementById('dataConsulta').value||nflTodayISO();
     nflAddEntry(pickedDate, nflCurrentRows.length, 'Gerado ('+baixados.join(', ')+')');
@@ -4936,7 +5035,9 @@
         if(/^exames?\b/.test(primN)){tipoAtual='Exame';continue;}
         if(/emissao\s+de\s+(nota|nf)|nota\s+fiscal/.test(primN)){tipoAtual='Exame';continue;}
         if(!colHeaderIncluido){
-          var isColHeader=/^(nome|paciente)$/.test(primN)&&row.some(function(c){ return /^cpf$/.test(nflNormTxt(c)); });
+          /* [v6.0] layout 2.0 (a partir de 08/10) abre com "DATA DO ATENDIMENTO": sem isso o cabeçalho era descartado
+             e o 1º paciente virava "cabeçalho" no Mapear (e o Retorno pela planilha lia 0 linhas). */
+          var isColHeader=/^(nome|paciente|data( do| de)? atendimento|data( de)? consulta)$/.test(primN)&&row.some(function(c){ return /^cpf$/.test(nflNormTxt(c)); });
           if(isColHeader){linhasLimpas.push(row);colHeaderIncluido=true;continue;}
         }
         continue;
@@ -5162,7 +5263,7 @@
         XLSX.utils.book_append_sheet(wb,ws2,'Pendências (não importar)');
       }
       var sufixo=tipoAlvo==='Consulta'?'CONSULTAS':'EXAMES';
-      XLSX.writeFile(wb,'nf_lote_'+sufixo+'_'+dateIso+'.xlsx');
+      XLSX.writeFile(wb,nflNomeArquivo(tipoAlvo==='Consulta'?'consultas':'exames',dateIso)); /* [v6.0] §G (usa a data da linha da lista) */
       toast(prontas.length+' pronta(s)'+(pendentes.length?', '+pendentes.length+' pendente(s)':'')+' — arquivo baixado', 'success');
     }catch(e){
       toast('Erro: '+e.message, 'error');
@@ -5441,7 +5542,7 @@
     var ws=XLSX.utils.aoa_to_sheet(wsData);
     var wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Conferência NF');
-    XLSX.writeFile(wb,'conferencia_nf.xlsx');
+    XLSX.writeFile(wb,nflNomeArquivo('conferencia_nf',nflxDiaAtivo())); /* [v6.0] §G */
   }
 
   /* ===== COMPARATIVO SINAXYS ===== */
@@ -5844,7 +5945,7 @@
       var blob=new Blob([out],{type:'application/octet-stream'});
       var url=URL.createObjectURL(blob);
       var a=document.createElement('a');
-      a.href=url; a.download='NOTAS_FISCAIS_3.0_atualizada.xlsx';
+      a.href=url; a.download=nflNomeArquivo('NOTAS_FISCAIS_3.0_atualizada',nflxDiaAtivo()); /* [v6.0] §G */
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(function(){URL.revokeObjectURL(url);},2000);
 
@@ -5862,7 +5963,7 @@
     var ws=XLSX.utils.aoa_to_sheet(wsData);
     var wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Comparativo Sinaxys');
-    XLSX.writeFile(wb,'comparativo_sinaxys.xlsx');
+    XLSX.writeFile(wb,nflNomeArquivo('comparativo_sinaxys',nflxDiaAtivo())); /* [v6.0] §G */
   }
 
   async function nflSinExcluirLote(){
@@ -6170,10 +6271,10 @@
       nflCollectEditedRows();
       var rows=grupos()[tipo]; if(!rows.length){ T('Nenhuma linha neste lote.','error'); return; }
       var nome=tipo==='Consulta'?'CONSULTAS':tipo==='Exame'?'EXAMES':'INCOMPLETOS';
-      if(tipo==='Incompletos'){ XLSX.writeFile(nflBuildWorkbookFor(rows),'nf_lote_INCOMPLETOS.xlsx'); }
+      if(tipo==='Incompletos'){ XLSX.writeFile(nflBuildWorkbookFor(rows),nflNomeArquivo('incompletos',nflxDiaAtivo())); } /* [v6.0] §G */
       else nflSplitChunks(rows,NFL_MAX_LOTE).forEach(function(chunk,i){
         var suf=rows.length>NFL_MAX_LOTE?'_parte'+(i+1):'';
-        XLSX.writeFile(nflBuildWorkbookFor(chunk),'nf_lote_'+nome+suf+'.xlsx');
+        XLSX.writeFile(nflBuildWorkbookFor(chunk),nflNomeArquivo(nome.toLowerCase(),nflxDiaAtivo(),suf)); /* [v6.0] §G */
       });
       nflAddEntry($('dataConsulta').value||nflTodayISO(), rows.length, 'Gerado ('+rows.length+' '+tipo+(tipo==='Incompletos'?'':'(s)')+')');
       var sb=$('savedBanner'); if(sb) sb.style.display='block';
@@ -6271,13 +6372,13 @@
       var aoa=[['Nome','CPF','Valor','Tipo','Motivo','Protocolo']].concat(ord.map(function(r){
         return [r.nome||'',r.cpf||'',r.valor||'',r.tipo||'',r.status==='recusada'?'Recusada pela Sinaxys':'Não consta no retorno',r.status==='recusada'?(r.nfNumero||''):'—'];
       }));
-      gravar(aoa,'nf_erros_para_corrigir_'+dataArq()+'.xlsx');
+      gravar(aoa,nflNomeArquivo('erros_para_corrigir',nflxDiaAtivo())); /* [v6.0] §G */
       T(ord.length+' paciente(s) no arquivo de correção','success');
     };
     window.nflxBaixarCompleto=function(){
       var ord=window._nflSinOrdered||[]; if(!ord.length) return;
       var aoa=[['Nome','CPF','Valor','Tipo','Status','Nº NF']].concat(ord.map(function(r){ return [r.nome||'',r.cpf||'',r.valor||'',r.tipo||'',ROT[r.status]||r.status,r.status==='emitida'?(r.nfNumero||''):'']; }));
-      gravar(aoa,'comparativo_sinaxys_'+dataArq()+'.xlsx');
+      gravar(aoa,nflNomeArquivo('comparativo_sinaxys',nflxDiaAtivo())); /* [v6.0] §G */
     };
     nflxSinGo(1);
   })();
@@ -6982,7 +7083,9 @@
     add('Divergências',[cab].concat(linhasFiltradas('div').map(linha)));
     add('Linhas com problema',[['Data','Aba','Paciente','CPF','Valor','Motivo']].concat(ST.problemas.map(function(p){ return [BR(p.dia),p.aba,p.nome,p.cpf,p.cents==null?'':p.cents/100,p.motivo]; })));
     add('NF sem linha na planilha',[['Data','Paciente (Sinaxys)','CPF','Valor','Nº NF']].concat(ST.sobras.map(function(r){ return [BR(r.dia),r.nome,r.cpf,r.cents/100,r.nf]; })));
-    XLSX.writeFile(wb,'falta_emitir_'+ST.de+'_a_'+ST.ate+'.xlsx');
+    /* [v6.0] §G — falta_emitir_01_10_a_07_10_2026.xlsx */
+    (function(){ var a=/^(\d{4})-(\d{2})-(\d{2})$/.exec(ST.de||''), b=/^(\d{4})-(\d{2})-(\d{2})$/.exec(ST.ate||'');
+      XLSX.writeFile(wb,(a&&b)?('falta_emitir_'+a[3]+'_'+a[2]+'_a_'+b[3]+'_'+b[2]+'_'+b[1]+'.xlsx'):('falta_emitir_'+(ST.de||nflxHojeLocalISO())+'_a_'+(ST.ate||nflxHojeLocalISO())+'.xlsx')); })();
   };
 
   /* datas padrão: últimos 7 dias até ontem */
@@ -7061,6 +7164,563 @@
   })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v5.1 · 03/10/2026</span>
+  <!-- ═══════════ v6.0 — NF em Lote unificado: 2 abas, layout por data, operadores, escrever Nº NF, fila de incompletos ═══════════
+       [v6.0] Bloco NOVO e isolado. Só ENVOLVE (wrapper) funções existentes — sempre chama a original e devolve o resultado.
+       Não altera nflProcessData, nflSinConferir, nflFetchViaCep, nflSinPerLogic etc. Só usa window.fbGet / window.fbSet. -->
+  <script>
+  (function(){
+    'use strict';
+    var $=function(id){return document.getElementById(id);};
+    var E=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+    function T(m,k){ try{ if(typeof toast==='function') toast(m,k||'success'); else alert(m);}catch(e){} }
+    function BR(iso){ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); return m?(m[3]+'/'+m[2]+'/'+m[1]):''; }
+    function BRc(iso){ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); return m?(m[3]+'/'+m[2]):''; }
+    function ontemLocal(){ var d=new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+    var NFLX6=window.NFLX6={ retornoMode:false, retStep:1, opLista:[], opDia:{}, opLembrar:{}, opEdit:{}, opFb:null, opFbT:0,
+                             opIdxBusca:-1, semOperador:false, autoComparar:false, fila:{}, filaHash:{} };
+
+    /* ═════════════ §B · layouts da planilha (detecção por data + validação contra o cabeçalho real) ═════════════
+       Cabeçalhos reais conferidos na planilha NOTAS FISCAIS 3.0 (13/10/2026). Variações de grafia aceitas
+       (EMAIL / E-MAIL / E- MAIL, N DE CELULAR / N° DO CELULAR / Nº DE CELULAR, Nº CASA / Nº DA CASA...). */
+    window.NFL_LAYOUTS={
+      'new':{ desde:'2026-10-08', nome:'Layout 2.0',
+        assinatura:['DATA DO ATENDIMENTO','PACIENTE','CPF','E-MAIL','VALOR','N° DO CELULAR','CEP','Nº CASA','PAGAMENTO','OPERADOR'],
+        mapa:{ 'DATA DO ATENDIMENTO':'Data de Consulta','PACIENTE':'Paciente','CPF':'CPF','E-MAIL':'Email','VALOR':'Valor','N° DO CELULAR':'Telefone','CEP':'CEP','Nº CASA':'Número','PAGAMENTO':'','OPERADOR':'' },
+        /* [v6.0] AGUARDANDO: o layout novo não tem coluna "N° NOTA FISCAL" no cabeçalho (termina em OPERADOR).
+           Fixar aqui a letra depois de rodar "Adicionar coluna Nº NF nas abas que faltam". Enquanto null, o Apps Script acha pelo cabeçalho. */
+        nfCol:null },
+      'old':{ desde:null, ate:'2026-10-07', nome:'Layout 1.0',
+        assinatura:['NOME','CPF','VALOR','PAGAMENTO','OPERADOR','E-MAIL','N° DO CELULAR','CEP','Nº CASA'],
+        mapa:{ 'NOME':'Paciente','CPF':'CPF','VALOR':'Valor','PAGAMENTO':'','OPERADOR':'','E-MAIL':'Email','N° DO CELULAR':'Telefone','CEP':'CEP','Nº CASA':'Número' },
+        nfCol:'J' } /* abas 01/10–07/10: coluna "Nº NF" é a J (não K) */
+    };
+    var COL_ALIAS=[
+      ['data',['data do atendimento','data atendimento','data de atendimento','data de consulta','data consulta','data']],
+      ['paciente',['paciente','nome','nome do paciente','cliente']],
+      ['cpf',['cpf','cpf paciente','cpf cliente']],
+      ['email',['email','e mail','e mail do paciente','email do paciente']],
+      ['valor',['valor','valor total']],
+      ['tel',['n do celular','n de celular','celular','telefone','n celular','numero do celular','numero de celular']],
+      ['cep',['cep']],
+      ['num',['n casa','n da casa','numero','n','numero da casa','numero casa']],
+      ['pagamento',['pagamento','forma de pagamento']],
+      ['operador',['operador']]
+    ];
+    var COL_LABEL={data:'DATA DO ATENDIMENTO',paciente:'PACIENTE/NOME',cpf:'CPF',email:'E-MAIL',valor:'VALOR',tel:'N° DO CELULAR',cep:'CEP',num:'Nº CASA',pagamento:'PAGAMENTO',operador:'OPERADOR'};
+    function colKey(h){
+      var n=nflNormTxt(h||''); if(!n) return '';
+      for(var i=0;i<COL_ALIAS.length;i++) if(COL_ALIAS[i][1].indexOf(n)>=0) return COL_ALIAS[i][0];
+      return '';
+    }
+    window.nflxLayoutParaData=function(iso){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||'')) return null;       /* sem data → cascata existente */
+      if(iso>=NFL_LAYOUTS['new'].desde) return 'new';
+      if(iso<=NFL_LAYOUTS['old'].ate) return 'old';
+      return null;
+    };
+    window.nflxValidarLayout=function(key,headerRow){
+      var L=NFL_LAYOUTS[key]; if(!L) return {pct:0,hit:0,total:0,faltam:[]};
+      var esp=L.assinatura.map(colKey), pres={};
+      (headerRow||[]).forEach(function(h){ var k=colKey(h); if(k) pres[k]=true; });
+      var falt=esp.filter(function(k){return !pres[k];}), hit=esp.length-falt.length;
+      return {pct:esp.length?hit/esp.length:0,hit:hit,total:esp.length,faltam:falt};
+    };
+    function campoDoLayout(key,k){ /* chave canônica → campo do template Sinaxys ('' = não usar) */
+      var L=NFL_LAYOUTS[key], mapa=L.mapa, campo;
+      Object.keys(mapa).forEach(function(h){ if(colKey(h)===k) campo=mapa[h]; });
+      return campo;
+    }
+    function ativarBadge(){
+      var iso=nflxDiaAtivo(), key=nflxLayoutParaData(iso), b=$('layoutBadge'), t=$('layoutBadgeTxt'); if(!b||!t) return;
+      if(key==='new'){ b.className='nflx6-badge new'; t.textContent='Layout 2.0 · '+BRc(NFL_LAYOUTS['new'].desde)+' em diante'; }
+      else if(key==='old'){ b.className='nflx6-badge old'; t.textContent='Layout 1.0 · até '+BRc(NFL_LAYOUTS['old'].ate); }
+      else { b.className='nflx6-badge unknown'; t.textContent='Escolha uma data'; }
+    }
+    function aplicarLayoutNoMapa(){
+      var card=$('nflxLayoutCard'); if(!card) return null;
+      var lines=window.nflParsedLines||[]; if(!lines.length){ card.style.display='none'; return null; }
+      var hdr=lines[0]||[], iso=nflxDiaAtivo()||(($('dataConsulta')||{}).value)||'', key=nflxLayoutParaData(iso);
+      var cls='nflx6-layout', t, s, pct='—', fill=0, aplicou=false;
+      if(!key){
+        cls+=' warn'; t='Sem data definida — reconhecimento por conteúdo'; s='Escolha o dia no topo para usar o layout da planilha. Confira as colunas no quadro abaixo.';
+      } else {
+        var L=NFL_LAYOUTS[key], v=nflxValidarLayout(key,hdr), p=Math.round(v.pct*100);
+        if(v.pct>=0.8){
+          var usado={}, mapeadas=0, ignoradas=0, lidas=0;
+          for(var i=0;i<(window.nflNumCols||hdr.length);i++){
+            var k=colKey(hdr[i]), sel=$('nflmap_'+i); if(hdr[i]!=null&&String(hdr[i]).trim()!=='') lidas++;
+            if(!k||!sel) continue;
+            var campo=campoDoLayout(key,k);
+            if(campo===undefined) continue;                       /* coluna conhecida mas fora deste layout: deixa o palpite */
+            if(campo&&!usado[campo]){ sel.value=campo; usado[campo]=1; mapeadas++; } else { sel.value=''; ignoradas++; }
+          }
+          aplicou=true; cls+=(key==='old'?' old':''); fill=p;
+          t=L.nome+' — reconhecido automaticamente'; pct=p+'%';
+          s=(key==='new'?'Padrão da planilha a partir de '+BR(L.desde):'Padrão da planilha até '+BR(L.ate))+' · '+lidas+' colunas lidas · '+mapeadas+' mapeadas · '+ignoradas+' ignoradas';
+        } else {
+          cls+=' warn'; fill=p; pct=p+'%';
+          t='Esperava o '+L.nome+', mas o cabeçalho só bate '+p+'% — mapeei pelo conteúdo';
+          s='Faltam: '+v.faltam.map(function(k){return COL_LABEL[k]||k;}).join(', ')+'. Revise as colunas no quadro abaixo (⚠).';
+        }
+      }
+      card.className=cls;
+      card.innerHTML='<div class="h"><div style="flex:1;"><div class="t">'+E(t)+'</div><div class="s">'+E(s)+'</div></div>'
+        +'<div style="text-align:right;"><div class="pct">'+E(pct)+'</div><div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;">Confiança</div></div></div>'
+        +'<div class="bar"><i style="width:'+fill+'%"></i></div>';
+      card.style.display='';
+      return {key:key,aplicou:aplicou};
+    }
+    window.nflxAplicarLayout=aplicarLayoutNoMapa;
+
+    /* ═════════════ §C · operador → tipo (Firebase admin/nfl_operadores + override do dia) ═════════════ */
+    function fbKey(s){ return String(s||'').toUpperCase().replace(/[.#$\[\]\/]/g,'_').replace(/[\u0000-\u001f\u007f]/g,'').trim(); }
+    async function opCarregarFb(force){
+      if(!force&&NFLX6.opFb&&Date.now()-NFLX6.opFbT<60000) return NFLX6.opFb;
+      if(!window.fbGet){ NFLX6.opFb=NFLX6.opFb||{}; return NFLX6.opFb; }
+      try{ var sn=await window.fbGet('admin/nfl_operadores'); NFLX6.opFb=(sn&&sn.exists()&&typeof sn.val()==='object')?sn.val():{}; NFLX6.opFbErro=''; }
+      catch(e){ NFLX6.opFb=NFLX6.opFb||{}; NFLX6.opFbErro=e.message||String(e); console.warn('[v6.0] admin/nfl_operadores:',e); }
+      NFLX6.opFbT=Date.now(); return NFLX6.opFb;
+    }
+    function opDicionario(){ /* seed hardcoded + Firebase (Firebase vence). Tokens normalizados. */
+      var d={}, seed=window.NFL_OPERADOR_TIPO||{};
+      Object.keys(seed).forEach(function(k){ var n=nflNormTxt(k); if(n) d[n]=seed[k]; });
+      var fb=NFLX6.opFb||{};
+      Object.keys(fb).forEach(function(k){ var t=fb[k]; if(t!=='Consulta'&&t!=='Exame') return; var n=nflNormTxt(k); if(n) d[n]=t; });
+      return d;
+    }
+    function tipoConhecido(cell){ /* sem o override do dia */
+      var raw=nflCleanCell(cell||''); if(!raw) return '';
+      var d=opDicionario(), n=nflNormTxt(raw); if(d[n]) return d[n];
+      var tk=n.split(' '); for(var j=0;j<tk.length;j++) if(d[tk[j]]) return d[tk[j]];
+      return '';
+    }
+    function tipoDoOperador(cell){
+      var raw=nflCleanCell(cell||''); if(!raw) return '';
+      var ov=NFLX6.opDia[raw.toUpperCase()]; if(ov) return ov;
+      return tipoConhecido(raw);
+    }
+    /* nflTipoPorOperador: mesma assinatura. Com a coluna OPERADOR identificada, olha SÓ ela — antes olhava a linha inteira e o
+       nome do paciente (Bruna, Gustavo, Fernanda…) podia ser confundido com operador. Sem a coluna: lógica original. */
+    var _tpo=window.nflTipoPorOperador;
+    window.nflTipoPorOperador=function(row){
+      if(NFLX6.semOperador) return '';
+      var i=NFLX6.opIdxBusca;
+      if(i>=0&&row&&i<row.length) return tipoDoOperador(row[i]);
+      return _tpo.apply(this,arguments);
+    };
+    var _ext=window.nflExtrairTipoDoSheet;
+    window.nflExtrairTipoDoSheet=function(linhas){
+      NFLX6.opIdxBusca=-1;
+      for(var i=0;i<Math.min(linhas.length,8);i++){
+        var r=linhas[i]||[]; if(!r.some(function(c){return nflNormTxt(c)==='cpf';})) continue;
+        for(var j=0;j<r.length;j++) if(nflNormTxt(r[j])==='operador'){ NFLX6.opIdxBusca=j; break; }
+        break;
+      }
+      NFLX6.semOperador=true; var a; try{ a=_ext.call(this,linhas); } finally{ NFLX6.semOperador=false; }  /* só tipos vindos de seção da planilha */
+      var b=_ext.call(this,linhas);
+      window.__nflxTipoSecao=a.tiposPorIndice||{}; window.__nflxTipoLen=(b.linhasLimpas||[]).length;
+      return b;
+    };
+    ['nflPuxarDoCaixa','nflClearAll'].forEach(function(n){ var o=window[n]; if(typeof o!=='function') return;
+      window[n]=function(){ window.__nflxTipoSecao=null; return o.apply(this,arguments); }; });
+    function opIdxDoMapa(){ var h=(window.nflParsedLines||[])[0]||[]; for(var i=0;i<h.length;i++) if(colKey(h[i])==='operador') return i; return -1; }
+    function recalcTipos(){ /* após Mapear: reaplica Firebase + override do dia nas linhas SEM tipo vindo de seção */
+      var lines=window.nflParsedLines||[], oi=opIdxDoMapa(), sec=window.__nflxTipoSecao;
+      if(oi<0||!sec||lines.length<2||lines.length!==window.__nflxTipoLen) return;
+      var tm=window.__sheetTipoByIdx=window.__sheetTipoByIdx||{};
+      for(var ri=0;ri<lines.length-1;ri++){
+        if(sec[ri]){ tm[ri]=sec[ri]; continue; }
+        var t=tipoDoOperador((lines[ri+1]||[])[oi]); if(t) tm[ri]=t; else delete tm[ri];
+      }
+    }
+    function operadoresDoDia(){
+      var lines=window.nflParsedLines||[], oi=opIdxDoMapa(), cont={}, ordem=[];
+      if(oi<0) return null;
+      lines.slice(1).forEach(function(r){
+        var raw=nflCleanCell((r||[])[oi]||''); if(!raw||/@/.test(raw)||/\d/.test(raw)) return;   /* e-mail/linha deslocada não é operador */
+        var k=raw.toUpperCase(); if(!cont[k]){ cont[k]=0; ordem.push(k); } cont[k]++;
+      });
+      ordem.sort(function(a,b){ return cont[b]-cont[a]; });
+      return ordem.map(function(k){ return {key:k,qtd:cont[k]}; });
+    }
+    window.renderOperadoresDia=async function(){
+      var box=$('nflxOpBlock'); if(!box) return;
+      var lista=operadoresDoDia();
+      if(lista===null){ box.style.display='none'; return; }                 /* sem coluna OPERADOR: nada a classificar */
+      if(!lista.length){ box.style.display='none'; return; }
+      await opCarregarFb(false);
+      NFLX6.opLista=lista;
+      var sem=0, nomesSem=[], h='<div class="ot">Coluna OPERADOR → tipo da nota <span style="font-weight:600;color:#6b7280;">(define Consulta ou Exame quando a planilha não tem seções)</span></div>';
+      lista.forEach(function(o,i){
+        var conhecido=tipoConhecido(o.key), ov=NFLX6.opDia[o.key], atual=ov||conhecido, editando=!!NFLX6.opEdit[i];
+        var tag=atual?'<span class="tag '+(atual==='Exame'?'e':'c')+'">'+E(atual)+(ov&&conhecido&&ov!==conhecido?' · só hoje':'')+'</span>':'';
+        h+='<div class="ol"><span class="on">'+E(o.key)+'</span><span class="oq">'+o.qtd+' linha(s)</span>';
+        if(conhecido&&!editando){
+          h+=tag+'<button type="button" class="mini" onclick="nflxOpAlterar('+i+')">alterar só hoje</button>';
+        } else {
+          h+='<label><input type="radio" name="nflxOp'+i+'" '+(atual==='Consulta'?'checked':'')+' onchange="nflxOpSet('+i+',\'Consulta\')"> Consulta</label>'
+            +'<label><input type="radio" name="nflxOp'+i+'" '+(atual==='Exame'?'checked':'')+' onchange="nflxOpSet('+i+',\'Exame\')"> Exame</label>';
+          if(!conhecido) h+='<label style="margin-left:6px;color:#6b7280;"><input type="checkbox" '+(NFLX6.opLembrar[o.key]?'checked':'')+' onchange="nflxOpLembrar('+i+',this.checked)"> lembrar</label>';
+          else h+='<button type="button" class="mini" onclick="nflxOpAlterar('+i+')">ok</button>';
+        }
+        h+='</div>';
+        if(!atual){ sem++; nomesSem.push(o.key); }
+      });
+      var nLemb=lista.filter(function(o){return NFLX6.opLembrar[o.key]&&NFLX6.opDia[o.key]&&!tipoConhecido(o.key);}).length;
+      h+='<div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><button type="button" class="mini" '+(nLemb?'':'disabled style="opacity:.5"')+' onclick="salvarOperadoresPadrao()">💾 Salvar como padrão para próximos dias'+(nLemb?' ('+nLemb+')':'')+'</button>'
+        +(NFLX6.opFbErro?'<span style="font-size:11px;color:#b45309;">⚠ não consegui ler/gravar a lista salva ('+E(NFLX6.opFbErro)+') — usando a lista padrão</span>':'')+'</div>';
+      if(sem) h+='<div class="warnbox">⚠ '+sem+' operador(es) sem tipo: <b>'+E(nomesSem.join(', '))+'</b>. Não bloqueia: as linhas deles vão para INCOMPLETOS com o motivo "Operador X sem tipo definido".</div>';
+      box.innerHTML=h; box.style.display='';
+    };
+    window.nflxOpSet=function(i,tipo){ var o=NFLX6.opLista[i]; if(!o) return; NFLX6.opDia[o.key]=tipo; window.renderOperadoresDia(); };
+    window.nflxOpLembrar=function(i,on){ var o=NFLX6.opLista[i]; if(!o) return; NFLX6.opLembrar[o.key]=!!on; window.renderOperadoresDia(); };
+    window.nflxOpAlterar=function(i){ NFLX6.opEdit[i]=!NFLX6.opEdit[i]; window.renderOperadoresDia(); };
+    window.salvarOperadoresPadrao=async function(){
+      if(!window.fbSet){ T('Firebase não disponível — recarregue a página.','error'); return; }
+      var salvar=NFLX6.opLista.filter(function(o){ return NFLX6.opLembrar[o.key]&&NFLX6.opDia[o.key]&&!tipoConhecido(o.key); });
+      if(!salvar.length){ T('Marque "lembrar" em algum operador novo antes de salvar.','info'); return; }
+      try{
+        for(var i=0;i<salvar.length;i++){
+          var k=fbKey(salvar[i].key); if(!k) continue;
+          await window.fbSet('admin/nfl_operadores/'+k, NFLX6.opDia[salvar[i].key]);
+          NFLX6.opFb=NFLX6.opFb||{}; NFLX6.opFb[k]=NFLX6.opDia[salvar[i].key]; delete NFLX6.opLembrar[salvar[i].key]; delete NFLX6.opDia[salvar[i].key];
+        }
+        NFLX6.opFbT=Date.now(); NFLX6.opFbErro='';
+        T(salvar.length+' operador(es) salvo(s) como padrão','success'); window.renderOperadoresDia();
+      }catch(e){ NFLX6.opFbErro=e.message||String(e); T('Não consegui salvar: '+NFLX6.opFbErro,'error'); window.renderOperadoresDia(); }
+    };
+
+    /* gancho do passo Mapear: layout + operadores */
+    var _bmt=window.nflBuildMapTable;
+    window.nflBuildMapTable=function(){
+      var r=_bmt.apply(this,arguments);
+      try{ aplicarLayoutNoMapa(); window.renderOperadoresDia(); }catch(e){ console.warn('[v6.0] layout/operadores:',e); }
+      return r;
+    };
+    /* ao avançar do Mapear: recalcula tipos (Firebase + override do dia) ANTES de seguir pra CEP/Corrigir */
+    var _goa=window.nflGoToAgendStep;
+    window.nflGoToAgendStep=function(){
+      try{ recalcTipos();
+           var sem=(NFLX6.opLista||[]).filter(function(o){return !tipoDoOperador(o.key);});
+           if(sem.length) T(sem.length+' operador(es) sem tipo — as linhas vão para INCOMPLETOS','info');
+      }catch(e){ console.warn('[v6.0] recalcTipos:',e); }
+      return _goa.apply(this,arguments);
+    };
+
+    /* ═════════════ §A · seletor de dia + 2 abas ═════════════ */
+    function sincronizarDia(iso){
+      ['puxarDataInput','dataConsulta','nflxSinDia'].forEach(function(id){ var e=$(id); if(e&&e.value!==iso) e.value=iso; });
+      try{ if(typeof window.nflxAtualizaDia==='function') window.nflxAtualizaDia(); }catch(e){}
+    }
+    function persistirDia(iso){ try{ localStorage.setItem('nflx_dia_ativo',iso); localStorage.setItem('nflx_dia_ativo_em',nflxHojeLocalISO()); }catch(e){} }
+    function diaInicial(){
+      try{ var v=localStorage.getItem('nflx_dia_ativo'), em=localStorage.getItem('nflx_dia_ativo_em');
+           if(/^\d{4}-\d{2}-\d{2}$/.test(v||'')&&em===nflxHojeLocalISO()) return v; }catch(e){}
+      return ontemLocal();                                                 /* pré-preenche com ontem (um dia salvo de outro dia não vale) */
+    }
+    var _diaAnt=null;
+    function trocarDia(){
+      var dp=$('datePicker'), iso=dp.value;
+      if(NFLX6.retornoMode&&window._nflSinOrdered&&window._nflSinOrdered.length&&_diaAnt&&iso!==_diaAnt){
+        if(!confirm('Trocar o dia descarta a comparação em andamento ('+BR(_diaAnt)+'). Continuar?')){ dp.value=_diaAnt; return; }
+      }
+      _diaAnt=iso; sincronizarDia(iso); persistirDia(iso); ativarBadge();
+      var ov=$('ov-map'); if(ov&&ov.classList.contains('open')) aplicarLayoutNoMapa();   /* atualiza a tabela de mapeamento sem recarregar */
+      if(NFLX6.retornoMode&&iso){ window._nflSinOrdered=null; window.nflSinLoteAtivo=null; irRetorno(true); }
+    }
+    function syncTabs(name){
+      var ret=(name==='sinaxys'&&NFLX6.retornoMode);
+      $('nflx6TabEmitir').classList.toggle('active',name==='gerar');
+      $('nflx6TabRetorno').classList.toggle('active',ret);
+      var h=$('nflxBtnHome'); if(h) h.style.display=(name==='gerar'||ret)?'none':'';
+    }
+    var _nst=window.nflShowTab;
+    window.nflShowTab=function(name){
+      var pg=$('nfl-page-incompletos'), r;
+      if(name==='incompletos'){
+        ['gerar','nfdia','conferir','sinaxys','preencher','historico'].forEach(function(n){ var p=$('nfl-page-'+n); if(p) p.classList.remove('active'); });
+        document.querySelectorAll('#nflx6OldTabs .tab').forEach(function(b){ b.classList.remove('active'); });
+        if(pg) pg.classList.add('active');
+        try{ window.nflxDrawer(false); }catch(e){}
+        NFLX6.retornoMode=false; syncTabs(name); window.nflIncompletosRender();
+        return;
+      }
+      if(pg) pg.classList.remove('active');
+      if(name!=='sinaxys') NFLX6.retornoMode=false;
+      r=_nst.apply(this,arguments); syncTabs(name); return r;
+    };
+    var _nir=window.nflxIr;
+    window.nflxIr=function(dest){ if(dest==='sinaxys') NFLX6.retornoMode=false; return _nir.apply(this,arguments); };
+    async function irRetorno(forcar){
+      var prev=NFLX6.retStep; NFLX6.retornoMode=true;
+      window.nflShowTab('sinaxys');
+      var dia=nflxDiaAtivo(); if(!dia){ T('Escolha o dia no topo.','error'); return; }
+      var l=window.nflSinLoteAtivo;
+      if(!forcar&&l&&l.dados&&l.dados.data===dia&&prev>=2){ window.nflxSinGo(prev); return; }   /* já tem lote desse dia: volta de onde parou */
+      var e=$('nflxSinDia'); if(e) e.value=dia;
+      await window.nflxSinUsarPlanilha();   /* lê a aba do dia e abre o Upload; se falhar, fica no passo 1 com a mensagem */
+    }
+    window.nflxIr6=function(dest){
+      if(dest==='emitir'){ NFLX6.retornoMode=false; window.nflShowTab('gerar'); return; }
+      if(dest==='retorno'){ irRetorno(false); return; }
+      if(dest==='importar'){ window.nflxIr('sinaxys'); var f=$('sinImportarLoteFile'), d=f&&f.closest('details'); if(d){ d.open=true; d.scrollIntoView({behavior:'smooth',block:'center'}); } return; }
+      if(dest==='falta'){ window.nflxIr('sinaxys'); var c=$('nflxSinPerCard'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+    };
+    var _dr=window.nflxDrawer;
+    window.nflxDrawer=function(on){ var r=_dr.apply(this,arguments); if(on) nflIncompletosContar(true); return r; };
+
+    /* passos do Retorno: Upload → Comparar → Escrever Nº NF (o passo "Lote" é automático pelo dia do topo) */
+    (function(){
+      var st=document.querySelectorAll('#nflxSinSteps .nflx-step');
+      var rot={2:['1','Upload'],3:['2','Comparar'],4:['3','Escrever Nº NF']};
+      st.forEach(function(s){ var n=+s.getAttribute('data-s'); if(n===1){ s.style.display='none'; return; }
+        var d=s.querySelector('.nflx-dot'), l=s.querySelector('.nflx-lbl'); if(d&&rot[n]) d.textContent=rot[n][0]; if(l&&rot[n]) l.textContent=rot[n][1]; });
+    })();
+    var _sg=window.nflxSinGo;
+    window.nflxSinGo=function(n){
+      NFLX6.retStep=n; var r=_sg.apply(this,arguments);
+      try{
+        if(n===3){ var ok=(window._nflSinOrdered||[]).filter(function(x){return x.status==='emitida';}).length, b=$('nflxSinEnvBtn');
+                   if(b) b.innerHTML='Escrever '+ok+' Nº NF na planilha<div class="sub">Direto via Apps Script · sem download</div>'; }
+        if(n===4){ var rs=$('nflxV6EscRes'); if(rs) rs.innerHTML=''; var bt=$('nflxV6EscBtn'); if(bt) bt.disabled=false; }
+      }catch(e){}
+      return r;
+    };
+    /* upload do retorno → detecta colunas → compara (sem mais cliques, se o mapeamento vier completo) */
+    var _hr=window.nflSinHandleRetorno;
+    window.nflSinHandleRetorno=function(){ NFLX6.autoComparar=true; return _hr.apply(this,arguments); };
+    var _bmr=window.nflSinBuildRetornoMap;
+    window.nflSinBuildRetornoMap=function(){
+      var r=_bmr.apply(this,arguments);
+      if(NFLX6.autoComparar){
+        NFLX6.autoComparar=false;
+        var v=[].map.call(document.querySelectorAll('[id^="sinmap_"]'),function(s){return s.value;});
+        if(v.indexOf('CPF')>=0&&v.indexOf('NumeroNF')>=0) setTimeout(function(){ try{ window.nflSinConferir(); }catch(e){ console.warn(e); } },0);
+        else T('Confira as colunas do retorno e clique em "Comparar".','info');
+      }
+      return r;
+    };
+    var _bx=window.nflxBaixar;
+    window.nflxBaixar=function(tipo){
+      var r=_bx.apply(this,arguments);
+      if(tipo!=='Incompletos'&&(window.nflCurrentRows||[]).length){ var p=$('nflx6Pulse'); if(p) p.style.display=''; }
+      return r;
+    };
+    $('nflx6TabRetorno').addEventListener('click',function(){ var p=$('nflx6Pulse'); if(p) p.style.display='none'; });
+
+    /* ═════════════ §D/§E · escrever Nº NF (Apps Script → fallback .xlsx) + processado automático ═════════════ */
+    async function recalcBadge(){
+      try{
+        if(!window.fbGet) return;
+        var sn=await window.fbGet('nf_dia_relatorios'), v=(sn&&sn.exists())?sn.val():{}, hoje=nflxHojeLocalISO();
+        var n=Object.keys(v||{}).filter(function(d){ var x=v[d]; return /^\d{4}-\d{2}-\d{2}$/.test(d)&&d<hoje&&x&&typeof x==='object'&&x._status!=='processado'; }).length;
+        var b=$('badgeNflote'); if(b){ if(n>0){ b.textContent=String(n); b.style.display='inline-flex'; } else b.style.display='none'; }
+        setTimeout(function(){ try{ if(typeof window.renderHoje==='function') window.renderHoje(); }catch(e){} },46000);   /* a página Hoje tem cache de 45s */
+      }catch(e){ console.warn('[v6.0] badge:',e); }
+    }
+    window.nflxRecalcBadge=recalcBadge;
+    window.marcarDiaProcessado=async function(iso){
+      if(!window.fbSet) throw new Error('Firebase não disponível');
+      await window.fbSet('nf_dia_relatorios/'+iso+'/_status','processado');
+      await recalcBadge(); return true;
+    };
+    var _nm=window.nflNfDiaMarcar;
+    if(typeof _nm==='function') window.nflNfDiaMarcar=async function(){ var r=await _nm.apply(this,arguments); recalcBadge(); return r; };   /* "Reabrir" também recalcula o badge */
+    function painelEsc(tipo,html){
+      var c={ok:['#dcfce7','#15803d'],info:['#ede9fe','#6d28d9'],warn:['#fef3c7','#b45309'],err:['#fee2e2','#C62828']}[tipo]||['#ede9fe','#6d28d9'];
+      var rs=$('nflxV6EscRes'); if(rs) rs.innerHTML='<div style="margin-top:12px;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.6;background:'+c[0]+';color:'+c[1]+';">'+html+'</div>';
+    }
+    function itensEmitidos(){
+      return (window._nflSinOrdered||[]).filter(function(r){ return r.status==='emitida'&&r.nfNumero; });
+    }
+    function valorStr(v){ var n=(typeof nflPreencherToFloat==='function')?nflPreencherToFloat(v):parseFloat(String(v).replace(',','.')); return (n===null||isNaN(n))?String(v==null?'':v):n.toFixed(2); }
+    window.escreverNfNaPlanilha=async function(){
+      var lote=window.nflSinLoteAtivo, itens=itensEmitidos(), btn=$('nflxV6EscBtn');
+      if(!lote||!lote.dados||!(window._nflSinOrdered||[]).length){ T('Rode a comparação primeiro.','error'); return; }
+      if(!itens.length){ painelEsc('warn','Nenhuma nota <b>emitida</b> neste comparativo — nada para escrever.'); return; }
+      var iso=lote.dados.data, key=nflxLayoutParaData(iso), nfCol=key?NFL_LAYOUTS[key].nfCol:null;
+      var url=(localStorage.getItem('nfl_webhook_url')||'').trim(), token=(localStorage.getItem('nfl_webhook_token')||'').trim();
+      var payload={token:token,data:iso,aba:BR(iso)}; if(nfCol) payload.coluna_nf=nfCol;
+      payload.items=itens.map(function(r){ return {cpf:r.cpf,valor:valorStr(r.valor),nfNumero:r.nfNumero,nome:r.nome}; });
+      if(btn) btn.disabled=true; painelEsc('info','📤 Escrevendo '+itens.length+' Nº NF na aba <b>'+E(BR(iso))+'</b>…');
+      var falha=null, out=null, tm=null;
+      try{
+        if(!url) throw new Error('a URL do Apps Script não está configurada (⚙️ Conexão com o Google Sheets)');
+        var ctrl=(typeof AbortController!=='undefined')?new AbortController():null; if(ctrl) tm=setTimeout(function(){ ctrl.abort(); },45000);
+        var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:ctrl?ctrl.signal:undefined});
+        out=await resp.json();
+        if(!out||!out.ok) throw new Error((out&&out.error)||'o script devolveu erro');
+      }catch(e){ falha=(e&&e.name==='AbortError')?'tempo esgotado (45 s)':(e&&e.message?e.message:String(e)); }
+      finally{ if(tm) clearTimeout(tm); if(btn) btn.disabled=false; }
+      if(falha){ painelFallback(falha,itens,iso); return; }
+      var nf=(out.notFound||[]).length, amb=(out.ambiguous||[]).length, esc=(out.written==null?itens.length:out.written);
+      var h='✓ <b>'+E(esc)+' Nº NF escrito(s)</b> na aba "'+E(out.aba||BR(iso))+'".';
+      if(nf) h+='<br>⚠ '+nf+' não encontrado(s): '+E(out.notFound.slice(0,5).join(', '))+(nf>5?'…':'');
+      if(amb) h+='<br>⚠ '+amb+' ambíguo(s) — não escritos para não errar.';
+      var limpo=esc>0&&!nf&&!amb;
+      if(limpo){
+        try{ await window.marcarDiaProcessado(iso); h+='<br>✓ O dia <b>'+E(BR(iso))+'</b> foi marcado como <b>Processado</b> (sai da lista de pendentes).'; }
+        catch(e){ h+='<br>⚠ Escrevi na planilha, mas não consegui marcar o dia como processado: '+E(e.message||e)+'. Use "Todas as datas → Marcar processada".'; }
+      } else {
+        h+='<br>O dia <b>não</b> foi marcado como processado porque houve itens não escritos. Resolva e, se estiver tudo certo, <a href="#" onclick="nflxV6ForcarProcessado(\''+E(iso)+'\');return false;" style="color:inherit;font-weight:700;text-decoration:underline;">marcar como processado mesmo assim</a>.';
+      }
+      painelEsc(limpo?'ok':'warn',h); T(esc+' Nº NF escrito(s) na planilha',limpo?'success':'info');
+    };
+    window.nflxV6ForcarProcessado=async function(iso){
+      if(!confirm('Marcar '+BR(iso)+' como processado mesmo com itens não escritos?')) return;
+      try{ await window.marcarDiaProcessado(iso); T('Dia marcado como processado','success'); }catch(e){ T('Erro: '+(e.message||e),'error'); }
+    };
+    function painelFallback(motivo,itens,iso){
+      painelEsc('warn','⚠ Não consegui escrever direto na planilha: <b>'+E(motivo)+'</b>.<br>Sem problema — gero a <b>NOTAS FISCAIS atualizada (.xlsx)</b> aqui: baixe a planilha do Google (Arquivo → Fazer download → .xlsx), selecione abaixo e clique em gerar. '
+        +'<div style="margin-top:8px;"><input type="file" id="nflxV6NotasFile" accept=".xlsx,.xls"> <button type="button" class="mini" style="background:#6d28d9;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;" onclick="nflxV6GerarLocal()">Gerar .xlsx atualizado</button></div><div id="nflxV6LocalRes" style="margin-top:6px;"></div>');
+    }
+    function setFile(inp,f){ var dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; }
+    window.nflxV6GerarLocal=async function(){
+      var f=($('nflxV6NotasFile')||{}).files&&$('nflxV6NotasFile').files[0], res=$('nflxV6LocalRes'), lote=window.nflSinLoteAtivo, itens=itensEmitidos();
+      if(!f){ T('Selecione a planilha NOTAS FISCAIS (.xlsx).','error'); return; }
+      if(!lote||!itens.length){ T('Nada para escrever — rode a comparação.','error'); return; }
+      try{
+        var iso=lote.dados.data, dd=iso.split('-');
+        var aoa=[['Nome','CPF','Valor','Nº NF','Status']].concat(itens.map(function(r){ var v=(typeof nflPreencherToFloat==='function')?nflPreencherToFloat(r.valor):r.valor; return [r.nome||'',r.cpf,v===null?r.valor:v,r.nfNumero,'Emitida']; }));
+        var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),dd[2]+'-'+dd[1]);
+        var bin=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+        setFile($('preencherNotasFile'),f);
+        setFile($('preencherRetornoFile'),new File([bin],'retorno_'+iso+'.xlsx',{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+        await window.nflPreencherCruzar();                       /* função original: preenche e baixa NOTAS_FISCAIS_3.0_atualizada_DD_MM_AAAA.xlsx */
+        var bn=$('preencherBanner'); if(res) res.innerHTML='<b>'+E((bn&&bn.textContent)||'Concluído.')+'</b>';
+      }catch(e){ if(res) res.innerHTML='<b style="color:#C62828;">Erro: '+E(e.message||e)+'</b>'; }
+    };
+
+    /* ═════════════ §F · fila persistente de incompletos (nfl_incompletos/{YYYY-MM-DD}) ═════════════ */
+    function linhasDoDia(nodo){ var L=nodo&&nodo.linhas; if(!L) return []; var a=Array.isArray(L)?L:Object.keys(L).map(function(k){return L[k];}); return a.filter(Boolean).sort(function(x,y){return (x.ts||0)-(y.ts||0);}); }
+    function diasPendentes(v){ return Object.keys(v||{}).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d)&&v[d]&&typeof v[d]==='object'&&v[d]._status!=='resolvido'&&linhasDoDia(v[d]).length; }).sort(); }
+    window.nflIncompletosContar=async function(sem){
+      try{
+        if(!window.fbGet) return {n:0,dias:0};
+        var sn=await window.fbGet('nfl_incompletos'), v=(sn&&sn.exists())?sn.val():{}, ds=diasPendentes(v), n=0;
+        ds.forEach(function(d){ n+=linhasDoDia(v[d]).length; });
+        var c=$('nflx6IncCnt'); if(c) c.textContent=n?String(n):'';
+        return {n:n,dias:ds.length};
+      }catch(e){ return {n:0,dias:0}; }
+    };
+    function motivoDe(r,ri){
+      var m=(r.warns||[]).slice();
+      if(!r.tipo){
+        var oi=opIdxDoMapa(), op=oi>=0?nflCleanCell(((window.nflParsedLines||[])[ri+1]||[])[oi]||''):'';
+        m.push(op&&!/@/.test(op)?('Operador '+op.toUpperCase()+' sem tipo definido'):'Sem tipo');
+      }
+      return m.join(' + ');
+    }
+    window.nflIncompletosEnfileirar=async function(){
+      if(!window.fbSet){ T('Firebase não disponível — recarregue a página.','error'); return; }
+      var rows=window.nflCurrentRows||[]; if(!rows.length){ T('Gere a planilha primeiro.','error'); return; }
+      nflCollectEditedRows();
+      var iso=nflxDiaAtivo()||(($('dataConsulta')||{}).value)||nflxHojeLocalISO(), idx=[];
+      rows.forEach(function(r,ri){ if(!r.tipo||r.hasWarning) idx.push(ri); });
+      if(!idx.length){ T('Nenhum incompleto neste lote.','info'); return; }
+      var H=function(v,n){ return v[NFL_HEADERS.indexOf(n)]||''; }, ts=Date.now(), origem='lote '+BRc(iso);
+      var itens=idx.map(function(ri,k){ var r=rows[ri], v=r.values;
+        return {key:ts.toString(36)+'_'+k,linha:{nome:H(v,'Paciente'),cpf:H(v,'CPF'),email:H(v,'Email'),tel:H(v,'Telefone'),cep:H(v,'CEP'),log:H(v,'Logradouro'),num:H(v,'Número'),comp:H(v,'Complemento'),bairro:H(v,'Bairro'),cidade:H(v,'Cidade'),uf:H(v,'UF'),valor:H(v,'Valor'),desc:H(v,'Descrição do Procedimento'),tipo:r.tipo||'',motivo:motivoDe(r,ri),origem:origem,ts:ts}}; });
+      var hash=iso+'|'+itens.map(function(x){return x.linha.cpf+':'+x.linha.valor+':'+x.linha.motivo;}).join(';');
+      if(NFLX6.filaHash[hash]){ T('Esses incompletos já foram guardados na fila.','info'); return; }   /* evita duplicar com clique duplo */
+      var btn=$('nflxBtnIncFila'); if(btn) btn.disabled=true;
+      try{
+        await Promise.all(itens.map(function(x){ return window.fbSet('nfl_incompletos/'+iso+'/linhas/'+x.key,x.linha); }));   /* 1 escrita por linha: sem sobrescrever o que já existe */
+        await window.fbSet('nfl_incompletos/'+iso+'/_status','pendente');
+        NFLX6.filaHash[hash]=true;
+        var c=await nflIncompletosContar();
+        T(itens.length+' incompleto(s) guardado(s) na fila — total pendente: '+c.n,'success'); atualizarInfoFila(c);
+      }catch(e){ T('Não consegui guardar na fila: '+(e.message||e),'error'); }
+      finally{ if(btn) btn.disabled=false; }
+    };
+    function atualizarInfoFila(c){
+      var el=$('nflxIncFilaInfo'); if(!el) return;
+      if(c&&c.n){ el.innerHTML='Já existem <b>'+c.n+'</b> incompleto(s) acumulado(s) na fila. <a href="#" onclick="nflxIr(\'incompletos\');return false;" style="color:#0d9488;font-weight:700;">Ver fila →</a>'; el.style.display=''; }
+      else el.style.display='none';
+    }
+    window.nflIncompletosRender=async function(){
+      var box=$('nflxIncList'); if(!box) return;
+      box.innerHTML='<div class="empty-state">Carregando…</div>';
+      if(!window.fbGet){ box.innerHTML='<div class="empty-state">Firebase não disponível — recarregue a página.</div>'; return; }
+      try{
+        var sn=await window.fbGet('nfl_incompletos'), v=(sn&&sn.exists())?sn.val():{}; NFLX6.fila=v||{};
+        var ds=diasPendentes(v), n=0;
+        if(!ds.length){ box.innerHTML='<div class="empty-state">Nenhum incompleto pendente. 🎉</div>'; var c0=$('nflx6IncCnt'); if(c0) c0.textContent=''; return; }
+        var h='';
+        ds.forEach(function(d){
+          var L=linhasDoDia(v[d]); n+=L.length;
+          var nomes=L.slice(0,6).map(function(x){return x.nome||'—';}).join(', ')+(L.length>6?' e +'+(L.length-6):'');
+          h+='<label class="d"><input type="checkbox" value="'+E(d)+'"><div><b>'+E(BR(d))+'</b> · '+L.length+' paciente(s)<div class="nm">'+E(nomes)+'</div></div></label>';
+        });
+        box.innerHTML='<div style="font-size:12px;color:#6b7280;margin-bottom:6px;">'+n+' incompleto(s) em '+ds.length+' dia(s) pendente(s)</div>'+h;
+        var c=$('nflx6IncCnt'); if(c) c.textContent=String(n);
+      }catch(e){ box.innerHTML='<div class="empty-state" style="color:#C62828;">Erro ao carregar: '+E(e.message||e)+'</div>'; }
+    };
+    function selecionados(){ return [].map.call(document.querySelectorAll('#nflxIncList input[type=checkbox]:checked'),function(c){return c.value;}); }
+    function msgInc(t,tipo){ var b=$('nflxIncMsg'); if(!b) return; b.style.display='block'; b.textContent=t; var c={ok:['#ede9fe','#6d28d9'],warn:['#fef3c7','#b45309'],err:['#fee2e2','#C62828']}[tipo||'ok']; b.style.background=c[0]; b.style.color=c[1]; }
+    window.nflIncompletosResolver=async function(){
+      var sel=selecionados(); if(!sel.length){ msgInc('Marque pelo menos um dia.','warn'); return; }
+      if(!confirm('Marcar '+sel.length+' dia(s) como resolvido(s)? Eles saem da fila.')) return;
+      try{ for(var i=0;i<sel.length;i++) await window.fbSet('nfl_incompletos/'+sel[i]+'/_status','resolvido');
+           msgInc('✓ '+sel.length+' dia(s) marcado(s) como resolvido(s).','ok'); await window.nflIncompletosRender(); }
+      catch(e){ msgInc('❌ '+(e.message||e),'err'); }
+    };
+    window.nflIncompletosBaixar=function(modo){
+      var v=NFLX6.fila||{}, dias=(modo==='sel')?selecionados().filter(function(d){return v[d];}):diasPendentes(v);
+      if(!dias.length){ msgInc(modo==='sel'?'Marque pelo menos um dia.':'Nada pendente para baixar.','warn'); return; }
+      dias.sort();
+      var aoa=[['Dia'].concat(NFL_HEADERS)], mot=[['Dia','Paciente','CPF','Motivo','Origem']], total=0;
+      dias.forEach(function(d){ linhasDoDia(v[d]).forEach(function(x){
+        aoa.push([BR(d),BR(d),x.nome||'',x.cpf||'',x.email||'',x.tel||'',x.cep||'',x.log||'',x.num||'',x.comp||'',x.bairro||'',x.cidade||'',x.uf||'',x.valor||'',x.desc||'']);
+        mot.push([BR(d),x.nome||'',x.cpf||'',x.motivo||'',x.origem||'']); total++;
+      }); });
+      var wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),'Modelo Importação');
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(mot),'Motivos (não importar)');
+      XLSX.writeFile(wb,nflNomeArquivo('incompletos_fila',nflxHojeLocalISO()));     /* data de GERAÇÃO, não do lote */
+      msgInc('✓ '+total+' paciente(s) de '+dias.length+' dia(s) baixados.','ok');
+    };
+    /* botão "Guardar na fila" acompanha o resultado + aviso da fila ao abrir o passo Baixar */
+    var _rr=window.nflRenderResultTable;
+    window.nflRenderResultTable=function(){
+      var r=_rr.apply(this,arguments);
+      try{ var inc=(window.nflCurrentRows||[]).filter(function(x){return !x.tipo||x.hasWarning;}).length, b=$('nflxBtnIncFila');
+           if(b){ b.style.display=inc?'':'none'; var s=$('nflxSubIncFila'); if(s) s.textContent=inc+' paciente(s) pra resolver depois · fica salvo no Firebase'; } }catch(e){}
+      return r;
+    };
+    var ovr=$('ov-result');
+    if(ovr) new MutationObserver(function(){ if(ovr.classList.contains('open')) nflIncompletosContar().then(atualizarInfoFila); }).observe(ovr,{attributes:true,attributeFilter:['class']});
+
+    /* ═════════════ Esc volta um passo (Emitir e Retorno) ═════════════ */
+    document.addEventListener('keydown',function(ev){
+      if(ev.key!=='Escape') return;
+      var t=ev.target; if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+      var v=$('viewNflote'); if(!v||!v.classList.contains('active')) return;
+      var dr=$('nflxDrawerBg'); if(dr&&dr.classList.contains('open')){ window.nflxDrawer(false); return; }
+      var pg=function(n){ var p=$('nfl-page-'+n); return p&&p.classList.contains('active'); };
+      if(pg('gerar')){
+        var ab=function(id){ var e=$(id); return e&&e.classList.contains('open'); };
+        if(ab('ov-result')) window.nflxVoltarResultado();
+        else if(ab('ov-fix')){ nflCloseStep('ov-fix'); nflOpenStep('ov-cep'); }
+        else if(ab('ov-cep')) window.nflxCepVoltar();
+        else if(ab('ov-agend')){ nflCloseStep('ov-agend'); nflOpenStep('ov-map'); }
+        else if(ab('ov-map')) window.nflxVoltarMapa();
+        else if(ab('ov-found')){ nflCloseStep('ov-found'); nflOpenStep('ov-paste'); }
+      } else if(pg('sinaxys')){
+        if(NFLX6.retStep>=3) window.nflxSinGo(NFLX6.retStep-1);
+        else if(NFLX6.retStep===2&&!NFLX6.retornoMode) window.nflxSinGo(1);
+      } else if(pg('nfdia')||pg('conferir')||pg('historico')||pg('preencher')||pg('incompletos')){ window.nflShowTab('gerar'); }
+    });
+
+    /* ═════════════ init ═════════════ */
+    (function(){
+      var dp=$('datePicker'); if(!dp) return;
+      dp.value=diaInicial(); _diaAnt=dp.value; sincronizarDia(dp.value); ativarBadge(); syncTabs('gerar');
+      dp.addEventListener('change',trocarDia);
+    })();
+  })();
+  </script>
+
+  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v6.0 · 13/10/2026</span>
 </body>
 </html>
