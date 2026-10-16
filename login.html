@@ -1,4 +1,4 @@
-<!-- VERSION: v1.2 | login.html | 03/10/2026 | visual: novo login (card branco sobre fundo navy, tom índigo, splash escura) — sem alteração de lógica. v1.1 | 14/07/2026 | feat: card Contratos + botão de novidades com changelog -->
+<!-- VERSION: v1.3 | login.html | 16/10/2026 | feat: card "Emissão de notas" (somente admin) → pages/emissao-notas.html. v1.2 | 03/10/2026 | visual: novo login (card branco sobre fundo navy, tom índigo, splash escura) — sem alteração de lógica. v1.1 | 14/07/2026 | feat: card Contratos + botão de novidades com changelog -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -240,6 +240,12 @@
           <div><div class="pc-name">Dashboard</div><div class="pc-desc">Produção, recebimentos e comissões de todos os colaboradores.</div></div>
           <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
+        <!-- [v1.3] Card Emissão de notas — só admin (visibilidade definida em abrirPortal) -->
+        <div class="portal-card" id="cardEmissaoNotas" style="display:none;" onclick="abrirSistema('pages/emissao-notas.html','Emissão de notas')">
+          <div class="pc-icon" style="background:#0d9488;"><i class="fas fa-file-invoice-dollar" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Emissão de notas</div><div class="pc-desc">Prepare o lote do dia, envie ao Sinaxys e registre o Nº da NF na planilha.</div></div>
+          <div class="pc-arrow"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
         <div class="portal-card" id="cardNps" style="display:none;" onclick="abrirSistema('pages/nps.html','NPS Atendimento')">
           <div class="pc-icon" style="background:#0891b2;"><i class="fas fa-star" style="color:white;font-size:22px;"></i></div>
           <div><div class="pc-name">NPS</div><div class="pc-desc">Pesquisa de satisfação e ranking do atendimento do call center.</div></div>
@@ -271,7 +277,7 @@
     carregarLogoGlobal(['#logoHeader']);
     carregarClinica();
 
-    const TODOS_CARDS = ['cardOrcamentos','cardFechamento','cardFinanceiro','cardExames','cardCronograma','cardCaixa','cardAdmin','cardDashboard','cardNps'];
+    const TODOS_CARDS = ['cardOrcamentos','cardFechamento','cardFinanceiro','cardExames','cardCronograma','cardCaixa','cardAdmin','cardDashboard','cardNps','cardEmissaoNotas']; // [v1.3] + cardEmissaoNotas
 
     function esconderSplash() {
       const s = document.getElementById('splashScreen');
@@ -340,6 +346,7 @@
       iniciarNovidades();
       if (isAdmin)                     document.getElementById('cardAdmin').style.display      = 'flex';
       if (isAdmin)                     document.getElementById('cardDashboard').style.display  = 'flex';
+      if (isAdmin)                     document.getElementById('cardEmissaoNotas').style.display = 'flex'; // [v1.3] só admin
       if (isAdmin || perms.nps)        document.getElementById('cardNps').style.display         = 'flex';
       if (isAdmin)                     document.getElementById('cardContratos').style.display = 'flex';
 
