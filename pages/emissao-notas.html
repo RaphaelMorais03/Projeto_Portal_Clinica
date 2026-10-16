@@ -1,0 +1,1462 @@
+<!-- VERSION: v1.0 | emissao-notas.html | 16/10/2026 | feat: nova página "Emissão de notas" (somente admin) — fluxo direto Emitir lote + Retorno Sinaxys, a partir do mockup NF em Lote v6.0 · Direto. Regras de validação/CEP/Sinaxys copiadas do dashboard v6.0 (commit a4afba5). -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<link rel="icon" href="../assets/favicon.png" type="image/png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emissão de notas · Portal Amor Saúde</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/shared-utils.js"></script>
+<style>
+  :root{
+    --navy:#0A1F44; --red:#C62828;
+    --green:#15803d; --green-bg:#dcfce7;
+    --amber:#b45309; --amber-bg:#fef3c7;
+    --purple:#6d28d9; --purple-bg:#ede9fe;
+    --blue:#1d4ed8; --blue-bg:#dbeafe;
+    --teal:#0d9488; --teal-bg:#f0fdfa;
+    --g50:#f9fafb; --g100:#f3f4f6; --g200:#e5e7eb; --g300:#d1d5db;
+    --g400:#9ca3af; --g500:#6b7280; --g600:#4b5563; --g700:#374151;
+    --g800:#1f2937; --g900:#111827;
+    --bd:#e5e7eb;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:#f9fafb;color:var(--g900);min-height:100vh;padding:32px 20px 80px;}
+  .app{max-width:640px;margin:0 auto;}
+
+  /* ── Header ── */
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .topbar h1{font-size:20px;font-weight:900;color:var(--navy);letter-spacing:-.5px;}
+  .ver{font-size:10px;font-weight:800;background:var(--teal-bg);color:var(--teal);border:1px solid #99f6e4;padding:3px 9px;border-radius:20px;}
+  .spacer{flex:1;}
+
+  .daybox{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--bd);border-radius:12px;padding:8px 14px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .daybox i{color:var(--teal);font-size:13px;}
+  .daybox input{border:none;background:transparent;font-family:inherit;font-size:14px;font-weight:800;color:var(--navy);outline:none;cursor:pointer;}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px;transition:all .25s;}
+  .chip.new{background:var(--green-bg);color:var(--green);border:1px solid #86efac;}
+  .chip.old{background:var(--blue-bg);color:var(--blue);border:1px solid #93c5fd;}
+  .chip .d{width:7px;height:7px;border-radius:50%;background:currentColor;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:22px;}
+  .tab{flex:1;padding:11px 16px;border-radius:11px;border:1.5px solid var(--bd);background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:var(--g500);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+  .tab:hover{border-color:var(--teal);color:var(--navy);}
+  .tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .tab .pulse{width:7px;height:7px;border-radius:50%;background:#fbbf24;animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
+
+  /* ── Card base ── */
+  .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.03);margin-bottom:14px;}
+  .card.high{border-color:var(--teal);box-shadow:0 4px 24px rgba(13,148,136,.08);}
+
+  /* ── Estado vazio: botão gigante ── */
+  .hero{text-align:center;padding:16px 0 8px;}
+  .hero .ic{width:64px;height:64px;border-radius:50%;background:var(--teal-bg);color:var(--teal);display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:16px;}
+  .hero .t{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+  .hero .s{font-size:13px;color:var(--g500);line-height:1.6;margin-bottom:22px;}
+  .btn-go{width:100%;padding:18px 22px;border-radius:14px;border:none;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;background:var(--teal);color:#fff;display:flex;align-items:center;gap:14px;text-align:left;transition:all .15s;}
+  .btn-go:hover{background:#0f766e;transform:translateY(-1px);box-shadow:0 8px 24px rgba(13,148,136,.2);}
+  .btn-go .bi{width:44px;height:44px;border-radius:11px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .btn-go .txt{flex:1;}
+  .btn-go .txt .sub{font-size:11.5px;font-weight:600;opacity:.85;margin-top:2px;}
+
+  /* ── Estado processando ── */
+  .proc-list{display:flex;flex-direction:column;gap:0;margin-top:6px;}
+  .proc{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--g100);font-size:13px;}
+  .proc:last-child{border-bottom:none;}
+  .proc .st{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+  .proc .st.wait{background:var(--g100);color:var(--g400);}
+  .proc .st.run{background:var(--teal-bg);color:var(--teal);}
+  .proc .st.run i{animation:spin 1s linear infinite;}
+  .proc .st.done{background:var(--green-bg);color:var(--green);}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .proc .lbl{flex:1;color:var(--g600);font-weight:500;}
+  .proc.done .lbl{color:var(--navy);font-weight:700;}
+  .proc .val{font-size:11.5px;color:var(--g400);font-weight:600;}
+
+  /* ── Estado pronto ── */
+  .pronto-h{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .pronto-h .ic{width:44px;height:44px;border-radius:12px;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .pronto-h .t{font-size:15px;font-weight:800;color:var(--navy);}
+  .pronto-h .s{font-size:12px;color:var(--g500);margin-top:2px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .bcard{border-radius:14px;padding:18px;cursor:pointer;transition:all .15s;border:1.5px solid;}
+  .bcard:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.08);}
+  .bcard.cons{background:var(--teal-bg);border-color:#99f6e4;color:#0f766e;}
+  .bcard.exa{background:var(--blue-bg);border-color:#93c5fd;color:#1e40af;}
+  .bcard .ic{font-size:20px;margin-bottom:8px;}
+  .bcard .n{font-size:30px;font-weight:900;letter-spacing:-1.5px;line-height:1;}
+  .bcard .l{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;opacity:.8;}
+  .bcard .btn{margin-top:12px;font-size:12px;font-weight:800;display:flex;align-items:center;gap:6px;opacity:.9;}
+  .bcard:hover .btn{opacity:1;}
+
+  .pend{background:var(--amber-bg);border:1.5px solid #fde68a;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px;margin-bottom:14px;}
+  .pend i{color:var(--amber);font-size:16px;}
+  .pend .txt{flex:1;color:#92400e;font-weight:600;}
+  .pend .txt b{color:var(--amber);}
+  .pend button{background:var(--amber);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;}
+
+  .aviso{background:var(--purple-bg);border:1.5px solid #c4b5fd;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px;margin-bottom:14px;}
+  .aviso i{color:var(--purple);font-size:16px;}
+  .aviso .txt{flex:1;color:#5b21b6;font-weight:600;}
+  .aviso .txt b{color:var(--purple);}
+
+  /* ── Bloco operador ── */
+  .ops{background:#f8fafc;border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+  .ops-h{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--g500);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .ops-h i{color:var(--teal);}
+  .op{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;}
+  .op .nome{font-weight:700;color:var(--navy);min-width:90px;}
+  .op .tag{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;}
+  .op .tag.cons{background:var(--blue-bg);color:var(--blue);}
+  .op .tag.exa{background:var(--purple-bg);color:var(--purple);}
+  .op .novo{font-size:10px;font-weight:800;background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:20px;}
+  .op .radios{display:flex;gap:6px;margin-left:auto;}
+  .op label{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;cursor:pointer;padding:4px 10px;border-radius:20px;border:1.5px solid var(--bd);background:#fff;color:var(--g600);transition:all .15s;}
+  .op input{display:none;}
+  .op input:checked + span{color:inherit;}
+  .op label.sel-c{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+  .op label.sel-e{background:var(--purple-bg);border-color:var(--purple);color:var(--purple);}
+  .op .lembrar{font-size:11px;color:var(--g500);display:inline-flex;align-items:center;gap:5px;cursor:pointer;}
+  .op .lembrar input{width:13px;height:13px;accent-color:var(--teal);}
+
+  /* ── Modal ── */
+  .mdl-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+  .mdl-bg.open{display:flex;}
+  .mdl{background:#fff;border-radius:18px;padding:24px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .mdl-h{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;}
+  .mdl-h h3{font-size:17px;font-weight:800;color:var(--navy);}
+  .mdl-x{background:none;border:none;font-size:18px;color:var(--g400);cursor:pointer;padding:2px 8px;border-radius:6px;}
+  .mdl-x:hover{background:var(--g100);}
+  .mdl-s{font-size:12.5px;color:var(--g500);margin-bottom:16px;line-height:1.6;}
+
+  .fix{border:1.5px solid #fecaca;border-radius:12px;padding:14px 16px;margin-bottom:12px;background:#fff;}
+  .fix-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .fix-h b{font-size:13.5px;font-weight:800;color:var(--navy);}
+  .fix-h .badge{font-size:10px;font-weight:800;background:#fef2f2;color:var(--red);border-radius:20px;padding:3px 10px;}
+  .fix-f{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .fix-f .full{grid-column:1/-1;}
+  .fix-f label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin-bottom:3px;}
+  .fix-f .req{color:var(--red);}
+  .fix-f input,.fix-f select{width:100%;padding:8px 10px;border:1.5px solid var(--bd);border-radius:8px;font-family:inherit;font-size:13px;outline:none;}
+  .fix-f input:focus,.fix-f select:focus{border-color:var(--teal);}
+  .fix-f .missing{border-color:var(--red);background:#fef2f2;}
+
+  /* ── Upload ── */
+  .up{border:2px dashed #cbd5e1;border-radius:14px;padding:32px 20px;text-align:center;background:var(--g50);cursor:pointer;transition:all .2s;}
+  .up:hover,.up.on{border-color:var(--purple);background:var(--purple-bg);}
+  .up i{font-size:34px;color:var(--g400);margin-bottom:10px;display:block;}
+  .up:hover i,.up.on i{color:var(--purple);}
+  .up .t{font-size:14px;font-weight:800;color:var(--g700);margin-bottom:4px;}
+  .up:hover .t,.up.on .t{color:var(--purple);}
+  .up .s{font-size:11.5px;color:var(--g500);}
+
+  /* ── Retorno pronto ── */
+  .ret-h{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .ret-h .ic{width:44px;height:44px;border-radius:12px;background:var(--purple-bg);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .ret-h .t{font-size:15px;font-weight:800;color:var(--navy);}
+  .ret-h .s{font-size:12px;color:var(--g500);margin-top:2px;}
+
+  .res-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+  .res{border-radius:12px;padding:14px 10px;text-align:center;}
+  .res .n{font-size:26px;font-weight:900;line-height:1;}
+  .res .l{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-top:6px;}
+  .res.g{background:var(--green-bg);color:var(--green);}
+  .res.a{background:var(--amber-bg);color:var(--amber);}
+  .res.r{background:#fee2e2;color:var(--red);}
+
+  .btn-pr{width:100%;padding:16px 20px;border-radius:14px;border:none;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;background:var(--purple);color:#fff;display:flex;align-items:center;gap:14px;text-align:left;transition:all .15s;margin-bottom:10px;}
+  .btn-pr:hover{background:#5b21b6;transform:translateY(-1px);}
+  .btn-pr .bi{width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .btn-pr .txt{flex:1;}
+  .btn-pr .txt .sub{font-size:11.5px;font-weight:600;opacity:.85;margin-top:2px;}
+
+  .btn-sec{width:100%;padding:12px 18px;border-radius:11px;border:1.5px solid var(--bd);background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:var(--g600);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;}
+  .btn-sec:hover{background:var(--g50);border-color:var(--g300);color:var(--navy);}
+
+  .sucesso{background:linear-gradient(135deg,#f0fdfa,#fff);border:1.5px solid #99f6e4;border-radius:14px;padding:20px;text-align:center;margin-bottom:16px;}
+  .sucesso .ic{width:56px;height:56px;border-radius:50%;background:var(--teal);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;}
+  .sucesso h3{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+  .sucesso p{font-size:12.5px;color:var(--g500);line-height:1.6;}
+
+  /* ── Toast ── */
+  #toastBox{position:fixed;bottom:22px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+  .toast{padding:11px 17px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:0 6px 20px rgba(0,0,0,.12);min-width:220px;animation:slideIn .25s ease;}
+  .toast.success{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0;}
+  .toast.error{background:#fee2e2;color:var(--red);border:1px solid #fecaca;}
+  .toast.info{background:var(--blue-bg);color:var(--blue);border:1px solid #bfdbfe;}
+  .toast.purple{background:var(--purple-bg);color:var(--purple);border:1px solid #c4b5fd;}
+  @keyframes slideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ── Estados ── */
+  .state{display:none;}
+  .state.on{display:block;animation:fade .3s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  @media(max-width:520px){
+    .grid2{grid-template-columns:1fr;}
+    .res-grid{grid-template-columns:1fr;}
+    .fix-f{grid-template-columns:1fr;}
+  }
+
+  /* ── [v1.0] elementos novos (fora do mockup) ── */
+  .icon-btn{width:38px;height:38px;border-radius:11px;border:1.5px solid var(--bd);background:#fff;color:var(--g600);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;}
+  .icon-btn:hover{border-color:var(--teal);color:var(--navy);}
+  .msg{display:none;border-radius:12px;padding:12px 15px;font-size:12.5px;font-weight:600;line-height:1.55;margin-bottom:14px;border:1.5px solid;}
+  .msg.info{background:var(--blue-bg);color:var(--blue);border-color:#93c5fd;}
+  .msg.warn{background:var(--amber-bg);color:#92400e;border-color:#fde68a;}
+  .msg.err{background:#fee2e2;color:var(--red);border-color:#fecaca;}
+  .fallback{margin-top:12px;}
+  .fallback .btn-sec{cursor:pointer;}
+  .det{margin:0 0 14px;border:1px solid var(--bd);border-radius:12px;padding:10px 14px;background:var(--g50);}
+  .det summary{font-size:12px;font-weight:800;color:var(--g600);cursor:pointer;}
+  .det ul{margin:8px 0 0 18px;font-size:12px;color:var(--g600);line-height:1.6;}
+  .tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px;}
+  .tbl td{padding:6px 4px;border-bottom:1px solid var(--g100);color:var(--g700);vertical-align:top;}
+  .tbl td.a{color:var(--amber);font-weight:700;} .tbl td.r{color:var(--red);font-weight:700;}
+  .sucesso .ic.warn{background:var(--amber);}
+  .cfg-f label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin:10px 0 3px;}
+  .cfg-f input{width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-family:inherit;font-size:13px;outline:none;}
+  .cfg-f input:focus{border-color:var(--teal);}
+  .btn-pr:disabled{cursor:not-allowed;}
+  .op .lembrar{margin-top:8px;}
+
+</style>
+</head>
+<body>
+<div id="toastBox"></div>
+
+<!-- o conteúdo só aparece depois que o gate de admin confirmar (ver script module no fim) -->
+<div class="app" id="app" style="display:none;">
+
+  <!-- ═══════ TOPBAR ═══════ -->
+  <div class="topbar">
+    <button class="icon-btn" type="button" onclick="irPara('../login.html')" title="Voltar ao portal"><i class="fas fa-arrow-left"></i></button>
+    <h1>Emissão de notas</h1>
+    <span class="ver">v1.0</span>
+    <span class="spacer"></span>
+    <button class="icon-btn" type="button" onclick="NFE.abrirCfg()" title="Conexão com o Google Sheets"><i class="fas fa-gear"></i></button>
+    <div class="daybox">
+      <i class="fas fa-calendar"></i>
+      <input type="date" id="dia" onchange="NFE.trocarDia()">
+    </div>
+    <span class="chip" id="layoutChip"><span class="d"></span> —</span>
+  </div>
+
+  <!-- ═══════ TABS ═══════ -->
+  <div class="tabs">
+    <button class="tab active" data-tab="emitir" type="button" onclick="NFE.trocarTab('emitir')"><i class="fas fa-file-invoice-dollar"></i> Emitir</button>
+    <button class="tab" data-tab="retorno" type="button" onclick="NFE.trocarTab('retorno')"><i class="fas fa-arrow-rotate-left"></i> Retorno <span class="pulse" id="tabPulse" style="display:none;"></span></button>
+  </div>
+
+  <!-- ═══════ TAB EMITIR ═══════ -->
+  <div id="panelEmitir">
+    <div class="msg" id="eMsg"></div>
+
+    <!-- 1: vazio -->
+    <div class="state on" id="e-vazio">
+      <div class="card high">
+        <div class="hero">
+          <div class="ic"><i class="fas fa-wand-magic-sparkles"></i></div>
+          <div class="t">Pronto pra preparar o lote do dia</div>
+          <div class="s">Vou ler a aba <b id="heroData">—</b>, reconhecer o layout,<br>buscar CEPs e separar Consulta / Exame automaticamente.</div>
+        </div>
+        <button class="btn-go" type="button" onclick="NFE.preparar()">
+          <div class="bi"><i class="fas fa-bolt"></i></div>
+          <div class="txt">Buscar e preparar lote<div class="sub">Um clique — eu faço o resto</div></div>
+          <i class="fas fa-arrow-right" style="opacity:.5;"></i>
+        </button>
+        <div class="fallback" id="fallbackBox" style="display:none;">
+          <label class="btn-sec"><input type="file" accept=".csv,.xlsx,.xls" style="display:none;" onchange="NFE.arquivoAba(this)"><i class="fas fa-paperclip"></i> Ou anexe a aba do dia (.csv / .xlsx)</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2: processando -->
+    <div class="state" id="e-processando">
+      <div class="card">
+        <div class="pronto-h">
+          <div class="ic" style="background:var(--teal-bg);color:var(--teal);"><i class="fas fa-spinner fa-spin"></i></div>
+          <div><div class="t">Preparando lote…</div><div class="s" id="procDia">—</div></div>
+        </div>
+        <div class="proc-list" id="procList"></div>
+      </div>
+    </div>
+
+    <!-- 3: pronto -->
+    <div class="state" id="e-pronto">
+      <div class="card high">
+        <div class="pronto-h">
+          <div class="ic"><i class="fas fa-circle-check"></i></div>
+          <div><div class="t" id="prontoT">—</div><div class="s" id="prontoS">—</div></div>
+        </div>
+
+        <div class="ops" id="opsBox" style="display:none;">
+          <div class="ops-h"><i class="fas fa-user-tag"></i> Operador novo no dia — defina o tipo</div>
+          <div id="opsList"></div>
+          <label class="lembrar"><input type="checkbox" id="lembrarOp" checked> lembrar para os próximos dias</label>
+        </div>
+
+        <div class="grid2">
+          <div class="bcard cons" onclick="NFE.baixar('Consulta')">
+            <div class="ic"><i class="fas fa-stethoscope"></i></div>
+            <div class="n" id="nCons">0</div><div class="l">Consultas</div>
+            <div class="btn"><i class="fas fa-download"></i> Baixar .xlsx</div>
+          </div>
+          <div class="bcard exa" onclick="NFE.baixar('Exame')">
+            <div class="ic"><i class="fas fa-flask"></i></div>
+            <div class="n" id="nExa">0</div><div class="l">Exames</div>
+            <div class="btn"><i class="fas fa-download"></i> Baixar .xlsx</div>
+          </div>
+        </div>
+
+        <div class="pend" id="pendBox" style="display:none;">
+          <i class="fas fa-triangle-exclamation"></i>
+          <div class="txt"><b id="pendN">0</b> paciente(s) com dados faltando — <span id="pendNome"></span></div>
+          <button type="button" onclick="NFE.abrirFix()">Resolver</button>
+        </div>
+        <div style="margin-bottom:14px;" id="pendExtra"><button class="btn-sec" type="button" style="font-size:12px;padding:9px 14px;" onclick="NFE.baixarPendentes()"><i class="fas fa-download"></i> Baixar incompletos (.xlsx)</button></div>
+
+        <details class="det" id="avisosBox" style="display:none;"><summary>Avisos automáticos do lote</summary><ul id="avisosList"></ul></details>
+
+        <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn-sec" type="button" style="flex:1;" onclick="NFE.novoLote()"><i class="fas fa-rotate"></i> Preparar outro dia</button>
+          <button class="btn-sec" type="button" style="flex:1;" onclick="NFE.trocarTab('retorno')"><i class="fas fa-arrow-rotate-left"></i> Ir pro retorno</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ TAB RETORNO ═══════ -->
+  <div id="panelRetorno" style="display:none;">
+    <div class="msg" id="rMsg"></div>
+
+    <!-- 1: vazio -->
+    <div class="state on" id="r-vazio">
+      <div class="card">
+        <div class="ret-h">
+          <div class="ic"><i class="fas fa-file-arrow-up"></i></div>
+          <div><div class="t">Retorno do Sinaxys</div><div class="s">Suba o .xlsx que o Sinaxys exportou depois de emitir o lote</div></div>
+        </div>
+        <label class="up" id="upBox" style="display:block;cursor:pointer;">
+          <input type="file" accept=".xlsx,.xls,.csv" multiple style="display:none;" onchange="NFE.subirRetorno(this)">
+          <i class="fas fa-cloud-arrow-up"></i>
+          <div class="t">Arraste aqui ou clique</div>
+          <div class="s">Splitadas ou De pacientes · cruza por CPF + Valor + Data</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 2: comparando -->
+    <div class="state" id="r-comparando">
+      <div class="card">
+        <div class="pronto-h">
+          <div class="ic" style="background:var(--purple-bg);color:var(--purple);"><i class="fas fa-spinner fa-spin"></i></div>
+          <div><div class="t">Comparando com o lote…</div><div class="s" id="cmpArq">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3: pronto pra escrever -->
+    <div class="state" id="r-pronto">
+      <div class="card">
+        <div class="ret-h">
+          <div class="ic"><i class="fas fa-list-check"></i></div>
+          <div><div class="t">Comparação concluída</div><div class="s"><span id="retTotal">0</span> paciente(s) do lote de <b id="retData">—</b></div></div>
+        </div>
+        <div class="res-grid">
+          <div class="res g"><div class="n" id="resE">0</div><div class="l">Emitidas</div></div>
+          <div class="res a"><div class="n" id="resD">0</div><div class="l">Divergente</div></div>
+          <div class="res r"><div class="n" id="resN">0</div><div class="l">Não emitidas</div></div>
+        </div>
+
+        <details class="det" id="retDetBox" style="display:none;" open>
+          <summary>O que precisa de atenção</summary>
+          <table class="tbl"><tbody id="retDetList"></tbody></table>
+        </details>
+
+        <button class="btn-pr" type="button" id="btnEscrever" onclick="NFE.escrever()">
+          <div class="bi"><i class="fas fa-pen-to-square"></i></div>
+          <div class="txt">Escrever N° NF na planilha<div class="sub">Direto via Apps Script · sem download</div></div>
+          <i class="fas fa-arrow-right" style="opacity:.6;"></i>
+        </button>
+        <button class="btn-sec" type="button" id="btnBaixarNf" style="display:none;margin-bottom:10px;" onclick="NFE.baixarRetornoXlsx()"><i class="fas fa-download"></i> Baixar .xlsx com os N° NF</button>
+        <button class="btn-sec" type="button" onclick="NFE.trocarArquivo()"><i class="fas fa-rotate"></i> Trocar arquivo</button>
+      </div>
+    </div>
+
+    <!-- 4: escrito -->
+    <div class="state" id="r-feito">
+      <div class="card high">
+        <div class="sucesso">
+          <div class="ic" id="feitoIc"><i class="fas fa-check"></i></div>
+          <h3>N° NF escrito — <span id="feitoData">—</span></h3>
+          <p id="feitoTxt">—</p>
+          <ul id="feitoAvisos" style="display:none;text-align:left;margin:10px 0 0 18px;font-size:12px;color:var(--g600);line-height:1.6;"></ul>
+        </div>
+        <button class="btn-sec" type="button" onclick="NFE.trocarArquivo()"><i class="fas fa-rotate"></i> Escolher outro retorno</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: CORRIGIR PENDENTES ═══════ -->
+<div class="mdl-bg" id="fixMdl" onclick="if(event.target===this)NFE.fecharFix()">
+  <div class="mdl">
+    <div class="mdl-h"><h3><i class="fas fa-pen" style="color:var(--amber);margin-right:8px;"></i>Corrigir pendentes</h3><button class="mdl-x" type="button" onclick="NFE.fecharFix()"><i class="fas fa-times"></i></button></div>
+    <div class="mdl-s">Campos com * são os que faltam. Ao salvar, o lote é recalculado (Consulta / Exame) automaticamente.</div>
+    <div id="fixList"></div>
+    <button class="btn-go" type="button" style="margin-top:14px;background:var(--amber);" onclick="NFE.aplicarFix()">
+      <div class="bi"><i class="fas fa-check"></i></div>
+      <div class="txt">Salvar e adicionar ao lote<div class="sub">Recalcula Consulta / Exame automaticamente</div></div>
+      <i class="fas fa-arrow-right" style="opacity:.5;"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: CONEXÃO COM O GOOGLE SHEETS ═══════ -->
+<div class="mdl-bg" id="cfgMdl" onclick="if(event.target===this)NFE.fecharCfg()">
+  <div class="mdl">
+    <div class="mdl-h"><h3><i class="fas fa-plug" style="color:var(--teal);margin-right:8px;"></i>Conexão com o Google Sheets</h3><button class="mdl-x" type="button" onclick="NFE.fecharCfg()"><i class="fas fa-times"></i></button></div>
+    <div class="mdl-s">Usada só para <b>escrever</b> o N° NF. Fica salva neste navegador (as mesmas chaves do dashboard — se já configurou lá, já está aqui).</div>
+    <div class="cfg-f">
+      <label for="cfgUrl">URL do Apps Script</label>
+      <input id="cfgUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+      <label for="cfgToken">Senha do script</label>
+      <input id="cfgToken" type="password" placeholder="sua senha do script" autocomplete="off">
+    </div>
+    <button class="btn-go" type="button" style="margin-top:16px;" onclick="NFE.salvarCfg()">
+      <div class="bi"><i class="fas fa-floppy-disk"></i></div>
+      <div class="txt">Salvar conexão</div>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ LÓGICA ═══════ -->
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   [v1.0] Funções COPIADAS SEM ALTERAÇÃO do dashboard.html v6.0 (commit a4afba5):
+   validação de CPF/valor/e-mail/endereço (regras Sinaxys), CEP (BrasilAPI → ViaCEP),
+   leitura do CSV e do retorno do Sinaxys. Não editar aqui sem checar o dashboard.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* ── extraído de dashboard.html v6.0 (a4afba5) ── */
+var NFL_LIXO_RE=/^(n[aã]o\s*inform(ou|ado|a[cç][aã]o)?|n\/?a|nao\s*tem|sem\s*(informa[cç][aã]o|numero|n[uú]mero)?|ou|-+|\.+|0+|0{5}-?0{3})$/i;
+
+var nflViaCepCache={};
+
+var ALIAS={
+    cpf:['cpf','cpf cliente','cpf paciente','cpf do cliente','cpf do paciente'],
+    nome:['nome','paciente','nome cliente','nome paciente','nome do paciente'],
+    data:['consulta','data de atendimento','data atendimento','data da consulta','data'],
+    cad:['cadastrada em','data de cadastro','data cadastro'],
+    nf:['sequencial','numero nf','numero da nf','n nota fiscal','no nota fiscal','nota fiscal','n nf','no nf','numero'],
+    status:['status','situacao']
+  };
+
+var p2=function(n){ return ('0'+n).slice(-2); };
+
+var NFL_HEADERS=["Data de Consulta","Paciente","CPF","Email","Telefone","CEP","Logradouro","Número","Complemento","Bairro","Cidade","UF","Valor","Descrição do Procedimento"];
+
+var NFL_OPERADOR_TIPO = {
+    'giovanna':'Exame', 'natiely':'Exame', 'bruna':'Exame', 'kauany':'Exame', 'gustavo':'Exame',
+    'fernanda':'Consulta', 'tayna':'Consulta', 'mariluce':'Consulta', 'carla':'Consulta'
+  };
+
+var NFL_MAX_LOTE=500;
+
+function nflIsValidCPF(digits){
+    if(digits.length!==11) return false;
+    if(/^(\d)\1{10}$/.test(digits)) return false;
+    var sum=0;
+    for(var i=0;i<9;i++) sum+=parseInt(digits[i],10)*(10-i);
+    var rev=11-(sum%11); if(rev>=10) rev=0;
+    if(rev!==parseInt(digits[9],10)) return false;
+    sum=0;
+    for(var i=0;i<10;i++) sum+=parseInt(digits[i],10)*(11-i);
+    rev=11-(sum%11); if(rev>=10) rev=0;
+    return rev===parseInt(digits[10],10);
+  }
+
+function nflCleanValor(s){
+    if(s===undefined||s===null||s==='') return {value:'',ok:true,guessed:false};
+    var str=s.toString().trim().replace(/R\$\s?/gi,'').trim();
+    var guessed=false;
+    if(str.includes(',')&&str.includes('.')) str=str.replace(/\./g,'').replace(',','.');
+    else if(str.includes(',')) str=str.replace(',','.');
+    else if(/^\d+$/.test(str)&&str.length>=3){ str=str.slice(0,-2)+'.'+str.slice(-2); guessed=true; }
+    var num=parseFloat(str);
+    if(isNaN(num)) return {value:s,ok:false,guessed:false};
+    return {value:num.toFixed(2),ok:true,guessed:guessed};
+  }
+
+function nflEmailSinaxys(s){
+    var e=String(s||'').trim();
+    return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(e)?e:'naotememail@gmail.com';
+  }
+
+function nflIsLixo(v){
+    var s=String(v==null?'':v).replace(/\s+/g,' ').trim();
+    if(!s) return true;
+    return NFL_LIXO_RE.test(s.normalize?s.normalize('NFD').replace(/[̀-ͯ]/g,''):s);
+  }
+
+function nflEncurtarBairro(b){
+    var s=String(b||'').replace(/\s+/g,' ').trim();
+    if(s.length<=30) return s;
+    s=s.replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();            // 1) remove sufixo entre parênteses
+    if(s.length<=30) return s;
+    s=s.replace(/\bConjunto\s+Residencial\b/ig,'Cj. Res.').replace(/\bConjunto\s+Habitacional\b/ig,'Cj. Hab.'); // 2) abrevia prefixos
+    if(s.length<=30) return s;
+    return s.slice(0,30).trim();                                                  // 3) último recurso
+  }
+
+function nflOnlyDigits(s){ return (s||'').toString().replace(/\D/g,''); }
+
+function nflNormCEPDigits(v){
+    var d=nflOnlyDigits(v);
+    if(d.length===7) d='0'+d;
+    return d.slice(0,8);
+  }
+
+function nflNormalizarEndereco(rec){
+    var fixes=[], warns=[];
+    /* "lixo" vira vazio (para o CEP poder preencher depois). Número 0/00 vira S/N (sem número) */
+    ['Logradouro','Bairro','Cidade','Complemento'].forEach(function(c){
+      if(rec[c]&&nflIsLixo(rec[c])){ fixes.push(c+' "'+rec[c]+'" tratado como vazio'); rec[c]=''; }
+    });
+    if(rec['Número']){
+      var n0=String(rec['Número']).trim();
+      if(/^0+$/.test(n0)){ rec['Número']='S/N'; fixes.push('Número "'+n0+'" → S/N'); }
+      else if(nflIsLixo(n0)){ fixes.push('Número "'+n0+'" tratado como vazio'); rec['Número']=''; }
+    }
+    if(rec['CEP']&&/^[\s0.\-]*$/.test(rec['CEP'])){ fixes.push('CEP "'+rec['CEP']+'" tratado como vazio'); rec['CEP']=''; }
+    /* Cidade nunca "SP" */
+    if(rec['Cidade']&&/^s\.?\s*p\.?$/i.test(rec['Cidade'].trim())){ rec['Cidade']='São Paulo'; fixes.push('Cidade "SP" → São Paulo'); }
+    /* Número: máx. 10 caracteres; "2.916" (ponto de milhar) → "2916"; excedente vai para Complemento */
+    if(rec['Número']){
+      var num=String(rec['Número']).replace(/\s+/g,' ').trim();
+      if(/^\d{1,3}(\.\d{3})+$/.test(num)){ num=num.replace(/\./g,''); fixes.push('Número "'+rec['Número']+'" → '+num+' (ponto de milhar removido)'); }
+      if(num.length>10){
+        var m=num.match(/^(\S{1,10})\s+(.+)$/);
+        if(m){
+          rec['Complemento']=(m[2]+(rec['Complemento']?' '+rec['Complemento']:'')).trim();
+          fixes.push('Número "'+num+'" → "'+m[1]+'" (resto foi para Complemento)'); num=m[1];
+        } else warns.push('Número com mais de 10 caracteres');
+      }
+      rec['Número']=num;
+    }
+    /* Bairro: 1 a 30 caracteres */
+    if(rec['Bairro']&&rec['Bairro'].length>30){
+      var b0=rec['Bairro']; rec['Bairro']=nflEncurtarBairro(b0);
+      fixes.push('Bairro "'+b0+'" encurtado para "'+rec['Bairro']+'"');
+    }
+    /* CEP: 8 dígitos e faixa real (não começa com 00). Só valida se vier preenchido */
+    if(rec['CEP']){
+      var cd=nflNormCEPDigits(rec['CEP']);
+      if(cd.length!==8||/^00/.test(cd)) warns.push('CEP inválido');
+    }
+    return {fixes:fixes,warns:warns};
+  }
+
+function nflFetchComTimeout(url,ms){
+    var ctrl=new AbortController();
+    var timer=setTimeout(function(){ctrl.abort();},ms);
+    return fetch(url,{signal:ctrl.signal}).finally(function(){clearTimeout(timer);});
+  }
+
+async function nflBuscarBrasilApiUm(cep){
+    var resp=await nflFetchComTimeout('https://brasilapi.com.br/api/cep/v2/'+cep,3000);
+    if(!resp.ok) throw new Error('erro HTTP '+resp.status);
+    var data=await resp.json();
+    return {logradouro:data.street||'',bairro:data.neighborhood||'',cidade:data.city||'',uf:data.state||''};
+  }
+
+async function nflBuscarViaCepUm(cep){
+    var resp=await nflFetchComTimeout('https://viacep.com.br/ws/'+cep+'/json/',4000);
+    if(!resp.ok) throw new Error('erro HTTP '+resp.status);
+    var data=await resp.json();
+    if(data.erro) throw new Error('CEP não existe na base do ViaCEP');
+    return {logradouro:data.logradouro||'',bairro:data.bairro||'',cidade:data.localidade||'',uf:data.uf||''};
+  }
+
+async function nflFetchViaCep(cep){
+    if(nflViaCepCache[cep]!==undefined) return nflViaCepCache[cep];
+    try{
+      var d;
+      try { d=await nflBuscarBrasilApiUm(cep); }
+      catch(e1) { d=await nflBuscarViaCepUm(cep); }
+      var r={ok:true,logradouro:d.logradouro,bairro:d.bairro,cidade:d.cidade,uf:d.uf};
+      nflViaCepCache[cep]=r;return r;
+    }catch(e){
+      var r={ok:false,reason:'CEP não encontrado ou indisponível no momento'};
+      nflViaCepCache[cep]=r;return r;
+    }
+  }
+
+function nflCleanCell(s){ return (s||'').toString().replace(/\s+/g,' ').trim(); }
+
+function nflParseCsvRFC4180(text){
+    var rows=[],row=[],field='',inQuotes=false,i=0;
+    while(i<text.length){
+      var c=text[i];
+      if(inQuotes){
+        if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQuotes=false;i++;continue; }
+        field+=c;i++;continue;
+      } else {
+        if(c==='"'&&field===''){inQuotes=true;i++;continue;}
+        if(c===','){row.push(field);field='';i++;continue;}
+        if(c==='\r'){i++;continue;}
+        if(c==='\n'){row.push(field);rows.push(row);row=[];field='';i++;continue;}
+        field+=c;i++;continue;
+      }
+    }
+    if(field.length||row.length){row.push(field);rows.push(row);}
+    return rows.map(function(r){ return r.map(nflCleanCell); });
+  }
+
+function nflIsoParaVariacoesAba(iso){
+    if(!iso||iso.length!==10) return [];
+    var parts=iso.split('-'),y=parts[0],m=parts[1],d=parts[2];
+    var d1=String(parseInt(d,10)),m1=String(parseInt(m,10));
+    return [d+' '+m+' '+y, d+'/'+m+'/'+y, d+'-'+m+'-'+y, d1+' '+m1+' '+y, d+' '+m+' '+y.slice(2), d+'/'+m+'/'+y.slice(2)];
+  }
+
+function nflNormNomeAba(s){
+    return (s||'').toLowerCase().trim().replace(/[\/\-\s]+/g,'/');
+  }
+
+function nflPreencherToFloat(v){
+    if(v===null||v===undefined||v==='') return null;
+    if(typeof v==='number') return Math.round(v*100)/100;
+    var s=v.toString().trim().replace('R$','').replace(/\s/g,'');
+    if(/,\d{1,2}$/.test(s)) s=s.replace(/\./g,'').replace(',','.');
+    else s=s.replace(',','.');
+    var n=parseFloat(s);
+    return isNaN(n)?null:Math.round(n*100)/100;
+  }
+
+function nflNormTxt(s){
+    return (s||'').toString()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+function mapaColunas(header,amostra){
+    var c={cpf:-1,nome:-1,valor:-1,data:-1,cad:-1,nf:-1,status:-1,cliente:-1};
+    (header||[]).forEach(function(h,i){
+      var k=nflNormTxt(h);
+      if(!k) return;
+      if(ALIAS.cpf.indexOf(k)>=0&&c.cpf<0) c.cpf=i;
+      else if(ALIAS.nome.indexOf(k)>=0&&c.nome<0) c.nome=i;
+      else if(k==='cliente'&&c.cliente<0) c.cliente=i;
+      else if(/^valor/.test(k)&&c.valor<0) c.valor=i;
+      else if(ALIAS.data.indexOf(k)>=0&&c.data<0) c.data=i;
+      else if(ALIAS.cad.indexOf(k)>=0&&c.cad<0) c.cad=i;
+      else if(ALIAS.nf.indexOf(k)>=0&&c.nf<0) c.nf=i;
+      else if(ALIAS.status.indexOf(k)>=0&&c.status<0) c.status=i;
+    });
+    /* "Cliente" pode ser o CPF (aba Splitadas) ou o nome (aba De pacientes): decide pelo conteúdo */
+    if(c.cliente>=0){
+      var n=0,cp=0;
+      (amostra||[]).forEach(function(r){ var v=r&&r[c.cliente]; if(v===''||v==null) return; n++; if(nflOnlyDigits(v).length===11) cp++; });
+      var ehCpf=n>0&&cp/n>=0.9;
+      if(ehCpf&&c.cpf<0) c.cpf=c.cliente; else if(!ehCpf&&c.nome<0) c.nome=c.cliente;
+    }
+    return c;
+  }
+
+function isoValido(y,m,d){
+    y=+y; m=+m; d=+d;
+    if(!(y>=2000&&y<=2100&&m>=1&&m<=12&&d>=1&&d<=31)) return null;
+    var dt=new Date(Date.UTC(y,m-1,d));
+    if(dt.getUTCFullYear()!==y||dt.getUTCMonth()!==m-1||dt.getUTCDate()!==d) return null;
+    return y+'-'+p2(m)+'-'+p2(d);
+  }
+
+function abaParaIso(nome,de,ate){
+    var s=String(nome==null?'':nome).trim(), m, iso;
+    if(!s) return null;
+    if((m=s.match(/(^|\D)(\d{4})\s*[\/.\-]\s*(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?!\d)/))){ iso=isoValido(m[2],m[3],m[4]); if(iso) return {iso:iso,semAno:false}; }
+    if((m=s.match(/(^|\D)(\d{1,2})\s*[\/.\-\s]+\s*(\d{1,2})\s*[\/.\-\s]+\s*(\d{4}|\d{2})(?!\d)/))){
+      var y=m[4].length===2?2000+(+m[4]):+m[4]; iso=isoValido(y,m[3],m[2]); if(iso) return {iso:iso,semAno:false};
+    }
+    if((m=s.match(/^\D*(\d{2})(\d{2})(\d{4})\D*$/))){ iso=isoValido(m[3],m[2],m[1]); if(iso) return {iso:iso,semAno:false}; }
+    if((m=s.match(/^\D*(\d{2})(\d{2})(\d{2})\D*$/))){ iso=isoValido(2000+(+m[3]),m[2],m[1]); if(iso) return {iso:iso,semAno:false}; }
+    if((m=s.match(/(^|\D)(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?![\d\/.\-])/)) && de && ate){
+      var y0=+String(de).slice(0,4), y1=+String(ate).slice(0,4), achou=false;
+      for(var yy=y0;yy<=y1;yy++){ var i2=isoValido(yy,m[3],m[2]); if(i2){ achou=true; if(i2>=de&&i2<=ate) return {iso:i2,semAno:true}; } }
+      if(achou) return {iso:null,fora:true};
+    }
+    return null;
+  }
+
+function parseDataCell(v){
+    if(v==null||v==='') return null;
+    if(typeof v==='number'){
+      if(!(v>20000&&v<80000)) return null;
+      var d=new Date(Math.round((Math.floor(v)-25569)*86400000));
+      return isoValido(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate());
+    }
+    if(Object.prototype.toString.call(v)==='[object Date]'){ if(isNaN(v)) return null; return isoValido(v.getFullYear(),v.getMonth()+1,v.getDate()); }
+    var s=String(v).trim(), m;
+    if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return isoValido(m[1],m[2],m[3]);
+    if((m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/))) return isoValido(m[3],m[2],m[1]);
+    return null;
+  }
+
+function classificarStatus(statusTxt,nfDigitos){
+    if(statusTxt!=null&&String(statusTxt).trim()!==''){
+      var k=nflNormTxt(statusTxt);
+      if(/^emitid/.test(k)) return {st:'emitida',motivo:''};
+      if(/recusad|rejeitad|negad/.test(k)){ var mm=String(statusTxt).match(/\(([^)]*)\)/); return {st:'recusada',motivo:mm?mm[1].trim():''}; }
+      if(/cancelad/.test(k)) return {st:'cancelada',motivo:''};
+      return {st:'outro',motivo:String(statusTxt).trim()};
+    }
+    /* sem coluna Status: número longo (13 dígitos) = protocolo de nota recusada; 6 dígitos = NF emitida */
+    if(nfDigitos.length>=10) return {st:'recusada',motivo:'protocolo '+nfDigitos};
+    if(nfDigitos.length>0) return {st:'emitida',motivo:''};
+    return {st:'outro',motivo:'sem número de NF'};
+  }
+
+function lerSinaxysWB(wb,nomeArq){
+    var out={registros:[],abas:[],ignoradas:[],semStatus:false};
+    wb.SheetNames.forEach(function(sn){
+      var ws=wb.Sheets[sn], rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true}), hi=-1, cols=null;
+      for(var i=0;i<Math.min(rows.length,10);i++){
+        var c=mapaColunas(rows[i]||[],rows.slice(i+1,i+51));
+        if(c.valor>=0&&c.cpf>=0){ hi=i; cols=c; break; }
+      }
+      if(hi<0){ out.ignoradas.push({arquivo:nomeArq,aba:sn,motivo:'sem colunas de CPF/Cliente e Valor'}); return; }
+      var tabDia=(abaParaIso(sn,null,null)||{}).iso||null;
+      if(cols.data<0&&!tabDia){ out.ignoradas.push({arquivo:nomeArq,aba:sn,motivo:'sem coluna de data (Consulta / Data de atendimento) e o nome da aba não é uma data'}); return; }
+      if(cols.status<0) out.semStatus=true;
+      var n=0,semCpf=0,semValor=0,semData=0;
+      for(var r=hi+1;r<rows.length;r++){
+        var row=rows[r];
+        if(!row||!row.some(function(c){ return String(c==null?'':c).trim()!==''; })) continue;
+        var cpf=nflOnlyDigits(row[cols.cpf]);
+        if(cpf.length!==11){ semCpf++; continue; }
+        var valor=nflPreencherToFloat(row[cols.valor]);
+        if(valor===null||isNaN(valor)){ semValor++; continue; }
+        var dia=cols.data>=0?parseDataCell(row[cols.data]):null;
+        if(!dia) dia=tabDia;
+        if(!dia){ semData++; continue; }
+        var nfD=nflOnlyDigits(cols.nf>=0?row[cols.nf]:'');
+        var cl=classificarStatus(cols.status>=0?row[cols.status]:null,nfD);
+        out.registros.push({dia:dia,cad:cols.cad>=0?parseDataCell(row[cols.cad]):null,cpf:cpf,cents:Math.round(valor*100),
+          nf:nfD,st:cl.st,motivo:cl.motivo,nome:cols.nome>=0?String(row[cols.nome]||'').trim():'',aba:sn,arq:nomeArq,usado:false});
+        n++;
+      }
+      out.abas.push({arquivo:nomeArq,aba:sn,formato:cols.status>=0?'com Status':'sem Status',linhas:n,semCpf:semCpf,semValor:semValor,semData:semData});
+    });
+    return out;
+  }
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   [v1.0] Emissão de notas — lógica da página (usa as funções nfl... e Sinaxys acima, copiadas do dashboard v6.0)
+   Namespace: window.NFE. Sem paths novos no Firebase: lê admin/nfl_operadores; marca nf_dia_relatorios/{data}/_status.
+   ══════════════════════════════════════════════════════════════════════════ */
+var NFE = (function () {
+  'use strict';
+
+  /* ─────────── CONFIG (o que muda quando a planilha mudar fica só aqui) ─────────── */
+  var SHEET_PUBHTML = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTCry8fv2plDONnHIBwl8lveBA6nZpzEZ4CaydiLQtErvzMOm579OlKMDZ2C16SsJa6aJx_UbRHGEMm/pubhtml';
+
+  /* apelidos de cabeçalho da planilha → chave interna. Cabeçalho novo/renomeado? Basta incluir o apelido aqui. */
+  var COL_ALIAS = [
+    ['data', ['data do atendimento', 'data atendimento', 'data de atendimento', 'data de consulta', 'data consulta', 'data']],
+    ['paciente', ['paciente', 'nome', 'nome do paciente', 'cliente']],
+    ['cpf', ['cpf', 'cpf paciente', 'cpf cliente']],
+    ['email', ['email', 'e mail', 'e mail do paciente', 'email do paciente']],
+    ['valor', ['valor', 'valor total']],
+    ['tel', ['n do celular', 'n de celular', 'celular', 'telefone', 'n celular', 'numero do celular', 'numero de celular']],
+    ['cep', ['cep']],
+    ['num', ['n casa', 'n da casa', 'numero', 'n', 'numero da casa', 'numero casa']],
+    ['pagamento', ['pagamento', 'forma de pagamento']],
+    ['operador', ['operador']]
+  ];
+  /* layouts conhecidos (só para o selo e o aviso de "cabeçalho diferente"; a leitura é sempre pelo nome da coluna) */
+  var LAYOUTS = {
+    'new': { nome: 'Layout 2.0', desde: '2026-10-08', nfCol: null,
+      assinatura: ['data', 'paciente', 'cpf', 'email', 'valor', 'tel', 'cep', 'num', 'pagamento', 'operador'] },
+    'old': { nome: 'Layout 1.0', ate: '2026-10-07', nfCol: 'J',
+      assinatura: ['paciente', 'cpf', 'valor', 'pagamento', 'operador', 'email', 'tel', 'cep', 'num'] }
+  };
+  var LS_URL = 'nfl_webhook_url', LS_TOKEN = 'nfl_webhook_token', LS_DIA = 'nflx_dia_ativo';   /* mesmas chaves do dashboard */
+  var DESC = { Consulta: 'REF A CONSULTA REALIZADA', Exame: 'REF A EXAMES REALIZADOS' };
+
+  /* ─────────── utilidades ─────────── */
+  var $ = function (id) { return document.getElementById(id); };
+  var E = function (s) { return window.esc ? window.esc(s) : String(s == null ? '' : s); };
+  var BR = function (iso) { return iso ? String(iso).split('-').reverse().join('/') : '—'; };
+  var tick = function (ms) { return new Promise(function (r) { setTimeout(r, ms || 30); }); };
+  function isoLocal(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function ontemISO() { var d = new Date(); d.setDate(d.getDate() - 1); return isoLocal(d); }
+  function layoutDe(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return null;
+    if (iso >= LAYOUTS['new'].desde) return 'new';
+    if (iso <= LAYOUTS['old'].ate) return 'old';
+    return null;
+  }
+  function colKey(h) {
+    var n = nflNormTxt(h || ''); if (!n) return '';
+    for (var i = 0; i < COL_ALIAS.length; i++) if (COL_ALIAS[i][1].indexOf(n) >= 0) return COL_ALIAS[i][0];
+    return '';
+  }
+  function fbKey(s) { return String(s || '').toUpperCase().replace(/[.#$\[\]\/]/g, '_').replace(/[\u0000-\u001f\u007f]/g, '').trim(); }
+  function valorStr(v) { var n = nflPreencherToFloat(v); return (n === null || isNaN(n)) ? String(v == null ? '' : v) : n.toFixed(2); }
+  function nomeArquivo(prefixo, iso, suf) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+    return prefixo + '_' + (m ? m[3] + '_' + m[2] + '_' + m[1] : isoLocal(new Date())) + (suf || '') + '.xlsx';
+  }
+  function ehEmail(s) { return /@/.test(String(s || '')); }
+
+  /* ─────────── estado ─────────── */
+  var S = { iso: '', rows: [], ops: [], opFb: null, lote: null, cmp: null, abas: null, ignoradas: 0, rotulo: '', sheetRows: null };
+
+  /* ─────────── mensagens e estados de tela ─────────── */
+  function msg(id, texto, tipo) {
+    var el = $(id); if (!el) return;
+    if (!texto) { el.style.display = 'none'; el.textContent = ''; return; }
+    el.className = 'msg ' + (tipo || 'info'); el.style.display = 'block'; el.textContent = texto;   /* textContent: sem HTML */
+  }
+  function showState(id) {
+    ['e-vazio', 'e-processando', 'e-pronto', 'r-vazio', 'r-comparando', 'r-pronto', 'r-feito'].forEach(function (x) {
+      var el = $(x); if (el) el.classList.toggle('on', x === id);
+    });
+  }
+  function trocarTab(t) {
+    document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tab') === t); });
+    $('panelEmitir').style.display = t === 'emitir' ? '' : 'none';
+    $('panelRetorno').style.display = t === 'retorno' ? '' : 'none';
+    if (t === 'retorno') $('tabPulse').style.display = 'none';
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { }
+  }
+
+  /* ─────────── dia + layout ─────────── */
+  function diaAtivo() { return ($('dia') || {}).value || ''; }
+  function trocarDia() {
+    var iso = diaAtivo(); S.iso = iso;
+    try { localStorage.setItem(LS_DIA, iso); } catch (e) { }
+    var key = layoutDe(iso), chip = $('layoutChip');
+    if (key) { chip.className = 'chip ' + key; chip.innerHTML = '<span class="d"></span> ' + E(LAYOUTS[key].nome); }
+    else { chip.className = 'chip'; chip.innerHTML = '<span class="d"></span> Escolha uma data'; }
+    var br = BR(iso);
+    ['heroData', 'procDia', 'retData', 'feitoData'].forEach(function (id) { var e = $(id); if (e) e.textContent = (id === 'procDia' && key) ? br + ' · ' + LAYOUTS[key].nome : br; });
+    S.sheetRows = null; S.lote = null; S.cmp = null;      /* trocou o dia: o que estava em memória não vale mais */
+    msg('eMsg', ''); msg('rMsg', '');
+    if ($('e-pronto').classList.contains('on') || $('e-processando').classList.contains('on')) showState('e-vazio');
+    if (!$('r-vazio').classList.contains('on')) showState('r-vazio');
+  }
+
+  /* ─────────── leitura da planilha (CSV publicado — mesma conexão do dashboard) ─────────── */
+  async function listarAbas() {
+    if (S.abas) return S.abas;
+    var r = await nflFetchComTimeout(SHEET_PUBHTML, 15000);
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' ao abrir a planilha');
+    var htxt = await r.text(), abas = [];
+    [/items\.push\(\{name:\s*"((?:[^"\\]|\\.)*)",\s*pageUrl:\s*"([^"]+)"/g,
+      /"name"\s*:\s*"([^"]+)"[^}]{0,200}"pageUrl"\s*:\s*"([^"]+)"/g,
+      /data-sheet-id="(\d+)"[^>]*>([^<]+)</g].forEach(function (re, ri) {
+        if (abas.length) return; var m; re.lastIndex = 0;
+        while ((m = re.exec(htxt)) !== null) {
+          var nome = (ri === 2 ? m[2] : m[1]).replace(/\\\//g, '/').trim();
+          var gid = ri === 2 ? m[1] : ((m[2].match(/gid=(-?\d+)/) || [])[1]);
+          if (nome && gid) abas.push({ nome: nome, gid: gid });
+        }
+      });
+    if (!abas.length) throw new Error('Não consegui listar as abas — confira se a planilha continua publicada na web.');
+    S.abas = abas; return abas;
+  }
+  /* devolve {aba, rows} | null (sem aba para o dia) */
+  async function lerAbaDoDia(iso) {
+    var abas = await listarAbas();
+    var vars = new Set(nflIsoParaVariacoesAba(iso).map(nflNormNomeAba));
+    var aba = abas.filter(function (a) { return vars.has(nflNormNomeAba(a.nome)); })[0];
+    if (!aba) return null;
+    var csvBase = SHEET_PUBHTML.replace(/pubhtml.*$/, 'pub?output=csv');
+    var r2 = await nflFetchComTimeout(csvBase + '&gid=' + aba.gid, 15000);
+    if (!r2.ok) throw new Error('HTTP ' + r2.status + ' ao baixar a aba "' + aba.nome + '"');
+    var csv = await r2.text();
+    if (csv.trim().charAt(0) === '<') throw new Error('A planilha devolveu HTML — confira se está publicada como CSV.');
+    return { aba: aba.nome, rows: nflParseCsvRFC4180(csv) };
+  }
+  function lerArquivoXlsx(file) {
+    return new Promise(function (resolve, reject) {
+      var rd = new FileReader();
+      rd.onload = function (e) { try { resolve(XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: false })); } catch (err) { reject(err); } };
+      rd.onerror = reject; rd.readAsArrayBuffer(file);
+    });
+  }
+
+  /* ─────────── mapeamento de colunas pelo CABEÇALHO (tolera reordenar/renomear) ─────────── */
+  function mapearPlanilha(rows) {
+    var hi = -1;
+    for (var i = 0; i < Math.min(4, rows.length); i++) {
+      if ((rows[i] || []).some(function (c) { return colKey(c) === 'cpf'; })) { hi = i; break; }
+    }
+    if (hi < 0) return null;
+    var idx = {}, nf = -1;
+    (rows[hi] || []).forEach(function (h, i) {
+      var k = colKey(h); if (k && idx[k] === undefined) idx[k] = i;
+      var n = nflNormTxt(h); if (nf < 0 && /^(n |numero )?(nf|nota fiscal)$/.test(n)) nf = i;
+    });
+    return { hi: hi, idx: idx, nf: nf };
+  }
+  function validarLayout(m, key) {
+    var L = LAYOUTS[key]; if (!L) return { pct: null, faltam: [] };
+    var falt = L.assinatura.filter(function (k) { return m.idx[k] === undefined; });
+    return { pct: Math.round(100 * (L.assinatura.length - falt.length) / L.assinatura.length), faltam: falt };
+  }
+  var COL_LABEL = { data: 'DATA DO ATENDIMENTO', paciente: 'PACIENTE/NOME', cpf: 'CPF', email: 'E-MAIL', valor: 'VALOR', tel: 'N° DO CELULAR', cep: 'CEP', num: 'Nº CASA', pagamento: 'PAGAMENTO', operador: 'OPERADOR' };
+
+  /* ─────────── operador → tipo ─────────── */
+  function opDicionario() {
+    var d = {};
+    Object.keys(NFL_OPERADOR_TIPO).forEach(function (k) { var n = nflNormTxt(k); if (n) d[n] = NFL_OPERADOR_TIPO[k]; });
+    var fb = S.opFb || {};
+    Object.keys(fb).forEach(function (k) { var t = fb[k]; if (t !== 'Consulta' && t !== 'Exame') return; var n = nflNormTxt(k); if (n) d[n] = t; });
+    return d;
+  }
+  function tipoConhecido(cell) {
+    var raw = nflCleanCell(cell || ''); if (!raw || ehEmail(raw)) return '';
+    var d = opDicionario(), n = nflNormTxt(raw); if (d[n]) return d[n];
+    var tk = n.split(' '); for (var j = 0; j < tk.length; j++) if (d[tk[j]]) return d[tk[j]];
+    return '';
+  }
+  function tipoDoOperador(cell, overrides) {
+    var raw = nflCleanCell(cell || ''); if (!raw) return '';
+    var ov = (overrides || {})[raw.toUpperCase()]; if (ov) return ov;
+    return tipoConhecido(raw);
+  }
+  async function carregarOperadoresFb() {
+    if (!window.fbGet) { S.opFb = S.opFb || {}; return; }
+    try { var sn = await window.fbGet('admin/nfl_operadores'); S.opFb = (sn && sn.exists() && typeof sn.val() === 'object') ? sn.val() : {}; }
+    catch (e) { S.opFb = S.opFb || {}; console.warn('[v1.0] admin/nfl_operadores:', e && e.message); }
+  }
+
+  /* ─────────── montagem e validação dos registros (regras idênticas às do dashboard v6.0) ─────────── */
+  function avaliar(r) {
+    var v = r.v, warns = [], cpfD = nflOnlyDigits(v['CPF']);
+    var nr = nflNormalizarEndereco(v);
+    r.fixes = r.fixes || [];
+    if (!cpfD || cpfD.length !== 11 || !nflIsValidCPF(cpfD)) warns.push('CPF inválido');
+    if (!v['Paciente']) warns.push('Paciente em branco');
+    if (!v['Telefone']) warns.push('Telefone em branco');
+    if (!v['Logradouro']) warns.push('Logradouro em branco');
+    if (!v['Número']) warns.push('Número em branco');
+    if (!v['Bairro']) warns.push('Bairro em branco');
+    if (!v['Cidade']) warns.push('Cidade em branco');
+    if (!v['UF']) warns.push('UF em branco');
+    if (!r.valorOk || !v['Valor']) warns.push('Valor inválido');
+    nr.warns.forEach(function (w) { warns.push(w); });
+    var telD = nflOnlyDigits(v['Telefone']);
+    if (cpfD && telD && cpfD === telD) warns.push('CPF igual ao telefone');
+    if (!r.tipo) warns.push('Tipo (Consulta/Exame) não definido');
+    r.warns = warns; r._cpf = cpfD;
+    return r;
+  }
+  function avaliarTodos(rows) {
+    rows.forEach(avaliar);
+    var byCpf = {};
+    rows.forEach(function (r) { if (r._cpf) (byCpf[r._cpf] = byCpf[r._cpf] || []).push(r); });
+    Object.keys(byCpf).forEach(function (c) {
+      var g = byCpf[c]; if (g.length < 2) return;
+      var nomes = {}; g.forEach(function (r) { nomes[(r.v['Paciente'] || '').trim().toLowerCase()] = 1; });
+      if (Object.keys(nomes).length > 1) g.forEach(function (r) { r.warns.push('CPF associado a nomes diferentes — revisão manual'); });
+    });
+    return rows;
+  }
+  function montarRegistros(rows, m, iso, overrides) {
+    var out = [], ignoradas = 0, cell = function (row, k) { return m.idx[k] === undefined ? '' : (row[m.idx[k]] == null ? '' : row[m.idx[k]]); };
+    rows.slice(m.hi + 1).forEach(function (row) {
+      row = row || [];
+      var nome = nflCleanCell(cell(row, 'paciente')), cpfRaw = nflCleanCell(cell(row, 'cpf')), cpfD = nflOnlyDigits(cpfRaw);
+      /* linha vazia, ou "quebrada" (coluna deslocada: sem CPF e com e-mail/nada no lugar do nome): ignora e conta */
+      if (!cpfD && (!nome || ehEmail(nome))) { if (row.some(function (c) { return String(c == null ? '' : c).trim() !== ''; })) ignoradas++; return; }
+      var v = {}; NFL_HEADERS.forEach(function (h) { v[h] = ''; });
+      var d = parseDataCell(cell(row, 'data'));
+      v['Data de Consulta'] = BR(d || iso);
+      v['Paciente'] = nome; v['CPF'] = cpfRaw;
+      v['Email'] = nflCleanCell(cell(row, 'email'));
+      v['Telefone'] = nflCleanCell(cell(row, 'tel'));
+      v['CEP'] = nflCleanCell(cell(row, 'cep'));
+      v['Número'] = nflCleanCell(cell(row, 'num'));
+      var vr = nflCleanValor(nflCleanCell(cell(row, 'valor')));
+      v['Valor'] = vr.ok ? vr.value : nflCleanCell(cell(row, 'valor'));
+      var op = nflCleanCell(cell(row, 'operador'));
+      var r = { v: v, op: op, valorOk: !!vr.ok, valorAdivinhado: !!vr.guessed, tipo: tipoDoOperador(op, overrides), fixes: [], warns: [] };
+      nflNormalizarEndereco(v);                      /* "lixo" (NAO INFORMOU, 0…) vira vazio antes da consulta de CEP */
+      out.push(r);
+    });
+    return { rows: out, ignoradas: ignoradas };
+  }
+  function preencherPorCep(r, res) {
+    var v = r.v;
+    if (res && res.ok) {
+      if (!v['Logradouro']) v['Logradouro'] = res.logradouro;
+      if (!v['Bairro']) v['Bairro'] = res.bairro;
+      if (!v['Cidade']) v['Cidade'] = res.cidade;
+      if (!v['UF']) v['UF'] = res.uf;
+    }
+  }
+  function finalizarRegistro(r) {
+    var v = r.v;
+    v['Email'] = nflEmailSinaxys(v['Email']);
+    if (r.tipo) v['Descrição do Procedimento'] = DESC[r.tipo]; else v['Descrição do Procedimento'] = '';
+    return r;
+  }
+  async function buscarCeps(rows, onProg) {
+    var ceps = {}; rows.forEach(function (r) { var c = nflNormCEPDigits(r.v['CEP']); if (c.length === 8) ceps[c] = true; });
+    var lista = Object.keys(ceps), feitos = 0, res = {}, i = 0;
+    async function worker() {
+      while (i < lista.length) { var c = lista[i++]; res[c] = await nflFetchViaCep(c); feitos++; if (onProg) onProg(feitos, lista.length); }
+    }
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    rows.forEach(function (r) { var c = nflNormCEPDigits(r.v['CEP']); if (c.length === 8) preencherPorCep(r, res[c]); });
+    return res;
+  }
+
+  /* ─────────── EMITIR ─────────── */
+  var PASSOS = [
+    { id: 'buscar', lbl: 'Lendo a planilha NOTAS FISCAIS 3.0' },
+    { id: 'layout', lbl: 'Reconhecendo layout da planilha' },
+    { id: 'mapear', lbl: 'Mapeando colunas pelo cabeçalho' },
+    { id: 'operador', lbl: 'Identificando tipo (Consulta/Exame)' },
+    { id: 'cep', lbl: 'Buscando CEP dos pacientes' }
+  ];
+  function montarPassos() {
+    $('procList').innerHTML = PASSOS.map(function (p) {
+      return '<div class="proc" id="proc-' + p.id + '"><div class="st wait"><i class="fas fa-circle" style="font-size:6px;"></i></div>'
+        + '<div class="lbl">' + E(p.lbl) + '</div><div class="val"></div></div>';
+    }).join('');
+  }
+  function passo(id, estado, val) {
+    var el = $('proc-' + id); if (!el) return;
+    var st = el.querySelector('.st');
+    st.className = 'st ' + (estado === 'done' ? 'done' : estado === 'run' ? 'run' : 'wait');
+    st.innerHTML = estado === 'done' ? '<i class="fas fa-check"></i>' : estado === 'run' ? '<i class="fas fa-spinner"></i>' : '<i class="fas fa-circle" style="font-size:6px;"></i>';
+    el.classList.toggle('done', estado === 'done');
+    if (val != null) el.querySelector('.val').textContent = val;
+  }
+  function falhaEmitir(texto) {
+    showState('e-vazio'); msg('eMsg', texto, 'err'); $('fallbackBox').style.display = '';
+  }
+
+  async function preparar() {
+    var iso = diaAtivo(); if (!iso) { toast('Escolha o dia no topo.', 'error'); return; }
+    msg('eMsg', ''); showState('e-processando'); montarPassos(); passo('buscar', 'run');
+    var lido;
+    try { lido = await lerAbaDoDia(iso); }
+    catch (e) { falhaEmitir('Não consegui ler a planilha: ' + (e && e.message ? e.message : e) + '. Você pode anexar a aba do dia (.csv/.xlsx) abaixo.'); return; }
+    if (!lido) { falhaEmitir('Não existe aba para ' + BR(iso) + ' na planilha. Confira o nome da aba ou anexe a aba do dia abaixo.'); return; }
+    S.sheetRows = lido.rows;
+    await processarRows(lido.rows, 'aba ' + lido.aba);
+  }
+  async function arquivoAba(input) {
+    var f = input.files && input.files[0]; input.value = ''; if (!f) return;
+    var iso = diaAtivo(); if (!iso) { toast('Escolha o dia no topo.', 'error'); return; }
+    msg('eMsg', ''); showState('e-processando'); montarPassos(); passo('buscar', 'run');
+    try {
+      var wb = await lerArquivoXlsx(f), nome = wb.SheetNames[0];
+      wb.SheetNames.forEach(function (sn) { var a = abaParaIso(sn, null, null); if (a && a.iso === iso) nome = sn; });
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, defval: '', raw: false }).map(function (r) { return r.map(nflCleanCell); });
+      S.sheetRows = rows;
+      await processarRows(rows, f.name + ' · ' + nome);
+    } catch (e) { falhaEmitir('Não consegui ler esse arquivo: ' + (e && e.message ? e.message : e)); }
+  }
+
+  async function processarRows(rows, rotulo) {
+    var iso = diaAtivo(); S.rotulo = rotulo;
+    passo('buscar', 'done', rotulo.length > 34 ? rotulo.slice(0, 34) + '…' : rotulo); await tick();
+    var m = mapearPlanilha(rows);
+    if (!m || m.idx.cpf === undefined || m.idx.valor === undefined || (m.idx.paciente === undefined)) {
+      falhaEmitir('Não achei as colunas PACIENTE/NOME, CPF e VALOR no cabeçalho dessa aba (procurei nas 4 primeiras linhas). Se renomeou colunas, inclua o novo nome em COL_ALIAS.'); return;
+    }
+    passo('layout', 'run'); await tick();
+    var key = layoutDe(iso), val = key ? validarLayout(m, key) : { pct: null, faltam: [] };
+    passo('layout', 'done', key ? (LAYOUTS[key].nome + (val.pct != null ? ' · ' + val.pct + '%' : '')) : 'sem layout p/ a data');
+    passo('mapear', 'run'); await tick();
+    var nCols = Object.keys(m.idx).length, avisoLayout = '';
+    if (key && val.pct < 80) avisoLayout = 'O cabeçalho dessa aba só bate ' + val.pct + '% com o ' + LAYOUTS[key].nome + ' (faltam: ' + val.faltam.map(function (k) { return COL_LABEL[k] || k; }).join(', ') + '). Mapeei pelo nome das colunas — confira o resultado.';
+    passo('mapear', 'done', nCols + ' colunas');
+    passo('operador', 'run'); await carregarOperadoresFb();
+    var mont = montarRegistros(rows, m, iso, null);
+    S.rows = mont.rows; S.ignoradas = mont.ignoradas;
+    if (!S.rows.length) { falhaEmitir('A aba não tem pacientes (linhas com nome ou CPF) abaixo do cabeçalho.'); return; }
+    /* operadores sem tipo conhecido (ignora e-mails digitados por engano na coluna) */
+    var vistos = {}; S.ops = [];
+    S.rows.forEach(function (r) {
+      var raw = r.op; if (!raw || ehEmail(raw)) return; var k = raw.toUpperCase();
+      if (vistos[k]) return; vistos[k] = 1; S.ops.push({ nome: raw, k: k, tipo: tipoConhecido(raw) });
+    });
+    passo('operador', 'done', S.ops.filter(function (o) { return !o.tipo; }).length ? 'há operador novo' : 'por operador');
+    passo('cep', 'run', '0/…');
+    await buscarCeps(S.rows, function (a, b) { passo('cep', 'run', a + '/' + b); });
+    S.rows.forEach(finalizarRegistro);
+    avaliarTodos(S.rows);
+    passo('cep', 'done', 'via BrasilAPI/ViaCEP');
+    await tick(250);
+    if (avisoLayout) msg('eMsg', avisoLayout, 'warn');
+    renderPronto();
+    showState('e-pronto');
+    var p = prontos().length, q = pendentes().length;
+    toast('Lote preparado — ' + p + ' pronto(s)' + (q ? ', ' + q + ' pendência(s)' : ''), q ? 'info' : 'success');
+  }
+
+  function prontos() { return S.rows.filter(function (r) { return !r.warns.length; }); }
+  function pendentes() { return S.rows.filter(function (r) { return r.warns.length; }); }
+
+  function renderPronto() {
+    var ok = prontos(), pend = pendentes();
+    var nc = ok.filter(function (r) { return r.tipo === 'Consulta'; }).length, ne = ok.filter(function (r) { return r.tipo === 'Exame'; }).length;
+    $('prontoT').textContent = ok.length + ' paciente(s) pronto(s)' + (pend.length ? ' · ' + pend.length + ' pendência(s)' : '');
+    $('prontoS').textContent = nc + ' consultas · ' + ne + ' exames · ' + pend.length + ' pendências' + (S.ignoradas ? ' · ' + S.ignoradas + ' linha(s) quebrada(s) ignorada(s)' : '');
+    $('nCons').textContent = nc; $('nExa').textContent = ne;
+    var pb = $('pendBox');
+    if (pend.length) {
+      pb.style.display = 'flex'; $('pendN').textContent = pend.length;
+      $('pendNome').textContent = pend.slice(0, 2).map(function (r) { return r.v['Paciente'] || '(sem nome)'; }).join(', ') + (pend.length > 2 ? '…' : '');
+    } else pb.style.display = 'none';
+    $('pendExtra').style.display = pend.length ? '' : 'none';
+    /* avisos automáticos (ajustes feitos pela regra Sinaxys) */
+    var av = []; S.rows.forEach(function (r) { if (r.valorAdivinhado) av.push((r.v['Paciente'] || '?') + ': valor interpretado como R$ ' + r.v['Valor'] + ' (sem ponto decimal no original)'); });
+    var ab = $('avisosBox');
+    if (av.length) { ab.style.display = ''; $('avisosList').innerHTML = av.slice(0, 30).map(function (t) { return '<li>' + E(t) + '</li>'; }).join(''); } else ab.style.display = 'none';
+    renderOps();
+  }
+
+  function renderOps() {
+    var box = $('opsBox'), novos = S.ops.filter(function (o) { return !o.tipo; });
+    if (!novos.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    $('opsList').innerHTML = novos.map(function (o, i) {
+      var idx = S.ops.indexOf(o);
+      return '<div class="op"><span class="nome">' + E(o.nome) + '</span><span class="novo">novo</span><div class="radios">'
+        + '<label><input type="radio" name="op-' + idx + '" onchange="NFE.marcarOp(' + idx + ',\'Consulta\')"><span>Consulta</span></label>'
+        + '<label><input type="radio" name="op-' + idx + '" onchange="NFE.marcarOp(' + idx + ',\'Exame\')"><span>Exame</span></label>'
+        + '</div></div>';
+    }).join('');
+  }
+  async function marcarOp(i, tipo) {
+    var o = S.ops[i]; if (!o) return; o.tipo = tipo;
+    var ov = {}; ov[o.k] = tipo;
+    S.rows.forEach(function (r) { if (r.op && r.op.toUpperCase() === o.k) { r.tipo = tipo; finalizarRegistro(r); } });
+    avaliarTodos(S.rows); renderPronto();
+    toast(o.nome + ' → ' + tipo, 'success');
+    if ($('lembrarOp') && $('lembrarOp').checked && window.fbSet) {
+      try { await window.fbSet('admin/nfl_operadores/' + fbKey(o.nome), tipo); }
+      catch (e) { toast('Não consegui lembrar esse operador (permissão do Firebase). Vale só para este lote.', 'info'); }
+    }
+  }
+
+  /* ─── corrigir pendentes ─── */
+  var CAMPOS_FIX = [['Paciente', 'full'], ['CPF', ''], ['Telefone', ''], ['Valor', ''], ['CEP', ''], ['Logradouro', 'full'], ['Número', ''], ['Bairro', ''], ['Cidade', ''], ['UF', '']];
+  function faltaCampo(r, c) {
+    var v = r.v[c], w = r.warns.join('|');
+    if (c === 'CPF') return /CPF/.test(w);
+    if (c === 'Valor') return /Valor/.test(w);
+    if (c === 'Número') return /Número/.test(w);
+    if (c === 'Paciente') return /Paciente/.test(w);
+    if (c === 'Telefone') return /Telefone/.test(w);
+    if (c === 'CEP') return /CEP/.test(w);
+    return !v || new RegExp(c, 'i').test(w);
+  }
+  function abrirFix() {
+    var pend = pendentes();
+    $('fixList').innerHTML = pend.map(function (r) {
+      var idx = S.rows.indexOf(r);
+      var campos = CAMPOS_FIX.map(function (cf) {
+        var c = cf[0], miss = faltaCampo(r, c);
+        return '<div class="' + cf[1] + '"><label>' + E(c) + (miss ? ' <span class="req">*</span>' : '') + '</label>'
+          + '<input data-r="' + idx + '" data-f="' + E(c) + '" class="' + (miss ? 'missing' : '') + '" value="' + E(r.v[c]) + '" oninput="this.classList.remove(\'missing\')"></div>';
+      }).join('');
+      var tipoSel = '<div class="full"><label>Tipo' + (!r.tipo ? ' <span class="req">*</span>' : '') + '</label><select data-r="' + idx + '" data-f="__tipo" class="' + (!r.tipo ? 'missing' : '') + '" onchange="this.classList.remove(\'missing\')">'
+        + '<option value=""' + (!r.tipo ? ' selected' : '') + '>—</option><option' + (r.tipo === 'Consulta' ? ' selected' : '') + '>Consulta</option><option' + (r.tipo === 'Exame' ? ' selected' : '') + '>Exame</option></select></div>';
+      return '<div class="fix"><div class="fix-h"><b>' + E(r.v['Paciente'] || '(sem nome)') + '</b><span class="badge">' + E(r.warns.slice(0, 2).join(' · ')) + (r.warns.length > 2 ? '…' : '') + '</span></div><div class="fix-f">' + campos + tipoSel + '</div></div>';
+    }).join('') || '<div class="mdl-s">Sem pendências.</div>';
+    $('fixMdl').classList.add('open');
+  }
+  function fecharFix() { $('fixMdl').classList.remove('open'); }
+  async function aplicarFix() {
+    var mudouCep = [];
+    document.querySelectorAll('#fixList [data-r]').forEach(function (el) {
+      var r = S.rows[+el.getAttribute('data-r')], f = el.getAttribute('data-f'); if (!r) return;
+      if (f === '__tipo') { r.tipo = el.value; return; }
+      var novo = nflCleanCell(el.value);
+      if (f === 'Valor') { var vr = nflCleanValor(novo); r.valorOk = !!vr.ok; r.v['Valor'] = vr.ok ? vr.value : novo; return; }
+      if (f === 'CEP' && novo !== r.v['CEP']) mudouCep.push(r);
+      r.v[f] = novo;
+    });
+    for (var i = 0; i < mudouCep.length; i++) {
+      var c = nflNormCEPDigits(mudouCep[i].v['CEP']);
+      if (c.length === 8) preencherPorCep(mudouCep[i], await nflFetchViaCep(c));
+    }
+    S.rows.forEach(finalizarRegistro); avaliarTodos(S.rows);
+    fecharFix(); renderPronto();
+    var q = pendentes().length;
+    toast(q ? 'Salvo — ainda restam ' + q + ' pendência(s)' : 'Corrigido! Todos os pacientes estão prontos', q ? 'info' : 'success');
+  }
+
+  /* ─── download ─── */
+  function wbDe(rows) {
+    var aoa = [NFL_HEADERS].concat(rows.map(function (r) { return NFL_HEADERS.map(function (h) { return r.v[h] == null ? '' : r.v[h]; }); }));
+    var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Modelo Importação'); return wb;
+  }
+  function baixar(tipo) {
+    var rows = prontos().filter(function (r) { return r.tipo === tipo; });
+    if (!rows.length) { toast('Nenhum paciente pronto em ' + tipo + '.', 'error'); return; }
+    var pref = tipo === 'Consulta' ? 'consultas' : 'exames', iso = diaAtivo();
+    for (var i = 0; i < rows.length; i += NFL_MAX_LOTE) {
+      var suf = rows.length > NFL_MAX_LOTE ? '_parte' + (Math.floor(i / NFL_MAX_LOTE) + 1) : '';
+      XLSX.writeFile(wbDe(rows.slice(i, i + NFL_MAX_LOTE)), nomeArquivo(pref, iso, suf));
+    }
+    toast(rows.length + ' paciente(s) baixados — ' + nomeArquivo(pref, iso), 'success');
+    setTimeout(function () { $('tabPulse').style.display = ''; toast('Quando o Sinaxys devolver, suba o retorno na aba Retorno.', 'info'); }, 900);
+  }
+  function baixarPendentes() {
+    var pend = pendentes(); if (!pend.length) return;
+    var wb = wbDe(pend);
+    var mot = [['Paciente', 'CPF', 'Motivo']].concat(pend.map(function (r) { return [r.v['Paciente'], r.v['CPF'], r.warns.join('; ')]; }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mot), 'Motivos (não importar)');
+    XLSX.writeFile(wb, nomeArquivo('incompletos', diaAtivo()));
+  }
+  function novoLote() {
+    if (!confirm('Preparar um novo dia?\n\nO que está na tela será descartado (os .xlsx já baixados continuam no seu computador).')) return;
+    S.rows = []; showState('e-vazio'); msg('eMsg', ''); toast('Escolha outro dia no topo', 'info');
+  }
+
+  /* ─────────── RETORNO ─────────── */
+  async function loteDoDia(iso) {
+    var rows = S.sheetRows, aba = S.rotulo;
+    if (!rows) { var lido = await lerAbaDoDia(iso); if (!lido) throw new Error('Não existe aba para ' + BR(iso) + ' na planilha.'); rows = lido.rows; aba = lido.aba; S.sheetRows = rows; }
+    var m = mapearPlanilha(rows);
+    if (!m || m.idx.cpf === undefined || m.idx.valor === undefined) throw new Error('Não achei as colunas CPF e VALOR na aba do dia.');
+    var itens = [], semDados = 0;
+    rows.slice(m.hi + 1).forEach(function (row) {
+      row = row || [];
+      var cpf = nflOnlyDigits(row[m.idx.cpf]), val = nflPreencherToFloat(row[m.idx.valor]);
+      var nome = m.idx.paciente !== undefined ? nflCleanCell(row[m.idx.paciente]) : '';
+      if (!cpf && !nome) return;
+      if (cpf.length !== 11 || val === null || isNaN(val)) { semDados++; return; }
+      itens.push({ cpf: cpf, cents: Math.round(val * 100), nome: nome });
+    });
+    return { aba: aba, itens: itens, semDados: semDados };
+  }
+
+  /* cruza por CPF + valor + data. Cada nota do Sinaxys é usada uma vez só (mesmo paciente com 2 atendimentos não repete o Nº). */
+  function cruzar(itens, regs, iso) {
+    regs.forEach(function (r) { r.usado = false; });
+    var res = itens.map(function (it) { return { it: it, st: null, nf: '', motivo: '' }; });
+    var doDia = regs.filter(function (r) { return r.dia === iso; });
+    function achar(lista, f) { for (var i = 0; i < lista.length; i++) if (!lista[i].usado && f(lista[i])) return lista[i]; return null; }
+    /* 1) emitidas exatas */
+    res.forEach(function (x) {
+      var g = achar(doDia, function (r) { return r.cpf === x.it.cpf && r.cents === x.it.cents && r.st === 'emitida' && r.nf; });
+      if (g) { g.usado = true; x.st = 'emitida'; x.nf = g.nf; }
+    });
+    /* 2) mesmo CPF+valor+dia, mas recusada/cancelada/outro */
+    res.forEach(function (x) {
+      if (x.st) return;
+      var g = achar(doDia, function (r) { return r.cpf === x.it.cpf && r.cents === x.it.cents; });
+      if (g) { g.usado = true; x.st = (g.st === 'recusada' || g.st === 'cancelada') ? 'nao' : 'div'; x.motivo = 'Sinaxys: ' + g.st + (g.motivo ? ' (' + g.motivo + ')' : ''); }
+    });
+    /* 3) mesmo CPF+valor em OUTRA data */
+    res.forEach(function (x) {
+      if (x.st) return;
+      var g = achar(regs, function (r) { return r.cpf === x.it.cpf && r.cents === x.it.cents && r.dia !== iso; });
+      if (g) { g.usado = true; x.st = 'div'; x.motivo = 'data diferente no Sinaxys (' + BR(g.dia) + ')'; }
+    });
+    /* 4) mesmo CPF e dia, valor diferente */
+    res.forEach(function (x) {
+      if (x.st) return;
+      var g = achar(doDia, function (r) { return r.cpf === x.it.cpf; });
+      if (g) { g.usado = true; x.st = 'div'; x.motivo = 'valor diferente no Sinaxys (R$ ' + (g.cents / 100).toFixed(2).replace('.', ',') + ')'; }
+    });
+    res.forEach(function (x) { if (!x.st) { x.st = 'nao'; x.motivo = 'não consta no retorno do Sinaxys'; } });
+    var sobras = doDia.filter(function (r) { return !r.usado && r.st === 'emitida'; });
+    return { res: res, sobras: sobras, doDia: doDia.length };
+  }
+
+  async function lerSinaxysArquivos(files) {
+    var all = { registros: [], ignoradas: [] }, vistos = {};
+    for (var i = 0; i < files.length; i++) {
+      var wb = await lerArquivoXlsx(files[i]), one = lerSinaxysWB(wb, files[i].name);
+      one.registros.forEach(function (r) {
+        if (r.nf) { var k = r.st + '|' + r.nf + '|' + r.cpf + '|' + r.cents + '|' + r.dia; if (vistos[k]) return; vistos[k] = 1; }
+        all.registros.push(r);
+      });
+      all.ignoradas = all.ignoradas.concat(one.ignoradas);
+    }
+    return all;
+  }
+
+  async function subirRetorno(input) {
+    var files = input && input.files ? Array.prototype.slice.call(input.files) : (input || []);
+    if (input && input.value !== undefined) input.value = '';
+    if (!files.length) return;
+    var iso = diaAtivo(); if (!iso) { toast('Escolha o dia no topo.', 'error'); return; }
+    msg('rMsg', ''); showState('r-comparando'); $('cmpArq').textContent = files.map(function (f) { return f.name; }).join(', ');
+    try {
+      var sin = await lerSinaxysArquivos(files);
+      if (!sin.registros.length) throw new Error('Não encontrei notas nesse arquivo (esperava colunas CPF/Cliente e Valor, abas Splitadas ou De pacientes).');
+      var lote = await loteDoDia(iso); S.lote = lote;
+      if (!lote.itens.length) throw new Error('A aba do dia não tem pacientes com CPF e valor válidos.');
+      S.cmp = cruzar(lote.itens, sin.registros, iso); S.cmp.sinRegs = sin.registros;
+    } catch (e) { showState('r-vazio'); msg('rMsg', e && e.message ? e.message : String(e), 'err'); return; }
+    renderRetorno();
+    showState('r-pronto');
+  }
+
+  function contar(st) { return S.cmp.res.filter(function (x) { return x.st === st; }).length; }
+  function renderRetorno() {
+    var c = S.cmp, ne = contar('emitida'), nd = contar('div'), nn = contar('nao');
+    $('retTotal').textContent = c.res.length; $('retData').textContent = BR(diaAtivo());
+    $('resE').textContent = ne; $('resD').textContent = nd; $('resN').textContent = nn;
+    var det = c.res.filter(function (x) { return x.st !== 'emitida'; });
+    var box = $('retDetBox');
+    var extra = [];
+    if (c.sobras.length) extra.push(c.sobras.length + ' nota(s) emitida(s) no Sinaxys para ' + BR(diaAtivo()) + ' sem linha correspondente na planilha');
+    if (S.lote.semDados) extra.push(S.lote.semDados + ' linha(s) da planilha sem CPF ou valor válido (não entram no cruzamento)');
+    if (!c.doDia) extra.push('o retorno não tem nenhuma nota com data ' + BR(diaAtivo()) + ' — confira se é o arquivo do dia certo');
+    if (det.length || extra.length) {
+      box.style.display = '';
+      $('retDetList').innerHTML = det.map(function (x) {
+        return '<tr><td>' + E(x.it.nome || '(sem nome)') + '</td><td>R$ ' + E((x.it.cents / 100).toFixed(2).replace('.', ',')) + '</td><td class="' + (x.st === 'div' ? 'a' : 'r') + '">' + E(x.motivo) + '</td></tr>';
+      }).join('') + extra.map(function (t) { return '<tr><td colspan="3" class="a">⚠ ' + E(t) + '</td></tr>'; }).join('');
+    } else box.style.display = 'none';
+    var b = $('btnEscrever');
+    b.querySelector('.txt').innerHTML = 'Escrever ' + ne + ' N° NF na planilha<div class="sub">Direto via Apps Script · sem download</div>';
+    b.disabled = ne === 0; b.style.opacity = ne === 0 ? '.5' : '';
+  }
+
+  function itensEmitidos() {
+    return S.cmp.res.filter(function (x) { return x.st === 'emitida'; }).map(function (x) {
+      return { cpf: x.it.cpf, valor: valorStr(x.it.cents / 100), nfNumero: x.nf, nome: x.it.nome };
+    });
+  }
+  function baixarRetornoXlsx() {
+    var it = itensEmitidos(), iso = diaAtivo();
+    var aoa = [['Paciente', 'CPF', 'Valor', 'N° NF']].concat(it.map(function (x) { return [x.nome, x.cpf, x.valor, x.nfNumero]; }));
+    var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'N° NF');
+    XLSX.writeFile(wb, nomeArquivo('numeros_nf', iso));
+  }
+  async function marcarProcessado(iso) {
+    if (!window.fbSet) throw new Error('Firebase não disponível');
+    await window.fbSet('nf_dia_relatorios/' + iso + '/_status', 'processado');
+  }
+  async function escrever() {
+    if (!S.cmp) return;
+    var iso = diaAtivo(), itens = itensEmitidos(), btn = $('btnEscrever');
+    if (!itens.length) { toast('Nenhuma nota emitida para escrever.', 'error'); return; }
+    var url = (localStorage.getItem(LS_URL) || '').trim(), token = (localStorage.getItem(LS_TOKEN) || '').trim();
+    if (!url) { msg('rMsg', 'A conexão com o Google Sheets não está configurada. Clique na engrenagem (topo) e informe a URL e a senha do Apps Script.', 'err'); abrirCfg(); return; }
+    if (!confirm('Escrever ' + itens.length + ' N° NF na aba ' + BR(iso) + ' da planilha?\n\nIsso altera a planilha real.')) return;
+    var key = layoutDe(iso), payload = { token: token, data: iso, aba: BR(iso) };
+    if (key && LAYOUTS[key].nfCol) payload.coluna_nf = LAYOUTS[key].nfCol;
+    payload.items = itens;
+    btn.disabled = true; var antes = btn.querySelector('.txt').innerHTML;
+    btn.querySelector('.txt').innerHTML = 'Escrevendo na planilha…<div class="sub">Apps Script em execução</div>';
+    var out = null, falha = null, tm = null, ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    try {
+      if (ctrl) tm = setTimeout(function () { ctrl.abort(); }, 45000);
+      var resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined });
+      out = await resp.json();
+      if (!out || !out.ok) throw new Error((out && out.error) || 'o script devolveu erro');
+    } catch (e) { falha = (e && e.name === 'AbortError') ? 'tempo esgotado (45 s)' : (e && e.message ? e.message : String(e)); }
+    finally { if (tm) clearTimeout(tm); btn.disabled = false; btn.querySelector('.txt').innerHTML = antes; }
+    if (falha) {
+      msg('rMsg', 'Não consegui escrever na planilha: ' + falha + '. Nada foi marcado como processado. Use "Baixar .xlsx com os N° NF" para colar manualmente.', 'err');
+      $('btnBaixarNf').style.display = ''; return;
+    }
+    var nf = (out.notFound || []), amb = (out.ambiguous || []), esc = (out.written == null ? itens.length : out.written);
+    var limpo = esc > 0 && !nf.length && !amb.length, extra = '';
+    if (limpo) { try { await marcarProcessado(iso); extra = 'O dia foi marcado como processado automaticamente.'; } catch (e) { extra = 'Escrevi na planilha, mas não consegui marcar o dia como processado (' + (e && e.message ? e.message : e) + ').'; } }
+    else extra = 'O dia NÃO foi marcado como processado porque houve itens não escritos.';
+    $('feitoTxt').textContent = esc + ' nota(s) escrita(s) na aba ' + (out.aba || BR(iso)) + '. ' + extra;
+    var lista = [];
+    if (nf.length) lista.push('Não encontrado(s) na planilha: ' + nf.slice(0, 8).join(', ') + (nf.length > 8 ? '…' : ''));
+    if (amb.length) lista.push(amb.length + ' ambíguo(s) — não escritos para não errar.');
+    $('feitoAvisos').innerHTML = lista.map(function (t) { return '<li>' + E(t) + '</li>'; }).join('');
+    $('feitoAvisos').style.display = lista.length ? '' : 'none';
+    $('feitoIc').className = 'ic' + (limpo ? '' : ' warn');
+    showState('r-feito');
+    toast(limpo ? esc + ' N° NF escritos' : 'Escrita parcial — confira os avisos', limpo ? 'success' : 'info');
+  }
+
+  /* ─────────── conexão com o Google Sheets (mesmas chaves do dashboard) ─────────── */
+  function abrirCfg() { $('cfgUrl').value = localStorage.getItem(LS_URL) || ''; $('cfgToken').value = localStorage.getItem(LS_TOKEN) || ''; $('cfgMdl').classList.add('open'); }
+  function fecharCfg() { $('cfgMdl').classList.remove('open'); }
+  function salvarCfg() {
+    localStorage.setItem(LS_URL, $('cfgUrl').value.trim()); localStorage.setItem(LS_TOKEN, $('cfgToken').value.trim());
+    fecharCfg(); toast('Conexão salva neste navegador', 'success');
+  }
+
+  /* ─────────── arrastar e soltar ─────────── */
+  function ligarDrop() {
+    var box = $('upBox'); if (!box) return;
+    ['dragenter', 'dragover'].forEach(function (ev) { box.addEventListener(ev, function (e) { e.preventDefault(); box.classList.add('on'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { box.addEventListener(ev, function (e) { e.preventDefault(); box.classList.remove('on'); }); });
+    box.addEventListener('drop', function (e) { var fs = e.dataTransfer && e.dataTransfer.files; if (fs && fs.length) subirRetorno(Array.prototype.slice.call(fs)); });
+  }
+
+  /* ─────────── início (chamado pelo módulo Firebase depois do gate de admin) ─────────── */
+  function iniciar() {
+    var salvo = ''; try { salvo = localStorage.getItem(LS_DIA) || ''; } catch (e) { }
+    $('dia').value = /^\d{4}-\d{2}-\d{2}$/.test(salvo) ? salvo : ontemISO();
+    trocarDia(); ligarDrop();
+    $('app').style.display = '';
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Escape') return;
+      if ($('fixMdl').classList.contains('open')) { fecharFix(); return; }
+      if ($('cfgMdl').classList.contains('open')) { fecharCfg(); return; }
+    });
+  }
+
+  return {
+    iniciar: iniciar, trocarDia: trocarDia, trocarTab: trocarTab, preparar: preparar, arquivoAba: arquivoAba,
+    baixar: baixar, baixarPendentes: baixarPendentes, abrirFix: abrirFix, fecharFix: fecharFix, aplicarFix: aplicarFix, novoLote: novoLote,
+    marcarOp: marcarOp, subirRetorno: subirRetorno, escrever: escrever, baixarRetornoXlsx: baixarRetornoXlsx,
+    trocarArquivo: function () { S.cmp = null; msg('rMsg', ''); showState('r-vazio'); },
+    abrirCfg: abrirCfg, fecharCfg: fecharCfg, salvarCfg: salvarCfg,
+    _t: { mapearPlanilha: mapearPlanilha, montarRegistros: montarRegistros, avaliarTodos: avaliarTodos, finalizarRegistro: finalizarRegistro, cruzar: cruzar, layoutDe: layoutDe, colKey: colKey, tipoConhecido: tipoConhecido, S: S, valorStr: valorStr }
+  };
+})();
+
+</script>
+
+<!-- ═══════ GATE DE ADMIN (mesmo critério do dashboard.html) ═══════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+  const app = initializeApp(window.FIREBASE_CONFIG);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  window.initFirebaseUtils(db, ref, get);
+  window.fbGet = function (p) { return get(ref(db, p)); };
+  window.fbSet = function (p, v) { return set(ref(db, p), v); };
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) { irPara('../login.html'); return; }
+    try {
+      const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
+      const perms = (snap.val() || {}).perms || {};
+      if (!perms.admin) { irPara('../login.html'); return; }   // acesso restritivo — só admin
+    } catch (e) { irPara('../login.html'); return; }            // se falhar a leitura, bloqueia
+    NFE.iniciar();
+  });
+</script>
+</body>
+</html>
