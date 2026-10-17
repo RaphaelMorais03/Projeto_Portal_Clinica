@@ -1637,6 +1637,7 @@
      *    (planilha não pôde ser lida — NUNCA vira Negativo) · na = despesa (não entra na conta).
      *  • Positivo  = paciente achado pelo nome exato + soma igual (±R$ 0,01) + cadastro completo.
      *    Alerta    = nome só parecido, OU cadastro incompleto (CPF/telefone/CEP/Nº/valor), OU outro operador.
+     *  Linha sem nome de paciente (ex.: transferência) = fora da conta ("—").
      *    Negativo  = sem cadastro na planilha do dia, OU soma diferente.
      *  • Prefixo cxPlan (não colide com os prefixos nfl, nfDia e cx). NÃO altera buscarNf/nfDiaComparar/carregarNotasFiscais.
      *  • Reaproveita globais já existentes neste arquivo: parseCsv, buscarNf, normNome, fm, esc, toast,
@@ -1813,7 +1814,11 @@
       }
       if (!sheet || !sheet.ok) {
         out.erro = (sheet && sheet.erro) || 'A planilha não foi lida.';
-        lancs.forEach(function (l, i) { if (!l.isDespesa) itens[i] = { status: 'nv', texto: 'planilha não lida' }; });
+        lancs.forEach(function (l, i) {
+          var np = cxPlanChave(l.paciente);
+          if (l.isDespesa || !np || np === '—') { itens[i] = { status: 'na', texto: '' }; return; }   // sem paciente (ex.: transferência) = fora da conta
+          itens[i] = { status: 'nv', texto: 'planilha não lida' };
+        });
         return fechar();
       }
       out.aba = sheet.aba; out.lidoEm = sheet.lidoEm;
@@ -1853,7 +1858,7 @@
       lancs.forEach(function (l, i) {
         if (l.isDespesa) return;
         var np = cxPlanChave(l.paciente);
-        if (!np || np === '—') { itens[i] = { status: 'ale', texto: 'sem nome do paciente no caixa' }; return; }
+        if (!np || np === '—') { itens[i] = { status: 'na', texto: '' }; return; }   // sem paciente (ex.: transferência) = fora da conta
         var a = achar(l.paciente);
         if (!a) { itens[i] = { status: 'neg', texto: 'não cadastrado na planilha' }; return; }
         var gk = a.f + '|' + a.k;
@@ -1902,8 +1907,7 @@
     function cxPlanCelHtml(it) {
       if (!it || it.status === 'na') return '<span style="color:#9ca3af;font-size:10px;">—</span>';
       var c = CX_PLAN_COR[it.status] || CX_PLAN_COR.nv;
-      return '<div style="color:' + c[0] + ';font-weight:900;font-size:11px;line-height:1.15;">' + c[1] + ' ' + c[2] + '</div>' +
-        (it.texto ? '<div style="font-size:8px;color:#6b7280;font-weight:600;margin-top:2px;line-height:1.2;">' + esc(it.texto) + '</div>' : '');
+      return '<span title="' + esc(c[2] + (it.texto ? ' — ' + it.texto : '')) + '" style="color:' + c[0] + ';font-weight:900;">' + c[1] + '</span>';
     }
     function cxPlanTh() {
       return '<th style="border:1px solid #374151;padding:7px 8px;font-size:9px;color:rgba(255,255,255,.7);text-align:center;">Dados Planilha</th>';
@@ -1912,32 +1916,28 @@
       return '<td data-cxplan="' + i + '" style="border:1px solid #e5e7eb;padding:4px 6px;text-align:center;vertical-align:middle;min-width:92px;">' +
         cxPlanCelHtml(cx.itens[i]) + '</td>';
     }
+    // modelo antigo (igual ao indicador "N ok · M com pendência" do Dados NF): linha pequena sob o nome do responsável
     function cxPlanResumoInner(cx) {
-      var h = '<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#6b7280;margin-bottom:5px;">Conferência com a planilha de NF</div>';
+      var h;
       if (cx.erro) {
-        h += '<div style="font-size:12px;font-weight:800;color:#6b7280;">? Planilha não verificada</div>' +
-          '<div style="font-size:10px;color:#6b7280;margin-top:3px;">' + esc(cx.erro) + '</div>';
+        h = '<div style="font-size:11px;color:#6b7280;">? Planilha não verificada — ' + esc(cx.erro) + '</div>';
       } else {
-        h += '<div style="font-size:13px;font-weight:900;">' +
-          '<span style="color:#15803d;">✓ ' + cx.cont.pos + ' Positivo</span> · ' +
-          '<span style="color:#b45309;">⚠ ' + cx.cont.ale + ' Alerta</span> · ' +
-          '<span style="color:#C62828;">✗ ' + cx.cont.neg + ' Negativo</span></div>' +
-          '<div style="font-size:9px;color:#6b7280;margin-top:3px;">aba ' + esc(cx.aba || '') + ' · operador ' + esc((cx.operador || '').toUpperCase()) +
-          ' · ' + cx.nLinhasOp + ' linha(s) do operador na planilha · lida às ' + esc(cx.lidoEm || '') + '</div>';
+        var pend = cx.cont.ale + cx.cont.neg;
+        h = '<div style="font-size:11px;color:' + (pend ? '#b45309' : '#15803d') + ';">Planilha: ' +
+          '✓ ' + cx.cont.pos + ' · ⚠ ' + cx.cont.ale + ' · ✗ ' + cx.cont.neg + '</div>';
       }
-      cx.avisos.forEach(function (a) { h += '<div style="font-size:10px;color:#b45309;margin-top:3px;">⚠ ' + esc(a) + '</div>'; });
+      cx.avisos.forEach(function (a) { h += '<div style="font-size:10px;color:#b45309;">⚠ ' + esc(a) + '</div>'; });
       if (!cx.erro && cx.semCaixa.length) {
         var lim = 15, lista = cx.semCaixa.slice(0, lim).map(function (s) {
           return esc(s.nome) + (s.semNome ? ' [linha sem nome]' : '') + ' — ' + fm(s.valor);
         }).join(' · ');
-        h += '<div style="font-size:10px;color:#374151;margin-top:6px;border-top:1px dashed #d1d5db;padding-top:5px;"><b>Na planilha, sem recebimento no caixa (' +
-          cx.semCaixa.length + '):</b> ' + lista + (cx.semCaixa.length > lim ? ' · e mais ' + (cx.semCaixa.length - lim) : '') + '</div>';
+        h += '<div style="font-size:10px;color:#6b7280;">Na planilha, sem recebimento no caixa (' + cx.semCaixa.length + '): ' + lista +
+          (cx.semCaixa.length > lim ? ' · e mais ' + (cx.semCaixa.length - lim) : '') + '</div>';
       }
       return h;
     }
     function cxPlanBlocosHtml(cx, docId) {
-      return '<div id="cxPlanBlocos" data-doc="' + esc(docId) + '" style="margin:0 0 1.2rem;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;background:#f9fafb;">' +
-        cxPlanResumoInner(cx) + '</div>';
+      return '<div id="cxPlanBlocos" data-doc="' + esc(docId) + '" style="margin-top:6px;">' + cxPlanResumoInner(cx) + '</div>';
     }
 
     /* ── auditoria: grava o resultado em relatorios/{uid}/{data}/matchPlanilha ── */
@@ -2182,6 +2182,7 @@
           '<div style="font-size:1.8rem;font-weight:900;color:#0A1F44;margin-bottom:.8rem;">RELATÓRIO DE CAIXA</div>' +
           '<div style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.5rem;background:#61C1D0;border-radius:12px;border:3px solid #980000;color:white;font-size:.9rem;font-weight:800;">👤 ' + esc(aten.toUpperCase()) + '</div>' +
           nfIndicador +
+          cxPlanBlocosHtml(cxP, cxDocId) + // [v3.1] Planilha: ✓ · ⚠ · ✗
         '</div>' +
         /* Cards de totais */
         '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:10px;">Total por forma de pagamento</div>' +
@@ -2209,7 +2210,6 @@
           '</tr></thead>' +
           '<tbody>' + rows + '</tbody>' +
         '</table>' +
-        cxPlanBlocosHtml(cxP, cxDocId) + // [v3.1] resumo ✓/⚠/✗ + planilha sem caixa
         /* Rodapé */
         '<div style="padding-top:.8rem;border-top:2px solid #61C1D0;display:flex;justify-content:space-between;align-items:center;">' +
           '<div style="font-size:10px;color:#888;">' + ds + ' às ' + hr + '</div>' +
