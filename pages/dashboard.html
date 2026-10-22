@@ -1,4 +1,4 @@
-<!-- VERSION: v6.1 | dashboard.html | 22/10/2026 | base v6.0 (NF em Lote, sidebar, Hoje) restaurada + aba 1:1s (Firestore, prefixo oo*) -->
+<!-- VERSION: v6.5 | dashboard.html | 22/10/2026 | base v6.0 + aba 1:1s (atendentes com caixa, NPS por atendente) · NF em Lote removido do menu/Hoje (código interno dormente) -->
 <!-- VERSION: v6.0 | dashboard.html | 13/10/2026 | NF em Lote v6.0 — fluxo unificado: 2 abas (Emitir lote / Retorno Sinaxys), seletor de data único no topo (nflx_dia_ativo), layout da planilha por data (NFL_LAYOUTS, fallback na cascata), operador→Consulta/Exame no Mapear (admin/nfl_operadores), escrever Nº NF direto na planilha via Apps Script (fallback .xlsx) + _status processado, fila de incompletos (nfl_incompletos), downloads nomeados DD_MM_AAAA. -->
 <!-- VERSION: v4.9.4 | dashboard.html | 05/10/2026 | NF em Lote: validações Sinaxys/prefeitura (Número, Bairro, Cidade, CEP, lixo, CPF=telefone) v4.9.4; duplicata (mesmo CPF/data/valor) não bloqueia mais — emite as duas e só avisa. v4.9.2: Comparativo Sinaxys: "Falta emitir no período" (planilha × exportação Sinaxys Splitadas/De pacientes; somente leitura). v4.9.1: Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
 <!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
@@ -1096,7 +1096,7 @@
         <div class="hoje-card">
           <div class="hoje-card-h"><h3><i class="fas fa-bolt" style="color:#d97706;"></i> Ações rápidas</h3></div>
           <div class="hoje-quick">
-            <button class="hoje-quick-btn" onclick="hojeIr('nflote','nfdia')"><div class="hoje-qi" style="background:#ccfbf1;color:#0d9488;"><i class="fas fa-calendar-day"></i></div><div class="hoje-qt">NF do Dia</div><div class="hoje-qs" id="hojeQsNf">—</div></button>
+            <!-- [v6.5] botão "NF do Dia" removido (NF em Lote saiu do dashboard) -->
             <button class="hoje-quick-btn" onclick="hojeIr('caixa')"><div class="hoje-qi" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-cash-register"></i></div><div class="hoje-qt">Caixa</div><div class="hoje-qs" id="hojeQsCaixa">—</div></button>
             <button class="hoje-quick-btn" onclick="hojeIr('fech')"><div class="hoje-qi" style="background:#fef3c7;color:#b45309;"><i class="fas fa-file-invoice-dollar"></i></div><div class="hoje-qt">Fechamentos</div><div class="hoje-qs" id="hojeQsFech">—</div></button>
             <button class="hoje-quick-btn" onclick="hojeIr('ranking')"><div class="hoje-qi" style="background:#ede9fe;color:#6d28d9;"><i class="fas fa-trophy"></i></div><div class="hoje-qt">Ranking</div><div class="hoje-qs">produção por colaborador</div></button>
@@ -3227,14 +3227,8 @@
       }
 
       /* NF do Dia (Firebase) — cache de 45s */
-      var nfRel = {}, nfOk = false;
-      try {
-        if (Date.now() - _hojeCacheNf.t > 45000 && window.fbGet) {
-          var sn = await window.fbGet('nf_dia_relatorios');
-          _hojeCacheNf = { t: Date.now(), v: (sn && sn.exists()) ? sn.val() : {} };
-        }
-      } catch(e) { console.warn('[Hoje] leitura de nf_dia_relatorios falhou:', e); }
-      if (_hojeCacheNf.v) { nfRel = _hojeCacheNf.v; nfOk = true; }
+      /* [v6.5] NF do Dia/NF em Lote saiu do dashboard: sem leitura de nf_dia_relatorios e sem alerta de NF pendente */
+      var nfRel = {}, nfOk = true;
       var ready = !!window._hojeReady;
 
       var datasPend = !nfOk ? [] : Object.keys(nfRel).filter(function(d){
@@ -3274,7 +3268,6 @@
         if (ok && n > 0) { el.textContent = String(n); el.style.display = 'inline-flex'; } else { el.style.display = 'none'; }
       }
       setBadge('badgeHoje',   datasPend.length + fechPend.length, ready && nfOk);
-      setBadge('badgeNflote', datasPend.length,                   ready && nfOk);
       setBadge('badgeFech',   fechPend.length,                    ready);
 
       /* ações rápidas */
@@ -3363,13 +3356,13 @@
     import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getDatabase, ref, get, set, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
-    // [v6.1] Firestore para a aba 1:1s (SDK modular v11.6.0, mesma versão do portal)
+    // [v6.5] Firestore para a aba 1:1s (SDK modular v11.6.0, mesma versão do portal)
     import { getFirestore, collection, doc, getDocs, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const _app  = initializeApp(window.FIREBASE_CONFIG);
     const _auth = getAuth(_app);
     const _db   = getDatabase(_app);
-    // [v6.1] Firestore (aba 1:1s) — exposto só para o bloco oo* no fim do arquivo
+    // [v6.5] Firestore (aba 1:1s) — exposto só para o bloco oo* no fim do arquivo
     window._ooFs = { db: getFirestore(_app), collection, doc, getDocs, setDoc, updateDoc };
     window.initFirebaseUtils(_db, ref, get);
     window.__fb = { db:_db, ref, get, set, onValue, remove };
@@ -6003,8 +5996,8 @@
         ]},
         {group:'Operação', items:[
           {id:'caixa',     icon:'fa-cash-register',       label:'Caixa'},
-          {id:'fech',      icon:'fa-file-invoice-dollar', label:'Fechamentos'},
-          {id:'nflote',    icon:'fa-file-invoice',        label:'NF em Lote'}
+          {id:'fech',      icon:'fa-file-invoice-dollar', label:'Fechamentos'}
+          /* [v6.5] NF em Lote removido do dashboard (agora em "Emissão de nota" no login) */
         ]},
         {group:'Análises', items:[
           {id:'prod',      icon:'fa-chart-bar',    label:'Produção'},
@@ -7136,7 +7129,7 @@
   <!-- ═══════════ v5.0 — landing "Hoje": atualização automática + aba inicial ═══════════ -->
   <script>
   (function(){
-    var VALID = ['hoje','prod','caixa','fech','visao','contratos','odonto','ranking','nflote'];
+    var VALID = ['hoje','prod','caixa','fech','visao','contratos','odonto','ranking']; /* [v6.5] sem 'nflote' */
     var tm = null;
     setTimeout(function(){ window._hojeReady = true; refresh(); }, 6000); /* garante saída do "carregando" mesmo com base vazia */
     function refresh(){ clearTimeout(tm); tm = setTimeout(function(){ try{ if (typeof window.renderHoje==='function') window.renderHoje(); }catch(e){} }, 400); }
@@ -7774,6 +7767,37 @@
 .oo-btn-red { padding:9px 14px; background:white; color:var(--red); border:1.5px solid var(--red); border-radius:9px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; }
 .oo-btn-red:hover { background:var(--red); color:white; }
 .oo-hidden { display:none !important; }
+.oo-sel { min-width:150px; }
+.oo-nps { border:1.5px solid var(--gray-200); border-radius:12px; background:var(--gray-50); padding:12px 14px; margin-bottom:14px; }
+.oo-nps-h { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.oo-nps-t { font-size:12px; font-weight:800; color:var(--navy); text-transform:uppercase; letter-spacing:.4px; }
+.oo-nps-link { margin-left:auto; font-size:11px; font-weight:700; color:var(--blue); text-decoration:none; cursor:pointer; background:none; border:none; font-family:inherit; padding:0; }
+.oo-nps-link:hover { text-decoration:underline; }
+.oo-nps-zona { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; }
+.oo-nps-tab { width:100%; border-collapse:collapse; font-size:12px; }
+.oo-nps-tab th { text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--gray-500); padding:4px 6px; border-bottom:1.5px solid var(--gray-200); }
+.oo-nps-tab td { padding:5px 6px; border-bottom:1px solid var(--gray-100); color:var(--gray-800); }
+.oo-nps-tab td.n { font-weight:800; }
+.oo-nps-nota { font-size:10px; color:var(--gray-400); margin-top:6px; }
+.oo-card-nps { font-size:12px; font-weight:700; }
+.oo-ind { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:12px; margin-bottom:14px; }
+.oo-ind .oo-nps { margin-bottom:0; min-width:0; }
+.oo-svg { display:block; width:100%; height:auto; margin:4px 0 6px; }
+.oo-leg { display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--gray-600); margin-bottom:8px; }
+.oo-leg i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align:-1px; }
+.oo-tab-wrap { overflow-x:auto; }
+.oo-lider { border:1.5px solid var(--gray-200); border-left:4px solid var(--navy); border-radius:10px; background:var(--gray-50); padding:10px 12px; display:grid; gap:10px; }
+.oo-lider-h { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--navy); }
+.oo-ta-s { min-height:64px; }
+.oo-seg { display:inline-flex; border:1.5px solid var(--gray-200); border-radius:9px; overflow:hidden; }
+.oo-seg button { padding:8px 14px; border:none; background:white; font-family:inherit; font-size:12px; font-weight:700; color:var(--gray-600); cursor:pointer; }
+.oo-seg button.on { background:var(--navy); color:white; }
+.oo-pront { padding-left:18px; border-left:3px solid var(--gray-200); margin-left:6px; }
+.oo-pront-item { position:relative; background:white; border:1.5px solid var(--gray-200); border-radius:12px; padding:12px 14px; margin-bottom:12px; display:grid; gap:10px; }
+.oo-pront-item:before { content:''; position:absolute; left:-24px; top:16px; width:11px; height:11px; border-radius:50%; background:var(--navy); border:2px solid white; box-shadow:0 0 0 1.5px var(--gray-200); }
+.oo-pront-sub { font-size:11px; color:var(--gray-500); }
+.oo-pront-plano { border-top:1px dashed var(--gray-200); padding-top:8px; display:grid; gap:8px; }
+.oo-pres-info { font-size:11px; color:var(--gray-500); }
 @media (max-width:768px) { .oo-busca { width:100%; } .oo-bar-right { margin-left:0; width:100%; } }
 </style>
 
@@ -7795,6 +7819,15 @@
       </div>
     </div>
     <div id="ooCards"><div class="oo-vazio"><i class="fas fa-spinner fa-spin"></i> Carregando…</div></div>
+
+    <!-- [v6.2] atendentes com caixa (dados do próprio dashboard: relatorios) -->
+    <div class="oo-sec">Atendentes com caixa</div>
+    <div class="oo-bar-right" style="margin:0 0 10px;">
+      <select id="ooMes" class="f-select oo-sel" onchange="ooRenderPresentes()" aria-label="Mês"></select>
+      <select id="ooDepto" class="f-select oo-sel" onchange="ooRenderPresentes()" aria-label="Departamento"><option value="">Todos os departamentos</option></select>
+      <button class="btn-sec" onclick="ooRenderPresentes(true)"><i class="fas fa-rotate"></i> Atualizar</button>
+    </div>
+    <div id="ooPresentes"></div>
   </div>
 
   <!-- FICHA da colaboradora -->
@@ -7806,11 +7839,14 @@
         <div class="oo-sub" id="ooFichaSub"></div>
       </div>
       <div class="oo-bar-right">
+        <div class="oo-seg" role="group" aria-label="Modo de visualização"><button type="button" id="ooSegReg" class="on" onclick="ooModoFicha('registros')">Registros</button><button type="button" id="ooSegPront" onclick="ooModoFicha('prontuario')">Prontuário</button></div>
         <button class="btn-p" onclick="ooAbrirReg(null)"><i class="fas fa-plus"></i> Novo 1:1</button>
+        <button class="btn-sec" onclick="ooAbrirReg(null,'lider')"><i class="fas fa-user-tie"></i> Relatório do líder</button>
         <button class="btn-sec" onclick="ooAbrirColab(window._ooFichaAtual)"><i class="fas fa-pen"></i> Editar ficha</button>
         <button class="oo-btn-red" onclick="ooExcluirColab()"><i class="fas fa-trash-can"></i> Mover para lixeira</button>
       </div>
     </div>
+    <div id="ooFichaNps"></div>
     <div id="ooHistorico"></div>
   </div>
 
@@ -7838,6 +7874,14 @@
     <div class="oo-modal-box">
       <div class="oo-modal-h"><span id="ooModalRegTitulo">Novo 1:1</span><button class="btn-sec" onclick="ooFecharModal('ooModalReg')">✕</button></div>
       <div class="oo-modal-b">
+        <div id="ooRegNps"></div>
+        <div class="oo-lider" id="ooSecLider">
+          <div class="oo-lider-h"><i class="fas fa-user-tie"></i> Relatório do líder <span style="text-transform:none;font-weight:400;color:var(--gray-400)">— resumo feito com o líder antes do 1:1</span></div>
+          <div><label class="oo-lbl" for="ooRegLider">Líder</label><input type="text" id="ooRegLider" class="f-input" style="width:100%;box-sizing:border-box;" maxlength="80" placeholder="Nome do líder"></div>
+          <div><label class="oo-lbl" for="ooRegLTopicos">Tópicos que o líder quer abordar</label><textarea id="ooRegLTopicos" class="f-input oo-ta oo-ta-s" placeholder="Em poucas linhas"></textarea></div>
+          <div><label class="oo-lbl" for="ooRegLMelhorias">Melhorias</label><textarea id="ooRegLMelhorias" class="f-input oo-ta oo-ta-s" placeholder="O que precisa melhorar"></textarea></div>
+          <div><label class="oo-lbl" for="ooRegLMomento">Momento atual (visão do líder)</label><textarea id="ooRegLMomento" class="f-input oo-ta oo-ta-s" placeholder="Como o líder vê a colaboradora hoje"></textarea></div>
+        </div>
         <div><label class="oo-lbl" for="ooRegData">Data do 1:1 *</label><input type="date" id="ooRegData" class="f-input"></div>
         <div><label class="oo-lbl" for="ooRegVisao">Visão da colaboradora</label><textarea id="ooRegVisao" class="f-input oo-ta"></textarea></div>
         <div><label class="oo-lbl" for="ooRegFortes">Pontos fortes</label><textarea id="ooRegFortes" class="f-input oo-ta"></textarea></div>
@@ -7902,6 +7946,7 @@
     var bl = $('btnLancProd'); if (bl) bl.style.display = 'none';
     S.view = 'home'; mostrar();
     if (!S.carregado) window.ooCarregar();
+    window.ooCarregarNps().then(function () { if ($('viewOneaone').classList.contains('active')) window.ooRender(); });
   };
   window.ooDesativarAba = function () {
     var vp = $('viewOneaone'); if (vp) vp.classList.remove('active');
@@ -7928,6 +7973,274 @@
     }
   };
 
+
+  /* ── [v6.2] atendentes com caixa no mês (lê _dados = relatorios, já carregado pelo dashboard) ── */
+  function dadosCaixa() { try { return (typeof _dados !== 'undefined' && _dados && typeof _dados === 'object') ? _dados : null; } catch (e) { return null; } }
+  function nomeCaixa(snap, uid) {
+    var n = (snap && snap.colaborador) || uid;
+    try { if (typeof aplicarAlias === 'function') n = aplicarAlias(n); } catch (e) {}
+    return String(n || '').trim();
+  }
+  function lerPresentes(mes) {
+    var d = dadosCaixa(), por = {}, us = window._usuarios || {};
+    if (!d) return [];
+    Object.keys(d).forEach(function (uid) {
+      var dias = d[uid]; if (!dias || typeof dias !== 'object') return;
+      Object.keys(dias).forEach(function (dia) {
+        if (dia.slice(0, 7) !== mes) return;
+        var snap = dias[dia]; if (!snap || typeof snap !== 'object' || !snap.totForma) return;
+        var nome = nomeCaixa(snap, uid); if (!nome) return;
+        var k = norm(nome);
+        if (!por[k]) por[k] = { nome: nome, depto: (us[uid] && us[uid].departamento) || '', dias: {} };
+        por[k].dias[dia] = true;
+        if (!por[k].depto && us[uid] && us[uid].departamento) por[k].depto = us[uid].departamento;
+      });
+    });
+    return Object.keys(por).map(function (k) { var p = por[k]; p.qtd = Object.keys(p.dias).length; return p; })
+      .sort(function (a, b) { return norm(a.nome).localeCompare(norm(b.nome)); });
+  }
+  window.ooRenderPresentes = function (forcar) {
+    var box = $('ooPresentes'); if (!box) return;
+    var d = dadosCaixa();
+    if (!d || !Object.keys(d).length) { box.innerHTML = '<div class="oo-vazio">Aguardando os dados do caixa… clique em “Atualizar” em alguns segundos.</div>'; return; }
+    /* meses com caixa (mais recente primeiro) */
+    var meses = {};
+    Object.keys(d).forEach(function (uid) { var dias = d[uid]; if (dias && typeof dias === 'object') Object.keys(dias).forEach(function (dia) { if (/^\d{4}-\d{2}-\d{2}$/.test(dia)) meses[dia.slice(0, 7)] = true; }); });
+    var lista = Object.keys(meses).sort().reverse();
+    var sel = $('ooMes'), atual = sel.value;
+    if (forcar || sel.options.length !== lista.length) {
+      sel.innerHTML = lista.map(function (m) { return '<option value="' + esc(m) + '">' + esc(m.slice(5) + '/' + m.slice(0, 4)) + '</option>'; }).join('');
+      sel.value = (atual && lista.indexOf(atual) >= 0) ? atual : (lista[0] || '');
+    }
+    var mes = sel.value, pres = lerPresentes(mes);
+    /* departamentos presentes no mês */
+    var dsel = $('ooDepto'), datual = dsel.value, deps = {};
+    pres.forEach(function (p) { if (p.depto) deps[p.depto] = true; });
+    var dl = Object.keys(deps).sort();
+    if (forcar || dsel.options.length !== dl.length + 1) {
+      dsel.innerHTML = '<option value="">Todos os departamentos</option>' + dl.map(function (x) { return '<option value="' + esc(x) + '">' + esc(x) + '</option>'; }).join('');
+      dsel.value = dl.indexOf(datual) >= 0 ? datual : '';
+    }
+    var filtro = dsel.value;
+    S.presentes = pres.filter(function (p) { return !filtro || p.depto === filtro; });
+    if (!S.presentes.length) { box.innerHTML = '<div class="oo-vazio">Nenhum atendente com caixa neste período.</div>'; return; }
+    box.innerHTML = S.presentes.map(function (p, i) {
+      var f = null, k = norm(p.nome);
+      S.fichas.forEach(function (x) { if (norm(x.nome) === k && (!f || (f.deletedAt && !x.deletedAt))) f = x; });
+      var acao = !f ? '<button class="btn-p" style="margin-left:auto" onclick="ooCriarDePresente(' + i + ')"><i class="fas fa-user-plus"></i> Criar ficha</button>'
+        : (f.deletedAt ? '<span class="oo-lix-info" style="margin-left:auto">Ficha na lixeira</span>'
+        : '<button class="btn-sec" style="margin-left:auto" onclick="ooAbrirFicha(\'' + esc(f.id) + '\')"><i class="fas fa-folder-open"></i> Abrir ficha</button>');
+      return '<div class="oo-lix-item"><div><div class="oo-lix-nome">' + esc(p.nome) + '</div><div class="oo-pres-info">' +
+        esc(p.depto || 'Sem departamento') + ' · ' + p.qtd + (p.qtd === 1 ? ' dia com caixa' : ' dias com caixa') + '</div></div>' + acao + '</div>';
+    }).join('');
+  };
+  window.ooCriarDePresente = async function (i) {
+    var F = fs(); var p = S.presentes && S.presentes[i]; if (!F || !p) return;
+    if (!S.carregado) { toast('Aguarde as fichas carregarem e tente de novo.', 'info'); return; }
+    var k = norm(p.nome);
+    if (S.fichas.some(function (x) { return !x.deletedAt && norm(x.nome) === k; })) { toast('Já existe ficha para ' + p.nome + '.', 'info'); window.ooRenderPresentes(); return; }
+    try {
+      var ref = F.doc(F.collection(F.db, COL)), t = agora();
+      var novo = { nome: p.nome, setor: p.depto || '', createdAt: t, updatedAt: t, deletedAt: null };
+      await F.setDoc(ref, novo); novo.id = ref.id; novo.registros = []; S.fichas.push(novo);
+      toast('Ficha criada: ' + p.nome, 'success'); window.ooRender();
+    } catch (e) { erroFs(e, 'Erro ao criar a ficha.'); }
+  };
+
+
+  /* ── [v6.3] NPS por atendente (lê nps/{YYYY-MM}/{id}, gravado pela página NPS) ── */
+  S.nps = { idx: {}, t: 0, ok: false, carregando: null };
+  function aliasNome(n) { try { if (typeof aplicarAlias === 'function') return aplicarAlias(n) || n; } catch (e) {} return n; }
+  function toks(k) { return k.split(/\s+/).filter(Boolean); }
+  function subconj(a, b) { return a.length > 0 && a.every(function (t) { return b.indexOf(t) >= 0; }); }
+  function mesBR(ym) { return ym.slice(5) + '/' + ym.slice(0, 4); }
+  function pct(n, t) { return t > 0 ? Math.round(n / t * 100) : 0; }
+  function zona(n) {
+    if (n >= 75) return { l: 'Excelência', bg: 'var(--green-bg)', c: 'var(--green)' };
+    if (n >= 50) return { l: 'Qualidade', bg: 'var(--blue-bg)', c: 'var(--blue)' };
+    if (n >= 0) return { l: 'Aperfeiçoamento', bg: 'var(--amber-bg)', c: 'var(--amber)' };
+    return { l: 'Crítica', bg: '#fee2e2', c: 'var(--red)' };
+  }
+  function processarNps(raw) {
+    var imports = [];
+    Object.keys(raw || {}).forEach(function (k) {
+      var v = raw[k]; if (!v || typeof v !== 'object') return;
+      if (/^\d{4}-\d{2}$/.test(k)) Object.keys(v).forEach(function (id) { var imp = v[id]; if (imp && typeof imp === 'object') imports.push({ periodo: k, imp: imp }); });
+      else if (k === 'relatorios') Object.keys(v).forEach(function (id) { var imp = v[id]; if (imp && typeof imp === 'object' && /^\d{4}-\d{2}$/.test(imp.periodo || '')) imports.push({ periodo: imp.periodo, imp: imp }); });
+    });
+    /* do mais antigo para o mais novo: em caso de vários uploads no mesmo mês, vale o mais recente */
+    imports.sort(function (a, b) { return String(a.imp.importadoEm || '').localeCompare(String(b.imp.importadoEm || '')); });
+    var idx = {};
+    imports.forEach(function (it) {
+      var rk = it.imp.ranking; rk = Array.isArray(rk) ? rk : (rk && typeof rk === 'object' ? Object.keys(rk).map(function (i) { return rk[i]; }) : []);
+      rk.forEach(function (r) {
+        if (!r || !r.nome) return;
+        var total = Number(r.total) || 0, p = Number(r.p) || 0, d = Number(r.d) || 0, s = Number(r.s) || 0;
+        if (!total) return;
+        var key = norm(aliasNome(String(r.nome)));
+        if (!key || key === 'desconhecido') return;
+        var e = idx[key] || (idx[key] = { nome: String(r.nome), meses: {} });
+        var ant = e.meses[it.periodo];
+        e.meses[it.periodo] = { nps: Math.round((p - d) / total * 100), total: total, p: p, s: s, d: d, uploads: (ant ? ant.uploads : 0) + 1 };
+        e.nome = String(r.nome);
+      });
+    });
+    S.nps.idx = idx;
+  }
+  window.ooCarregarNps = function (forcar) {
+    if (S.nps.carregando) return S.nps.carregando;
+    if (!forcar && S.nps.ok && Date.now() - S.nps.t < 300000) return Promise.resolve();
+    if (!window.fbGet) return Promise.resolve();
+    S.nps.carregando = window.fbGet('nps').then(function (snap) {
+      processarNps(snap && snap.val ? snap.val() : {}); S.nps.ok = true; S.nps.t = Date.now();
+    }).catch(function (e) {
+      S.nps.ok = false; console.warn('[1:1s] NPS indisponível:', e);
+      if (forcar) toast('Não foi possível ler o NPS agora.', 'info');
+    }).then(function () { S.nps.carregando = null; });
+    return S.nps.carregando;
+  };
+  /* acha a entrada da ficha em um índice (NPS ou caixa): nome igual (com alias) ou, se único e sem ambiguidade, por palavras do nome */
+  function acharPorNome(idx, f) {
+    var k = norm(aliasNome(f.nome));
+    if (idx[k]) return idx[k];
+    var tk = toks(k), chaves = Object.keys(idx);
+    var cands = chaves.filter(function (c) { var tc = toks(c); return subconj(tk, tc) || subconj(tc, tk); });
+    if (cands.length !== 1) return null;
+    var tc = toks(cands[0]);
+    var outra = S.fichas.some(function (x) {
+      if (x.id === f.id || x.deletedAt) return false;
+      var tx = toks(norm(aliasNome(x.nome))); return subconj(tx, tc) || subconj(tc, tx);
+    });
+    return outra ? null : idx[cands[0]];
+  }
+  function npsDaFicha(f) { return acharPorNome(S.nps.idx, f); }
+  function ultimoMesNps(e) { var ms = Object.keys(e.meses).sort(); return ms.length ? ms[ms.length - 1] : ''; }
+
+  /* ── gráfico de linhas em SVG (sem biblioteca) ── */
+  function brl(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+  function brlCurto(v) {
+    v = Number(v) || 0;
+    if (v >= 1e6) return 'R$ ' + (v / 1e6).toFixed(1).replace('.', ',') + ' mi';
+    if (v >= 1e4) return 'R$ ' + Math.round(v / 1e3) + ' mil';
+    if (v >= 1e3) return 'R$ ' + (v / 1e3).toFixed(1).replace('.', ',') + ' mil';
+    return 'R$ ' + Math.round(v);
+  }
+  function maxBonito(max) {
+    if (!(max > 0)) return 1;
+    var mag = Math.pow(10, Math.floor(Math.log(max) / Math.LN10));
+    return Math.ceil(max / mag * 2) / 2 * mag;
+  }
+  function svgLinhas(labels, series, opt) {
+    var W = 560, H = 210, L = 52, R = 14, T = 12, B = 26, iw = W - L - R, ih = H - T - B, n = labels.length, ymax = opt.ymax;
+    function X(i) { return n === 1 ? L + iw / 2 : L + iw * i / (n - 1); }
+    function Y(v) { return T + ih - ih * (Math.max(0, v) / ymax); }
+    var s = '<svg class="oo-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(opt.titulo) + '">';
+    for (var g = 0; g <= 4; g++) {
+      var gv = ymax * g / 4, gy = Y(gv);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" style="stroke:var(--gray-200)" stroke-width="1"/>' +
+        '<text x="' + (L - 6) + '" y="' + (gy + 3) + '" text-anchor="end" font-size="10" style="fill:var(--gray-500)">' + esc(opt.fmtY(gv)) + '</text>';
+    }
+    labels.forEach(function (lb, i) { s += '<text x="' + X(i) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" style="fill:var(--gray-500)">' + esc(lb) + '</text>'; });
+    series.forEach(function (se) {
+      if (n > 1) s += '<polyline fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="' + (se.grossa ? 3 : 2) + '" style="stroke:' + se.cor + '" points="' +
+        se.vals.map(function (v, i) { return X(i).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ') + '"/>';
+      se.vals.forEach(function (v, i) {
+        s += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="3.5" style="fill:' + se.cor + '"><title>' + esc(labels[i] + ' · ' + se.nome + ': ' + se.dicas[i]) + '</title></circle>';
+      });
+    });
+    return s + '</svg>';
+  }
+  function legenda(series) { return '<div class="oo-leg">' + series.map(function (se) { return '<span><i style="background:' + se.cor + '"></i>' + esc(se.nome) + '</span>'; }).join('') + '</div>'; }
+  function labelMes(ym) { return ym.slice(5) + '/' + ym.slice(2, 4); }
+
+  function npsHtml(f, maxMeses) {
+    var e = npsDaFicha(f); if (!e) return '';
+    var ms = Object.keys(e.meses).sort().reverse(); if (!ms.length) return '';
+    var lim = maxMeses || 6, u = e.meses[ms[0]], z = zona(u.nps);
+    var asc = ms.slice(0, lim).reverse();
+    var series = [
+      { nome: 'Promotores', cor: 'var(--green)', vals: [], dicas: [] },
+      { nome: 'Passivos', cor: 'var(--amber)', vals: [], dicas: [] },
+      { nome: 'Detratores', cor: 'var(--red)', vals: [], dicas: [] }];
+    asc.forEach(function (m) {
+      var x = e.meses[m];
+      [[x.p, 0], [x.s, 1], [x.d, 2]].forEach(function (pr) { series[pr[1]].vals.push(pct(pr[0], x.total)); series[pr[1]].dicas.push(pct(pr[0], x.total) + '% (' + pr[0] + ' de ' + x.total + ')'); });
+    });
+    var grafico = svgLinhas(asc.map(labelMes), series, { ymax: 100, fmtY: function (v) { return Math.round(v) + '%'; }, titulo: 'Evolução de promotores, passivos e detratores' }) + legenda(series) +
+      (asc.length < 2 ? '<div class="oo-nps-nota">Só há 1 mês com resultado; a linha aparece a partir de 2 meses.</div>' : '');
+    var linhas = ms.slice(0, lim).map(function (m) {
+      var x = e.meses[m], zz = zona(x.nps);
+      return '<tr><td>' + esc(mesBR(m)) + '</td><td class="n" style="color:' + zz.c + '">' + x.nps + '</td><td>' + pct(x.p, x.total) + '%</td><td>' + pct(x.s, x.total) + '%</td><td>' + pct(x.d, x.total) + '%</td><td>' + x.total +
+        (x.uploads > 1 ? ' <span class="oo-nps-nota" title="Mais de um upload neste mês; vale o mais recente">(' + x.uploads + ' uploads)</span>' : '') + '</td></tr>';
+    }).join('');
+    return '<div class="oo-nps"><div class="oo-nps-h"><span class="oo-nps-t"><i class="fas fa-star"></i> NPS · ' + esc(e.nome) + '</span>' +
+      '<span class="oo-nps-zona" style="background:' + z.bg + ';color:' + z.c + '">' + u.nps + ' · ' + esc(z.l) + ' (' + esc(mesBR(ms[0])) + ')</span>' +
+      '<a class="oo-nps-link" href="nps.html" target="_blank" rel="noopener">Abrir NPS →</a></div>' + grafico +
+      '<div class="oo-tab-wrap"><table class="oo-nps-tab"><thead><tr><th>Mês</th><th>NPS</th><th>Promotores</th><th>Passivos</th><th>Detratores</th><th>Pesquisas</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+      (ms.length > lim ? '<div class="oo-nps-nota">Mostrando os ' + lim + ' meses mais recentes de ' + ms.length + '.</div>' : '') + '</div>';
+  }
+
+  /* ── caixa: faturamento por mês (mesma conta do dashboard: calcRow) ── */
+  function calcSeguro(tf, uid) {
+    try { if (typeof calcRow === 'function') { var r = calcRow(tf, uid); return { avista: r.avista || 0, credito: r.credito || 0, despesas: r.despesas || 0 }; } } catch (e) {}
+    tf = tf || {};
+    var en = function (k) { return (tf[k] && tf[k].entrada) || 0; };
+    var desp = 0; Object.keys(tf).forEach(function (k) { desp += (tf[k] && tf[k].saida) || 0; });
+    return { avista: en('Cartão de Débito') + en('PIX') + en('Dinheiro'), credito: en('Cartão de Crédito'), despesas: desp };
+  }
+  var _cx = { d: null, t: 0, idx: {} };
+  function indiceCaixa() {
+    var d = dadosCaixa(); if (!d) return {};
+    if (_cx.d === d && Date.now() - _cx.t < 20000) return _cx.idx;
+    var idx = {};
+    Object.keys(d).forEach(function (uid) {
+      var dias = d[uid]; if (!dias || typeof dias !== 'object') return;
+      Object.keys(dias).forEach(function (dia) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dia)) return;
+        var snap = dias[dia]; if (!snap || typeof snap !== 'object' || !snap.totForma) return;
+        var nome = nomeCaixa(snap, uid); if (!nome) return;
+        var k = norm(nome), e = idx[k] || (idx[k] = { nome: nome, meses: {} }), ym = dia.slice(0, 7);
+        var m = e.meses[ym] || (e.meses[ym] = { avista: 0, credito: 0, despesas: 0, dias: {} });
+        var r = calcSeguro(snap.totForma, uid);
+        m.avista += r.avista; m.credito += r.credito; m.despesas += r.despesas; m.dias[dia] = true;
+      });
+    });
+    _cx = { d: d, t: Date.now(), idx: idx };
+    return idx;
+  }
+  function caixaHtml(f, maxMeses) {
+    var e = acharPorNome(indiceCaixa(), f); if (!e) return '';
+    var ms = Object.keys(e.meses).sort().reverse(); if (!ms.length) return '';
+    var lim = maxMeses || 6, asc = ms.slice(0, lim).reverse();
+    var series = [
+      { nome: 'Faturamento', cor: 'var(--navy)', vals: [], dicas: [], grossa: true },
+      { nome: 'À vista', cor: 'var(--green)', vals: [], dicas: [] },
+      { nome: 'Crédito', cor: 'var(--purple)', vals: [], dicas: [] }];
+    var max = 0;
+    asc.forEach(function (m) {
+      var x = e.meses[m], fat = x.avista + x.credito;
+      series[0].vals.push(fat); series[0].dicas.push(brl(fat));
+      series[1].vals.push(x.avista); series[1].dicas.push(brl(x.avista));
+      series[2].vals.push(x.credito); series[2].dicas.push(brl(x.credito));
+      max = Math.max(max, fat, x.avista, x.credito);
+    });
+    var grafico = svgLinhas(asc.map(labelMes), series, { ymax: maxBonito(max), fmtY: brlCurto, titulo: 'Evolução do faturamento no caixa' }) + legenda(series) +
+      (asc.length < 2 ? '<div class="oo-nps-nota">Só há 1 mês com caixa; a linha aparece a partir de 2 meses.</div>' : '');
+    var uf = e.meses[ms[0]], ufat = uf.avista + uf.credito;
+    var linhas = ms.slice(0, lim).map(function (m) {
+      var x = e.meses[m], fat = x.avista + x.credito, nd = Object.keys(x.dias).length;
+      return '<tr><td>' + esc(mesBR(m)) + '</td><td class="n">' + esc(brl(fat)) + '</td><td>' + esc(brl(x.avista)) + '</td><td>' + esc(brl(x.credito)) + '</td><td>' + esc(brl(x.despesas)) + '</td><td>' + nd + '</td><td>' + esc(brl(nd ? fat / nd : 0)) + '</td></tr>';
+    }).join('');
+    return '<div class="oo-nps"><div class="oo-nps-h"><span class="oo-nps-t"><i class="fas fa-cash-register"></i> Caixa · ' + esc(e.nome) + '</span>' +
+      '<span class="oo-nps-zona" style="background:var(--blue-bg);color:var(--blue)">' + esc(brl(ufat)) + ' (' + esc(mesBR(ms[0])) + ')</span></div>' + grafico +
+      '<div class="oo-tab-wrap"><table class="oo-nps-tab"><thead><tr><th>Mês</th><th>Faturamento</th><th>À vista</th><th>Crédito</th><th>Despesas</th><th>Dias</th><th>Média/dia</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+      '<div class="oo-nps-nota">Faturamento = à vista + crédito, sem descontar despesas. Dias = dias com caixa fechado.' + (ms.length > lim ? ' Mostrando os ' + lim + ' meses mais recentes de ' + ms.length + '.' : '') + '</div></div>';
+  }
+  function indicadoresHtml(f, maxMeses) {
+    var a = npsHtml(f, maxMeses), b = caixaHtml(f, maxMeses);
+    return (a || b) ? '<div class="oo-ind">' + a + b + '</div>' : '';
+  }
+
   /* ── navegação interna ────────────────────────────────────────── */
   function mostrar() {
     $('ooHome').classList.toggle('oo-hidden', S.view !== 'home');
@@ -7935,7 +8248,7 @@
     $('ooLixeira').classList.toggle('oo-hidden', S.view !== 'lixeira');
   }
   window.ooVoltar = function () { S.view = 'home'; S.fichaId = null; mostrar(); window.ooRender(); };
-  window.ooAbrirFicha = function (id) { S.fichaId = id; S.view = 'ficha'; mostrar(); window.ooRender(); };
+  window.ooAbrirFicha = function (id) { S.fichaId = id; S.modo = 'registros'; S.view = 'ficha'; mostrar(); window.ooRender(); };
   window.ooAbrirLixeira = function () { S.view = 'lixeira'; mostrar(); window.ooRender(); };
   window.ooFecharModal = function (id) { $(id).style.display = 'none'; };
   function abrirModal(id) { $(id).style.display = 'flex'; }
@@ -7948,11 +8261,17 @@
       else (f.registros || []).forEach(function (r) { if (r.deletedAt) nLix++; });
     });
     $('ooLixCount').textContent = nLix ? ' (' + nLix + ')' : '';
-    if (S.view === 'home') renderCards();
+    if (S.view === 'home') { renderCards(); window.ooRenderPresentes(); }
     else if (S.view === 'ficha') renderFicha();
     else renderLixeira();
   };
 
+  function cardNps(f) {
+    var e = npsDaFicha(f); if (!e) return '';
+    var m = ultimoMesNps(e); if (!m) return '';
+    var x = e.meses[m], z = zona(x.nps);
+    return '<span class="oo-card-nps" style="color:' + z.c + '"><i class="fas fa-star"></i> NPS ' + x.nps + ' (' + esc(mesBR(m)) + ')</span>';
+  }
   function renderCards() {
     var q = norm($('ooBusca').value);
     var lista = S.fichas.filter(function (f) { return !f.deletedAt && (!q || norm(f.nome).indexOf(q) >= 0); })
@@ -7969,7 +8288,7 @@
         '<div class="oo-card-nome">' + esc(f.nome) + '</div>' +
         '<div class="oo-card-setor">' + esc(f.setor || '—') + '</div>' +
         '<div class="oo-card-meta"><span><i class="fas fa-comments"></i> ' + rs.length + (rs.length === 1 ? ' 1:1' : ' 1:1s') + '</span>' +
-        '<span><i class="fas fa-calendar"></i> ' + (ult ? 'Último: ' + esc(ult) : 'Sem 1:1s ainda') + '</span></div></button>';
+        '<span><i class="fas fa-calendar"></i> ' + (ult ? 'Último: ' + esc(ult) : 'Sem 1:1s ainda') + '</span>' + cardNps(f) + '</div></button>';
     }).join('') + '</div>';
   }
 
@@ -7982,13 +8301,34 @@
     if (!valor) return '';
     return '<div><div class="oo-campo-l">' + esc(rotulo) + '</div><div class="oo-campo-v">' + esc(valor) + '</div></div>';
   }
+  /* [v6.5] relatório do líder */
+  function temLider(r) { return !!(r.liderNome || r.liderTopicos || r.liderMelhorias || r.liderMomento); }
+  function liderHtml(r) {
+    if (!temLider(r)) return '';
+    return '<div class="oo-lider"><div class="oo-lider-h"><i class="fas fa-user-tie"></i> Relatório do líder' + (r.liderNome ? ' · ' + esc(r.liderNome) : '') + '</div>' +
+      campo('Tópicos que o líder quer abordar', r.liderTopicos) + campo('Melhorias', r.liderMelhorias) + campo('Momento atual (visão do líder)', r.liderMomento) + '</div>';
+  }
+  function prontuarioHtml(rs) {
+    if (!rs.length) return '<div class="oo-vazio">Nenhum 1:1 registrado. Use “Relatório do líder” ou “Novo 1:1”.</div>';
+    return '<div class="oo-pront">' + rs.map(function (r) {
+      var plano = campo('Plano de ação', r.planoAcao) + campo('Combinados', r.combinados) + campo('Próxima data', fmtData(r.proximaData));
+      return '<div class="oo-pront-item"><div><span class="oo-reg-data">' + esc(fmtData(r.dataReuniao)) + '</span>' + (r.liderNome ? ' <span class="oo-pront-sub">· Líder: ' + esc(r.liderNome) + '</span>' : '') + '</div>' +
+        (temLider(r) ? campo('Momento atual (visão do líder)', r.liderMomento) + campo('Melhorias', r.liderMelhorias) + campo('Tópicos que o líder quer abordar', r.liderTopicos)
+                     : '<div class="oo-pront-sub">Sem relatório do líder neste 1:1.</div>') +
+        (plano ? '<div class="oo-pront-plano">' + plano + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  window.ooModoFicha = function (m) { S.modo = (m === 'prontuario') ? 'prontuario' : 'registros'; window.ooRender(); };
   function renderFicha() {
     var f = fichaPorId(S.fichaId);
     if (!f || f.deletedAt) { window.ooVoltar(); return; }
     window._ooFichaAtual = f.id;
     $('ooFichaNome').textContent = f.nome;
     $('ooFichaSub').textContent = (f.setor || '') + (f.setor ? ' · ' : '') + regsAtivos(f).length + ' registro(s)';
+    $('ooFichaNps').innerHTML = indicadoresHtml(f, 12);
     var rs = regsAtivos(f);
+    $('ooSegReg').classList.toggle('on', S.modo !== 'prontuario'); $('ooSegPront').classList.toggle('on', S.modo === 'prontuario');
+    if (S.modo === 'prontuario') { $('ooHistorico').innerHTML = prontuarioHtml(rs); return; }
     if (!rs.length) { $('ooHistorico').innerHTML = '<div class="oo-vazio">Nenhum 1:1 registrado. Use “Novo 1:1”.</div>'; return; }
     $('ooHistorico').innerHTML = rs.map(function (r) {
       var orig = '';
@@ -8000,7 +8340,7 @@
         (r.origem ? '<span class="oo-reg-tag">importado</span>' : '') +
         '<div class="oo-reg-actions"><button class="btn-sec" onclick="ooAbrirReg(\'' + esc(r.id) + '\')"><i class="fas fa-pen"></i> Editar</button>' +
         '<button class="oo-btn-red" onclick="ooExcluirReg(\'' + esc(r.id) + '\')"><i class="fas fa-trash-can"></i></button></div></div>' +
-        '<div class="oo-reg-body">' +
+        '<div class="oo-reg-body">' + liderHtml(r) +
         campo('Visão da colaboradora', r.visaoColaboradora) + campo('Pontos fortes', r.pontosFortes) +
         campo('Desenvolvimento (SBI)', r.desenvolvimentoSBI) + campo('Plano de ação', r.planoAcao) +
         campo('Combinados', r.combinados) + campo('Próxima data', fmtData(r.proximaData)) +
@@ -8074,15 +8414,27 @@
   /* ── 1:1: criar / editar / lixeira ────────────────────────────── */
   var CAMPOS = [['dataReuniao', 'ooRegData'], ['visaoColaboradora', 'ooRegVisao'], ['pontosFortes', 'ooRegFortes'],
     ['desenvolvimentoSBI', 'ooRegSbi'], ['planoAcao', 'ooRegPlano'], ['combinados', 'ooRegCombinados'],
-    ['proximaData', 'ooRegProxima'], ['observacoes', 'ooRegObs']];
-  window.ooAbrirReg = function (id) {
+    ['proximaData', 'ooRegProxima'], ['observacoes', 'ooRegObs'],
+    ['liderNome', 'ooRegLider'], ['liderTopicos', 'ooRegLTopicos'], ['liderMelhorias', 'ooRegLMelhorias'], ['liderMomento', 'ooRegLMomento']];
+  /* [v6.5] nome do líder do último relatório (da própria ficha, senão de qualquer ficha) */
+  function ultimoLider(f) {
+    var melhor = '', data = '';
+    function olha(x) { (x.registros || []).forEach(function (r) { if (!r.deletedAt && r.liderNome && (r.dataReuniao || '') >= data) { data = r.dataReuniao || ''; melhor = r.liderNome; } }); }
+    olha(f); if (melhor) return melhor;
+    data = ''; S.fichas.forEach(olha); return melhor;
+  }
+  window.ooAbrirReg = function (id, foco) {
     var f = fichaPorId(S.fichaId); if (!f) return;
     var r = null; if (id) (f.registros || []).forEach(function (x) { if (x.id === id) r = x; });
     S.editRegId = r ? r.id : null;
     $('ooModalRegTitulo').textContent = (r ? 'Editar 1:1' : 'Novo 1:1') + ' — ' + f.nome;
     CAMPOS.forEach(function (c) { $(c[1]).value = r ? (r[c[0]] || '') : ''; });
-    if (!r) $('ooRegData').value = hojeLocal();
+    if (!r) { $('ooRegData').value = hojeLocal(); $('ooRegLider').value = ultimoLider(f); }
+    $('ooRegNps').innerHTML = indicadoresHtml(f, 6);
     abrirModal('ooModalReg');
+    if (foco === 'lider') { var sec = $('ooSecLider'); if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: 'center' }); $('ooRegLTopicos').focus(); }
+    /* se o NPS ainda não tinha carregado, preenche assim que chegar */
+    window.ooCarregarNps().then(function () { if ($('ooModalReg').style.display === 'flex' && S.fichaId === f.id) $('ooRegNps').innerHTML = indicadoresHtml(f, 6); });
   };
   window.ooSalvarReg = async function () {
     var F = fs(); var f = fichaPorId(S.fichaId); if (!F || !f) return;
@@ -8158,6 +8510,10 @@
           var rd = { dataReuniao: r.dataReuniao, visaoColaboradora: String(r.visaoColaboradora || ''), pontosFortes: String(r.pontosFortes || ''),
             desenvolvimentoSBI: String(r.desenvolvimentoSBI || ''), planoAcao: String(r.planoAcao || ''), combinados: String(r.combinados || ''),
             proximaData: RE_DATA.test(r.proximaData || '') ? r.proximaData : '', observacoes: String(r.observacoes || ''),
+            liderNome: String(r.liderNome != null ? r.liderNome : (antigo ? antigo.liderNome || '' : '')),
+            liderTopicos: String(r.liderTopicos != null ? r.liderTopicos : (antigo ? antigo.liderTopicos || '' : '')),
+            liderMelhorias: String(r.liderMelhorias != null ? r.liderMelhorias : (antigo ? antigo.liderMelhorias || '' : '')),
+            liderMomento: String(r.liderMomento != null ? r.liderMomento : (antigo ? antigo.liderMomento || '' : '')),
             respostasOriginais: (r.respostasOriginais && typeof r.respostasOriginais === 'object') ? r.respostasOriginais : null,
             origem: String(r.origem || 'importacao-json'), createdAt: antigo ? (antigo.createdAt || t) : t, updatedAt: t, deletedAt: antigo ? (antigo.deletedAt || null) : null };
           await F.setDoc(F.doc(F.db, COL, col.id, 'registros', r.id), rd);
