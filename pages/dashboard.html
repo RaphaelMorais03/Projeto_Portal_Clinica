@@ -2396,10 +2396,14 @@
     import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getDatabase, ref, get, set, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    // [v2.2] Firestore para a aba 1:1s (SDK modular v11.6.0, mesma versão do portal)
+    import { getFirestore, collection, doc, getDocs, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const _app  = initializeApp(window.FIREBASE_CONFIG);
     const _auth = getAuth(_app);
     const _db   = getDatabase(_app);
+    // [v2.2] Firestore (aba 1:1s) — exposto só para o bloco oo* no fim do arquivo
+    window._ooFs = { db: getFirestore(_app), collection, doc, getDocs, setDoc, updateDoc };
     window.initFirebaseUtils(_db, ref, get);
     window.fbSet    = (path, data) => set(ref(_db, path), data);
     window.fbGet    = (path)       => get(ref(_db, path));
@@ -2896,6 +2900,463 @@ window.baixarExportCaixa = function() {
   }
 })();
 </script>
+<!-- ══════════════════════════════════════════════════════════════════
+     [v2.2] ABA 1:1s — acompanhamento de 1:1 do callcenter
+     Dados no Firestore: oneaone_fichas/{id} e oneaone_fichas/{id}/registros/{id}
+     Prefixo oo* (IDs e funções). Não altera nenhuma aba existente.
+     ══════════════════════════════════════════════════════════════════ -->
+<style>
+/* [v2.2] estilos da aba 1:1s — todos com prefixo .oo- ou #oo* */
+#viewOneaone { padding: 4px 0 40px; }
+.oo-bar { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+.oo-title { font-size:16px; font-weight:800; color:var(--navy); }
+.oo-sub { font-size:12px; color:var(--gray-400); margin-top:2px; }
+.oo-bar-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; }
+.oo-busca { width:220px; }
+.oo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+.oo-card { background:white; border:1.5px solid var(--gray-200); border-radius:14px; padding:16px; cursor:pointer; transition:border-color .2s, box-shadow .2s; text-align:left; font-family:inherit; }
+.oo-card:hover { border-color:var(--navy); box-shadow:0 6px 18px rgba(10,31,68,.10); }
+.oo-card-nome { font-size:15px; font-weight:800; color:var(--navy); margin-bottom:2px; }
+.oo-card-setor { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--gray-500); margin-bottom:12px; }
+.oo-card-meta { font-size:12px; color:var(--gray-600); display:flex; flex-direction:column; gap:3px; }
+.oo-vazio { padding:48px 16px; text-align:center; color:var(--gray-400); font-size:13px; }
+.oo-back { background:none; border:none; color:var(--navy); font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; padding:0; margin-bottom:12px; }
+.oo-reg { background:white; border:1.5px solid var(--gray-200); border-radius:14px; margin-bottom:12px; overflow:hidden; }
+.oo-reg-head { display:flex; align-items:center; gap:10px; padding:12px 16px; background:var(--gray-50); border-bottom:1.5px solid var(--gray-200); flex-wrap:wrap; }
+.oo-reg-data { font-size:14px; font-weight:800; color:var(--navy); }
+.oo-reg-tag { font-size:10px; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:20px; background:var(--blue-bg); color:var(--blue); }
+.oo-reg-actions { margin-left:auto; display:flex; gap:6px; }
+.oo-reg-body { padding:14px 16px; display:grid; gap:12px; }
+.oo-campo-l { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--gray-500); margin-bottom:3px; }
+.oo-campo-v { font-size:13px; color:var(--gray-800); white-space:pre-wrap; line-height:1.5; }
+.oo-orig { border:1.5px dashed var(--gray-200); border-radius:10px; padding:10px 12px; background:var(--gray-50); }
+.oo-orig > summary { cursor:pointer; font-size:12px; font-weight:700; color:var(--gray-600); }
+.oo-orig-corpo { display:grid; gap:10px; margin-top:10px; }
+.oo-sec { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--gray-500); margin:18px 0 8px; }
+.oo-lix-item { display:flex; align-items:center; gap:10px; background:white; border:1.5px solid var(--gray-200); border-radius:10px; padding:10px 14px; margin-bottom:8px; flex-wrap:wrap; }
+.oo-lix-nome { font-size:13px; font-weight:700; color:var(--gray-800); }
+.oo-lix-info { font-size:11px; color:var(--gray-400); }
+.oo-modal { display:none; position:fixed; inset:0; background:rgba(10,31,68,.55); backdrop-filter:blur(4px); z-index:700; align-items:center; justify-content:center; padding:20px; }
+.oo-modal-box { background:white; border-radius:18px; max-width:620px; width:100%; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.oo-modal-h { padding:16px 22px; border-bottom:1.5px solid var(--gray-100); display:flex; align-items:center; justify-content:space-between; font-size:15px; font-weight:800; color:var(--navy); }
+.oo-modal-b { padding:18px 22px; display:grid; gap:12px; }
+.oo-modal-f { padding:14px 22px; border-top:1.5px solid var(--gray-100); display:flex; justify-content:flex-end; gap:8px; }
+.oo-lbl { font-size:11px; font-weight:700; text-transform:uppercase; color:var(--gray-500); display:block; margin-bottom:5px; }
+.oo-hint { font-size:11px; color:var(--gray-400); margin-top:3px; }
+.oo-ta { width:100%; min-height:84px; resize:vertical; box-sizing:border-box; }
+.oo-btn-red { padding:9px 14px; background:white; color:var(--red); border:1.5px solid var(--red); border-radius:9px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.oo-btn-red:hover { background:var(--red); color:white; }
+.oo-hidden { display:none !important; }
+@media (max-width:768px) { .oo-busca { width:100%; } .oo-bar-right { margin-left:0; width:100%; } }
+</style>
+
+<div class="view-panel" id="viewOneaone">
+
+  <!-- TELA INICIAL: cards do time -->
+  <div id="ooHome">
+    <div class="oo-bar">
+      <div>
+        <div class="oo-title">1:1s do Callcenter</div>
+        <div class="oo-sub">Acompanhamento individual — dados visíveis só para o líder</div>
+      </div>
+      <div class="oo-bar-right">
+        <input type="search" id="ooBusca" class="f-input oo-busca" placeholder="Buscar colaboradora…" oninput="ooRender()" autocomplete="off">
+        <button class="btn-p" id="ooBtnNova" onclick="ooAbrirColab(null)"><i class="fas fa-user-plus"></i> Nova colaboradora</button>
+        <button class="btn-sec" id="ooBtnImport" onclick="document.getElementById('ooArquivo').click()"><i class="fas fa-file-import"></i> Importar JSON</button>
+        <button class="btn-sec" id="ooBtnLixeira" onclick="ooAbrirLixeira()"><i class="fas fa-trash-can"></i> Lixeira<span id="ooLixCount"></span></button>
+        <input type="file" id="ooArquivo" accept=".json,application/json" style="display:none" onchange="ooImportar(this)">
+      </div>
+    </div>
+    <div id="ooCards"><div class="oo-vazio"><i class="fas fa-spinner fa-spin"></i> Carregando…</div></div>
+  </div>
+
+  <!-- FICHA da colaboradora -->
+  <div id="ooFicha" class="oo-hidden">
+    <button class="oo-back" onclick="ooVoltar()"><i class="fas fa-arrow-left"></i> Voltar ao time</button>
+    <div class="oo-bar">
+      <div>
+        <div class="oo-title" id="ooFichaNome"></div>
+        <div class="oo-sub" id="ooFichaSub"></div>
+      </div>
+      <div class="oo-bar-right">
+        <button class="btn-p" onclick="ooAbrirReg(null)"><i class="fas fa-plus"></i> Novo 1:1</button>
+        <button class="btn-sec" onclick="ooAbrirColab(window._ooFichaAtual)"><i class="fas fa-pen"></i> Editar ficha</button>
+        <button class="oo-btn-red" onclick="ooExcluirColab()"><i class="fas fa-trash-can"></i> Mover para lixeira</button>
+      </div>
+    </div>
+    <div id="ooHistorico"></div>
+  </div>
+
+  <!-- LIXEIRA -->
+  <div id="ooLixeira" class="oo-hidden">
+    <button class="oo-back" onclick="ooVoltar()"><i class="fas fa-arrow-left"></i> Voltar ao time</button>
+    <div class="oo-bar"><div><div class="oo-title">Lixeira</div><div class="oo-sub">Itens ficam guardados aqui até serem restaurados</div></div></div>
+    <div id="ooLixConteudo"></div>
+  </div>
+
+  <!-- MODAL: colaboradora -->
+  <div class="oo-modal" id="ooModalColab">
+    <div class="oo-modal-box" style="max-width:440px;">
+      <div class="oo-modal-h"><span id="ooModalColabTitulo">Nova colaboradora</span><button class="btn-sec" onclick="ooFecharModal('ooModalColab')">✕</button></div>
+      <div class="oo-modal-b">
+        <div><label class="oo-lbl" for="ooColabNome">Nome</label><input type="text" id="ooColabNome" class="f-input" style="width:100%;box-sizing:border-box;" maxlength="80"></div>
+        <div><label class="oo-lbl" for="ooColabSetor">Setor / cargo (opcional)</label><input type="text" id="ooColabSetor" class="f-input" style="width:100%;box-sizing:border-box;" maxlength="60" placeholder="Callcenter"></div>
+      </div>
+      <div class="oo-modal-f"><button class="btn-sec" onclick="ooFecharModal('ooModalColab')">Cancelar</button><button class="btn-p" id="ooBtnSalvarColab" onclick="ooSalvarColab()"><i class="fas fa-floppy-disk"></i> Salvar</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL: 1:1 -->
+  <div class="oo-modal" id="ooModalReg">
+    <div class="oo-modal-box">
+      <div class="oo-modal-h"><span id="ooModalRegTitulo">Novo 1:1</span><button class="btn-sec" onclick="ooFecharModal('ooModalReg')">✕</button></div>
+      <div class="oo-modal-b">
+        <div><label class="oo-lbl" for="ooRegData">Data do 1:1 *</label><input type="date" id="ooRegData" class="f-input"></div>
+        <div><label class="oo-lbl" for="ooRegVisao">Visão da colaboradora</label><textarea id="ooRegVisao" class="f-input oo-ta"></textarea></div>
+        <div><label class="oo-lbl" for="ooRegFortes">Pontos fortes</label><textarea id="ooRegFortes" class="f-input oo-ta"></textarea></div>
+        <div><label class="oo-lbl" for="ooRegSbi">Desenvolvimento (SBI)</label><textarea id="ooRegSbi" class="f-input oo-ta"></textarea><div class="oo-hint">Situação, Comportamento e Impacto.</div></div>
+        <div><label class="oo-lbl" for="ooRegPlano">Plano de ação</label><textarea id="ooRegPlano" class="f-input oo-ta"></textarea></div>
+        <div><label class="oo-lbl" for="ooRegCombinados">Combinados</label><textarea id="ooRegCombinados" class="f-input oo-ta"></textarea><div class="oo-hint">Texto livre, sem status nem prazo.</div></div>
+        <div><label class="oo-lbl" for="ooRegProxima">Próxima data</label><input type="date" id="ooRegProxima" class="f-input"></div>
+        <div><label class="oo-lbl" for="ooRegObs">Observações</label><textarea id="ooRegObs" class="f-input oo-ta"></textarea></div>
+      </div>
+      <div class="oo-modal-f"><button class="btn-sec" onclick="ooFecharModal('ooModalReg')">Cancelar</button><button class="btn-p" id="ooBtnSalvarReg" onclick="ooSalvarReg()"><i class="fas fa-floppy-disk"></i> Salvar 1:1</button></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   [v2.2] ABA 1:1s — lógica (prefixo oo*)
+   Depende de window._ooFs, exposto no <script type="module"> do dashboard.
+   O dashboard já só abre para perms.admin; a proteção dos dados é feita
+   pelas Firestore Rules (UID do líder) — ver firestore.rules.
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  var COL = 'oneaone_fichas';
+  var S = { fichas: [], carregado: false, view: 'home', fichaId: null, editColabId: null, editRegId: null };
+
+  function $(id) { return document.getElementById(id); }
+  function fs() {
+    if (!window._ooFs) { toast('Firestore ainda não carregou. Recarregue a página.', 'error'); return null; }
+    return window._ooFs;
+  }
+  function agora() { return new Date().toISOString(); }
+  function hojeLocal() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function fmtData(s) {
+    if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+    var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0];
+  }
+  function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
+  function erroFs(e, msg) {
+    var perm = e && (e.code === 'permission-denied' || /permission/i.test(e.message || ''));
+    toast(perm ? 'Sem permissão no Firestore. Confira as regras de oneaone_fichas.' : (msg || 'Erro ao acessar o Firestore.'), 'error');
+    console.error('[1:1s]', e);
+  }
+  function fichaPorId(id) { for (var i = 0; i < S.fichas.length; i++) if (S.fichas[i].id === id) return S.fichas[i]; return null; }
+  function regsAtivos(f) {
+    return (f.registros || []).filter(function (r) { return !r.deletedAt; }).sort(function (a, b) {
+      return (b.dataReuniao || '').localeCompare(a.dataReuniao || '') || (b.createdAt || '').localeCompare(a.createdAt || '');
+    });
+  }
+
+  /* ── ativar / desativar a aba ─────────────────────────────────── */
+  window.ooAbrirAba = function () {
+    document.querySelectorAll('.view-panel').forEach(function (p) { p.classList.remove('active'); p.style.removeProperty('display'); });
+    document.querySelectorAll('.main-tab').forEach(function (b) { b.classList.remove('active'); });
+    $('viewOneaone').classList.add('active');
+    var btn = $('mainTabOneaone'); if (btn) btn.classList.add('active');
+    var bl = $('btnLancProd'); if (bl) bl.style.display = 'none';
+    S.view = 'home'; mostrar();
+    if (!S.carregado) window.ooCarregar();
+  };
+  window.ooDesativarAba = function () {
+    var vp = $('viewOneaone'); if (vp) vp.classList.remove('active');
+    var btn = $('mainTabOneaone'); if (btn) btn.classList.remove('active');
+  };
+
+  /* ── leitura ──────────────────────────────────────────────────── */
+  window.ooCarregar = async function () {
+    var F = fs(); if (!F) return;
+    try {
+      var snap = await F.getDocs(F.collection(F.db, COL));
+      var fichas = [];
+      for (var i = 0; i < snap.docs.length; i++) {
+        var d = snap.docs[i], f = d.data(); f.id = d.id;
+        var rs = await F.getDocs(F.collection(F.db, COL, d.id, 'registros'));
+        f.registros = rs.docs.map(function (x) { var r = x.data(); r.id = x.id; return r; });
+        fichas.push(f);
+      }
+      S.fichas = fichas; S.carregado = true;
+      window.ooRender();
+    } catch (e) {
+      $('ooCards').innerHTML = '<div class="oo-vazio">Não foi possível carregar os 1:1s.</div>';
+      erroFs(e, 'Erro ao carregar os 1:1s.');
+    }
+  };
+
+  /* ── navegação interna ────────────────────────────────────────── */
+  function mostrar() {
+    $('ooHome').classList.toggle('oo-hidden', S.view !== 'home');
+    $('ooFicha').classList.toggle('oo-hidden', S.view !== 'ficha');
+    $('ooLixeira').classList.toggle('oo-hidden', S.view !== 'lixeira');
+  }
+  window.ooVoltar = function () { S.view = 'home'; S.fichaId = null; mostrar(); window.ooRender(); };
+  window.ooAbrirFicha = function (id) { S.fichaId = id; S.view = 'ficha'; mostrar(); window.ooRender(); };
+  window.ooAbrirLixeira = function () { S.view = 'lixeira'; mostrar(); window.ooRender(); };
+  window.ooFecharModal = function (id) { $(id).style.display = 'none'; };
+  function abrirModal(id) { $(id).style.display = 'flex'; }
+
+  /* ── render ───────────────────────────────────────────────────── */
+  window.ooRender = function () {
+    var nLix = 0;
+    S.fichas.forEach(function (f) {
+      if (f.deletedAt) nLix++;
+      else (f.registros || []).forEach(function (r) { if (r.deletedAt) nLix++; });
+    });
+    $('ooLixCount').textContent = nLix ? ' (' + nLix + ')' : '';
+    if (S.view === 'home') renderCards();
+    else if (S.view === 'ficha') renderFicha();
+    else renderLixeira();
+  };
+
+  function renderCards() {
+    var q = norm($('ooBusca').value);
+    var lista = S.fichas.filter(function (f) { return !f.deletedAt && (!q || norm(f.nome).indexOf(q) >= 0); })
+      .sort(function (a, b) { return norm(a.nome).localeCompare(norm(b.nome)); });
+    if (!S.carregado) return;
+    if (!lista.length) {
+      $('ooCards').innerHTML = '<div class="oo-vazio">' + (S.fichas.some(function (f) { return !f.deletedAt; })
+        ? 'Nenhuma colaboradora encontrada.' : 'Nenhuma colaboradora cadastrada. Use “Nova colaboradora” ou “Importar JSON”.') + '</div>';
+      return;
+    }
+    $('ooCards').innerHTML = '<div class="oo-grid">' + lista.map(function (f) {
+      var rs = regsAtivos(f), ult = rs.length ? fmtData(rs[0].dataReuniao) : '';
+      return '<button class="oo-card" onclick="ooAbrirFicha(\'' + esc(f.id) + '\')">' +
+        '<div class="oo-card-nome">' + esc(f.nome) + '</div>' +
+        '<div class="oo-card-setor">' + esc(f.setor || '—') + '</div>' +
+        '<div class="oo-card-meta"><span><i class="fas fa-comments"></i> ' + rs.length + (rs.length === 1 ? ' 1:1' : ' 1:1s') + '</span>' +
+        '<span><i class="fas fa-calendar"></i> ' + (ult ? 'Último: ' + esc(ult) : 'Sem 1:1s ainda') + '</span></div></button>';
+    }).join('') + '</div>';
+  }
+
+  var ROTULOS_ORIG = {
+    tempoDeCasa: 'Tempo de casa', dominaBem: 'O que domina bem', duvidasInseguranca: 'Dúvidas / insegurança',
+    oQueAtrapalha: 'O que atrapalha o desempenho', expectativaVsRealidade: 'Expectativa vs. realidade',
+    suporteLideranca: 'Visão sobre o suporte da liderança'
+  };
+  function campo(rotulo, valor) {
+    if (!valor) return '';
+    return '<div><div class="oo-campo-l">' + esc(rotulo) + '</div><div class="oo-campo-v">' + esc(valor) + '</div></div>';
+  }
+  function renderFicha() {
+    var f = fichaPorId(S.fichaId);
+    if (!f || f.deletedAt) { window.ooVoltar(); return; }
+    window._ooFichaAtual = f.id;
+    $('ooFichaNome').textContent = f.nome;
+    $('ooFichaSub').textContent = (f.setor || '') + (f.setor ? ' · ' : '') + regsAtivos(f).length + ' registro(s)';
+    var rs = regsAtivos(f);
+    if (!rs.length) { $('ooHistorico').innerHTML = '<div class="oo-vazio">Nenhum 1:1 registrado. Use “Novo 1:1”.</div>'; return; }
+    $('ooHistorico').innerHTML = rs.map(function (r) {
+      var orig = '';
+      if (r.respostasOriginais && typeof r.respostasOriginais === 'object') {
+        var itens = Object.keys(ROTULOS_ORIG).map(function (k) { return campo(ROTULOS_ORIG[k], r.respostasOriginais[k]); }).join('');
+        if (itens) orig = '<details class="oo-orig"><summary>Respostas originais do questionário</summary><div class="oo-orig-corpo">' + itens + '</div></details>';
+      }
+      return '<div class="oo-reg"><div class="oo-reg-head"><span class="oo-reg-data">' + esc(fmtData(r.dataReuniao)) + '</span>' +
+        (r.origem ? '<span class="oo-reg-tag">importado</span>' : '') +
+        '<div class="oo-reg-actions"><button class="btn-sec" onclick="ooAbrirReg(\'' + esc(r.id) + '\')"><i class="fas fa-pen"></i> Editar</button>' +
+        '<button class="oo-btn-red" onclick="ooExcluirReg(\'' + esc(r.id) + '\')"><i class="fas fa-trash-can"></i></button></div></div>' +
+        '<div class="oo-reg-body">' +
+        campo('Visão da colaboradora', r.visaoColaboradora) + campo('Pontos fortes', r.pontosFortes) +
+        campo('Desenvolvimento (SBI)', r.desenvolvimentoSBI) + campo('Plano de ação', r.planoAcao) +
+        campo('Combinados', r.combinados) + campo('Próxima data', fmtData(r.proximaData)) +
+        campo('Observações', r.observacoes) + orig + '</div></div>';
+    }).join('');
+  }
+
+  function renderLixeira() {
+    var html = '', fichas = S.fichas.filter(function (f) { return f.deletedAt; });
+    var regs = [];
+    S.fichas.forEach(function (f) {
+      if (f.deletedAt) return;
+      (f.registros || []).forEach(function (r) { if (r.deletedAt) regs.push({ f: f, r: r }); });
+    });
+    if (fichas.length) {
+      html += '<div class="oo-sec">Colaboradoras</div>' + fichas.map(function (f) {
+        return '<div class="oo-lix-item"><div><div class="oo-lix-nome">' + esc(f.nome) + '</div><div class="oo-lix-info">Excluída em ' + esc(fmtData((f.deletedAt || '').slice(0, 10))) +
+          ' · ' + (f.registros || []).length + ' registro(s) guardados</div></div><button class="btn-sec" style="margin-left:auto" onclick="ooRestaurarColab(\'' + esc(f.id) + '\')"><i class="fas fa-rotate-left"></i> Restaurar</button></div>';
+      }).join('');
+    }
+    if (regs.length) {
+      html += '<div class="oo-sec">1:1s</div>' + regs.map(function (x) {
+        return '<div class="oo-lix-item"><div><div class="oo-lix-nome">' + esc(x.f.nome) + ' — ' + esc(fmtData(x.r.dataReuniao)) + '</div><div class="oo-lix-info">Excluído em ' +
+          esc(fmtData((x.r.deletedAt || '').slice(0, 10))) + '</div></div><button class="btn-sec" style="margin-left:auto" onclick="ooRestaurarReg(\'' + esc(x.f.id) + '\',\'' + esc(x.r.id) + '\')"><i class="fas fa-rotate-left"></i> Restaurar</button></div>';
+      }).join('');
+    }
+    $('ooLixConteudo').innerHTML = html || '<div class="oo-vazio">A lixeira está vazia.</div>';
+  }
+
+  /* ── colaboradora: criar / editar / lixeira ───────────────────── */
+  window.ooAbrirColab = function (id) {
+    var f = id ? fichaPorId(id) : null;
+    S.editColabId = f ? f.id : null;
+    $('ooModalColabTitulo').textContent = f ? 'Editar ficha' : 'Nova colaboradora';
+    $('ooColabNome').value = f ? f.nome : '';
+    $('ooColabSetor').value = f ? (f.setor || '') : '';
+    abrirModal('ooModalColab'); $('ooColabNome').focus();
+  };
+  window.ooSalvarColab = async function () {
+    var F = fs(); if (!F) return;
+    var nome = $('ooColabNome').value.trim(), setor = $('ooColabSetor').value.trim();
+    if (!nome) { toast('Informe o nome da colaboradora.', 'error'); return; }
+    var btn = $('ooBtnSalvarColab'); btn.disabled = true;
+    try {
+      if (S.editColabId) {
+        await F.updateDoc(F.doc(F.db, COL, S.editColabId), { nome: nome, setor: setor, updatedAt: agora() });
+        var f = fichaPorId(S.editColabId); f.nome = nome; f.setor = setor;
+      } else {
+        var ref = F.doc(F.collection(F.db, COL)), t = agora();
+        var novo = { nome: nome, setor: setor, createdAt: t, updatedAt: t, deletedAt: null };
+        await F.setDoc(ref, novo); novo.id = ref.id; novo.registros = []; S.fichas.push(novo);
+      }
+      window.ooFecharModal('ooModalColab'); window.ooRender(); toast('Ficha salva.', 'success');
+    } catch (e) { erroFs(e, 'Erro ao salvar a ficha.'); }
+    btn.disabled = false;
+  };
+  window.ooExcluirColab = async function () {
+    var F = fs(); var f = fichaPorId(S.fichaId); if (!F || !f) return;
+    if (!confirm('Mover a ficha de "' + f.nome + '" para a lixeira? Os 1:1s ficam guardados e voltam ao restaurar.')) return;
+    try {
+      var t = agora(); await F.updateDoc(F.doc(F.db, COL, f.id), { deletedAt: t, updatedAt: t }); f.deletedAt = t;
+      toast('Ficha movida para a lixeira.', 'success'); window.ooVoltar();
+    } catch (e) { erroFs(e, 'Erro ao mover para a lixeira.'); }
+  };
+  window.ooRestaurarColab = async function (id) {
+    var F = fs(); var f = fichaPorId(id); if (!F || !f) return;
+    try { await F.updateDoc(F.doc(F.db, COL, id), { deletedAt: null, updatedAt: agora() }); f.deletedAt = null; toast('Ficha restaurada.', 'success'); window.ooRender(); }
+    catch (e) { erroFs(e, 'Erro ao restaurar.'); }
+  };
+
+  /* ── 1:1: criar / editar / lixeira ────────────────────────────── */
+  var CAMPOS = [['dataReuniao', 'ooRegData'], ['visaoColaboradora', 'ooRegVisao'], ['pontosFortes', 'ooRegFortes'],
+    ['desenvolvimentoSBI', 'ooRegSbi'], ['planoAcao', 'ooRegPlano'], ['combinados', 'ooRegCombinados'],
+    ['proximaData', 'ooRegProxima'], ['observacoes', 'ooRegObs']];
+  window.ooAbrirReg = function (id) {
+    var f = fichaPorId(S.fichaId); if (!f) return;
+    var r = null; if (id) (f.registros || []).forEach(function (x) { if (x.id === id) r = x; });
+    S.editRegId = r ? r.id : null;
+    $('ooModalRegTitulo').textContent = (r ? 'Editar 1:1' : 'Novo 1:1') + ' — ' + f.nome;
+    CAMPOS.forEach(function (c) { $(c[1]).value = r ? (r[c[0]] || '') : ''; });
+    if (!r) $('ooRegData').value = hojeLocal();
+    abrirModal('ooModalReg');
+  };
+  window.ooSalvarReg = async function () {
+    var F = fs(); var f = fichaPorId(S.fichaId); if (!F || !f) return;
+    var dados = {}; CAMPOS.forEach(function (c) { dados[c[0]] = $(c[1]).value.trim(); });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dados.dataReuniao)) { toast('Informe a data do 1:1.', 'error'); return; }
+    var btn = $('ooBtnSalvarReg'); btn.disabled = true;
+    try {
+      var t = agora();
+      if (S.editRegId) {
+        dados.updatedAt = t;
+        await F.updateDoc(F.doc(F.db, COL, f.id, 'registros', S.editRegId), dados);
+        (f.registros || []).forEach(function (x) { if (x.id === S.editRegId) Object.assign(x, dados); });
+      } else {
+        var ref = F.doc(F.collection(F.db, COL, f.id, 'registros'));
+        dados.createdAt = t; dados.updatedAt = t; dados.deletedAt = null; dados.origem = null; dados.respostasOriginais = null;
+        await F.setDoc(ref, dados); dados.id = ref.id; f.registros = f.registros || []; f.registros.push(dados);
+      }
+      window.ooFecharModal('ooModalReg'); window.ooRender(); toast('1:1 salvo.', 'success');
+    } catch (e) { erroFs(e, 'Erro ao salvar o 1:1.'); }
+    btn.disabled = false;
+  };
+  window.ooExcluirReg = async function (rid) {
+    var F = fs(); var f = fichaPorId(S.fichaId); if (!F || !f) return;
+    if (!confirm('Mover este 1:1 para a lixeira?')) return;
+    try {
+      var t = agora(); await F.updateDoc(F.doc(F.db, COL, f.id, 'registros', rid), { deletedAt: t, updatedAt: t });
+      (f.registros || []).forEach(function (x) { if (x.id === rid) x.deletedAt = t; });
+      toast('1:1 movido para a lixeira.', 'success'); window.ooRender();
+    } catch (e) { erroFs(e, 'Erro ao mover para a lixeira.'); }
+  };
+  window.ooRestaurarReg = async function (fid, rid) {
+    var F = fs(); var f = fichaPorId(fid); if (!F || !f) return;
+    try {
+      await F.updateDoc(F.doc(F.db, COL, fid, 'registros', rid), { deletedAt: null, updatedAt: agora() });
+      (f.registros || []).forEach(function (x) { if (x.id === rid) x.deletedAt = null; });
+      toast('1:1 restaurado.', 'success'); window.ooRender();
+    } catch (e) { erroFs(e, 'Erro ao restaurar.'); }
+  };
+
+  /* ── importar JSON (IDs fixos: reimportar sobrescreve, sem duplicar) ── */
+  var RE_ID = /^[A-Za-z0-9_-]{1,80}$/, RE_DATA = /^\d{4}-\d{2}-\d{2}$/;
+  window.ooImportar = async function (input) {
+    var arq = input.files && input.files[0]; input.value = '';
+    var F = fs(); if (!arq || !F) return;
+    if (arq.size > 1048576) { toast('Arquivo grande demais (máx. 1 MB).', 'error'); return; }
+    var dados;
+    try { dados = JSON.parse(await arq.text()); } catch (e) { toast('JSON inválido.', 'error'); return; }
+    var cols = dados && Array.isArray(dados.colaboradoras) ? dados.colaboradoras : null;
+    if (!cols || !cols.length) { toast('Formato inesperado: faltou a lista "colaboradoras".', 'error'); return; }
+    var nReg = 0;
+    for (var i = 0; i < cols.length; i++) {
+      var c = cols[i];
+      if (!c || !RE_ID.test(c.id || '') || !c.nome) { toast('Colaboradora inválida na posição ' + (i + 1) + '.', 'error'); return; }
+      var regs = Array.isArray(c.registros) ? c.registros : [];
+      for (var j = 0; j < regs.length; j++) {
+        if (!RE_ID.test(regs[j].id || '') || !RE_DATA.test(regs[j].dataReuniao || '')) { toast('Registro inválido em ' + c.nome + ' (id ou dataReuniao).', 'error'); return; }
+        nReg++;
+      }
+    }
+    if (!confirm('Importar ' + cols.length + ' colaboradora(s) e ' + nReg + ' registro(s)?\n\nRegistros com o mesmo ID serão SOBRESCRITOS (edições feitas neles se perdem).')) return;
+    try {
+      if (!S.carregado) await window.ooCarregar();
+      var t = agora();
+      for (var a = 0; a < cols.length; a++) {
+        var col = cols[a], existente = fichaPorId(col.id);
+        var fd = { nome: String(col.nome), setor: String(col.setor || ''), updatedAt: t };
+        if (!existente) { fd.createdAt = t; fd.deletedAt = null; }
+        await F.setDoc(F.doc(F.db, COL, col.id), fd, { merge: true });
+        var rs = Array.isArray(col.registros) ? col.registros : [];
+        for (var b = 0; b < rs.length; b++) {
+          var r = rs[b], antigo = null;
+          if (existente) (existente.registros || []).forEach(function (x) { if (x.id === r.id) antigo = x; });
+          var rd = { dataReuniao: r.dataReuniao, visaoColaboradora: String(r.visaoColaboradora || ''), pontosFortes: String(r.pontosFortes || ''),
+            desenvolvimentoSBI: String(r.desenvolvimentoSBI || ''), planoAcao: String(r.planoAcao || ''), combinados: String(r.combinados || ''),
+            proximaData: RE_DATA.test(r.proximaData || '') ? r.proximaData : '', observacoes: String(r.observacoes || ''),
+            respostasOriginais: (r.respostasOriginais && typeof r.respostasOriginais === 'object') ? r.respostasOriginais : null,
+            origem: String(r.origem || 'importacao-json'), createdAt: antigo ? (antigo.createdAt || t) : t, updatedAt: t, deletedAt: antigo ? (antigo.deletedAt || null) : null };
+          await F.setDoc(F.doc(F.db, COL, col.id, 'registros', r.id), rd);
+        }
+      }
+      S.carregado = false; await window.ooCarregar();
+      toast('Importação concluída: ' + cols.length + ' colaboradora(s), ' + nReg + ' registro(s).', 'success');
+    } catch (e) { erroFs(e, 'Erro durante a importação (pode ter ficado parcial; reimportar é seguro).'); }
+  };
+
+  /* ── botão da aba + desativar ao trocar para outra aba ─────────── */
+  var nav = document.querySelector('.main-tabs');
+  if (nav) {
+    var btn = document.createElement('button');
+    btn.className = 'main-tab'; btn.id = 'mainTabOneaone';
+    btn.innerHTML = '<i class="fas fa-comments"></i> 1:1s';
+    btn.addEventListener('click', function () { window.ooAbrirAba(); });
+    nav.appendChild(btn);
+  }
+  /* qualquer botão que chama switchMainTab(...) fecha o painel 1:1s */
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('[onclick*="switchMainTab"]') : null;
+    if (t) window.ooDesativarAba();
+  });
+})();
+</script>
+<!-- [v2.2] fim da aba 1:1s -->
+
 <!-- VERSION: v2.1 | dashboard.html | 31/08/2026 -->
 
 <!-- ═══════════════════════════════════════════════════════════════════════
