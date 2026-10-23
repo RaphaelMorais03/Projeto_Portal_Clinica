@@ -1,4 +1,4 @@
-<!-- VERSION: v6.5 | dashboard.html | 22/10/2026 | base v6.0 + aba 1:1s (atendentes com caixa, NPS por atendente) · NF em Lote removido do menu/Hoje (código interno dormente) -->
+<!-- VERSION: v6.7 | dashboard.html | 22/10/2026 | base v6.0 + aba 1:1s (atendentes com caixa, NPS por atendente) · NF em Lote removido do menu/Hoje (código interno dormente) -->
 <!-- VERSION: v6.0 | dashboard.html | 13/10/2026 | NF em Lote v6.0 — fluxo unificado: 2 abas (Emitir lote / Retorno Sinaxys), seletor de data único no topo (nflx_dia_ativo), layout da planilha por data (NFL_LAYOUTS, fallback na cascata), operador→Consulta/Exame no Mapear (admin/nfl_operadores), escrever Nº NF direto na planilha via Apps Script (fallback .xlsx) + _status processado, fila de incompletos (nfl_incompletos), downloads nomeados DD_MM_AAAA. -->
 <!-- VERSION: v4.9.4 | dashboard.html | 05/10/2026 | NF em Lote: validações Sinaxys/prefeitura (Número, Bairro, Cidade, CEP, lixo, CPF=telefone) v4.9.4; duplicata (mesmo CPF/data/valor) não bloqueia mais — emite as duas e só avisa. v4.9.2: Comparativo Sinaxys: "Falta emitir no período" (planilha × exportação Sinaxys Splitadas/De pacientes; somente leitura). v4.9.1: Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
 <!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
@@ -1096,7 +1096,7 @@
         <div class="hoje-card">
           <div class="hoje-card-h"><h3><i class="fas fa-bolt" style="color:#d97706;"></i> Ações rápidas</h3></div>
           <div class="hoje-quick">
-            <!-- [v6.5] botão "NF do Dia" removido (NF em Lote saiu do dashboard) -->
+            <!-- [v6.7] botão "NF do Dia" removido (NF em Lote saiu do dashboard) -->
             <button class="hoje-quick-btn" onclick="hojeIr('caixa')"><div class="hoje-qi" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-cash-register"></i></div><div class="hoje-qt">Caixa</div><div class="hoje-qs" id="hojeQsCaixa">—</div></button>
             <button class="hoje-quick-btn" onclick="hojeIr('fech')"><div class="hoje-qi" style="background:#fef3c7;color:#b45309;"><i class="fas fa-file-invoice-dollar"></i></div><div class="hoje-qt">Fechamentos</div><div class="hoje-qs" id="hojeQsFech">—</div></button>
             <button class="hoje-quick-btn" onclick="hojeIr('ranking')"><div class="hoje-qi" style="background:#ede9fe;color:#6d28d9;"><i class="fas fa-trophy"></i></div><div class="hoje-qt">Ranking</div><div class="hoje-qs">produção por colaborador</div></button>
@@ -3227,7 +3227,7 @@
       }
 
       /* NF do Dia (Firebase) — cache de 45s */
-      /* [v6.5] NF do Dia/NF em Lote saiu do dashboard: sem leitura de nf_dia_relatorios e sem alerta de NF pendente */
+      /* [v6.7] NF do Dia/NF em Lote saiu do dashboard: sem leitura de nf_dia_relatorios e sem alerta de NF pendente */
       var nfRel = {}, nfOk = true;
       var ready = !!window._hojeReady;
 
@@ -3356,13 +3356,13 @@
     import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getDatabase, ref, get, set, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
-    // [v6.5] Firestore para a aba 1:1s (SDK modular v11.6.0, mesma versão do portal)
+    // [v6.7] Firestore para a aba 1:1s (SDK modular v11.6.0, mesma versão do portal)
     import { getFirestore, collection, doc, getDocs, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const _app  = initializeApp(window.FIREBASE_CONFIG);
     const _auth = getAuth(_app);
     const _db   = getDatabase(_app);
-    // [v6.5] Firestore (aba 1:1s) — exposto só para o bloco oo* no fim do arquivo
+    // [v6.7] Firestore (aba 1:1s) — exposto só para o bloco oo* no fim do arquivo
     window._ooFs = { db: getFirestore(_app), collection, doc, getDocs, setDoc, updateDoc };
     window.initFirebaseUtils(_db, ref, get);
     window.__fb = { db:_db, ref, get, set, onValue, remove };
@@ -5997,7 +5997,7 @@
         {group:'Operação', items:[
           {id:'caixa',     icon:'fa-cash-register',       label:'Caixa'},
           {id:'fech',      icon:'fa-file-invoice-dollar', label:'Fechamentos'}
-          /* [v6.5] NF em Lote removido do dashboard (agora em "Emissão de nota" no login) */
+          /* [v6.7] NF em Lote removido do dashboard (agora em "Emissão de nota" no login) */
         ]},
         {group:'Análises', items:[
           {id:'prod',      icon:'fa-chart-bar',    label:'Produção'},
@@ -7129,7 +7129,7 @@
   <!-- ═══════════ v5.0 — landing "Hoje": atualização automática + aba inicial ═══════════ -->
   <script>
   (function(){
-    var VALID = ['hoje','prod','caixa','fech','visao','contratos','odonto','ranking']; /* [v6.5] sem 'nflote' */
+    var VALID = ['hoje','prod','caixa','fech','visao','contratos','odonto','ranking']; /* [v6.7] sem 'nflote' */
     var tm = null;
     setTimeout(function(){ window._hojeReady = true; refresh(); }, 6000); /* garante saída do "carregando" mesmo com base vazia */
     function refresh(){ clearTimeout(tm); tm = setTimeout(function(){ try{ if (typeof window.renderHoje==='function') window.renderHoje(); }catch(e){} }, 400); }
@@ -7745,6 +7745,19 @@
 .oo-reg-head { display:flex; align-items:center; gap:10px; padding:12px 16px; background:var(--gray-50); border-bottom:1.5px solid var(--gray-200); flex-wrap:wrap; }
 .oo-reg-data { font-size:14px; font-weight:800; color:var(--navy); }
 .oo-reg-tag { font-size:10px; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:20px; background:var(--blue-bg); color:var(--blue); }
+/* [v6.7] links dos líderes */
+.oo-lid-it { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 0; border-bottom:1px solid var(--gray-200); }
+.oo-lid-it:last-child { border-bottom:none; }
+.oo-lid-nome { font-weight:800; color:var(--navy); font-size:14px; }
+.oo-lid-off { font-size:10px; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:20px; background:var(--gray-200); color:var(--gray-600); }
+.oo-lid-link { width:100%; box-sizing:border-box; font-size:11px; color:var(--gray-600); }
+/* [v6.6] rascunho do relatório do líder */
+.oo-reg-tag.pend { background:#FEF3C7; color:#92400E; }
+.oo-reg.pend { border-color:#F59E0B; }
+.oo-pend-box { border:1.5px solid #F59E0B; border-left:4px solid #F59E0B; background:#FFFBEB; border-radius:12px; padding:12px 14px; margin-bottom:12px; display:grid; gap:8px; }
+.oo-pend-h { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:#92400E; }
+.oo-pend-it { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; color:var(--gray-800); }
+.oo-card-pend { color:#92400E; font-weight:700; }
 .oo-reg-actions { margin-left:auto; display:flex; gap:6px; }
 .oo-reg-body { padding:14px 16px; display:grid; gap:12px; }
 .oo-campo-l { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--gray-500); margin-bottom:3px; }
@@ -7815,6 +7828,7 @@
         <button class="btn-p" id="ooBtnNova" onclick="ooAbrirColab(null)"><i class="fas fa-user-plus"></i> Nova colaboradora</button>
         <button class="btn-sec" id="ooBtnImport" onclick="document.getElementById('ooArquivo').click()"><i class="fas fa-file-import"></i> Importar JSON</button>
         <button class="btn-sec" id="ooBtnLixeira" onclick="ooAbrirLixeira()"><i class="fas fa-trash-can"></i> Lixeira<span id="ooLixCount"></span></button>
+        <button class="btn-sec" id="ooBtnLideres" onclick="ooAbrirLideres()"><i class="fas fa-link"></i> Links dos líderes</button>
         <input type="file" id="ooArquivo" accept=".json,application/json" style="display:none" onchange="ooImportar(this)">
       </div>
     </div>
@@ -7869,6 +7883,19 @@
     </div>
   </div>
 
+  <!-- [v6.7] MODAL: links dos líderes -->
+  <div class="oo-modal" id="ooModalLideres">
+    <div class="oo-modal-box">
+      <div class="oo-modal-h"><span>Links dos líderes</span><button class="btn-sec" onclick="ooFecharModal('ooModalLideres')">✕</button></div>
+      <div class="oo-modal-b">
+        <div class="oo-hint">Cada líder recebe um link próprio, sem login. Ele vê só os nomes das colaboradoras e envia o relatório; o que chega vira rascunho na ficha ao abrir esta aba.</div>
+        <div style="display:flex;gap:8px;"><input type="text" id="ooLidNome" class="f-input" style="flex:1;" maxlength="80" placeholder="Nome do líder"><button class="btn-p" id="ooBtnLidCriar" onclick="ooCriarLider()"><i class="fas fa-plus"></i> Criar link</button></div>
+        <div id="ooLidLista"></div>
+      </div>
+      <div class="oo-modal-f"><button class="btn-sec" onclick="ooFecharModal('ooModalLideres')">Fechar</button></div>
+    </div>
+  </div>
+
   <!-- MODAL: 1:1 -->
   <div class="oo-modal" id="ooModalReg">
     <div class="oo-modal-box">
@@ -7891,7 +7918,7 @@
         <div><label class="oo-lbl" for="ooRegProxima">Próxima data</label><input type="date" id="ooRegProxima" class="f-input"></div>
         <div><label class="oo-lbl" for="ooRegObs">Observações</label><textarea id="ooRegObs" class="f-input oo-ta"></textarea></div>
       </div>
-      <div class="oo-modal-f"><button class="btn-sec" onclick="ooFecharModal('ooModalReg')">Cancelar</button><button class="btn-p" id="ooBtnSalvarReg" onclick="ooSalvarReg()"><i class="fas fa-floppy-disk"></i> Salvar 1:1</button></div>
+      <div class="oo-modal-f"><button class="btn-sec" onclick="ooFecharModal('ooModalReg')">Cancelar</button><button class="btn-sec" id="ooBtnSalvarRasc" onclick="ooSalvarReg('rascunho')"><i class="fas fa-user-tie"></i> Salvar relatório do líder (rascunho)</button><button class="btn-p" id="ooBtnSalvarReg" onclick="ooSalvarReg('concluido')"><i class="fas fa-floppy-disk"></i> Salvar 1:1</button></div>
     </div>
   </div>
 
@@ -7906,7 +7933,7 @@
    ══════════════════════════════════════════════════════════════════ */
 (function () {
   var COL = 'oneaone_fichas';
-  var S = { fichas: [], carregado: false, view: 'home', fichaId: null, editColabId: null, editRegId: null };
+  var S = { lideres: [], fichas: [], carregado: false, view: 'home', fichaId: null, editColabId: null, editRegId: null };
 
   function $(id) { return document.getElementById(id); }
   function fs() {
@@ -7929,6 +7956,10 @@
     console.error('[1:1s]', e);
   }
   function fichaPorId(id) { for (var i = 0; i < S.fichas.length; i++) if (S.fichas[i].id === id) return S.fichas[i]; return null; }
+  /* [v6.6] status: 'rascunho' = só o relatório do líder salvo; ausente/'concluido' = 1:1 feito (registros antigos) */
+  function ehRascunho(r) { return r && r.status === 'rascunho'; }
+  function regsConcluidos(f) { return regsAtivos(f).filter(function (r) { return !ehRascunho(r); }); }
+  function regsPendentes(f) { return regsAtivos(f).filter(ehRascunho); }
   function regsAtivos(f) {
     return (f.registros || []).filter(function (r) { return !r.deletedAt; }).sort(function (a, b) {
       return (b.dataReuniao || '').localeCompare(a.dataReuniao || '') || (b.createdAt || '').localeCompare(a.createdAt || '');
@@ -7954,6 +7985,114 @@
   };
 
   /* ── leitura ──────────────────────────────────────────────────── */
+  /* ── [v6.7] líderes: link secreto, nomes sincronizados e caixa de entrada ── */
+  var COL_L = 'oneaone_lideres';
+  function nomesAtivos() {
+    return S.fichas.filter(function (f) { return !f.deletedAt; })
+      .sort(function (a, b) { return norm(a.nome).localeCompare(norm(b.nome)); })
+      .map(function (f) { return { id: f.id, nome: f.nome }; });
+  }
+  async function carregarLideres() {
+    var F = fs(); if (!F) return;
+    var snap = await F.getDocs(F.collection(F.db, COL_L));
+    S.lideres = snap.docs.map(function (d) { var l = d.data(); l.id = d.id; return l; })
+      .sort(function (a, b) { return norm(a.nome || '').localeCompare(norm(b.nome || '')); });
+  }
+  async function sincronizarNomes() {
+    var F = fs(); if (!F) return; var nomes = nomesAtivos(), chave = JSON.stringify(nomes);
+    for (var i = 0; i < S.lideres.length; i++) {
+      var l = S.lideres[i];
+      if (l.ativo !== true || JSON.stringify(l.colaboradoras || []) === chave) continue;
+      await F.updateDoc(F.doc(F.db, COL_L, l.id), { colaboradoras: nomes, updatedAt: agora() });
+      l.colaboradoras = nomes;
+    }
+  }
+  function dataLocalDe(iso) {
+    var d = new Date(iso); if (isNaN(d.getTime())) return hojeLocal();
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  async function importarEnvios() {
+    var F = fs(); if (!F) return; var novos = 0;
+    for (var i = 0; i < S.lideres.length; i++) {
+      var l = S.lideres[i];
+      var snap = await F.getDocs(F.collection(F.db, COL_L, l.id, 'envios'));
+      for (var j = 0; j < snap.docs.length; j++) {
+        var e = snap.docs[j].data(); if (e.importado === true) continue;
+        var f = fichaPorId(e.fichaId); if (!f || f.deletedAt) continue;
+        var t = agora(), rid = 'lnk_' + snap.docs[j].id;
+        /* id determinístico: se a marcação "importado" falhar, a próxima carga não duplica */
+        var reg = { dataReuniao: dataLocalDe(e.enviadoEm), visaoColaboradora: '', pontosFortes: '', desenvolvimentoSBI: '', planoAcao: '', combinados: '',
+          proximaData: '', observacoes: '', liderNome: l.nome || '', liderTopicos: String(e.liderTopicos || ''), liderMelhorias: String(e.liderMelhorias || ''),
+          liderMomento: String(e.liderMomento || ''), status: 'rascunho', origem: 'link-lider', respostasOriginais: null, createdAt: t, updatedAt: t, deletedAt: null };
+        await F.setDoc(F.doc(F.db, COL, f.id, 'registros', rid), reg);
+        await F.updateDoc(F.doc(F.db, COL_L, l.id, 'envios', snap.docs[j].id), { importado: true, importadoEm: t });
+        reg.id = rid; f.registros = (f.registros || []).filter(function (x) { return x.id !== rid; }); f.registros.push(reg); novos++;
+      }
+    }
+    if (novos) { window.ooRender(); toast(novos + (novos === 1 ? ' relatório de líder recebido (rascunho).' : ' relatórios de líderes recebidos (rascunhos).'), 'success'); }
+  }
+  function novoToken() {
+    var a = new Uint8Array(24); crypto.getRandomValues(a); var b = '';
+    for (var i = 0; i < a.length; i++) b += String.fromCharCode(a[i]);
+    return btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function linkDe(token) { return location.href.split('#')[0].split('?')[0].replace(/[^\/]*$/, '') + 'lider.html?t=' + encodeURIComponent(token); }
+  function renderLideres() {
+    if (!S.lideres.length) { $('ooLidLista').innerHTML = '<div class="oo-vazio">Nenhum líder cadastrado.</div>'; return; }
+    $('ooLidLista').innerHTML = S.lideres.map(function (l) {
+      var on = l.ativo === true, id = esc(l.id);
+      return '<div class="oo-lid-it"><span class="oo-lid-nome">' + esc(l.nome) + '</span>' + (on ? '' : '<span class="oo-lid-off">desativado</span>') +
+        '<div class="oo-reg-actions">' + (on ? '<button class="btn-p" onclick="ooCopiarLink(\'' + id + '\')"><i class="fas fa-copy"></i> Copiar link</button>' : '') +
+        '<button class="btn-sec" onclick="ooNovoLink(\'' + id + '\')" title="Gera outro link e desativa este"><i class="fas fa-rotate"></i> Novo link</button>' +
+        '<button class="btn-sec" onclick="ooAlternarLider(\'' + id + '\')">' + (on ? 'Desativar' : 'Ativar') + '</button></div>' +
+        (on ? '<input type="text" class="f-input oo-lid-link" readonly value="' + esc(linkDe(l.id)) + '" onfocus="this.select()">' : '') + '</div>';
+    }).join('');
+  }
+  function liderPorId(id) { for (var i = 0; i < S.lideres.length; i++) if (S.lideres[i].id === id) return S.lideres[i]; return null; }
+  window.ooAbrirLideres = async function () {
+    abrirModal('ooModalLideres'); $('ooLidLista').innerHTML = '<div class="oo-vazio"><i class="fas fa-spinner fa-spin"></i></div>';
+    try { await carregarLideres(); } catch (e) { erroFs(e, 'Erro ao carregar os líderes.'); }
+    renderLideres();
+  };
+  window.ooCriarLider = async function () {
+    var F = fs(); if (!F) return; var nome = $('ooLidNome').value.trim();
+    if (!nome) { toast('Informe o nome do líder.', 'error'); return; }
+    var btn = $('ooBtnLidCriar'); btn.disabled = true;
+    try {
+      var tk = novoToken(), t = agora();
+      var l = { nome: nome, ativo: true, colaboradoras: nomesAtivos(), createdAt: t, updatedAt: t };
+      await F.setDoc(F.doc(F.db, COL_L, tk), l); l.id = tk; S.lideres.push(l);
+      $('ooLidNome').value = ''; renderLideres(); toast('Link criado.', 'success');
+    } catch (e) { erroFs(e, 'Erro ao criar o link.'); }
+    btn.disabled = false;
+  };
+  window.ooCopiarLink = function (id) {
+    var url = linkDe(id);
+    function fallback() { window.prompt('Copie o link:', url); }
+    try { navigator.clipboard.writeText(url).then(function () { toast('Link copiado.', 'success'); }, fallback); } catch (e) { fallback(); }
+  };
+  window.ooAlternarLider = async function (id) {
+    var F = fs(); var l = liderPorId(id); if (!F || !l) return;
+    var novo = l.ativo !== true;
+    if (!novo && !confirm('Desativar o link de ' + l.nome + '? Quem tiver o link não conseguirá mais enviar.')) return;
+    try {
+      await F.updateDoc(F.doc(F.db, COL_L, id), { ativo: novo, updatedAt: agora() }); l.ativo = novo;
+      if (novo) { l.colaboradoras = nomesAtivos(); await F.updateDoc(F.doc(F.db, COL_L, id), { colaboradoras: l.colaboradoras }); }
+      renderLideres();
+    } catch (e) { erroFs(e, 'Erro ao atualizar o líder.'); }
+  };
+  window.ooNovoLink = async function (id) {
+    var F = fs(); var l = liderPorId(id); if (!F || !l) return;
+    if (!confirm('Gerar um novo link para ' + l.nome + '? O link atual será desativado.')) return;
+    try {
+      var tk = novoToken(), t = agora(), n = { nome: l.nome, ativo: true, colaboradoras: nomesAtivos(), createdAt: t, updatedAt: t };
+      await F.setDoc(F.doc(F.db, COL_L, tk), n);
+      await F.updateDoc(F.doc(F.db, COL_L, id), { ativo: false, updatedAt: t }); l.ativo = false;
+      n.id = tk; S.lideres.push(n); renderLideres(); toast('Novo link criado; o anterior foi desativado.', 'success');
+    } catch (e) { erroFs(e, 'Erro ao gerar o novo link.'); }
+  };
+
   window.ooCarregar = async function () {
     var F = fs(); if (!F) return;
     try {
@@ -7967,6 +8106,8 @@
       }
       S.fichas = fichas; S.carregado = true;
       window.ooRender();
+      /* [v6.7] líderes: sincroniza nomes e importa envios (falha aqui não afeta o resto da aba) */
+      try { await carregarLideres(); await sincronizarNomes(); await importarEnvios(); } catch (e2) { console.error('[1:1s] líderes', e2); }
     } catch (e) {
       $('ooCards').innerHTML = '<div class="oo-vazio">Não foi possível carregar os 1:1s.</div>';
       erroFs(e, 'Erro ao carregar os 1:1s.');
@@ -8283,12 +8424,13 @@
       return;
     }
     $('ooCards').innerHTML = '<div class="oo-grid">' + lista.map(function (f) {
-      var rs = regsAtivos(f), ult = rs.length ? fmtData(rs[0].dataReuniao) : '';
+      var rs = regsConcluidos(f), pd = regsPendentes(f).length, ult = rs.length ? fmtData(rs[0].dataReuniao) : '';
       return '<button class="oo-card" onclick="ooAbrirFicha(\'' + esc(f.id) + '\')">' +
         '<div class="oo-card-nome">' + esc(f.nome) + '</div>' +
         '<div class="oo-card-setor">' + esc(f.setor || '—') + '</div>' +
         '<div class="oo-card-meta"><span><i class="fas fa-comments"></i> ' + rs.length + (rs.length === 1 ? ' 1:1' : ' 1:1s') + '</span>' +
-        '<span><i class="fas fa-calendar"></i> ' + (ult ? 'Último: ' + esc(ult) : 'Sem 1:1s ainda') + '</span>' + cardNps(f) + '</div></button>';
+        '<span><i class="fas fa-calendar"></i> ' + (ult ? 'Último: ' + esc(ult) : 'Sem 1:1s ainda') + '</span>' +
+        (pd ? '<span class="oo-card-pend"><i class="fas fa-clock"></i> ' + pd + (pd === 1 ? ' relatório do líder pendente' : ' relatórios do líder pendentes') + '</span>' : '') + cardNps(f) + '</div></button>';
     }).join('') + '</div>';
   }
 
@@ -8324,20 +8466,26 @@
     if (!f || f.deletedAt) { window.ooVoltar(); return; }
     window._ooFichaAtual = f.id;
     $('ooFichaNome').textContent = f.nome;
-    $('ooFichaSub').textContent = (f.setor || '') + (f.setor ? ' · ' : '') + regsAtivos(f).length + ' registro(s)';
+    $('ooFichaSub').textContent = (f.setor || '') + (f.setor ? ' · ' : '') + regsConcluidos(f).length + ' registro(s)' + (regsPendentes(f).length ? ' · ' + regsPendentes(f).length + ' pendente(s)' : '');
     $('ooFichaNps').innerHTML = indicadoresHtml(f, 12);
-    var rs = regsAtivos(f);
+    var rs = regsConcluidos(f), pend = regsPendentes(f);
+    /* [v6.6] relatórios do líder aguardando o 1:1 */
+    var pendHtml = pend.length ? '<div class="oo-pend-box"><div class="oo-pend-h"><i class="fas fa-clock"></i> Relatório do líder aguardando o 1:1</div>' + pend.map(function (r) {
+      return '<div class="oo-pend-it"><b>' + esc(fmtData(r.dataReuniao)) + '</b>' + (r.liderNome ? '<span>· ' + esc(r.liderNome) + '</span>' : '') +
+        '<div class="oo-reg-actions"><button class="btn-p" onclick="ooAbrirReg(\'' + esc(r.id) + '\')"><i class="fas fa-play"></i> Continuar 1:1</button>' +
+        '<button class="oo-btn-red" onclick="ooExcluirReg(\'' + esc(r.id) + '\')"><i class="fas fa-trash-can"></i></button></div></div>' + liderHtml(r);
+    }).join('') + '</div>' : '';
     $('ooSegReg').classList.toggle('on', S.modo !== 'prontuario'); $('ooSegPront').classList.toggle('on', S.modo === 'prontuario');
-    if (S.modo === 'prontuario') { $('ooHistorico').innerHTML = prontuarioHtml(rs); return; }
-    if (!rs.length) { $('ooHistorico').innerHTML = '<div class="oo-vazio">Nenhum 1:1 registrado. Use “Novo 1:1”.</div>'; return; }
-    $('ooHistorico').innerHTML = rs.map(function (r) {
+    if (S.modo === 'prontuario') { $('ooHistorico').innerHTML = pendHtml + prontuarioHtml(rs); return; }
+    if (!rs.length) { $('ooHistorico').innerHTML = pendHtml + '<div class="oo-vazio">Nenhum 1:1 concluído. Use “Novo 1:1”.</div>'; return; }
+    $('ooHistorico').innerHTML = pendHtml + rs.map(function (r) {
       var orig = '';
       if (r.respostasOriginais && typeof r.respostasOriginais === 'object') {
         var itens = Object.keys(ROTULOS_ORIG).map(function (k) { return campo(ROTULOS_ORIG[k], r.respostasOriginais[k]); }).join('');
         if (itens) orig = '<details class="oo-orig"><summary>Respostas originais do questionário</summary><div class="oo-orig-corpo">' + itens + '</div></details>';
       }
       return '<div class="oo-reg"><div class="oo-reg-head"><span class="oo-reg-data">' + esc(fmtData(r.dataReuniao)) + '</span>' +
-        (r.origem ? '<span class="oo-reg-tag">importado</span>' : '') +
+        (r.origem ? '<span class="oo-reg-tag">' + (r.origem === 'link-lider' ? 'via link do líder' : 'importado') + '</span>' : '') +
         '<div class="oo-reg-actions"><button class="btn-sec" onclick="ooAbrirReg(\'' + esc(r.id) + '\')"><i class="fas fa-pen"></i> Editar</button>' +
         '<button class="oo-btn-red" onclick="ooExcluirReg(\'' + esc(r.id) + '\')"><i class="fas fa-trash-can"></i></button></div></div>' +
         '<div class="oo-reg-body">' + liderHtml(r) +
@@ -8431,16 +8579,28 @@
     CAMPOS.forEach(function (c) { $(c[1]).value = r ? (r[c[0]] || '') : ''; });
     if (!r) { $('ooRegData').value = hojeLocal(); $('ooRegLider').value = ultimoLider(f); }
     $('ooRegNps').innerHTML = indicadoresHtml(f, 6);
+    /* [v6.6] rascunho: botão do rascunho só em 1:1 novo ou ainda pendente; o principal vira "Concluir" */
+    var rasc = !!(r && ehRascunho(r));
+    if (rasc) $('ooRegData').value = hojeLocal(); /* [v6.6] data do 1:1 = dia em que a colaboradora é chamada (editável) */
+    $('ooBtnSalvarRasc').style.display = (!r || rasc) ? '' : 'none';
+    $('ooBtnSalvarReg').innerHTML = '<i class="fas fa-floppy-disk"></i> ' + (rasc ? 'Concluir e salvar no prontuário' : 'Salvar 1:1');
     abrirModal('ooModalReg');
+    if (rasc) { var a = $('ooRegVisao'); if (a && a.focus && foco !== 'lider') a.focus(); }
     if (foco === 'lider') { var sec = $('ooSecLider'); if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: 'center' }); $('ooRegLTopicos').focus(); }
     /* se o NPS ainda não tinha carregado, preenche assim que chegar */
     window.ooCarregarNps().then(function () { if ($('ooModalReg').style.display === 'flex' && S.fichaId === f.id) $('ooRegNps').innerHTML = indicadoresHtml(f, 6); });
   };
-  window.ooSalvarReg = async function () {
+  window.ooSalvarReg = async function (modoSalvar) {
     var F = fs(); var f = fichaPorId(S.fichaId); if (!F || !f) return;
     var dados = {}; CAMPOS.forEach(function (c) { dados[c[0]] = $(c[1]).value.trim(); });
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dados.dataReuniao)) { toast('Informe a data do 1:1.', 'error'); return; }
-    var btn = $('ooBtnSalvarReg'); btn.disabled = true;
+    /* [v6.6] rascunho exige ao menos um campo do líder; concluir/salvar normal mantém as regras de antes */
+    var rascunho = (modoSalvar === 'rascunho');
+    if (rascunho && !(dados.liderTopicos || dados.liderMelhorias || dados.liderMomento)) { toast('Preencha ao menos um campo do relatório do líder.', 'error'); return; }
+    var atual = null; if (S.editRegId) (f.registros || []).forEach(function (x) { if (x.id === S.editRegId) atual = x; });
+    if (rascunho) dados.status = 'rascunho';
+    else if (!atual || ehRascunho(atual)) dados.status = 'concluido';
+    var btn = $('ooBtnSalvarReg'), btn2 = $('ooBtnSalvarRasc'); btn.disabled = true; btn2.disabled = true;
     try {
       var t = agora();
       if (S.editRegId) {
@@ -8452,9 +8612,10 @@
         dados.createdAt = t; dados.updatedAt = t; dados.deletedAt = null; dados.origem = null; dados.respostasOriginais = null;
         await F.setDoc(ref, dados); dados.id = ref.id; f.registros = f.registros || []; f.registros.push(dados);
       }
-      window.ooFecharModal('ooModalReg'); window.ooRender(); toast('1:1 salvo.', 'success');
+      window.ooFecharModal('ooModalReg'); window.ooRender();
+      toast(rascunho ? 'Relatório do líder salvo como rascunho.' : '1:1 salvo no prontuário.', 'success');
     } catch (e) { erroFs(e, 'Erro ao salvar o 1:1.'); }
-    btn.disabled = false;
+    btn.disabled = false; btn2.disabled = false;
   };
   window.ooExcluirReg = async function (rid) {
     var F = fs(); var f = fichaPorId(S.fichaId); if (!F || !f) return;
