@@ -35,6 +35,7 @@
 </head>
 <body>
   <header><h1>Relatório do líder</h1><p id="quem"></p></header>
+  <div id="nomeBox" style="display:none;max-width:720px;margin:16px auto 0;padding:0 16px;"><label for="nomeLider">Seu nome *</label><input type="text" id="nomeLider" maxlength="80" autocomplete="name" placeholder="Digite seu nome" style="width:100%;font:inherit;font-size:15px;padding:10px;border:1.5px solid var(--g200);border-radius:10px;"></div>
   <main id="app"><div class="msg">Carregando…</div></main>
   <div class="res" id="res" role="status"></div>
   <div class="bar" id="bar" style="display:none"><span id="cont">Nada preenchido</span><button id="btnEnviar" type="button">Enviar</button></div>
@@ -63,8 +64,9 @@
         var card = document.getElementById('c_' + c.id); if (card) card.classList.toggle('has', on);
       });
       $('cont').textContent = n ? n + (n === 1 ? ' colaboradora preenchida' : ' colaboradoras preenchidas') : 'Nada preenchido';
-      $('btnEnviar').disabled = !n;
+      $('btnEnviar').disabled = !n || (lider.compartilhado === true && !$('nomeLider').value.trim());
       var o = {}; (lider.colaboradoras || []).forEach(function (c) { var v = {}; CAMPOS.forEach(function (k) { v[k[0]] = document.getElementById('f_' + c.id + '_' + k[0]).value; }); o[c.id] = v; });
+      try { if (lider.compartilhado === true) localStorage.setItem(LS + '_nome', $('nomeLider').value); } catch (e) {}
       gravar(o); /* rascunho local no aparelho, para não perder se fechar a página */
     }
 
@@ -90,10 +92,11 @@
 
     async function enviar() {
       var btn = $('btnEnviar'); btn.disabled = true; $('res').className = 'res'; $('res').textContent = 'Enviando…';
-      var ok = 0, falhou = 0, salvo = ler();
+      var ok = 0, falhou = 0, salvo = ler(), quem = $('nomeLider').value.trim();
       for (var i = 0; i < lider.colaboradoras.length; i++) {
         var c = lider.colaboradoras[i]; if (!preenchida(c.id)) continue;
         var d = { fichaId: c.id, enviadoEm: new Date().toISOString(), importado: false };
+        if (lider.compartilhado === true) d.liderNome = quem; /* [v6.8] link único: o líder se identifica */
         CAMPOS.forEach(function (k) { d[k[0]] = document.getElementById('f_' + c.id + '_' + k[0]).value.trim(); });
         try {
           await setDoc(doc(collection(db, 'oneaone_lideres', TOKEN, 'envios')), d);
@@ -113,7 +116,13 @@
         var s = await getDoc(doc(db, 'oneaone_lideres', TOKEN));
         if (!s.exists() || s.data().ativo !== true) { msg('Link inválido ou desativado. Peça um novo link.'); return; }
         lider = s.data(); $('quem').textContent = 'Olá, ' + (lider.nome || '') + '. Preencha só as colaboradoras que quiser e toque em Enviar.';
-        $('btnEnviar').addEventListener('click', enviar); montar();
+        $('btnEnviar').addEventListener('click', enviar);
+        if (lider.compartilhado === true) {
+          $('quem').textContent = 'Digite seu nome, preencha só as colaboradoras que quiser e toque em Enviar.';
+          $('nomeBox').style.display = 'block'; try { $('nomeLider').value = localStorage.getItem(LS + '_nome') || ''; } catch (e) {}
+          $('nomeLider').addEventListener('input', function () { if (lider.colaboradoras) atualizar(); });
+        }
+        montar();
       } catch (e) { console.error(e); msg('Não foi possível abrir o link. Tente novamente em instantes.'); }
     })();
   </script>

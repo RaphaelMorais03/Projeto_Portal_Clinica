@@ -1,4 +1,4 @@
-<!-- VERSION: v6.7 | dashboard.html | 22/10/2026 | base v6.0 + aba 1:1s (atendentes com caixa, NPS por atendente) · NF em Lote removido do menu/Hoje (código interno dormente) -->
+<!-- VERSION: v6.8 | dashboard.html | 22/10/2026 | base v6.0 + aba 1:1s (atendentes com caixa, NPS por atendente) · NF em Lote removido do menu/Hoje (código interno dormente) -->
 <!-- VERSION: v6.0 | dashboard.html | 13/10/2026 | NF em Lote v6.0 — fluxo unificado: 2 abas (Emitir lote / Retorno Sinaxys), seletor de data único no topo (nflx_dia_ativo), layout da planilha por data (NFL_LAYOUTS, fallback na cascata), operador→Consulta/Exame no Mapear (admin/nfl_operadores), escrever Nº NF direto na planilha via Apps Script (fallback .xlsx) + _status processado, fila de incompletos (nfl_incompletos), downloads nomeados DD_MM_AAAA. -->
 <!-- VERSION: v4.9.4 | dashboard.html | 05/10/2026 | NF em Lote: validações Sinaxys/prefeitura (Número, Bairro, Cidade, CEP, lixo, CPF=telefone) v4.9.4; duplicata (mesmo CPF/data/valor) não bloqueia mais — emite as duas e só avisa. v4.9.2: Comparativo Sinaxys: "Falta emitir no período" (planilha × exportação Sinaxys Splitadas/De pacientes; somente leitura). v4.9.1: Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
 <!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
@@ -1096,7 +1096,7 @@
         <div class="hoje-card">
           <div class="hoje-card-h"><h3><i class="fas fa-bolt" style="color:#d97706;"></i> Ações rápidas</h3></div>
           <div class="hoje-quick">
-            <!-- [v6.7] botão "NF do Dia" removido (NF em Lote saiu do dashboard) -->
+            <!-- [v6.8] botão "NF do Dia" removido (NF em Lote saiu do dashboard) -->
             <button class="hoje-quick-btn" onclick="hojeIr('caixa')"><div class="hoje-qi" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-cash-register"></i></div><div class="hoje-qt">Caixa</div><div class="hoje-qs" id="hojeQsCaixa">—</div></button>
             <button class="hoje-quick-btn" onclick="hojeIr('fech')"><div class="hoje-qi" style="background:#fef3c7;color:#b45309;"><i class="fas fa-file-invoice-dollar"></i></div><div class="hoje-qt">Fechamentos</div><div class="hoje-qs" id="hojeQsFech">—</div></button>
             <button class="hoje-quick-btn" onclick="hojeIr('ranking')"><div class="hoje-qi" style="background:#ede9fe;color:#6d28d9;"><i class="fas fa-trophy"></i></div><div class="hoje-qt">Ranking</div><div class="hoje-qs">produção por colaborador</div></button>
@@ -3227,7 +3227,7 @@
       }
 
       /* NF do Dia (Firebase) — cache de 45s */
-      /* [v6.7] NF do Dia/NF em Lote saiu do dashboard: sem leitura de nf_dia_relatorios e sem alerta de NF pendente */
+      /* [v6.8] NF do Dia/NF em Lote saiu do dashboard: sem leitura de nf_dia_relatorios e sem alerta de NF pendente */
       var nfRel = {}, nfOk = true;
       var ready = !!window._hojeReady;
 
@@ -3356,13 +3356,13 @@
     import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getDatabase, ref, get, set, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
-    // [v6.7] Firestore para a aba 1:1s (SDK modular v11.6.0, mesma versão do portal)
+    // [v6.8] Firestore para a aba 1:1s (SDK modular v11.6.0, mesma versão do portal)
     import { getFirestore, collection, doc, getDocs, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const _app  = initializeApp(window.FIREBASE_CONFIG);
     const _auth = getAuth(_app);
     const _db   = getDatabase(_app);
-    // [v6.7] Firestore (aba 1:1s) — exposto só para o bloco oo* no fim do arquivo
+    // [v6.8] Firestore (aba 1:1s) — exposto só para o bloco oo* no fim do arquivo
     window._ooFs = { db: getFirestore(_app), collection, doc, getDocs, setDoc, updateDoc };
     window.initFirebaseUtils(_db, ref, get);
     window.__fb = { db:_db, ref, get, set, onValue, remove };
@@ -5997,7 +5997,7 @@
         {group:'Operação', items:[
           {id:'caixa',     icon:'fa-cash-register',       label:'Caixa'},
           {id:'fech',      icon:'fa-file-invoice-dollar', label:'Fechamentos'}
-          /* [v6.7] NF em Lote removido do dashboard (agora em "Emissão de nota" no login) */
+          /* [v6.8] NF em Lote removido do dashboard (agora em "Emissão de nota" no login) */
         ]},
         {group:'Análises', items:[
           {id:'prod',      icon:'fa-chart-bar',    label:'Produção'},
@@ -7129,7 +7129,7 @@
   <!-- ═══════════ v5.0 — landing "Hoje": atualização automática + aba inicial ═══════════ -->
   <script>
   (function(){
-    var VALID = ['hoje','prod','caixa','fech','visao','contratos','odonto','ranking']; /* [v6.7] sem 'nflote' */
+    var VALID = ['hoje','prod','caixa','fech','visao','contratos','odonto','ranking']; /* [v6.8] sem 'nflote' */
     var tm = null;
     setTimeout(function(){ window._hojeReady = true; refresh(); }, 6000); /* garante saída do "carregando" mesmo com base vazia */
     function refresh(){ clearTimeout(tm); tm = setTimeout(function(){ try{ if (typeof window.renderHoje==='function') window.renderHoje(); }catch(e){} }, 400); }
@@ -7890,6 +7890,7 @@
       <div class="oo-modal-b">
         <div class="oo-hint">Cada líder recebe um link próprio, sem login. Ele vê só os nomes das colaboradoras e envia o relatório; o que chega vira rascunho na ficha ao abrir esta aba.</div>
         <div style="display:flex;gap:8px;"><input type="text" id="ooLidNome" class="f-input" style="flex:1;" maxlength="80" placeholder="Nome do líder"><button class="btn-p" id="ooBtnLidCriar" onclick="ooCriarLider()"><i class="fas fa-plus"></i> Criar link</button></div>
+        <div><button class="btn-sec" id="ooBtnLidGeral" onclick="ooCriarLider(true)"><i class="fas fa-users"></i> Criar link único para todos os líderes</button><div class="oo-hint">[v6.8] Um só link para o grupo: cada líder digita o próprio nome ao responder.</div></div>
         <div id="ooLidLista"></div>
       </div>
       <div class="oo-modal-f"><button class="btn-sec" onclick="ooFecharModal('ooModalLideres')">Fechar</button></div>
@@ -8023,7 +8024,7 @@
         var t = agora(), rid = 'lnk_' + snap.docs[j].id;
         /* id determinístico: se a marcação "importado" falhar, a próxima carga não duplica */
         var reg = { dataReuniao: dataLocalDe(e.enviadoEm), visaoColaboradora: '', pontosFortes: '', desenvolvimentoSBI: '', planoAcao: '', combinados: '',
-          proximaData: '', observacoes: '', liderNome: l.nome || '', liderTopicos: String(e.liderTopicos || ''), liderMelhorias: String(e.liderMelhorias || ''),
+          proximaData: '', observacoes: '', liderNome: String((l.compartilhado === true ? (e.liderNome || l.nome) : l.nome) || '').trim().slice(0, 80), liderTopicos: String(e.liderTopicos || ''), liderMelhorias: String(e.liderMelhorias || ''),
           liderMomento: String(e.liderMomento || ''), status: 'rascunho', origem: 'link-lider', respostasOriginais: null, createdAt: t, updatedAt: t, deletedAt: null };
         await F.setDoc(F.doc(F.db, COL, f.id, 'registros', rid), reg);
         await F.updateDoc(F.doc(F.db, COL_L, l.id, 'envios', snap.docs[j].id), { importado: true, importadoEm: t });
@@ -8042,7 +8043,7 @@
     if (!S.lideres.length) { $('ooLidLista').innerHTML = '<div class="oo-vazio">Nenhum líder cadastrado.</div>'; return; }
     $('ooLidLista').innerHTML = S.lideres.map(function (l) {
       var on = l.ativo === true, id = esc(l.id);
-      return '<div class="oo-lid-it"><span class="oo-lid-nome">' + esc(l.nome) + '</span>' + (on ? '' : '<span class="oo-lid-off">desativado</span>') +
+      return '<div class="oo-lid-it"><span class="oo-lid-nome">' + esc(l.nome) + '</span>' + (l.compartilhado === true ? '<span class="oo-reg-tag">link único</span>' : '') + (on ? '' : '<span class="oo-lid-off">desativado</span>') +
         '<div class="oo-reg-actions">' + (on ? '<button class="btn-p" onclick="ooCopiarLink(\'' + id + '\')"><i class="fas fa-copy"></i> Copiar link</button>' : '') +
         '<button class="btn-sec" onclick="ooNovoLink(\'' + id + '\')" title="Gera outro link e desativa este"><i class="fas fa-rotate"></i> Novo link</button>' +
         '<button class="btn-sec" onclick="ooAlternarLider(\'' + id + '\')">' + (on ? 'Desativar' : 'Ativar') + '</button></div>' +
@@ -8055,13 +8056,14 @@
     try { await carregarLideres(); } catch (e) { erroFs(e, 'Erro ao carregar os líderes.'); }
     renderLideres();
   };
-  window.ooCriarLider = async function () {
-    var F = fs(); if (!F) return; var nome = $('ooLidNome').value.trim();
+  window.ooCriarLider = async function (geral) {
+    var F = fs(); if (!F) return; var nome = geral === true ? 'Link único (todos os líderes)' : $('ooLidNome').value.trim();
     if (!nome) { toast('Informe o nome do líder.', 'error'); return; }
     var btn = $('ooBtnLidCriar'); btn.disabled = true;
     try {
       var tk = novoToken(), t = agora();
       var l = { nome: nome, ativo: true, colaboradoras: nomesAtivos(), createdAt: t, updatedAt: t };
+      if (geral === true) l.compartilhado = true; /* [v6.8] cada líder digita o próprio nome na página */
       await F.setDoc(F.doc(F.db, COL_L, tk), l); l.id = tk; S.lideres.push(l);
       $('ooLidNome').value = ''; renderLideres(); toast('Link criado.', 'success');
     } catch (e) { erroFs(e, 'Erro ao criar o link.'); }
@@ -8087,6 +8089,7 @@
     if (!confirm('Gerar um novo link para ' + l.nome + '? O link atual será desativado.')) return;
     try {
       var tk = novoToken(), t = agora(), n = { nome: l.nome, ativo: true, colaboradoras: nomesAtivos(), createdAt: t, updatedAt: t };
+      if (l.compartilhado === true) n.compartilhado = true;
       await F.setDoc(F.doc(F.db, COL_L, tk), n);
       await F.updateDoc(F.doc(F.db, COL_L, id), { ativo: false, updatedAt: t }); l.ativo = false;
       n.id = tk; S.lideres.push(n); renderLideres(); toast('Novo link criado; o anterior foi desativado.', 'success');
