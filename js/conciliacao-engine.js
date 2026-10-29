@@ -492,6 +492,29 @@
     return { casados: casados, wdSemMatch: semMatch, solSemMatch: solSem, valorDiferente: valorDif };
   }
 
+  /* [v1.4] Extrato do Mais Todos em PDF → texto no formato do CSV (o PDF não traz ID nem hora).
+     lines = linhas de texto da página, de cima para baixo. ID sintético = data+tipo+descrição+valor+nº da ocorrência no dia,
+     estável se o mesmo PDF (ou um PDF que repita o dia inteiro) for carregado de novo. */
+  function pdfMaisTodosParaCsv(lines) {
+    var rx = /^(\d\d\/\d\d\/\d{4})\s+(.*?)\s*([+-])\s*R\$\s*([\d.]+,\d\d)\s*$/;
+    var L = lines.map(function (l) { return String(l == null ? '' : l).replace(/\s+/g, ' ').trim(); }).filter(function (l) { return l; });
+    var rows = [], saldos = {}, cont = {};
+    for (var i = 0; i < L.length; i++) {
+      var sd = /^(\d\d)\/(\d\d)\/(\d{4}) Saldo do dia R\$ ?(-?[\d.]+,\d\d)$/.exec(L[i]);
+      if (sd) { saldos[sd[3] + '-' + sd[2] + '-' + sd[1]] = toCents(sd[4]); continue; }
+      var m = rx.exec(L[i]); if (!m || i === 0) continue;
+      var tipo = L[i - 1], desc = (L[i + 1] || ''), mid = m[2];
+      if (/^Adquirente:/i.test(mid)) {
+        desc = mid.replace(/\s*\d{2}\.\d{3}\.\d{3}\/\d{4}-\d\d\s*$/, '') + ' ' + desc;
+      }
+      desc = desc.replace(/;/g, ',');
+      var v = (m[3] === '-' ? '-' : '') + m[4].replace(/\./g, '');
+      var key = [m[1], tipo, desc, v].join('|'); cont[key] = (cont[key] || 0) + 1;
+      rows.push(m[1] + ' às 00:00:00;' + tipo + ';' + desc + ';pdf-' + hash(key + '#' + cont[key]) + ';R$ ' + v);
+    }
+    return { csv: 'Data de transferência;Tipo de transferência;Descrição;ID da transação;Valor da transferência\n' + rows.join('\n') + '\n', saldos: saldos, n: rows.length };
+  }
+
   /* [v1.2] Webstats (texto colado do Painel Caixa): linha = data + 7 valores
      Saldo Anterior | Entrada | Saída | Saldo do Dia | Diferença | Extrato Banco | Saldo Atual */
   function parseWebstats(texto) {
@@ -512,5 +535,5 @@
   return { toCents: toCents, fmt: fmt, norm: norm, hash: hash, tipoWD: tipoWD, parseConsolidado: parseConsolidado, parseMaisTodos: parseMaisTodos,
            parearExato: parearExato, findSubset: findSubset, conciliar: conciliar, registroParaSalvar: registroParaSalvar,
            montarMatriz: montarMatriz, auditarNSU: auditarNSU, rowsFromDoc: rowsFromDoc,
-           extrairFechamentoRows: extrairFechamentoRows, extrairCaixaGeralRows: extrairCaixaGeralRows, parseWebstats: parseWebstats };
+           extrairFechamentoRows: extrairFechamentoRows, extrairCaixaGeralRows: extrairCaixaGeralRows, parseWebstats: parseWebstats, pdfMaisTodosParaCsv: pdfMaisTodosParaCsv };
 }));
