@@ -416,6 +416,62 @@
     });
   }
 
+  /* ───────────── Importação de planilhas (Google Sheets exportado) ───────────── */
+  /* Funciona sobre linhas (array de arrays de texto). Posições são relativas aos rótulos/datas, então
+     colunas extras (número da linha do Google) não atrapalham. */
+  var RX_DATA = /^(\d\d)\/(\d\d)\/(\d{4})$/;
+  function proximaNaoVazia(cells, j) {
+    for (var x = j + 1; x < cells.length; x++) if (String(cells[x]).replace(/\s/g, '') !== '') return cells[x];
+    return '';
+  }
+  function rowsFromDoc(doc) {
+    var t = doc.querySelector('table'); if (!t) return [];
+    return Array.prototype.map.call(t.querySelectorAll('tr'), cellsOf);
+  }
+  /* Aba de fechamento diário: "DATA DO CAIXA | 19/10/2026", "DINHEIRO | ...", "BANCO", "SALDO TOTAL", "SALDO WEB DENTAL", "DIFERENÇA". */
+  function extrairFechamentoRows(rows) {
+    var mapa = { 'DINHEIRO': 'dinheiro', 'BANCO': 'banco', 'SALDO TOTAL': 'saldoTotal', 'SALDO WEB DENTAL': 'wdSaldo', 'DIFERENCA': 'diferenca' };
+    var out = {}, dia = null;
+    for (var i = 0; i < rows.length; i++) {
+      for (var j = 0; j < rows[i].length; j++) {
+        var n = deacc(rows[i][j]).replace(/\s+/g, ' ').trim().toUpperCase();
+        if (n === 'DATA DO CAIXA' && !dia) {
+          var m = RX_DATA.exec(String(proximaNaoVazia(rows[i], j)).trim());
+          if (m) dia = m[3] + '-' + m[2] + '-' + m[1];
+        } else if (mapa[n] && out[mapa[n]] === undefined) {
+          var c = toCents(proximaNaoVazia(rows[i], j));
+          if (c !== null && String(proximaNaoVazia(rows[i], j)).trim() !== '') out[mapa[n]] = c;
+        }
+      }
+    }
+    if (!dia) return null;
+    out.dia = dia;
+    return out;
+  }
+  /* Aba mensal da Caixa Geral: cabeçalho DATA | ENTRADAS | SAÍDAS | SALDO; linhas por dia. */
+  function extrairCaixaGeralRows(rows) {
+    var temCab = rows.some(function (r) {
+      var n = r.map(function (c) { return deacc(c).trim().toUpperCase(); });
+      return n.indexOf('ENTRADAS') >= 0 && n.indexOf('SAIDAS') >= 0;
+    });
+    if (!temCab) return null;
+    var dias = [], saldoInicial = null;
+    rows.forEach(function (r) {
+      for (var j = 0; j < r.length; j++) {
+        if (/^SALDO INICIAL/.test(deacc(r[j]).trim().toUpperCase())) { var c = toCents(proximaNaoVazia(r, j)); if (c !== null) saldoInicial = c; }
+        var m = RX_DATA.exec(String(r[j]).trim());
+        if (m) {
+          var saldo = toCents(r[j + 3]), ent = toCents(r[j + 1]), sai = toCents(r[j + 2]);
+          if (String(r[j + 3] == null ? '' : r[j + 3]).trim() !== '' && saldo !== null) {
+            dias.push({ dia: m[3] + '-' + m[2] + '-' + m[1], entradas: ent || 0, saidas: sai || 0, saldo: saldo });
+          }
+          break;
+        }
+      }
+    });
+    return { dias: dias, saldoInicial: saldoInicial };
+  }
+
   /* ───────────── Módulo 4: NSU (Webdental TEF x Soluções) ───────────── */
   function nsuKey(s) { return String(s == null ? '' : s).replace(/\D/g, '').replace(/^0+/, ''); }
 
@@ -436,7 +492,25 @@
     return { casados: casados, wdSemMatch: semMatch, solSemMatch: solSem, valorDiferente: valorDif };
   }
 
+  /* [v1.2] Webstats (texto colado do Painel Caixa): linha = data + 7 valores
+     Saldo Anterior | Entrada | Saída | Saldo do Dia | Diferença | Extrato Banco | Saldo Atual */
+  function parseWebstats(texto) {
+    var out = {}, n = 0;
+    String(texto || '').split(/\r?\n/).forEach(function (ln) {
+      var m = /^\s*(\d\d)\/(\d\d)\/(\d{4})\b(.*)$/.exec(ln); if (!m) return;
+      var resto = m[4].replace(/-\s+(?=\d)/g, '-');
+      var nums = resto.match(/-?\d{1,3}(?:\.\d{3})*,\d{2}/g) || [];
+      if (nums.length < 7) return;
+      var v = nums.slice(0, 7).map(toCents);
+      if (v.some(function (x) { return x === null; })) return;
+      out[m[3] + '-' + m[2] + '-' + m[1]] = { saldoAnterior: v[0], entradas: v[1], saidas: Math.abs(v[2]), saldoDoDia: v[3], diferenca: v[4], extratoBanco: v[5], saldoAtual: v[6] };
+      n++;
+    });
+    return n ? out : null;
+  }
+
   return { toCents: toCents, fmt: fmt, norm: norm, hash: hash, tipoWD: tipoWD, parseConsolidado: parseConsolidado, parseMaisTodos: parseMaisTodos,
            parearExato: parearExato, findSubset: findSubset, conciliar: conciliar, registroParaSalvar: registroParaSalvar,
-           montarMatriz: montarMatriz, auditarNSU: auditarNSU };
+           montarMatriz: montarMatriz, auditarNSU: auditarNSU, rowsFromDoc: rowsFromDoc,
+           extrairFechamentoRows: extrairFechamentoRows, extrairCaixaGeralRows: extrairCaixaGeralRows, parseWebstats: parseWebstats };
 }));
