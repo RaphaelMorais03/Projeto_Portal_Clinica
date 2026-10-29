@@ -84,6 +84,12 @@
     .toast.success{background:var(--green);}.toast.error{background:var(--red);}.toast.info{background:var(--navy);}
     .tag-nome{color:var(--gray-600);}
     .sep{height:1px;background:var(--gray-100);margin:14px 0;}
+      .verdict{display:flex;gap:14px;align-items:center;padding:16px 18px;border-radius:14px;margin-bottom:14px;font-size:15px;font-weight:700;}
+    .verdict i{font-size:26px;}.verdict small{display:block;font-weight:500;font-size:12px;margin-top:3px;}
+    .verdict.ok{background:var(--green-bg);color:var(--green);}.verdict.no{background:var(--red-bg);color:var(--red);}.verdict.av{background:var(--amber-bg);color:var(--amber);}
+    .passo{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--navy);color:white;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+    .so-admin{display:none;}body.is-admin .so-admin{display:block;}body.is-admin .tab-btn.so-admin{display:flex;}
+    .big{font-size:15px;padding:12px 24px;}
   </style>
 </head>
 <body>
@@ -93,70 +99,67 @@
   <div class="s-header">
     <div class="s-logo">
       <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
-      <div><div class="s-logo-name">Conciliação diária</div><div class="s-logo-sub">Webdental × Mais Todos × Caixa · Pirituba · somente admin</div></div>
+      <div><div class="s-logo-name">Conciliação diária</div><div class="s-logo-sub">Webdental × Mais Todos × Caixa · Pirituba</div></div>
     </div>
-    <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+    <button class="back-btn" id="btnPortal"><i class="fas fa-home"></i> Portal</button>
   </div>
 
   <div class="content" id="conteudo" style="display:none;">
     <div class="tabs">
-      <button class="tab-btn active" data-tab="conciliar"><i class="fas fa-scale-balanced"></i> Conciliar</button>
-      <button class="tab-btn" data-tab="matriz"><i class="fas fa-table"></i> Matriz de dias</button>
-      <button class="tab-btn" data-tab="abertos"><i class="fas fa-list-check"></i> Itens abertos <span class="badge b-gray" id="bgAbertos">0</span></button>
-      <button class="tab-btn" data-tab="config"><i class="fas fa-gear"></i> Configuração</button>
+      <button class="tab-btn active" data-tab="conciliar"><i class="fas fa-scale-balanced"></i> Conciliar o dia</button>
+      <button class="tab-btn" data-tab="matriz"><i class="fas fa-table"></i> Dias fechados</button>
+      <button class="tab-btn" data-tab="abertos"><i class="fas fa-list-check"></i> Pendências <span class="badge b-gray" id="bgAbertos">0</span></button>
+      <button class="tab-btn so-admin" data-tab="config"><i class="fas fa-gear"></i> Configuração</button>
     </div>
 
     <!-- ═════════ ABA CONCILIAR ═════════ -->
     <div class="tab-pane active" id="pane-conciliar">
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><i class="fas fa-calendar-day"></i> 1 · Dia e ponto de partida</div><span id="estadoDia"></span></div>
-        <div class="grid g3">
-          <div><label class="f-label" for="cDia">Dia do fechamento</label><input type="date" id="cDia" class="f-input"></div>
-          <div><label class="f-label">Fechamento anterior</label><div id="prevInfo" class="hint" style="margin-top:9px;font-size:13px;color:var(--gray-800);">—</div></div>
-          <div><label class="f-label">&nbsp;</label><label style="font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;margin-top:9px;"><input type="checkbox" id="seedManual"> Informar ponto de partida manualmente</label></div>
-        </div>
-        <div id="seedBox" style="display:none;margin-top:14px;">
-          <div class="sep"></div>
-          <div class="hint" style="margin:0 0 10px;">Use na primeira vez, ou se quiser partir de outro dia. Valores do último fechamento (planilha de fechamento).</div>
-          <div class="grid g4">
-            <div><label class="f-label" for="sDia">Data do fechamento anterior</label><input type="date" id="sDia" class="f-input"></div>
-            <div><label class="f-label" for="sDinheiro">Dinheiro</label><input id="sDinheiro" class="f-input" inputmode="decimal" placeholder="0,00"></div>
-            <div><label class="f-label" for="sMT">Saldo Mais Todos</label><input id="sMT" class="f-input" inputmode="decimal" placeholder="0,00"></div>
-            <div><label class="f-label" for="sSant">Saldo Santander</label><input id="sSant" class="f-input" inputmode="decimal" placeholder="0,00"></div>
-          </div>
-          <div style="margin-top:12px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-            <div style="width:260px;"><label class="f-label" for="sWD">Saldo Webdental do fechamento anterior</label><input id="sWD" class="f-input" inputmode="decimal" placeholder="0,00"></div>
-            <button class="btn-s" id="btnBuscarSeed" type="button"><i class="fas fa-cloud-arrow-down"></i> Buscar da planilha de fechamento</button>
-          </div>
-          <div class="hint">Preenche pela aba do dia na planilha "Fechamento de Caixa Diário". O campo Banco da planilha vai inteiro em Mais Todos e Santander fica 0,00.</div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><div class="panel-title"><i class="fas fa-file-arrow-up"></i> 2 · Arquivos</div></div>
+        <div class="panel-header"><div class="panel-title"><span class="passo">1</span> Qual dia você vai fechar?</div><span id="estadoDia"></span></div>
         <div class="grid g2">
-          <div class="dropzone"><label class="f-label" for="fWD">Webdental · Consolidado do Dia (.xls / .html / .csv)</label><input type="file" id="fWD" accept=".xls,.xlsx,.html,.htm,.csv"><div class="st" id="stWD">Nenhum arquivo.</div></div>
-          <div class="dropzone"><label class="f-label" for="fMT">Mais Todos · extrato (.csv, pode ser mais de um)</label><input type="file" id="fMT" accept=".csv" multiple><div class="st" id="stMT">Nenhum arquivo.</div></div>
-        </div>
-        <div class="grid g2" style="margin-top:14px;">
-          <div><label class="f-label" for="tWebstats">Webstats · cole o texto da tela (opcional)</label><textarea id="tWebstats" class="f-input" placeholder="Cole aqui. Se achar um 'Saldo', sugiro no campo Saldo Webdental (confira sempre)."></textarea></div>
-          <div class="dropzone"><label class="f-label" for="fSol">Soluções · transações por NSU (opcional, para auditar cartão)</label><input type="file" id="fSol" accept=".csv,.xls,.xlsx"><div class="st" id="stSol">Nenhum arquivo. Só é usado quando o cartão divergir.</div></div>
+          <div><label class="f-label" for="cDia">Dia</label><input type="date" id="cDia" class="f-input"></div>
+          <div><label class="f-label">Último dia já fechado</label><div id="prevInfo" class="hint" style="margin-top:9px;font-size:13px;color:var(--gray-800);">—</div></div>
         </div>
       </div>
 
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><i class="fas fa-keyboard"></i> 3 · Valores do dia</div></div>
-        <div class="grid g4">
-          <div><label class="f-label" for="vDinheiro">Dinheiro (saldo da planilha Caixa Geral)</label><input id="vDinheiro" class="f-input" inputmode="decimal" placeholder="0,00"></div>
-          <div><label class="f-label" for="vSant">Santander (saldo)</label><input id="vSant" class="f-input" inputmode="decimal" placeholder="em branco = igual ao anterior"></div>
-          <div><label class="f-label" for="vWD">Saldo Webdental <span id="wdLock"></span></label><input id="vWD" class="f-input" inputmode="decimal" placeholder="0,00"></div>
-          <div><label class="f-label" for="vMTApp">Saldo Mais Todos no app (conferência, opcional)</label><input id="vMTApp" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+        <div class="panel-header"><div class="panel-title"><span class="passo">2</span> Anexe os dois arquivos do dia</div></div>
+        <div class="grid g2">
+          <div class="dropzone"><label class="f-label" for="fWD">Webdental · Consolidado do Dia (.xls)</label><input type="file" id="fWD" accept=".xls,.xlsx,.html,.htm,.csv"><div class="st" id="stWD">Nenhum arquivo.</div></div>
+          <div class="dropzone"><label class="f-label" for="fMT">Mais Todos · extrato (.csv)</label><input type="file" id="fMT" accept=".csv" multiple><div class="st" id="stMT">Nenhum arquivo.</div></div>
         </div>
-        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn-s" id="btnBuscarDia" type="button"><i class="fas fa-cloud-arrow-down"></i> Buscar nas planilhas</button>
-          <button class="btn-p" id="btnConciliar"><i class="fas fa-scale-balanced"></i> Conciliar</button>
+        <div class="hint">No Mais Todos, baixe o extrato em CSV desde o último dia fechado até o dia que está fechando.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><span class="passo">3</span> Confira os dois valores</div><button class="btn-s" id="btnBuscarDia" type="button"><i class="fas fa-wand-magic-sparkles"></i> Preencher sozinho</button></div>
+        <div class="grid g3">
+          <div><label class="f-label" for="vDinheiro">Dinheiro em caixa (planilha Caixa Geral)</label><input id="vDinheiro" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+          <div><label class="f-label" for="vWD">Saldo Webdental (Webstats) <span id="wdLock"></span></label><input id="vWD" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+          <div><label class="f-label" for="vSant">Saldo Santander (digite só se mudou)</label><input id="vSant" class="f-input" inputmode="decimal" placeholder="0,00"></div>
         </div>
-        <div class="hint">"Buscar nas planilhas" traz o Dinheiro da Caixa Geral Odonto e, se o dia já estiver na planilha de fechamento, o saldo Webdental e o Banco para conferência. Só preenche campos vazios que você pode editar. Exige o Apps Script configurado.</div>
+        <details style="margin-top:14px;" id="avancado"><summary><i class="fas fa-sliders"></i> Opções avançadas (normalmente não precisa)</summary><div class="in">
+          <div class="grid g2">
+            <div><label class="f-label" for="vMTApp">Saldo do Mais Todos no app (só para conferir)</label><input id="vMTApp" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+          </div>
+          <div class="dropzone" style="margin-top:12px;"><label class="f-label" for="fSol">Soluções · recebíveis (.csv), só para auditar cartão pelo NSU</label><input type="file" id="fSol" accept=".csv,.xls,.xlsx"><div class="st" id="stSol">Nenhum arquivo.</div></div>
+          <div class="so-admin" style="margin-top:12px;">
+            <label style="font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;"><input type="checkbox" id="seedManual"> Informar o ponto de partida manualmente (admin)</label>
+            <div id="seedBox" style="display:none;margin-top:12px;">
+              <div class="grid g4">
+                <div><label class="f-label" for="sDia">Data do fechamento anterior</label><input type="date" id="sDia" class="f-input"></div>
+                <div><label class="f-label" for="sDinheiro">Dinheiro</label><input id="sDinheiro" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+                <div><label class="f-label" for="sMT">Saldo Mais Todos</label><input id="sMT" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+                <div><label class="f-label" for="sSant">Saldo Santander</label><input id="sSant" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                <div style="width:260px;"><label class="f-label" for="sWD">Saldo Webdental do fechamento anterior</label><input id="sWD" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+                <button class="btn-s" id="btnBuscarSeed" type="button"><i class="fas fa-cloud-arrow-down"></i> Buscar na planilha de fechamento</button>
+              </div>
+            </div>
+          </div>
+        </div></details>
+        <div style="margin-top:18px;"><button class="btn-p big" id="btnConciliar"><i class="fas fa-scale-balanced"></i> Conciliar</button></div>
       </div>
 
       <div id="resultado"></div>
@@ -165,30 +168,52 @@
     <!-- ═════════ ABA MATRIZ ═════════ -->
     <div class="tab-pane" id="pane-matriz">
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><i class="fas fa-table"></i> Matriz de dias fechados</div><button class="btn-s" id="btnExportMatriz"><i class="fas fa-file-excel"></i> Exportar Excel</button></div>
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-table"></i> Dias fechados</div><button class="btn-s" id="btnExportMatriz"><i class="fas fa-file-excel"></i> Exportar Excel</button></div>
         <div class="scroll" id="matrizBox"></div>
-        <div class="hint">Diferença = (Dinheiro + Mais Todos + Santander) − Saldo Webdental. Variação = diferença de hoje − diferença do fechamento anterior.</div>
+        <div class="hint">Diferença = (Dinheiro + Mais Todos + Santander) − Saldo Webdental. Variação = diferença de hoje − diferença do dia fechado anterior.</div>
       </div>
     </div>
 
     <!-- ═════════ ABA ABERTOS ═════════ -->
     <div class="tab-pane" id="pane-abertos">
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><i class="fas fa-list-check"></i> Itens abertos de todos os dias fechados</div></div>
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-list-check"></i> Pendências dos dias fechados</div></div>
         <div id="abertosBox"></div>
       </div>
     </div>
 
-    <!-- ═════════ ABA CONFIG ═════════ -->
+    <!-- ═════════ ABA CONFIG (admin) ═════════ -->
     <div class="tab-pane" id="pane-config">
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><i class="fas fa-link"></i> Envio ao Google Sheets</div></div>
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-database"></i> Base inicial (importar das planilhas)</div><span id="baseResumo" class="hint"></span></div>
+        <div class="grid g2">
+          <div class="dropzone"><label class="f-label" for="fBase">Planilhas do Google Sheets (baixadas como .xlsx ou .html; pode escolher vários)</label><input type="file" id="fBase" accept=".xlsx,.xls,.html,.htm" multiple>
+            <div class="hint">Serve para "Caixa Geral Odonto" (uma aba por mês) e "Fechamento de Caixa Diário" (uma aba por dia). O sistema reconhece cada aba sozinho.</div></div>
+          <div><label class="f-label" for="tWebstats">Webstats · cole a tabela do Painel Caixa (opcional)</label><textarea id="tWebstats" class="f-input" placeholder="Cole as linhas com Data, Saldo Anterior, Entrada, Saída..., Saldo Atual."></textarea></div>
+        </div>
+        <div style="margin-top:14px;"><button class="btn-p" id="btnImportar"><i class="fas fa-file-import"></i> Importar para a base</button></div>
+        <div id="stBase" class="hint"></div>
+        <div class="hint">Só são gravados valores por dia (saldos e totais). Nenhum nome de paciente.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-flag-checkered"></i> Ponto de partida</div><span id="inicioInfo" class="hint"></span></div>
+        <div class="grid g3">
+          <div><label class="f-label" for="iniDia">Último dia já conferido na planilha antiga</label><input type="date" id="iniDia" class="f-input"></div>
+          <div><label class="f-label" for="iniMT">Saldo do Mais Todos nesse dia (do extrato/app)</label><input id="iniMT" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+          <div><label class="f-label">&nbsp;</label><button class="btn-p" id="btnDefinirInicio"><i class="fas fa-check"></i> Definir ponto de partida</button></div>
+        </div>
+        <div class="hint">Dinheiro, Saldo Webdental e Banco vêm da base importada. O Santander é calculado: Banco da planilha − saldo do Mais Todos. A conciliação começa no dia seguinte.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-link"></i> Envio ao Google Sheets e leitura automática</div></div>
         <div class="grid g2">
           <div><label class="f-label" for="cfgUrl">URL do Apps Script (Web App)</label><input id="cfgUrl" class="f-input" placeholder="https://script.google.com/macros/s/.../exec"></div>
           <div><label class="f-label" for="cfgToken">Token (o mesmo da Propriedade do script)</label><input id="cfgToken" class="f-input" placeholder="segredo compartilhado"></div>
         </div>
         <div style="margin-top:14px;"><button class="btn-p" id="btnSalvarCfg"><i class="fas fa-floppy-disk"></i> Salvar configuração</button></div>
-        <div class="hint">Gravado em <code>clinica-pirituba/conciliacao/config</code>, legível só por admin (exige a regra do RTDB).</div>
+        <div class="hint">Opcional. Sem isso o sistema usa só a base importada acima.</div>
       </div>
     </div>
   </div>
@@ -210,7 +235,7 @@
     const E = s => window.esc(s);
     const MAXL = 200;
     let user = null;
-    const S = { wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, pwd: '' };
+    const S = { wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, base: { fechamento: {}, caixa: {}, webstats: {} }, inicio: null, admin: false };
 
     /* ───────── util ───────── */
     function hojeISO() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
@@ -219,58 +244,91 @@
     function sgn(c) { return (c > 0 ? '+' : '') + M(c); }
     function cls(c) { return c === 0 ? 'ok-t' : 'bad-t'; }
     function logAdmin(msg) { set(ref(db, 'admin_logs/' + Date.now()), { tipo: 'info', msg: (user.email || user.uid) + ' ' + msg, ts: new Date().toISOString() }).catch(() => {}); }
+    /* [v1.2] todo botão passa por aqui: erro inesperado sempre vira mensagem na tela */
+    function acao(fn) { return async ev => { try { await fn(ev); } catch (e) { console.error(e); toast('Não deu certo: ' + (e && e.message ? e.message : e), 'error'); } }; }
+    function proxDia(iso) { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); if (d.getUTCDay() === 0) d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); }
 
     /* ───────── dados salvos ───────── */
     async function carregarDias() {
       const s = await get(ref(db, BASE));
       const v = s.exists() ? s.val() : {};
       S.cfg = v.config || {};
+      S.base = { fechamento: (v.base && v.base.fechamento) || {}, caixa: (v.base && v.base.caixa) || {}, webstats: (v.base && v.base.webstats) || {} };
+      S.inicio = v.inicio || null;
       S.dias = {};
       Object.keys(v).forEach(k => { if (/^\d{4}-\d\d-\d\d$/.test(k)) S.dias[k] = v[k]; });
       $('cfgUrl').value = S.cfg.webhookUrl || ''; $('cfgToken').value = S.cfg.token || '';
+      renderBase();
     }
     function fechados() { return Object.keys(S.dias).filter(k => S.dias[k].reg && S.dias[k].estado && S.dias[k].estado.status === 'fechado').sort(); }
     function achaPrev(dia) {
-      const ks = fechados().filter(k => k < dia); if (!ks.length) return null;
-      const k = ks[ks.length - 1], g = S.dias[k].reg.saldos;
-      return { dia: k, dinheiro: g.dinheiro, maisTodos: g.maisTodos, santander: g.santander, wdSaldo: g.wdSaldo };
+      const ks = fechados().filter(k => k < dia);
+      if (ks.length) { const k = ks[ks.length - 1], g = S.dias[k].reg.saldos; return { dia: k, dinheiro: g.dinheiro, maisTodos: g.maisTodos, santander: g.santander, wdSaldo: g.wdSaldo, origem: 'fechado' }; }
+      if (S.inicio && S.inicio.dia < dia) return { dia: S.inicio.dia, dinheiro: S.inicio.dinheiro, maisTodos: S.inicio.maisTodos, santander: S.inicio.santander, wdSaldo: S.inicio.wdSaldo, origem: 'inicio' };
+      return null;
     }
     function getPrev() {
-      if ($('seedManual').checked || !achaPrev($('cDia').value)) {
+      if ((S.admin && $('seedManual').checked) || !achaPrev($('cDia').value)) {
+        if (!S.admin) return null;
         const p = { dia: $('sDia').value, dinheiro: val('sDinheiro'), maisTodos: val('sMT'), santander: val('sSant'), wdSaldo: val('sWD') };
         if (!p.dia || [p.dinheiro, p.maisTodos, p.santander, p.wdSaldo].some(x => x === null || Number.isNaN(x))) return null;
         return p;
       }
       return achaPrev($('cDia').value);
     }
+    function valoresDaBase(dia) {
+      const f = S.base.fechamento[dia], c = S.base.caixa[dia], w = S.base.webstats[dia];
+      return {
+        /* [v1.2] foto do fechamento antigo tem prioridade (o Webdental muda depois com edições retroativas) */
+        dinheiro: f && f.dinheiro != null ? f.dinheiro : (c && c.saldo != null ? c.saldo : null),
+        wdSaldo: f && f.wdSaldo != null ? f.wdSaldo : (w && w.saldoAtual != null ? w.saldoAtual : null),
+        fechamentoAntigo: f || null, webstats: w || null
+      };
+    }
 
     /* ───────── estado do dia na tela ───────── */
     function atualizaDia() {
       const dia = $('cDia').value, prev = achaPrev(dia), rec = S.dias[dia];
-      const manual = $('seedManual').checked || !prev;
+      const manual = S.admin && ($('seedManual').checked || !prev);
       $('seedBox').style.display = manual ? 'block' : 'none';
-      $('prevInfo').innerHTML = prev && !manual ? '<b>' + dBR(prev.dia) + '</b> · Dinheiro ' + M(prev.dinheiro) + ' · Mais Todos ' + M(prev.maisTodos) + ' · Santander ' + M(prev.santander) + ' · Webdental ' + M(prev.wdSaldo)
-        : (manual ? 'Informe abaixo.' : '—');
+      if (prev && !manual) $('prevInfo').innerHTML = '<b>' + dBR(prev.dia) + '</b>' + (prev.origem === 'inicio' ? ' (ponto de partida)' : '');
+      else if (!prev) $('prevInfo').innerHTML = S.admin ? '<span class="bad-t">Sem ponto de partida: defina em Configuração.</span>' : '<span class="bad-t">Peça ao administrador para definir o ponto de partida.</span>';
+      else $('prevInfo').textContent = 'Informe abaixo.';
       const fechado = rec && rec.estado && rec.estado.status === 'fechado';
-      $('estadoDia').innerHTML = fechado ? '<span class="badge b-ok"><i class="fas fa-lock"></i> Fechado · saldo Webdental congelado</span> <button class="btn-s" id="btnReabrir"><i class="fas fa-lock-open"></i> Reabrir dia</button>'
+      $('estadoDia').innerHTML = fechado ? '<span class="badge b-ok"><i class="fas fa-lock"></i> Dia fechado</span> <button class="btn-s so-admin" style="display:inline-flex;" id="btnReabrir"><i class="fas fa-lock-open"></i> Reabrir</button>'
         : (rec && rec.estado ? '<span class="badge b-warn">Reaberto</span>' : '');
       $('vWD').disabled = !!fechado;
       $('wdLock').textContent = fechado ? '(congelado)' : '';
       if (fechado) $('vWD').value = C.fmt(rec.reg.saldos.wdSaldo, true);
-      const b = $('btnReabrir'); if (b) b.onclick = reabrir;
+      const b = $('btnReabrir'); if (b) b.onclick = acao(reabrir);
     }
 
     async function reabrir() {
+      if (!S.admin) { toast('Só o administrador pode reabrir um dia.', 'error'); return; }
       const dia = $('cDia').value; const motivo = prompt('Motivo da reabertura de ' + dBR(dia) + ' (fica registrado):');
-      if (!motivo || !motivo.trim()) return;
+      if (motivo === null) { toast('Reabertura cancelada.', 'info'); return; }
+      if (!motivo.trim()) { toast('Escreva o motivo para reabrir.', 'error'); return; }
       const ts = Date.now();
-      try {
-        await update(ref(db, BASE + '/' + dia), { estado: { status: 'reaberto', por: user.email || user.uid, em: new Date().toISOString() } });
-        await set(ref(db, BASE + '/' + dia + '/reaberturas/' + ts), { por: user.email || user.uid, em: new Date().toISOString(), motivo: motivo.trim().slice(0, 300) });
-        logAdmin('reabriu a conciliação de ' + dia);
-        await carregarDias(); atualizaDia(); renderTudoAbas(); toast('Dia reaberto. Refaça a conciliação e feche de novo.', 'info');
-      } catch (e) { console.error(e); toast('Não foi possível reabrir: ' + e.message, 'error'); }
+      await update(ref(db, BASE + '/' + dia), { estado: { status: 'reaberto', por: user.email || user.uid, em: new Date().toISOString() } });
+      await set(ref(db, BASE + '/' + dia + '/reaberturas/' + ts), { por: user.email || user.uid, em: new Date().toISOString(), motivo: motivo.trim().slice(0, 300) });
+      logAdmin('reabriu a conciliação de ' + dia);
+      await carregarDias(); atualizaDia(); renderTudoAbas(); toast('Dia reaberto. Refaça a conciliação e feche de novo.', 'info');
     }
+
+    /* [v1.2] preenche Dinheiro/Webdental pela base importada (só campos vazios) */
+    function preencher(dia, aviso) {
+      const b = valoresDaBase(dia), msgs = [];
+      if (b.dinheiro != null && !$('vDinheiro').value.trim()) { $('vDinheiro').value = C.fmt(b.dinheiro, true); msgs.push('Dinheiro ' + C.fmt(b.dinheiro)); }
+      if (b.wdSaldo != null && !$('vWD').value.trim() && !$('vWD').disabled) { $('vWD').value = C.fmt(b.wdSaldo, true); msgs.push('Webdental ' + C.fmt(b.wdSaldo)); }
+      const pv = achaPrev(dia);
+      if (pv && !$('vSant').value.trim()) $('vSant').value = C.fmt(pv.santander, true);
+      if (aviso) {
+        if (msgs.length) toast('Preenchido pela base: ' + msgs.join(' · ') + '. Confira.', 'success');
+        else if (b.dinheiro == null && b.wdSaldo == null) toast('Não há valores de ' + dBR(dia) + ' na base importada. ' + (S.admin ? 'Importe em Configuração' : 'Peça ao administrador para importar') + ' ou digite os valores.', 'info');
+        else toast('Os campos já estavam preenchidos; nada foi alterado.', 'info');
+      }
+    }
+    function limparDia() { ['vDinheiro', 'vSant', 'vMTApp'].forEach(i => { $(i).value = ''; }); if (!$('vWD').disabled) $('vWD').value = ''; $('resultado').innerHTML = ''; S.res = null; }
 
     /* ───────── leitura dos arquivos ───────── */
     async function lerWD(file) {
@@ -293,19 +351,18 @@
         const per = w.periodo ? ' · período ' + dBR(w.periodo[0]) + ' a ' + dBR(w.periodo[1]) : '';
         $('stWD').innerHTML = '<span class="ok-t"><b>' + w.entradas.length + '</b> entradas, <b>' + w.anteriores.length + '</b> recebimentos anteriores, <b>' + w.saidas.length + '</b> saídas' + E(per) + '</span>' +
           (w.invalidas ? ' <span class="warn-t">· ' + w.invalidas + ' linhas ignoradas</span>' : '') + (w.entradas.length + w.saidas.length === 0 ? ' <span class="bad-t">· nada reconhecido: o layout mudou?</span>' : '');
-      } catch (e) { console.error(e); S.wd = null; $('stWD').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; }
+      } catch (e) { console.error(e); S.wd = null; $('stWD').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; toast('Erro ao ler o Consolidado: ' + e.message, 'error'); }
     });
     $('fMT').addEventListener('change', async ev => {
-      const fs = Array.from(ev.target.files); if (!fs.length) return;
-      const porId = {}; let inval = 0;
-      for (const f of fs) { const r = C.parseMaisTodos(await f.text()); inval += r.invalidas; r.linhas.forEach(l => { porId[l.id] = l; }); }
-      S.banco = Object.keys(porId).map(k => porId[k]);
-      const dias = [...new Set(S.banco.map(l => l.dia))].sort();
-      $('stMT').innerHTML = '<span class="ok-t"><b>' + S.banco.length + '</b> lançamentos · dias ' + dias.map(dBR).map(E).join(', ') + '</span>' + (inval ? ' <span class="warn-t">· ' + inval + ' linhas ignoradas</span>' : '');
-    });
-    $('tWebstats').addEventListener('input', () => {
-      const m = /saldo[^\d-]{0,40}(-?\d{1,3}(?:\.\d{3})*,\d{2})/i.exec($('tWebstats').value);
-      if (m && !$('vWD').value.trim() && !$('vWD').disabled) { $('vWD').value = m[1]; toast('Saldo sugerido do texto colado: ' + m[1] + ' — confira.', 'info'); }
+      const fs = Array.from(ev.target.files); if (!fs.length) { S.banco = []; $('stMT').textContent = 'Nenhum arquivo.'; return; }
+      try {
+        const porId = {}; let inval = 0;
+        for (const f of fs) { const r = C.parseMaisTodos(await f.text()); inval += r.invalidas; r.linhas.forEach(l => { porId[l.id] = l; }); }
+        S.banco = Object.keys(porId).map(k => porId[k]);
+        const dias = [...new Set(S.banco.map(l => l.dia))].sort();
+        if (!S.banco.length) { $('stMT').innerHTML = '<span class="bad-t">Nada reconhecido. É o extrato CSV do Mais Todos? (PDF não funciona.)</span>'; toast('Não reconheci lançamentos nesse arquivo. Use o extrato em CSV do Mais Todos.', 'error'); return; }
+        $('stMT').innerHTML = '<span class="ok-t"><b>' + S.banco.length + '</b> lançamentos · dias ' + dias.map(dBR).map(E).join(', ') + '</span>' + (inval ? ' <span class="warn-t">· ' + inval + ' linhas ignoradas</span>' : '');
+      } catch (e) { console.error(e); S.banco = []; $('stMT').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; toast('Erro ao ler o extrato: ' + e.message, 'error'); }
     });
     $('fSol').addEventListener('change', async ev => {
       const f = ev.target.files[0]; if (!f) return;
@@ -323,27 +380,29 @@
         if (S.res) renderResultado();
       } catch (e) { console.error(e); S.sol = null; $('stSol').innerHTML = '<span class="bad-t">Erro: ' + E(e.message) + '</span>'; }
     });
-
     /* ───────── conciliar ───────── */
     function conciliar() {
       const dia = $('cDia').value;
       if (!dia) { toast('Escolha o dia.', 'error'); return; }
-      if (!S.wd) { toast('Carregue o Consolidado do Webdental.', 'error'); return; }
-      if (!S.banco.length) { toast('Carregue o extrato do Mais Todos.', 'error'); return; }
-      const prev = getPrev(); if (!prev) { toast('Informe o ponto de partida (fechamento anterior).', 'error'); return; }
-      if (prev.dia >= dia) { toast('O fechamento anterior precisa ser antes do dia escolhido.', 'error'); return; }
+      if (!S.wd) { toast('Anexe o Consolidado do Dia do Webdental (passo 2).', 'error'); return; }
+      if (!S.banco.length) { toast('Anexe o extrato CSV do Mais Todos (passo 2).', 'error'); return; }
+      const prev = getPrev(); if (!prev) { toast(S.admin ? 'Defina o ponto de partida em Configuração.' : 'Falta o ponto de partida. Peça ao administrador para defini-lo.', 'error'); return; }
+      if (prev.dia >= dia) { toast('O dia escolhido precisa ser depois de ' + dBR(prev.dia) + '.', 'error'); return; }
       const rec = S.dias[dia];
       const congelado = rec && rec.estado && rec.estado.status === 'fechado';
+      if (!congelado && $('vDinheiro').value.trim() === '' && $('vWD').value.trim() === '') preencher(dia, false);
       const V = { dinheiro: val('vDinheiro'), santander: val('vSant'), wdSaldo: congelado ? rec.reg.saldos.wdSaldo : val('vWD'), maisTodosApp: val('vMTApp') };
-      if (V.dinheiro === null || V.wdSaldo === null) { toast('Preencha Dinheiro e Saldo Webdental.', 'error'); return; }
+      if (V.dinheiro === null) { toast('Falta o Dinheiro em caixa (passo 3).', 'error'); return; }
+      if (V.wdSaldo === null) { toast('Falta o Saldo Webdental (passo 3).', 'error'); return; }
       if ([V.dinheiro, V.santander, V.wdSaldo, V.maisTodosApp].some(x => Number.isNaN(x))) { toast('Há valor inválido (campo em vermelho).', 'error'); return; }
       if (V.santander === null) V.santander = prev.santander;
       if (S.wd.periodo && (dia < S.wd.periodo[0] || dia > S.wd.periodo[1])) toast('O dia está fora do período do Consolidado (' + dBR(S.wd.periodo[0]) + ' a ' + dBR(S.wd.periodo[1]) + ').', 'error');
       S.res = C.conciliar({ dia, prevDia: prev.dia, wd: S.wd, banco: S.banco, excluidos: S.excl, valores: V, prev });
       S.res._prev = prev; S.res._congelado = !!congelado;
       if (!S.res.wd.entradas && !S.res.wd.saidas) S.res.alertas.unshift({ nivel: 'aviso', texto: 'O Webdental não tem nenhuma entrada ou saída entre ' + dBR(prev.dia) + ' (exclusive) e ' + dBR(dia) + '. Confira o arquivo e as datas.' });
-      if (!S.banco.some(l => l.dia > prev.dia && l.dia <= dia)) S.res.alertas.unshift({ nivel: 'aviso', texto: 'O extrato do Mais Todos não tem nenhuma linha no período do fechamento. Confira o arquivo.' });
+      if (!S.banco.some(l => l.dia > prev.dia && l.dia <= dia)) S.res.alertas.unshift({ nivel: 'aviso', texto: 'O extrato do Mais Todos não tem nenhuma linha no período. Confira o arquivo.' });
       renderResultado();
+      const el = $('resultado'); if (el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     /* ───────── render do resultado ───────── */
@@ -363,45 +422,6 @@
     function lim(arr) { return arr.slice(0, MAXL); }
     function limNota(arr) { return arr.length > MAXL ? '<div class="hint">Mostrando ' + MAXL + ' de ' + arr.length + '.</div>' : ''; }
 
-    function renderResultado() {
-      const r = S.res; if (!r) return;
-      const s = r.saldos, ok = s.dDiff === 0;
-      let h = '<div class="panel"><div class="panel-header"><div class="panel-title"><i class="fas fa-chart-simple"></i> 4 · Resultado de ' + dBR(r.dia) + '</div><span class="badge b-gray">período: após ' + dBR(r.prevDia) + ' até ' + dBR(r.dia) + '</span></div>';
-      r.alertas.forEach(a => { h += '<div class="alerta ' + a.nivel + '"><i class="fas fa-triangle-exclamation"></i> ' + E(a.texto) + '</div>'; });
-      h += '<div class="cards">' +
-        '<div class="card"><div class="k">Saldo real</div><div class="v">' + M(s.real) + '</div><div class="hint">Dinheiro ' + M(s.dinheiro) + ' · Mais Todos ' + M(s.maisTodos) + ' · Santander ' + M(s.santander) + '</div></div>' +
-        '<div class="card"><div class="k">Saldo Webdental' + (r._congelado ? ' (congelado)' : '') + '</div><div class="v">' + M(s.wdSaldo) + '</div></div>' +
-        '<div class="card ' + (s.diff === 0 ? 'good' : 'alert') + '"><div class="k">Diferença (real − Webdental)</div><div class="v">' + M(s.diff) + '</div><div class="hint">no fechamento anterior: ' + M(s.prevDiff) + '</div></div>' +
-        '<div class="card ' + (ok ? 'good' : 'alert') + '"><div class="k">Variação neste fechamento</div><div class="v">' + sgn(s.dDiff) + '</div></div></div>';
-      h += '<div class="panel-title" style="margin:6px 0 8px;font-size:13px;">De onde veio a variação</div>';
-      const rows = []; let tot = 0;
-      Object.keys(LBL).forEach(k => {
-        const v = r.comp[k]; tot += v;
-        rows.push('<tr><td><span class="badge b-gray">' + LBL[k][0] + '</span></td><td>' + E(LBL[k][1]) + '</td><td class="n ' + cls(v) + '">' + (v === 0 ? '—' : sgn(v)) + '</td></tr>');
-      });
-      rows.push('<tr class="tot"><td></td><td>Total explicado</td><td class="n ' + cls(tot) + '">' + sgn(tot) + '</td></tr>');
-      h += tbl(['', 'Origem', 'Valor'], rows, [2]);
-      h += '<div class="hint">Positivo = o dinheiro real ficou acima do Webdental; negativo = abaixo. Sem justificativa por taxa: toda diferença é tratada como possível erro.</div></div>';
-
-      /* Log de ações */
-      h += '<div class="panel"><div class="panel-header"><div class="panel-title"><i class="fas fa-clipboard-list"></i> Log de ações (' + r.log.length + ')</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-s" id="btnCopiarLog"><i class="fas fa-copy"></i> Copiar</button><button class="btn-s" id="btnSheets"><i class="fas fa-table"></i> Enviar ao Sheets</button>' +
-        '<button class="btn-g" id="btnFechar"' + (r._congelado ? ' disabled title="Dia fechado: reabra para alterar"' : '') + '><i class="fas fa-lock"></i> Fechar dia e salvar</button></div></div>';
-      if (!r.log.length) h += '<div class="alerta" style="background:var(--green-bg);color:var(--green);"><i class="fas fa-check"></i> Nada a fazer: sem divergências neste período.</div>';
-      r.log.forEach(i => {
-        h += '<div class="log-i"><span class="p"><span class="badge ' + (i.prio <= 2 ? 'b-bad' : i.prio <= 4 ? 'b-warn' : 'b-gray') + '">' + E(i.modulo) + '</span></span><div>' + E(i.texto) + '</div></div>';
-      });
-      h += '</div>';
-
-      /* Módulos */
-      h += '<div class="panel"><div class="panel-header"><div class="panel-title"><i class="fas fa-magnifying-glass-chart"></i> Detalhe por módulo</div></div>' + renderM2(r) + renderM3(r) + renderM5(r) + renderM1(r) + '</div>';
-      $('resultado').innerHTML = h;
-
-      $('btnCopiarLog').onclick = () => { navigator.clipboard.writeText('Conciliação ' + dBR(r.dia) + '\n' + r.log.map(i => '- ' + i.texto).join('\n')).then(() => toast('Log copiado.', 'success')); };
-      $('btnFechar').onclick = fechar;
-      $('btnSheets').onclick = enviarSheets;
-      document.querySelectorAll('.chk-excl').forEach(c => c.addEventListener('change', () => { S.excl[c.dataset.id] = c.checked; if (!c.checked) delete S.excl[c.dataset.id]; conciliar(); }));
-    }
 
     function renderM1(r) {
       const m = r.m1;
@@ -457,39 +477,85 @@
       return h + '</div></details>';
     }
 
+    function renderResultado() {
+      const r = S.res; if (!r) return;
+      const s = r.saldos, ok = s.dDiff === 0, n = r.log.length;
+      const velha = valoresDaBase(r.dia).fechamentoAntigo;
+      let h = '<div class="panel"><div class="panel-header"><div class="panel-title"><i class="fas fa-chart-simple"></i> Resultado de ' + dBR(r.dia) + '</div><span class="badge b-gray">movimento após ' + dBR(r.prevDia) + ' até ' + dBR(r.dia) + '</span></div>';
+      if (ok && !n) h += '<div class="verdict ok"><i class="fas fa-circle-check"></i><div>Tudo certo neste dia<small>Sem divergência entre Webdental, banco e caixa. Pode fechar o dia.</small></div></div>';
+      else if (ok) h += '<div class="verdict av"><i class="fas fa-triangle-exclamation"></i><div>O total fecha, mas há ' + n + ' ponto(s) para conferir<small>Os valores se compensam. Veja a lista abaixo antes de fechar.</small></div></div>';
+      else h += '<div class="verdict no"><i class="fas fa-circle-xmark"></i><div>Há ' + n + ' ponto(s) para corrigir no Webdental · diferença do dia ' + sgn(s.dDiff) + '<small>Faça as ações da lista abaixo e depois confira de novo.</small></div></div>';
+      r.alertas.forEach(a => { h += '<div class="alerta ' + a.nivel + '"><i class="fas fa-triangle-exclamation"></i> ' + E(a.texto) + '</div>'; });
+      if (velha && velha.diferenca != null) h += '<div class="hint" style="margin-bottom:10px;">Na planilha antiga, a diferença deste dia ficou em <b>' + M(velha.diferenca) + '</b>; aqui a diferença acumulada é <b>' + M(s.diff) + '</b>' + (velha.diferenca === s.diff ? ' (igual).' : ' (diferente: veja em "Ver o cálculo").') + '</div>';
+
+      h += '<div class="panel-header" style="margin-top:6px;"><div class="panel-title" style="font-size:13px;"><i class="fas fa-clipboard-list"></i> O que fazer (' + n + ')</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-s" id="btnCopiarLog"><i class="fas fa-copy"></i> Copiar lista</button><button class="btn-s" id="btnSheets"><i class="fas fa-table"></i> Enviar ao Sheets</button>' +
+        '<button class="btn-g" id="btnFechar"><i class="fas fa-lock"></i> Fechar o dia</button></div></div>';
+      if (!n) h += '<div class="alerta" style="background:var(--green-bg);color:var(--green);"><i class="fas fa-check"></i> Nada a fazer.</div>';
+      r.log.forEach(i => {
+        h += '<div class="log-i"><span class="p"><span class="badge ' + (i.prio <= 2 ? 'b-bad' : i.prio <= 4 ? 'b-warn' : 'b-gray') + '">' + E(i.modulo) + '</span></span><div>' + E(i.texto) + '</div></div>';
+      });
+      h += '</div>';
+
+      h += '<div class="panel"><details><summary><i class="fas fa-calculator"></i> Ver o cálculo e os detalhes (para quem quiser conferir)</summary><div class="in">';
+      h += '<div class="cards">' +
+        '<div class="card"><div class="k">Saldo real</div><div class="v">' + M(s.real) + '</div><div class="hint">Dinheiro ' + M(s.dinheiro) + ' · Mais Todos ' + M(s.maisTodos) + ' · Santander ' + M(s.santander) + '</div></div>' +
+        '<div class="card"><div class="k">Saldo Webdental' + (r._congelado ? ' (congelado)' : '') + '</div><div class="v">' + M(s.wdSaldo) + '</div></div>' +
+        '<div class="card ' + (s.diff === 0 ? 'good' : 'alert') + '"><div class="k">Diferença (real − Webdental)</div><div class="v">' + M(s.diff) + '</div><div class="hint">no dia anterior: ' + M(s.prevDiff) + '</div></div>' +
+        '<div class="card ' + (ok ? 'good' : 'alert') + '"><div class="k">Variação do dia</div><div class="v">' + sgn(s.dDiff) + '</div></div></div>';
+      const rows = []; let tot = 0;
+      Object.keys(LBL).forEach(k => {
+        const v = r.comp[k]; tot += v;
+        rows.push('<tr><td><span class="badge b-gray">' + LBL[k][0] + '</span></td><td>' + E(LBL[k][1]) + '</td><td class="n ' + cls(v) + '">' + (v === 0 ? '—' : sgn(v)) + '</td></tr>');
+      });
+      rows.push('<tr class="tot"><td></td><td>Total explicado</td><td class="n ' + cls(tot) + '">' + sgn(tot) + '</td></tr>');
+      h += tbl(['', 'De onde veio a variação', 'Valor'], rows, [2]);
+      h += '<div class="hint">Positivo = o dinheiro real ficou acima do Webdental; negativo = abaixo. Taxas não justificam diferença: tudo é tratado como possível erro.</div><div class="sep"></div>';
+      h += renderM2(r) + renderM3(r) + renderM5(r) + renderM1(r) + '</div></details></div>';
+      $('resultado').innerHTML = h;
+
+      $('btnCopiarLog').onclick = acao(async () => {
+        if (!r.log.length) { toast('A lista está vazia: não há nada para copiar.', 'info'); return; }
+        const txt = 'Conciliação ' + dBR(r.dia) + '\n' + r.log.map(i => '- ' + i.texto).join('\n');
+        try { await navigator.clipboard.writeText(txt); toast('Lista copiada.', 'success'); }
+        catch (e) { toast('O navegador não deixou copiar. Selecione o texto da lista e copie manualmente.', 'error'); }
+      });
+      $('btnFechar').onclick = acao(fechar);
+      $('btnSheets').onclick = acao(enviarSheets);
+      document.querySelectorAll('.chk-excl').forEach(c => c.addEventListener('change', () => { S.excl[c.dataset.id] = c.checked; if (!c.checked) delete S.excl[c.dataset.id]; conciliar(); }));
+    }
+
     /* ───────── fechar / salvar ───────── */
     async function fechar() {
-      const r = S.res; if (!r) return;
-      if (r.residuo !== 0) { toast('A decomposição não fechou (resíduo ' + M(r.residuo) + '). Não vou salvar.', 'error'); return; }
-      if (r._congelado) { toast('Dia já fechado. Reabra para alterar.', 'error'); return; }
-      const open = r.log.length;
-      if (!confirm('Fechar ' + dBR(r.dia) + '?\n\nVariação: ' + sgn(r.saldos.dDiff) + '\nItens no log: ' + open + '\n\nO saldo Webdental (' + M(r.saldos.wdSaldo) + ') fica congelado.')) return;
-      const reg = C.registroParaSalvar(r, { prev: { dia: r._prev.dia, dinheiro: r._prev.dinheiro, maisTodos: r._prev.maisTodos, santander: r._prev.santander, wdSaldo: r._prev.wdSaldo }, versao: '1.0' });
+      const r = S.res; if (!r) { toast('Faça a conciliação antes de fechar.', 'error'); return; }
+      if (r.residuo !== 0) { toast('O cálculo não fechou (resíduo ' + M(r.residuo) + '). Não vou salvar; avise o administrador.', 'error'); return; }
+      if (r._congelado) { toast('Este dia já está fechado. Para alterar, o administrador precisa reabrir.', 'info'); return; }
+      if (!confirm('Fechar ' + dBR(r.dia) + '?\n\nDiferença do dia: ' + sgn(r.saldos.dDiff) + '\nPontos na lista: ' + r.log.length + '\n\nO saldo Webdental (' + M(r.saldos.wdSaldo) + ') fica congelado.')) { toast('Fechamento cancelado.', 'info'); return; }
+      const reg = C.registroParaSalvar(r, { prev: { dia: r._prev.dia, dinheiro: r._prev.dinheiro, maisTodos: r._prev.maisTodos, santander: r._prev.santander, wdSaldo: r._prev.wdSaldo }, versao: '1.2' });
       const antigo = S.dias[r.dia] || {};
       const doc = { reg, estado: { status: 'fechado', por: user.email || user.uid, em: new Date().toISOString() } };
       if (antigo.reaberturas) doc.reaberturas = antigo.reaberturas;
       if (antigo.resolvidos) doc.resolvidos = antigo.resolvidos;
-      try {
-        await set(ref(db, BASE + '/' + r.dia), doc);
-        logAdmin('fechou a conciliação de ' + r.dia);
-        r._congelado = true;   /* [v1.0] trava o botão e o saldo Webdental logo após fechar */
-        await carregarDias(); atualizaDia(); renderTudoAbas(); renderResultado();
-        toast('Dia ' + dBR(r.dia) + ' fechado e salvo.', 'success');
-      } catch (e) { console.error(e); toast('Não foi possível salvar: ' + e.message + ' (regra do RTDB aplicada?)', 'error'); }
+      try { await set(ref(db, BASE + '/' + r.dia), doc); }
+      catch (e) { console.error(e); toast('Não foi possível salvar: ' + e.message + ' (regra do RTDB aplicada?)', 'error'); return; }
+      logAdmin('fechou a conciliação de ' + r.dia);
+      r._congelado = true;
+      await carregarDias(); atualizaDia(); renderTudoAbas(); renderResultado();
+      toast('Dia ' + dBR(r.dia) + ' fechado e salvo.', 'success');
+      const prox = proxDia(r.dia);
+      if (confirm('Dia fechado. Seguir para ' + dBR(prox) + '?')) { $('cDia').value = prox; S.wd = null; S.banco = []; S.excl = {}; $('fWD').value = ''; $('fMT').value = ''; $('stWD').textContent = 'Nenhum arquivo.'; $('stMT').textContent = 'Nenhum arquivo.'; limparDia(); atualizaDia(); preencher(prox, false); window.scrollTo(0, 0); }
     }
 
     /* ───────── Google Sheets ───────── */
     async function enviarSheets() {
-      const r = S.res; if (!r) return;
-      if (!S.cfg.webhookUrl) { toast('Configure a URL do Apps Script na aba Configuração.', 'error'); return; }
+      const r = S.res; if (!r) { toast('Faça a conciliação antes de enviar.', 'error'); return; }
+      if (!S.cfg.webhookUrl) { toast('O envio ao Google Sheets ainda não foi configurado pelo administrador.', 'info'); return; }
       const mat = C.montarMatriz([{ dia: r.dia, saldos: r.saldos, wd: r.wd }])[0];
       const payload = { token: S.cfg.token || '', dia: r.dia, matriz: mat, log: r.log.map(i => ({ modulo: i.modulo, valor: i.valor, texto: i.texto })), comp: r.comp };
-      try {
-        const resp = await fetch(S.cfg.webhookUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-        let j = null; try { j = await resp.json(); } catch (e) {}
-        if (j && j.ok) toast('Enviado ao Google Sheets (' + (j.aba || 'aba') + ').', 'success');
-        else toast('Enviado, mas sem confirmação do script' + (j && j.erro ? ': ' + j.erro : '') + '.', 'info');
-      } catch (e) { console.error(e); toast('Falha ao enviar: ' + e.message, 'error'); }
+      const resp = await fetch(S.cfg.webhookUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+      let j = null; try { j = await resp.json(); } catch (e) {}
+      if (j && j.ok) toast('Enviado ao Google Sheets (' + (j.aba || 'aba') + ').', 'success');
+      else toast('Enviado, mas o script não confirmou' + (j && j.erro ? ': ' + j.erro : '') + '. Confira a planilha.', 'info');
     }
 
     /* ───────── abas ───────── */
@@ -497,11 +563,12 @@
       const regs = fechados().map(k => S.dias[k].reg);
       if (!regs.length) { $('matrizBox').innerHTML = '<div class="hint">Nenhum dia fechado ainda.</div>'; return; }
       const mat = C.montarMatriz(regs).reverse();
-      $('matrizBox').innerHTML = tbl(['Data', 'Saldo anterior', 'Entradas', 'Saídas', 'Saldo do dia', 'Retroativo', 'Saldo atual (WD)', 'Real (dinheiro+bancos)', 'Diferença', 'Variação', 'Abertos'],
+      $('matrizBox').innerHTML = tbl(['Data', 'Saldo anterior', 'Entradas', 'Saídas', 'Saldo do dia', 'Retroativo', 'Saldo atual (WD)', 'Real (dinheiro+bancos)', 'Diferença', 'Variação', 'Pendências'],
         mat.map(x => { const ab = abertosDoDia(x.dia).length;
           return '<tr><td>' + dBR(x.dia) + '</td><td class="n">' + M(x.saldoAnterior) + '</td><td class="n">' + M(x.entradas) + '</td><td class="n">' + M(x.saidas) + '</td><td class="n">' + M(x.saldoDoDia) + '</td><td class="n">' + (x.retroativo ? sgn(x.retroativo) : '—') + '</td><td class="n">' + M(x.saldoAtual) + '</td><td class="n">' + M(x.dinheiro + x.bancoReal) + '</td><td class="n ' + cls(x.diferenca) + '">' + M(x.diferenca) + '</td><td class="n ' + cls(x.dDiff) + '">' + sgn(x.dDiff) + '</td><td class="n">' + (ab ? '<span class="badge b-bad">' + ab + '</span>' : '<span class="badge b-ok">0</span>') + '</td></tr>'; }),
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     }
+
     function abertosDoDia(dia) {
       const rec = S.dias[dia]; if (!rec || !rec.reg) return [];
       const res = rec.resolvidos || {};
@@ -529,71 +596,150 @@
     }
     function renderTudoAbas() { renderMatriz(); renderAbertos(); }
 
-    $('btnExportMatriz').onclick = () => {
-      const regs = fechados().map(k => S.dias[k].reg); if (!regs.length) { toast('Nada para exportar.', 'info'); return; }
+    $('btnExportMatriz').onclick = acao(() => {
+      const regs = fechados().map(k => S.dias[k].reg); if (!regs.length) { toast('Ainda não há dias fechados para exportar.', 'info'); return; }
       const mat = C.montarMatriz(regs);
       const aoa = [['Data', 'Saldo anterior', 'Entradas', 'Saídas', 'Saldo do dia', 'Retroativo', 'Saldo atual (WD)', 'Dinheiro', 'Bancos', 'Diferença', 'Variação']]
         .concat(mat.map(x => [dBR(x.dia), x.saldoAnterior / 100, x.entradas / 100, x.saidas / 100, x.saldoDoDia / 100, x.retroativo / 100, x.saldoAtual / 100, x.dinheiro / 100, x.bancoReal / 100, x.diferenca / 100, x.dDiff / 100]));
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Matriz');
       XLSX.writeFile(wb, 'conciliacao_matriz.xlsx');
-    };
-    $('btnSalvarCfg').onclick = async () => {
-      try { await set(ref(db, BASE + '/config'), { webhookUrl: $('cfgUrl').value.trim(), token: $('cfgToken').value.trim() }); await carregarDias(); toast('Configuração salva.', 'success'); }
-      catch (e) { console.error(e); toast('Erro: ' + e.message, 'error'); }
-    };
+      toast('Planilha gerada.', 'success');
+    });
+
+    /* ───────── Configuração (admin) ───────── */
+    $('btnSalvarCfg').onclick = acao(async () => {
+      if (!S.admin) { toast('Só o administrador altera a configuração.', 'error'); return; }
+      const u = $('cfgUrl').value.trim();
+      if (u && !/^https:\/\/script\.google\.com\//.test(u)) { toast('A URL precisa começar com https://script.google.com/', 'error'); return; }
+      await set(ref(db, BASE + '/config'), { webhookUrl: u, token: $('cfgToken').value.trim() });
+      await carregarDias(); toast('Configuração salva.', 'success');
+    });
+
+    function renderBase() {
+      const fk = Object.keys(S.base.fechamento).sort(), ck = Object.keys(S.base.caixa).sort(), wk = Object.keys(S.base.webstats).sort();
+      const fa = (k) => k.length ? dBR(k[0]) + ' a ' + dBR(k[k.length - 1]) : '—';
+      $('baseResumo').textContent = 'Base: fechamento ' + fk.length + ' dia(s) · caixa geral ' + ck.length + ' dia(s) · webstats ' + wk.length + ' dia(s)';
+      $('inicioInfo').textContent = S.inicio ? 'Atual: ' + dBR(S.inicio.dia) + ' · Dinheiro ' + M(S.inicio.dinheiro) + ' · Mais Todos ' + M(S.inicio.maisTodos) + ' · Santander ' + M(S.inicio.santander) + ' · Webdental ' + M(S.inicio.wdSaldo) : 'Ainda não definido';
+      $('stBase').title = fa(fk) + ' | ' + fa(ck) + ' | ' + fa(wk);
+    }
+    function docDe(txt) { return new DOMParser().parseFromString(txt, 'text/html'); }
+    async function lerArquivoBase(f) {
+      const out = { fech: [], caixa: [], abas: 0, ignoradas: 0 };
+      const docs = [];
+      if (/\.(html?|xls)$/i.test(f.name)) {
+        const txt = await f.text();
+        if (/<table/i.test(txt.slice(0, 300000))) docs.push(docDe(txt));
+      }
+      if (!docs.length) {
+        const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+        wb.SheetNames.forEach(sn => docs.push(docDe(XLSX.utils.sheet_to_html(wb.Sheets[sn]))));
+      }
+      docs.forEach(doc => {
+        out.abas++;
+        const rows = C.rowsFromDoc(doc);
+        const fe = C.extrairFechamentoRows(rows);
+        if (fe) { out.fech.push(fe); return; }
+        const cg = C.extrairCaixaGeralRows(rows);
+        if (cg) { out.caixa = out.caixa.concat(cg.dias); return; }
+        out.ignoradas++;
+      });
+      return out;
+    }
+    function limpo(o) { const r = {}; Object.keys(o).forEach(k => { if (o[k] !== undefined && o[k] !== null && !Number.isNaN(o[k])) r[k] = o[k]; }); return r; }
+    $('btnImportar').onclick = acao(async () => {
+      if (!S.admin) { toast('Só o administrador importa a base.', 'error'); return; }
+      const files = Array.from($('fBase').files), ws = $('tWebstats').value.trim();
+      if (!files.length && !ws) { toast('Escolha ao menos uma planilha ou cole a tabela do Webstats.', 'error'); return; }
+      const fech = {}, caixa = {}; let abas = 0, ign = 0; const erros = [];
+      for (const f of files) {
+        try { const r = await lerArquivoBase(f); abas += r.abas; ign += r.ignoradas; r.fech.forEach(x => { fech[x.dia] = limpo({ dinheiro: x.dinheiro, banco: x.banco, saldoTotal: x.saldoTotal, wdSaldo: x.wdSaldo, diferenca: x.diferenca }); }); r.caixa.forEach(x => { caixa[x.dia] = limpo({ saldo: x.saldo, entradas: x.entradas, saidas: x.saidas }); }); }
+        catch (e) { console.error(e); erros.push(f.name + ': ' + e.message); }
+      }
+      let webs = null;
+      if (ws) { webs = C.parseWebstats(ws); if (!webs) erros.push('Webstats: não encontrei linhas no formato esperado (data + 7 valores).'); }
+      const nf = Object.keys(fech).length, nc = Object.keys(caixa).length, nw = webs ? Object.keys(webs).length : 0;
+      if (!nf && !nc && !nw) { $('stBase').innerHTML = '<span class="bad-t">Nada reconhecido. ' + E(erros.join(' | ')) + (ign ? ' ' + ign + ' aba(s) sem layout conhecido.' : '') + '</span>'; toast('Não reconheci nada nos arquivos. Veja a mensagem abaixo do botão.', 'error'); return; }
+      if (nf) await update(ref(db, BASE + '/base/fechamento'), fech);
+      if (nc) await update(ref(db, BASE + '/base/caixa'), caixa);
+      if (nw) await update(ref(db, BASE + '/base/webstats'), webs);
+      logAdmin('importou base da conciliação (' + nf + ' fechamentos, ' + nc + ' dias caixa, ' + nw + ' webstats)');
+      await carregarDias();
+      $('stBase').innerHTML = '<span class="ok-t">Importado: <b>' + nf + '</b> dia(s) de fechamento, <b>' + nc + '</b> dia(s) da Caixa Geral, <b>' + nw + '</b> dia(s) do Webstats.</span>' + (ign ? ' <span class="warn-t">' + ign + ' aba(s) ignorada(s) (layout desconhecido).</span>' : '') + (erros.length ? ' <span class="bad-t">' + E(erros.join(' | ')) + '</span>' : '');
+      toast('Base importada: ' + nf + ' fechamentos, ' + nc + ' dias de caixa, ' + nw + ' do Webstats.', 'success');
+      $('fBase').value = ''; $('tWebstats').value = '';
+      limparDia(); atualizaDia(); preencher($('cDia').value, false);
+    });
+    $('btnDefinirInicio').onclick = acao(async () => {
+      if (!S.admin) { toast('Só o administrador define o ponto de partida.', 'error'); return; }
+      const dia = $('iniDia').value; if (!dia) { toast('Escolha o último dia já conferido na planilha antiga.', 'error'); return; }
+      const mt = val('iniMT'); if (mt === null) { toast('Digite o saldo do Mais Todos desse dia.', 'error'); return; } if (Number.isNaN(mt)) { toast('Saldo do Mais Todos inválido.', 'error'); return; }
+      const b = valoresDaBase(dia), f = S.base.fechamento[dia];
+      const falta = [];
+      if (b.dinheiro == null) falta.push('Dinheiro'); if (b.wdSaldo == null) falta.push('Saldo Webdental'); if (!f || f.banco == null) falta.push('Banco (planilha de fechamento)');
+      if (falta.length) { toast('Faltam na base para ' + dBR(dia) + ': ' + falta.join(', ') + '. Importe as planilhas primeiro.', 'error'); return; }
+      const ini = { dia, dinheiro: b.dinheiro, maisTodos: mt, santander: f.banco - mt, wdSaldo: b.wdSaldo };
+      if (!confirm('Ponto de partida em ' + dBR(dia) + ':\n\nDinheiro ' + M(ini.dinheiro) + '\nMais Todos ' + M(ini.maisTodos) + '\nSantander ' + M(ini.santander) + ' (Banco ' + M(f.banco) + ' − Mais Todos)\nWebdental ' + M(ini.wdSaldo) + '\n\nConfirma?')) { toast('Cancelado.', 'info'); return; }
+      await set(ref(db, BASE + '/inicio'), Object.assign(ini, { por: user.email || user.uid, em: new Date().toISOString() }));
+      logAdmin('definiu ponto de partida da conciliação em ' + dia);
+      await carregarDias(); const prox = proxDia(dia); $('cDia').value = prox; limparDia(); atualizaDia(); preencher(prox, false);
+      toast('Ponto de partida salvo. Comece pelo dia ' + dBR(prox) + ' na aba "Conciliar o dia".', 'success');
+    });
 
     document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + b.dataset.tab));
     }));
-    /* ───────── leitura das planilhas (Apps Script, só leitura) ───────── */
+
+    /* ───────── leitura das planilhas pelo Apps Script (opcional, só leitura) ───────── */
     async function buscarDia(dia) {
-      if (!S.cfg.webhookUrl) { toast('Configure a URL do Apps Script na aba Configuração.', 'error'); return null; }
       const u = S.cfg.webhookUrl + (S.cfg.webhookUrl.includes('?') ? '&' : '?') + 'acao=dia&dia=' + encodeURIComponent(dia) + '&token=' + encodeURIComponent(S.cfg.token || '');
-      try {
-        const j = await (await fetch(u)).json();
-        if (!j.ok) { toast('Planilhas: ' + (j.erro || 'erro desconhecido'), 'error'); return null; }
-        return j;
-      } catch (e) { console.error(e); toast('Não consegui falar com o Apps Script: ' + e.message, 'error'); return null; }
+      const j = await (await fetch(u)).json();
+      if (!j.ok) { toast('Planilhas: ' + (j.erro || 'erro desconhecido'), 'error'); return null; }
+      return j;
     }
     const cm = c => (c == null ? '' : C.fmt(c, true));
-    $('btnBuscarSeed').addEventListener('click', async () => {
+    $('btnBuscarSeed').onclick = acao(async () => {
       const dia = $('sDia').value; if (!dia) { toast('Escolha a data do fechamento anterior.', 'error'); return; }
+      if (!S.cfg.webhookUrl) { toast('Sem Apps Script configurado. Use a importação da base em Configuração.', 'info'); return; }
       const j = await buscarDia(dia); if (!j) return;
       if (!j.fechamento) { toast('Não há aba de fechamento em ' + dBR(dia) + ' (fim de semana ou feriado?).', 'error'); return; }
       const f = j.fechamento;
       if (f.dinheiro == null || f.banco == null || f.wdSaldo == null) { toast('A aba existe mas faltam valores (Dinheiro, Banco ou Saldo Web Dental).', 'error'); return; }
-      $('sDinheiro').value = cm(f.dinheiro); $('sMT').value = cm(f.banco); $('sSant').value = '0,00'; $('sWD').value = cm(f.wdSaldo);
-      toast('Ponto de partida preenchido pelo fechamento de ' + dBR(dia) + '. Confira.', 'success');
+      $('sDinheiro').value = cm(f.dinheiro); $('sWD').value = cm(f.wdSaldo);
+      if (!$('sMT').value.trim()) { $('sMT').value = cm(f.banco); $('sSant').value = '0,00'; toast('Preenchido. Atenção: o Banco da planilha foi todo para o Mais Todos; ajuste o Santander se existir.', 'info'); }
+      else { $('sSant').value = cm(f.banco - val('sMT')); toast('Preenchido; Santander = Banco − Mais Todos.', 'success'); }
     });
-    $('btnBuscarDia').addEventListener('click', async () => {
+    $('btnBuscarDia').onclick = acao(async () => {
       const dia = $('cDia').value; if (!dia) { toast('Escolha o dia.', 'error'); return; }
+      const b = valoresDaBase(dia);
+      if (b.dinheiro != null || b.wdSaldo != null) { preencher(dia, true); return; }
+      if (!S.cfg.webhookUrl) { toast('Não há valores de ' + dBR(dia) + ' na base importada. ' + (S.admin ? 'Importe as planilhas em Configuração' : 'Peça ao administrador para importar') + ' ou digite os valores.', 'info'); return; }
       const j = await buscarDia(dia); if (!j) return;
       const msgs = [];
-      if (j.caixaGeral && j.caixaGeral.achou && j.caixaGeral.saldo != null) { $('vDinheiro').value = cm(j.caixaGeral.saldo); msgs.push('Dinheiro ' + cm(j.caixaGeral.saldo)); }
-      else toast('A Caixa Geral não tem a data ' + dBR(dia) + ' (' + ((j.caixaGeral && j.caixaGeral.erro) || 'linha não encontrada') + ').', 'error');
-      if (j.fechamento) {
-        if (j.fechamento.wdSaldo != null && !$('vWD').value.trim() && !$('vWD').disabled) { $('vWD').value = cm(j.fechamento.wdSaldo); msgs.push('Webdental ' + cm(j.fechamento.wdSaldo)); }
-        if (j.fechamento.banco != null && !$('vMTApp').value.trim()) { $('vMTApp').value = cm(j.fechamento.banco); msgs.push('Banco (conferência) ' + cm(j.fechamento.banco)); }
-      }
+      if (j.caixaGeral && j.caixaGeral.achou && j.caixaGeral.saldo != null) { if (!$('vDinheiro').value.trim()) $('vDinheiro').value = cm(j.caixaGeral.saldo); msgs.push('Dinheiro ' + cm(j.caixaGeral.saldo)); }
+      else toast('A Caixa Geral não tem a data ' + dBR(dia) + '.', 'error');
+      if (j.fechamento && j.fechamento.wdSaldo != null && !$('vWD').value.trim() && !$('vWD').disabled) { $('vWD').value = cm(j.fechamento.wdSaldo); msgs.push('Webdental ' + cm(j.fechamento.wdSaldo)); }
       if (msgs.length) toast('Da planilha: ' + msgs.join(' · '), 'success');
     });
-    $('btnConciliar').addEventListener('click', conciliar);
-    $('cDia').addEventListener('change', () => { atualizaDia(); });
+    $('btnConciliar').onclick = acao(conciliar);
+    $('btnPortal').onclick = () => irPara('../login.html');
+    $('cDia').addEventListener('change', () => { limparDia(); atualizaDia(); preencher($('cDia').value, false); });
     $('seedManual').addEventListener('change', atualizaDia);
 
-    /* ───────── gate: somente admin ───────── */
+    /* ───────── acesso: admin ou financeiro ───────── */
     onAuthStateChanged(auth, async u => {
       if (!u) { irPara('../login.html'); return; }
       user = u;
       let perms = {};
       try { const snap = await get(ref(db, 'admin/usuarios/' + u.uid)); perms = (snap.exists() && snap.val().perms) || {}; } catch (e) { console.warn('[conciliacao] perms:', e); }
-      if (!perms.admin) { alert('Acesso restrito a administradores.'); irPara('../login.html'); return; }
+      if (!perms.admin && !perms.financeiro) { alert('Acesso restrito ao financeiro e administradores.'); irPara('../login.html'); return; }
+      S.admin = !!perms.admin; document.body.classList.toggle('is-admin', S.admin);
       carregarLogoGlobal(['#headerLogo']);
       $('conteudo').style.display = 'block';
-      $('cDia').value = hojeISO();
-      try { await carregarDias(); } catch (e) { console.error(e); toast('Não consegui ler ' + BASE + ' (regra do RTDB aplicada?): ' + e.message, 'error'); }
-      atualizaDia(); renderTudoAbas();
+      try { await carregarDias(); } catch (e) { console.error(e); toast('Não consegui ler os dados salvos (' + e.message + '). A regra do banco foi aplicada?', 'error'); }
+      const ult = fechados().pop(), prev0 = ult || (S.inicio && S.inicio.dia);
+      $('cDia').value = prev0 ? proxDia(prev0) : hojeISO();
+      atualizaDia(); renderTudoAbas(); preencher($('cDia').value, false);
       logAdmin('acessou Conciliação');
     });
   </script>
