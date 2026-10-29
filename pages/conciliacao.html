@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Conciliação</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <script src="../js/conciliacao-engine.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    /* [v1.0] Conciliação diária — mesmos tokens do Financeiro */
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-800:#1e293b;--green:#15803d;--green-bg:#dcfce7;--amber:#92400e;--amber-bg:#fef3c7;--red-bg:#fee2e2;--shadow:0 4px 20px rgba(10,31,68,.1);}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
+    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
+    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);letter-spacing:-.3px;}
+    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;}
+    .back-btn:hover{background:var(--red-h);}
+    .content{max-width:1180px;margin:0 auto;padding:24px 24px 60px;}
+    .tabs{display:flex;gap:6px;margin-bottom:22px;background:white;border:1px solid var(--gray-200);border-radius:14px;padding:6px;box-shadow:var(--shadow);}
+    .tab-btn{flex:1;padding:10px 14px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--gray-400);display:flex;align-items:center;justify-content:center;gap:6px;}
+    .tab-btn:hover{color:var(--navy);background:var(--gray-50);}
+    .tab-btn.active{color:white;background:var(--navy);box-shadow:0 4px 12px rgba(10,31,68,.25);}
+    .tab-pane{display:none;}.tab-pane.active{display:block;}
+    .panel{background:white;border:1px solid var(--gray-200);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);}
+    .panel-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+    .panel-title i{color:var(--red);}
+    .f-label{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:5px;}
+    .f-input{padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:14px;color:var(--gray-800);background:var(--gray-50);outline:none;width:100%;}
+    .f-input:focus{border-color:var(--navy);background:white;}
+    .f-input:disabled{background:var(--gray-100);color:var(--gray-500);}
+    .f-input.bad{border-color:var(--red);background:var(--red-bg);}
+    textarea.f-input{min-height:70px;resize:vertical;font-size:12px;}
+    .grid{display:grid;gap:14px;}
+    .g2{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:repeat(3,1fr);}.g4{grid-template-columns:repeat(4,1fr);}
+    @media(max-width:820px){.g2,.g3,.g4{grid-template-columns:1fr;}.content{padding:14px 12px 50px;}.s-header{padding:0 12px;}}
+    .btn-p,.btn-s,.btn-r,.btn-g{padding:9px 16px;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+    .btn-p{background:var(--navy);color:white;}.btn-p:hover{background:var(--navy-mid);}
+    .btn-s{background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);}.btn-s:hover{background:var(--gray-200);}
+    .btn-r{background:var(--red);color:white;}.btn-r:hover{background:var(--red-h);}
+    .btn-g{background:var(--green);color:white;}.btn-g:hover{background:#166534;}
+    button:disabled{opacity:.45;cursor:not-allowed;}
+    .hint{font-size:12px;color:var(--gray-500);margin-top:5px;line-height:1.45;}
+    .ok-t{color:var(--green);}.bad-t{color:var(--red);}.warn-t{color:var(--amber);}
+    .badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:800;}
+    .b-ok{background:var(--green-bg);color:var(--green);}.b-warn{background:var(--amber-bg);color:var(--amber);}.b-bad{background:var(--red-bg);color:var(--red);}.b-gray{background:var(--gray-100);color:var(--gray-600);}
+    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+    @media(max-width:820px){.cards{grid-template-columns:repeat(2,1fr);}}
+    .card{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:14px;padding:14px;}
+    .card .k{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--gray-500);}
+    .card .v{font-size:19px;font-weight:800;color:var(--navy);margin-top:4px;}
+    .card.alert{border-color:var(--red);background:var(--red-bg);}.card.alert .v{color:var(--red);}
+    .card.good{border-color:#86efac;background:var(--green-bg);}.card.good .v{color:var(--green);}
+    table.t{width:100%;border-collapse:collapse;font-size:12.5px;}
+    table.t th{text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gray-500);padding:7px 8px;border-bottom:2px solid var(--gray-200);}
+    table.t td{padding:7px 8px;border-bottom:1px solid var(--gray-100);vertical-align:top;}
+    table.t td.n,table.t th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    table.t tr.tot td{font-weight:800;border-top:2px solid var(--gray-200);}
+    .scroll{overflow-x:auto;}
+    details{border:1.5px solid var(--gray-200);border-radius:12px;margin-bottom:10px;background:white;}
+    details>summary{padding:12px 14px;cursor:pointer;font-weight:800;font-size:13px;color:var(--navy);display:flex;align-items:center;gap:8px;list-style:none;}
+    details>summary::-webkit-details-marker{display:none;}
+    details[open]>summary{border-bottom:1px solid var(--gray-100);}
+    details .in{padding:12px 14px;}
+    .log-i{display:flex;gap:10px;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:10px;margin-bottom:6px;font-size:13px;line-height:1.45;}
+    .log-i .p{flex-shrink:0;}
+    .alerta{padding:10px 12px;border-radius:10px;margin-bottom:8px;font-size:13px;font-weight:600;}
+    .alerta.erro{background:var(--red-bg);color:var(--red);}.alerta.aviso{background:var(--amber-bg);color:var(--amber);}
+    .dropzone{border:2px dashed var(--gray-300);border-radius:12px;padding:14px;background:var(--gray-50);}
+    .dropzone .st{font-size:12px;margin-top:6px;color:var(--gray-600);}
+    .toast-box{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+    .toast{padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;color:white;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:360px;}
+    .toast.success{background:var(--green);}.toast.error{background:var(--red);}.toast.info{background:var(--navy);}
+    .tag-nome{color:var(--gray-600);}
+    .sep{height:1px;background:var(--gray-100);margin:14px 0;}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+  <div class="toast-box" id="toastBox"></div>
+
+  <div class="s-header">
+    <div class="s-logo">
+      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
+      <div><div class="s-logo-name">Conciliação diária</div><div class="s-logo-sub">Webdental × Mais Todos × Caixa · Pirituba · somente admin</div></div>
+    </div>
+    <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+  </div>
+
+  <div class="content" id="conteudo" style="display:none;">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="conciliar"><i class="fas fa-scale-balanced"></i> Conciliar</button>
+      <button class="tab-btn" data-tab="matriz"><i class="fas fa-table"></i> Matriz de dias</button>
+      <button class="tab-btn" data-tab="abertos"><i class="fas fa-list-check"></i> Itens abertos <span class="badge b-gray" id="bgAbertos">0</span></button>
+      <button class="tab-btn" data-tab="config"><i class="fas fa-gear"></i> Configuração</button>
+    </div>
+
+    <!-- ═════════ ABA CONCILIAR ═════════ -->
+    <div class="tab-pane active" id="pane-conciliar">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-calendar-day"></i> 1 · Dia e ponto de partida</div><span id="estadoDia"></span></div>
+        <div class="grid g3">
+          <div><label class="f-label" for="cDia">Dia do fechamento</label><input type="date" id="cDia" class="f-input"></div>
+          <div><label class="f-label">Fechamento anterior</label><div id="prevInfo" class="hint" style="margin-top:9px;font-size:13px;color:var(--gray-800);">—</div></div>
+          <div><label class="f-label">&nbsp;</label><label style="font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;margin-top:9px;"><input type="checkbox" id="seedManual"> Informar ponto de partida manualmente</label></div>
+        </div>
+        <div id="seedBox" style="display:none;margin-top:14px;">
+          <div class="sep"></div>
+          <div class="hint" style="margin:0 0 10px;">Use na primeira vez, ou se quiser partir de outro dia. Valores do último fechamento (planilha de fechamento).</div>
+          <div class="grid g4">
+            <div><label class="f-label" for="sDia">Data do fechamento anterior</label><input type="date" id="sDia" class="f-input"></div>
+            <div><label class="f-label" for="sDinheiro">Dinheiro</label><input id="sDinheiro" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+            <div><label class="f-label" for="sMT">Saldo Mais Todos</label><input id="sMT" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+            <div><label class="f-label" for="sSant">Saldo Santander</label><input id="sSant" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+          </div>
+          <div style="margin-top:12px;max-width:260px;"><label class="f-label" for="sWD">Saldo Webdental do fechamento anterior</label><input id="sWD" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-file-arrow-up"></i> 2 · Arquivos</div></div>
+        <div class="grid g2">
+          <div class="dropzone"><label class="f-label" for="fWD">Webdental · Consolidado do Dia (.xls / .html / .csv)</label><input type="file" id="fWD" accept=".xls,.xlsx,.html,.htm,.csv"><div class="st" id="stWD">Nenhum arquivo.</div></div>
+          <div class="dropzone"><label class="f-label" for="fMT">Mais Todos · extrato (.csv, pode ser mais de um)</label><input type="file" id="fMT" accept=".csv" multiple><div class="st" id="stMT">Nenhum arquivo.</div></div>
+        </div>
+        <div class="grid g2" style="margin-top:14px;">
+          <div><label class="f-label" for="tWebstats">Webstats · cole o texto da tela (opcional)</label><textarea id="tWebstats" class="f-input" placeholder="Cole aqui. Se achar um 'Saldo', sugiro no campo Saldo Webdental (confira sempre)."></textarea></div>
+          <div class="dropzone"><label class="f-label" for="fSol">Soluções · transações por NSU (opcional, para auditar cartão)</label><input type="file" id="fSol" accept=".csv,.xls,.xlsx"><div class="st" id="stSol">Nenhum arquivo. Só é usado quando o cartão divergir.</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-keyboard"></i> 3 · Valores do dia</div></div>
+        <div class="grid g4">
+          <div><label class="f-label" for="vDinheiro">Dinheiro (saldo da planilha Caixa Geral)</label><input id="vDinheiro" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+          <div><label class="f-label" for="vSant">Santander (saldo)</label><input id="vSant" class="f-input" inputmode="decimal" placeholder="em branco = igual ao anterior"></div>
+          <div><label class="f-label" for="vWD">Saldo Webdental <span id="wdLock"></span></label><input id="vWD" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+          <div><label class="f-label" for="vMTApp">Saldo Mais Todos no app (conferência, opcional)</label><input id="vMTApp" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-p" id="btnConciliar"><i class="fas fa-scale-balanced"></i> Conciliar</button>
+        </div>
+      </div>
+
+      <div id="resultado"></div>
+    </div>
+
+    <!-- ═════════ ABA MATRIZ ═════════ -->
+    <div class="tab-pane" id="pane-matriz">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-table"></i> Matriz de dias fechados</div><button class="btn-s" id="btnExportMatriz"><i class="fas fa-file-excel"></i> Exportar Excel</button></div>
+        <div class="scroll" id="matrizBox"></div>
+        <div class="hint">Diferença = (Dinheiro + Mais Todos + Santander) − Saldo Webdental. Variação = diferença de hoje − diferença do fechamento anterior.</div>
+      </div>
+    </div>
+
+    <!-- ═════════ ABA ABERTOS ═════════ -->
+    <div class="tab-pane" id="pane-abertos">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-list-check"></i> Itens abertos de todos os dias fechados</div></div>
+        <div id="abertosBox"></div>
+      </div>
+    </div>
+
+    <!-- ═════════ ABA CONFIG ═════════ -->
+    <div class="tab-pane" id="pane-config">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-link"></i> Envio ao Google Sheets</div></div>
+        <div class="grid g2">
+          <div><label class="f-label" for="cfgUrl">URL do Apps Script (Web App)</label><input id="cfgUrl" class="f-input" placeholder="https://script.google.com/macros/s/.../exec"></div>
+          <div><label class="f-label" for="cfgToken">Token (o mesmo da Propriedade do script)</label><input id="cfgToken" class="f-input" placeholder="segredo compartilhado"></div>
+        </div>
+        <div style="margin-top:14px;"><button class="btn-p" id="btnSalvarCfg"><i class="fas fa-floppy-disk"></i> Salvar configuração</button></div>
+        <div class="hint">Gravado em <code>clinica-pirituba/conciliacao/config</code>, legível só por admin (exige a regra do RTDB).</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const app = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    window.initFirebaseUtils(db, ref, get);
+
+    const BASE = 'clinica-pirituba/conciliacao';   // [v1.0] path aprovado: clinica-pirituba/conciliacao/{data}
+    const C = window.CONC;
+    const $ = id => document.getElementById(id);
+    const M = c => C.fmt(c);
+    const E = s => window.esc(s);
+    const MAXL = 200;
+    let user = null;
+    const S = { wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, pwd: '' };
+
+    /* ───────── util ───────── */
+    function hojeISO() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+    function dBR(iso) { return iso ? iso.split('-').reverse().join('/') : ''; }
+    function val(id) { const el = $(id); const t = el.value.trim(); el.classList.remove('bad'); if (!t) return null; const c = C.toCents(t); if (c === null) { el.classList.add('bad'); return NaN; } return c; }
+    function sgn(c) { return (c > 0 ? '+' : '') + M(c); }
+    function cls(c) { return c === 0 ? 'ok-t' : 'bad-t'; }
+    function logAdmin(msg) { set(ref(db, 'admin_logs/' + Date.now()), { tipo: 'info', msg: (user.email || user.uid) + ' ' + msg, ts: new Date().toISOString() }).catch(() => {}); }
+
+    /* ───────── dados salvos ───────── */
+    async function carregarDias() {
+      const s = await get(ref(db, BASE));
+      const v = s.exists() ? s.val() : {};
+      S.cfg = v.config || {};
+      S.dias = {};
+      Object.keys(v).forEach(k => { if (/^\d{4}-\d\d-\d\d$/.test(k)) S.dias[k] = v[k]; });
+      $('cfgUrl').value = S.cfg.webhookUrl || ''; $('cfgToken').value = S.cfg.token || '';
+    }
+    function fechados() { return Object.keys(S.dias).filter(k => S.dias[k].reg && S.dias[k].estado && S.dias[k].estado.status === 'fechado').sort(); }
+    function achaPrev(dia) {
+      const ks = fechados().filter(k => k < dia); if (!ks.length) return null;
+      const k = ks[ks.length - 1], g = S.dias[k].reg.saldos;
+      return { dia: k, dinheiro: g.dinheiro, maisTodos: g.maisTodos, santander: g.santander, wdSaldo: g.wdSaldo };
+    }
+    function getPrev() {
+      if ($('seedManual').checked || !achaPrev($('cDia').value)) {
+        const p = { dia: $('sDia').value, dinheiro: val('sDinheiro'), maisTodos: val('sMT'), santander: val('sSant'), wdSaldo: val('sWD') };
+        if (!p.dia || [p.dinheiro, p.maisTodos, p.santander, p.wdSaldo].some(x => x === null || Number.isNaN(x))) return null;
+        return p;
+      }
+      return achaPrev($('cDia').value);
+    }
+
+    /* ───────── estado do dia na tela ───────── */
+    function atualizaDia() {
+      const dia = $('cDia').value, prev = achaPrev(dia), rec = S.dias[dia];
+      const manual = $('seedManual').checked || !prev;
+      $('seedBox').style.display = manual ? 'block' : 'none';
+      $('prevInfo').innerHTML = prev && !manual ? '<b>' + dBR(prev.dia) + '</b> · Dinheiro ' + M(prev.dinheiro) + ' · Mais Todos ' + M(prev.maisTodos) + ' · Santander ' + M(prev.santander) + ' · Webdental ' + M(prev.wdSaldo)
+        : (manual ? 'Informe abaixo.' : '—');
+      const fechado = rec && rec.estado && rec.estado.status === 'fechado';
+      $('estadoDia').innerHTML = fechado ? '<span class="badge b-ok"><i class="fas fa-lock"></i> Fechado · saldo Webdental congelado</span> <button class="btn-s" id="btnReabrir"><i class="fas fa-lock-open"></i> Reabrir dia</button>'
+        : (rec && rec.estado ? '<span class="badge b-warn">Reaberto</span>' : '');
+      $('vWD').disabled = !!fechado;
+      $('wdLock').textContent = fechado ? '(congelado)' : '';
+      if (fechado) $('vWD').value = C.fmt(rec.reg.saldos.wdSaldo, true);
+      const b = $('btnReabrir'); if (b) b.onclick = reabrir;
+    }
+
+    async function reabrir() {
+      const dia = $('cDia').value; const motivo = prompt('Motivo da reabertura de ' + dBR(dia) + ' (fica registrado):');
+      if (!motivo || !motivo.trim()) return;
+      const ts = Date.now();
+      try {
+        await update(ref(db, BASE + '/' + dia), { estado: { status: 'reaberto', por: user.email || user.uid, em: new Date().toISOString() } });
+        await set(ref(db, BASE + '/' + dia + '/reaberturas/' + ts), { por: user.email || user.uid, em: new Date().toISOString(), motivo: motivo.trim().slice(0, 300) });
+        logAdmin('reabriu a conciliação de ' + dia);
+        await carregarDias(); atualizaDia(); renderTudoAbas(); toast('Dia reaberto. Refaça a conciliação e feche de novo.', 'info');
+      } catch (e) { console.error(e); toast('Não foi possível reabrir: ' + e.message, 'error'); }
+    }
+
+    /* ───────── leitura dos arquivos ───────── */
+    async function lerWD(file) {
+      const buf = await file.arrayBuffer();
+      let txt = new TextDecoder('utf-8').decode(buf);
+      let doc;
+      if (/<table/i.test(txt.slice(0, 200000))) doc = new DOMParser().parseFromString(txt, 'text/html');
+      else {                                         // xlsx/csv de verdade → vira tabela HTML
+        const wb = XLSX.read(buf, { type: 'array' });
+        doc = new DOMParser().parseFromString(XLSX.utils.sheet_to_html(wb.Sheets[wb.SheetNames[0]]), 'text/html');
+      }
+      return C.parseConsolidado(doc);
+    }
+    $('fWD').addEventListener('change', async ev => {
+      const f = ev.target.files[0]; if (!f) return;
+      $('stWD').textContent = 'Lendo ' + f.name + '…';
+      try {
+        const w = await lerWD(f);
+        S.wd = w;
+        const per = w.periodo ? ' · período ' + dBR(w.periodo[0]) + ' a ' + dBR(w.periodo[1]) : '';
+        $('stWD').innerHTML = '<span class="ok-t"><b>' + w.entradas.length + '</b> entradas, <b>' + w.anteriores.length + '</b> recebimentos anteriores, <b>' + w.saidas.length + '</b> saídas' + E(per) + '</span>' +
+          (w.invalidas ? ' <span class="warn-t">· ' + w.invalidas + ' linhas ignoradas</span>' : '') + (w.entradas.length + w.saidas.length === 0 ? ' <span class="bad-t">· nada reconhecido: o layout mudou?</span>' : '');
+      } catch (e) { console.error(e); S.wd = null; $('stWD').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; }
+    });
+    $('fMT').addEventListener('change', async ev => {
+      const fs = Array.from(ev.target.files); if (!fs.length) return;
+      const porId = {}; let inval = 0;
+      for (const f of fs) { const r = C.parseMaisTodos(await f.text()); inval += r.invalidas; r.linhas.forEach(l => { porId[l.id] = l; }); }
+      S.banco = Object.keys(porId).map(k => porId[k]);
+      const dias = [...new Set(S.banco.map(l => l.dia))].sort();
+      $('stMT').innerHTML = '<span class="ok-t"><b>' + S.banco.length + '</b> lançamentos · dias ' + dias.map(dBR).map(E).join(', ') + '</span>' + (inval ? ' <span class="warn-t">· ' + inval + ' linhas ignoradas</span>' : '');
+    });
+    $('tWebstats').addEventListener('input', () => {
+      const m = /saldo[^\d-]{0,40}(-?\d{1,3}(?:\.\d{3})*,\d{2})/i.exec($('tWebstats').value);
+      if (m && !$('vWD').value.trim() && !$('vWD').disabled) { $('vWD').value = m[1]; toast('Saldo sugerido do texto colado: ' + m[1] + ' — confira.', 'info'); }
+    });
+    $('fSol').addEventListener('change', async ev => {
+      const f = ev.target.files[0]; if (!f) return;
+      try {
+        const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', raw: true });
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' });
+        let h = rows.findIndex(r => r.some(c => /nsu/i.test(String(c))));
+        if (h < 0) throw new Error('não achei coluna NSU');
+        const head = rows[h].map(String);
+        const iN = head.findIndex(c => /nsu/i.test(c)), iV = head.findIndex(c => /valor|amount|bruto/i.test(c));
+        if (iV < 0) throw new Error('não achei coluna de valor');
+        S.sol = rows.slice(h + 1).map(r => ({ nsu: r[iN], v: C.toCents(String(r[iV]).replace(/[^\d,.\-]/g, '')) })).filter(x => x.nsu && x.v !== null);
+        S.solArq = f.name;
+        $('stSol').innerHTML = '<span class="ok-t"><b>' + S.sol.length + '</b> transações · NSU: “' + E(head[iN]) + '” · valor: “' + E(head[iV]) + '” <span class="warn-t">(layout ainda não validado com arquivo real)</span></span>';
+        if (S.res) renderResultado();
+      } catch (e) { console.error(e); S.sol = null; $('stSol').innerHTML = '<span class="bad-t">Erro: ' + E(e.message) + '</span>'; }
+    });
+
+    /* ───────── conciliar ───────── */
+    function conciliar() {
+      const dia = $('cDia').value;
+      if (!dia) { toast('Escolha o dia.', 'error'); return; }
+      if (!S.wd) { toast('Carregue o Consolidado do Webdental.', 'error'); return; }
+      if (!S.banco.length) { toast('Carregue o extrato do Mais Todos.', 'error'); return; }
+      const prev = getPrev(); if (!prev) { toast('Informe o ponto de partida (fechamento anterior).', 'error'); return; }
+      if (prev.dia >= dia) { toast('O fechamento anterior precisa ser antes do dia escolhido.', 'error'); return; }
+      const rec = S.dias[dia];
+      const congelado = rec && rec.estado && rec.estado.status === 'fechado';
+      const V = { dinheiro: val('vDinheiro'), santander: val('vSant'), wdSaldo: congelado ? rec.reg.saldos.wdSaldo : val('vWD'), maisTodosApp: val('vMTApp') };
+      if (V.dinheiro === null || V.wdSaldo === null) { toast('Preencha Dinheiro e Saldo Webdental.', 'error'); return; }
+      if ([V.dinheiro, V.santander, V.wdSaldo, V.maisTodosApp].some(x => Number.isNaN(x))) { toast('Há valor inválido (campo em vermelho).', 'error'); return; }
+      if (V.santander === null) V.santander = prev.santander;
+      if (S.wd.periodo && (dia < S.wd.periodo[0] || dia > S.wd.periodo[1])) toast('O dia está fora do período do Consolidado (' + dBR(S.wd.periodo[0]) + ' a ' + dBR(S.wd.periodo[1]) + ').', 'error');
+      S.res = C.conciliar({ dia, prevDia: prev.dia, wd: S.wd, banco: S.banco, excluidos: S.excl, valores: V, prev });
+      S.res._prev = prev; S.res._congelado = !!congelado;
+      if (!S.res.wd.entradas && !S.res.wd.saidas) S.res.alertas.unshift({ nivel: 'aviso', texto: 'O Webdental não tem nenhuma entrada ou saída entre ' + dBR(prev.dia) + ' (exclusive) e ' + dBR(dia) + '. Confira o arquivo e as datas.' });
+      if (!S.banco.some(l => l.dia > prev.dia && l.dia <= dia)) S.res.alertas.unshift({ nivel: 'aviso', texto: 'O extrato do Mais Todos não tem nenhuma linha no período do fechamento. Confira o arquivo.' });
+      renderResultado();
+    }
+
+    /* ───────── render do resultado ───────── */
+    const LBL = {
+      dinheiro: ['M1', 'Dinheiro: variação da planilha × movimento em dinheiro no Webdental'],
+      pix: ['M2', 'PIX e transferências: banco × Webdental'],
+      pixExcluidos: ['M2', 'Entradas marcadas "não é de paciente" (existem no banco, não no Webdental)'],
+      credito: ['M3', 'Cartão de crédito: banco × Webdental'],
+      debito: ['M3', 'Cartão de débito: banco × Webdental'],
+      saidas: ['M5', 'Saídas: Webdental lançou a mais (+) ou a menos (−) do que o banco pagou'],
+      santander: ['SA', 'Santander: variação do saldo digitado'],
+      retroativo: ['WD', 'Lançamentos retroativos no Webdental (fora do período)']
+    };
+    function tbl(heads, rows, nums) {
+      return '<div class="scroll"><table class="t"><thead><tr>' + heads.map((h, i) => '<th' + (nums && nums.includes(i) ? ' class="n"' : '') + '>' + E(h) + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>';
+    }
+    function lim(arr) { return arr.slice(0, MAXL); }
+    function limNota(arr) { return arr.length > MAXL ? '<div class="hint">Mostrando ' + MAXL + ' de ' + arr.length + '.</div>' : ''; }
+
+    function renderResultado() {
+      const r = S.res; if (!r) return;
+      const s = r.saldos, ok = s.dDiff === 0;
+      let h = '<div class="panel"><div class="panel-header"><div class="panel-title"><i class="fas fa-chart-simple"></i> 4 · Resultado de ' + dBR(r.dia) + '</div><span class="badge b-gray">período: após ' + dBR(r.prevDia) + ' até ' + dBR(r.dia) + '</span></div>';
+      r.alertas.forEach(a => { h += '<div class="alerta ' + a.nivel + '"><i class="fas fa-triangle-exclamation"></i> ' + E(a.texto) + '</div>'; });
+      h += '<div class="cards">' +
+        '<div class="card"><div class="k">Saldo real</div><div class="v">' + M(s.real) + '</div><div class="hint">Dinheiro ' + M(s.dinheiro) + ' · Mais Todos ' + M(s.maisTodos) + ' · Santander ' + M(s.santander) + '</div></div>' +
+        '<div class="card"><div class="k">Saldo Webdental' + (r._congelado ? ' (congelado)' : '') + '</div><div class="v">' + M(s.wdSaldo) + '</div></div>' +
+        '<div class="card ' + (s.diff === 0 ? 'good' : 'alert') + '"><div class="k">Diferença (real − Webdental)</div><div class="v">' + M(s.diff) + '</div><div class="hint">no fechamento anterior: ' + M(s.prevDiff) + '</div></div>' +
+        '<div class="card ' + (ok ? 'good' : 'alert') + '"><div class="k">Variação neste fechamento</div><div class="v">' + sgn(s.dDiff) + '</div></div></div>';
+      h += '<div class="panel-title" style="margin:6px 0 8px;font-size:13px;">De onde veio a variação</div>';
+      const rows = []; let tot = 0;
+      Object.keys(LBL).forEach(k => {
+        const v = r.comp[k]; tot += v;
+        rows.push('<tr><td><span class="badge b-gray">' + LBL[k][0] + '</span></td><td>' + E(LBL[k][1]) + '</td><td class="n ' + cls(v) + '">' + (v === 0 ? '—' : sgn(v)) + '</td></tr>');
+      });
+      rows.push('<tr class="tot"><td></td><td>Total explicado</td><td class="n ' + cls(tot) + '">' + sgn(tot) + '</td></tr>');
+      h += tbl(['', 'Origem', 'Valor'], rows, [2]);
+      h += '<div class="hint">Positivo = o dinheiro real ficou acima do Webdental; negativo = abaixo. Sem justificativa por taxa: toda diferença é tratada como possível erro.</div></div>';
+
+      /* Log de ações */
+      h += '<div class="panel"><div class="panel-header"><div class="panel-title"><i class="fas fa-clipboard-list"></i> Log de ações (' + r.log.length + ')</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-s" id="btnCopiarLog"><i class="fas fa-copy"></i> Copiar</button><button class="btn-s" id="btnSheets"><i class="fas fa-table"></i> Enviar ao Sheets</button>' +
+        '<button class="btn-g" id="btnFechar"' + (r._congelado ? ' disabled title="Dia fechado: reabra para alterar"' : '') + '><i class="fas fa-lock"></i> Fechar dia e salvar</button></div></div>';
+      if (!r.log.length) h += '<div class="alerta" style="background:var(--green-bg);color:var(--green);"><i class="fas fa-check"></i> Nada a fazer: sem divergências neste período.</div>';
+      r.log.forEach(i => {
+        h += '<div class="log-i"><span class="p"><span class="badge ' + (i.prio <= 2 ? 'b-bad' : i.prio <= 4 ? 'b-warn' : 'b-gray') + '">' + E(i.modulo) + '</span></span><div>' + E(i.texto) + '</div></div>';
+      });
+      h += '</div>';
+
+      /* Módulos */
+      h += '<div class="panel"><div class="panel-header"><div class="panel-title"><i class="fas fa-magnifying-glass-chart"></i> Detalhe por módulo</div></div>' + renderM2(r) + renderM3(r) + renderM5(r) + renderM1(r) + '</div>';
+      $('resultado').innerHTML = h;
+
+      $('btnCopiarLog').onclick = () => { navigator.clipboard.writeText('Conciliação ' + dBR(r.dia) + '\n' + r.log.map(i => '- ' + i.texto).join('\n')).then(() => toast('Log copiado.', 'success')); };
+      $('btnFechar').onclick = fechar;
+      $('btnSheets').onclick = enviarSheets;
+      document.querySelectorAll('.chk-excl').forEach(c => c.addEventListener('change', () => { S.excl[c.dataset.id] = c.checked; if (!c.checked) delete S.excl[c.dataset.id]; conciliar(); }));
+    }
+
+    function renderM1(r) {
+      const m = r.m1;
+      return '<details><summary><span class="badge b-gray">M1</span> Dinheiro ' + (m.dif === 0 ? '<span class="badge b-ok">ok</span>' : '<span class="badge b-bad">' + sgn(m.dif) + '</span>') + '</summary><div class="in">' +
+        tbl(['', 'Valor'], [
+          '<tr><td>Entradas em dinheiro no Webdental</td><td class="n">' + M(m.wdEntradas) + '</td></tr>',
+          '<tr><td>Saídas em dinheiro no Webdental</td><td class="n">' + M(m.wdSaidas) + '</td></tr>',
+          '<tr><td>Movimento líquido no Webdental</td><td class="n">' + M(m.wdLiquido) + '</td></tr>',
+          '<tr><td>Variação do saldo da planilha Caixa Geral</td><td class="n">' + M(m.variacaoPlanilha) + '</td></tr>'], [1]) + '</div></details>';
+    }
+
+    function renderM2(r) {
+      const m = r.m2, semPar = new Set(m.bancoSemPar.map(x => x.ref.id).concat(m.dicasDigitacao.map(d => d.banco.ref.id)));
+      const ent = m.linhas;   /* [v1.0] vem do motor: já sem pares cancelados por devolução */
+      const entRows = lim(ent).map(l => '<tr><td><input type="checkbox" class="chk-excl" data-id="' + E(l.id) + '"' + (S.excl[l.id] ? ' checked' : '') + '></td><td>' + dBR(l.dia) + ' ' + E(l.hora.slice(0, 5)) + '</td><td class="tag-nome">' + E(l.desc) + (l.admin ? ' <span class="badge b-warn">administradora</span>' : '') + '</td><td>' + E(l.tipo.replace('Transferência ', '')) + '</td><td class="n">' + M(l.v) + '</td><td>' +
+        (S.excl[l.id] ? '<span class="badge b-gray">excluído</span>' : semPar.has(l.id) ? '<span class="badge b-bad">sem par</span>' : '<span class="badge b-ok">ok</span>') + '</td></tr>');
+      let h = '<details open><summary><span class="badge b-gray">M2</span> PIX e transferências ' + (r.comp.pix === 0 ? '<span class="badge b-ok">ok</span>' : '<span class="badge b-bad">' + sgn(r.comp.pix) + '</span>') + '</summary><div class="in">' +
+        '<div class="hint" style="margin:0 0 8px;">Banco (sem as marcadas): <b>' + M(m.bancoTotal) + '</b> · Webdental (PIX, transferências e online): <b>' + M(m.wdTotal) + '</b> · ' + m.pares + ' pares exatos. Marque a caixa se a entrada <b>não é de paciente</b>.</div>';
+      h += tbl(['Não é paciente', 'Quando', 'Descrição (só na tela, não é salvo)', 'Tipo', 'Valor', 'Status'], entRows, [4]) + limNota(ent);
+      if (m.dicasDigitacao.length) h += '<div class="sep"></div><b style="font-size:12px;">Prováveis erros de digitação</b>' + tbl(['Banco', 'Webdental', 'Diferença'], m.dicasDigitacao.map(d => '<tr><td class="n">' + M(d.banco.v) + '</td><td class="n">' + M(d.wd.v) + '</td><td class="n bad-t">' + sgn(d.dif) + '</td></tr>'), [0, 1, 2]);
+      if (m.wdSemPar.length) h += '<div class="sep"></div><b style="font-size:12px;">No Webdental sem entrada no banco</b>' + tbl(['Dia', 'Paciente (só na tela)', 'Tipo', 'Valor'], lim(m.wdSemPar).map(x => '<tr><td>' + dBR(x.ref.dt) + '</td><td class="tag-nome">' + E(x.ref.paciente || x.ref.hist.slice(0, 60)) + '</td><td>' + E(x.ref.tipo) + '</td><td class="n">' + M(x.v) + '</td></tr>'), [3]);
+      return h + '</div></details>';
+    }
+
+    function renderM3(r) {
+      const m = r.m3, c = m.credito, d = m.debito;
+      let h = '<details' + (c.dif || d.dif ? ' open' : '') + '><summary><span class="badge b-gray">M3</span> Cartões ' + ((c.dif || d.dif) ? '<span class="badge b-bad">possível erro</span>' : '<span class="badge b-ok">ok</span>') + '</summary><div class="in">' +
+        tbl(['', 'Banco (Domicílio Bancário)', 'Webdental', 'Diferença'], [
+          '<tr><td>Crédito</td><td class="n">' + M(c.banco) + '</td><td class="n">' + M(c.wd) + '</td><td class="n ' + cls(c.dif) + '">' + sgn(c.dif) + '</td></tr>',
+          '<tr><td>Débito</td><td class="n">' + M(d.banco) + '</td><td class="n">' + M(d.wd) + '</td><td class="n ' + cls(d.dif) + '">' + sgn(d.dif) + '</td></tr>'], [1, 2, 3]) +
+        '<div class="hint">Sem justificativa por taxa. Para achar a transação, use o Módulo 4 (carregue o arquivo de NSU da Soluções) ou procure pelo NSU/valor abaixo.</div>';
+      if (S.sol) {
+        const a = C.auditarNSU(m.linhasWD, S.sol);
+        h += '<div class="sep"></div><b style="font-size:12px;">Módulo 4 · NSU (' + E(S.solArq) + ') — ' + a.casados + ' casados</b>';
+        h += a.valorDiferente.length ? tbl(['NSU', 'Webdental', 'Soluções', 'Diferença'], lim(a.valorDiferente).map(x => '<tr><td>' + E(x.wd.ref.tef) + '</td><td class="n">' + M(x.wd.v) + '</td><td class="n">' + M(x.sol.v) + '</td><td class="n bad-t">' + sgn(x.dif) + '</td></tr>'), [1, 2, 3]) : '<div class="hint">Nenhum NSU com valor diferente.</div>';
+        h += a.wdSemMatch.length ? '<b style="font-size:12px;">No Webdental sem NSU na Soluções (' + a.wdSemMatch.length + ')</b>' + tbl(['NSU', 'Final', 'Bandeira', 'Dia', 'Valor'], lim(a.wdSemMatch).map(x => '<tr><td>' + E(x.ref.tef) + '</td><td>' + E((/(\d{4})\s*$/.exec(x.ref.anexo) || [])[1] || '') + '</td><td>' + E((x.ref.anexo || '').split(' - ')[0]) + '</td><td>' + dBR(x.ref.dt) + '</td><td class="n">' + M(x.v) + '</td></tr>'), [4]) : '';
+        h += '<div class="hint">Na Soluções sem NSU no Webdental: ' + a.solSemMatch.length + ' (inclui outros dias do arquivo).</div>';
+      }
+      const lw = lim(m.linhasWD);
+      h += '<div class="sep"></div><b style="font-size:12px;">Cartões lançados no Webdental no período (' + m.linhasWD.length + ')</b>' +
+        tbl(['Dia', 'Tipo', 'Bandeira', 'Final', 'NSU (TEF)', 'Valor'], lw.map(x => '<tr><td>' + dBR(x.dt) + '</td><td>' + (x.t === 'credito' ? 'Crédito' : 'Débito') + '</td><td>' + E((x.anexo || '').split(' - ')[0]) + '</td><td>' + E((/(\d{4})\s*$/.exec(x.anexo) || [])[1] || '') + '</td><td>' + E(x.tef) + '</td><td class="n">' + M(x.v) + '</td></tr>'), [5]) + limNota(m.linhasWD);
+      return h + '</div></details>';
+    }
+
+    function renderM5(r) {
+      const m = r.m5;
+      let h = '<details' + (m.sugestoes.length + m.bancoSemPar.length + m.wdSemPar.length ? ' open' : '') + '><summary><span class="badge b-gray">M5</span> Saídas ' + (r.comp.saidas === 0 ? '<span class="badge b-ok">ok</span>' : '<span class="badge b-bad">' + sgn(r.comp.saidas) + '</span>') + '</summary><div class="in">' +
+        '<div class="hint" style="margin:0 0 8px;">Banco pago (já sem devoluções de PIX): <b>' + M(m.bancoTotal) + '</b> · Webdental (saídas não-dinheiro): <b>' + M(m.wdTotal) + '</b> · ' + m.pares + ' pares exatos (inclui um pagamento lançado em várias linhas) · ' + m.canceladas.length + ' saída(s) cancelada(s) por devolução.</div>';
+      if (m.sugestoes.length) h += '<b style="font-size:12px;">Mesmo favorecido, valor diferente (sugestão pelo nome)</b>' + tbl(['Favorecido (banco)', 'Banco pagou', 'Webdental lançou', 'Diferença'], m.sugestoes.map(s => '<tr><td>' + E(s.banco.ref.desc) + '</td><td class="n">' + M(s.banco.v) + '</td><td class="n">' + M(s.wdSoma) + (s.wd.length > 1 ? ' <span class="hint">(' + s.wd.length + ' linhas)</span>' : '') + '</td><td class="n bad-t">' + sgn(s.dif) + '</td></tr>'), [1, 2, 3]);
+      if (m.bancoSemPar.length) h += '<div class="sep"></div><b style="font-size:12px;">No banco sem lançamento no Webdental</b>' + tbl(['Quando', 'Descrição', 'Valor'], m.bancoSemPar.map(x => '<tr><td>' + dBR(x.ref.dia) + ' ' + E(x.ref.hora.slice(0, 5)) + '</td><td>' + E(x.ref.desc) + '</td><td class="n">' + M(x.v) + '</td></tr>'), [2]);
+      if (m.wdSemPar.length) h += '<div class="sep"></div><b style="font-size:12px;">No Webdental sem débito no banco</b>' + tbl(['Dia', 'Histórico', 'Valor'], m.wdSemPar.map(x => '<tr><td>' + dBR(x.ref.dt) + '</td><td>' + E(x.ref.hist.slice(0, 120)) + '</td><td class="n">' + M(x.v) + '</td></tr>'), [2]);
+      if (!m.sugestoes.length && !m.bancoSemPar.length && !m.wdSemPar.length) h += '<div class="hint">Todas as saídas casaram.</div>';
+      return h + '</div></details>';
+    }
+
+    /* ───────── fechar / salvar ───────── */
+    async function fechar() {
+      const r = S.res; if (!r) return;
+      if (r.residuo !== 0) { toast('A decomposição não fechou (resíduo ' + M(r.residuo) + '). Não vou salvar.', 'error'); return; }
+      if (r._congelado) { toast('Dia já fechado. Reabra para alterar.', 'error'); return; }
+      const open = r.log.length;
+      if (!confirm('Fechar ' + dBR(r.dia) + '?\n\nVariação: ' + sgn(r.saldos.dDiff) + '\nItens no log: ' + open + '\n\nO saldo Webdental (' + M(r.saldos.wdSaldo) + ') fica congelado.')) return;
+      const reg = C.registroParaSalvar(r, { prev: { dia: r._prev.dia, dinheiro: r._prev.dinheiro, maisTodos: r._prev.maisTodos, santander: r._prev.santander, wdSaldo: r._prev.wdSaldo }, versao: '1.0' });
+      const antigo = S.dias[r.dia] || {};
+      const doc = { reg, estado: { status: 'fechado', por: user.email || user.uid, em: new Date().toISOString() } };
+      if (antigo.reaberturas) doc.reaberturas = antigo.reaberturas;
+      if (antigo.resolvidos) doc.resolvidos = antigo.resolvidos;
+      try {
+        await set(ref(db, BASE + '/' + r.dia), doc);
+        logAdmin('fechou a conciliação de ' + r.dia);
+        r._congelado = true;   /* [v1.0] trava o botão e o saldo Webdental logo após fechar */
+        await carregarDias(); atualizaDia(); renderTudoAbas(); renderResultado();
+        toast('Dia ' + dBR(r.dia) + ' fechado e salvo.', 'success');
+      } catch (e) { console.error(e); toast('Não foi possível salvar: ' + e.message + ' (regra do RTDB aplicada?)', 'error'); }
+    }
+
+    /* ───────── Google Sheets ───────── */
+    async function enviarSheets() {
+      const r = S.res; if (!r) return;
+      if (!S.cfg.webhookUrl) { toast('Configure a URL do Apps Script na aba Configuração.', 'error'); return; }
+      const mat = C.montarMatriz([{ dia: r.dia, saldos: r.saldos, wd: r.wd }])[0];
+      const payload = { token: S.cfg.token || '', dia: r.dia, matriz: mat, log: r.log.map(i => ({ modulo: i.modulo, valor: i.valor, texto: i.texto })), comp: r.comp };
+      try {
+        const resp = await fetch(S.cfg.webhookUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+        let j = null; try { j = await resp.json(); } catch (e) {}
+        if (j && j.ok) toast('Enviado ao Google Sheets (' + (j.aba || 'aba') + ').', 'success');
+        else toast('Enviado, mas sem confirmação do script' + (j && j.erro ? ': ' + j.erro : '') + '.', 'info');
+      } catch (e) { console.error(e); toast('Falha ao enviar: ' + e.message, 'error'); }
+    }
+
+    /* ───────── abas ───────── */
+    function renderMatriz() {
+      const regs = fechados().map(k => S.dias[k].reg);
+      if (!regs.length) { $('matrizBox').innerHTML = '<div class="hint">Nenhum dia fechado ainda.</div>'; return; }
+      const mat = C.montarMatriz(regs).reverse();
+      $('matrizBox').innerHTML = tbl(['Data', 'Saldo anterior', 'Entradas', 'Saídas', 'Saldo do dia', 'Retroativo', 'Saldo atual (WD)', 'Real (dinheiro+bancos)', 'Diferença', 'Variação', 'Abertos'],
+        mat.map(x => { const ab = abertosDoDia(x.dia).length;
+          return '<tr><td>' + dBR(x.dia) + '</td><td class="n">' + M(x.saldoAnterior) + '</td><td class="n">' + M(x.entradas) + '</td><td class="n">' + M(x.saidas) + '</td><td class="n">' + M(x.saldoDoDia) + '</td><td class="n">' + (x.retroativo ? sgn(x.retroativo) : '—') + '</td><td class="n">' + M(x.saldoAtual) + '</td><td class="n">' + M(x.dinheiro + x.bancoReal) + '</td><td class="n ' + cls(x.diferenca) + '">' + M(x.diferenca) + '</td><td class="n ' + cls(x.dDiff) + '">' + sgn(x.dDiff) + '</td><td class="n">' + (ab ? '<span class="badge b-bad">' + ab + '</span>' : '<span class="badge b-ok">0</span>') + '</td></tr>'; }),
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    }
+    function abertosDoDia(dia) {
+      const rec = S.dias[dia]; if (!rec || !rec.reg) return [];
+      const res = rec.resolvidos || {};
+      return (rec.reg.itens || []).filter(i => !res[i.chave]);
+    }
+    function renderAbertos() {
+      let total = 0, h = '';
+      fechados().reverse().forEach(dia => {
+        const its = abertosDoDia(dia); if (!its.length) return; total += its.length;
+        h += '<div style="margin-bottom:14px;"><b style="color:var(--navy);">' + dBR(dia) + '</b> <span class="badge b-bad">' + its.length + '</span>';
+        its.forEach(i => { h += '<div class="log-i"><span class="p"><span class="badge b-gray">' + E(i.modulo) + '</span></span><div style="flex:1;">' + E(i.texto) + '</div>' +
+          '<div style="display:flex;gap:6px;"><input class="f-input" style="width:190px;padding:5px 8px;font-size:12px;" placeholder="o que foi feito" id="nt_' + E(dia + '_' + i.chave) + '"><button class="btn-g res-b" style="padding:5px 10px;" data-dia="' + E(dia) + '" data-chave="' + E(i.chave) + '"><i class="fas fa-check"></i> Resolvido</button></div></div>'; });
+        h += '</div>';
+      });
+      $('abertosBox').innerHTML = h || '<div class="alerta" style="background:var(--green-bg);color:var(--green);">Nenhum item aberto.</div>';
+      $('bgAbertos').textContent = total; $('bgAbertos').className = 'badge ' + (total ? 'b-bad' : 'b-gray');
+      document.querySelectorAll('.res-b').forEach(b => b.onclick = async () => {
+        const dia = b.dataset.dia, chave = b.dataset.chave, nota = ($('nt_' + dia + '_' + chave).value || '').trim();
+        if (!nota) { toast('Escreva o que foi feito.', 'error'); return; }
+        try {
+          await set(ref(db, BASE + '/' + dia + '/resolvidos/' + chave), { por: user.email || user.uid, em: new Date().toISOString(), nota: nota.slice(0, 300) });
+          await carregarDias(); renderTudoAbas(); toast('Item resolvido.', 'success');
+        } catch (e) { console.error(e); toast('Erro: ' + e.message, 'error'); }
+      });
+    }
+    function renderTudoAbas() { renderMatriz(); renderAbertos(); }
+
+    $('btnExportMatriz').onclick = () => {
+      const regs = fechados().map(k => S.dias[k].reg); if (!regs.length) { toast('Nada para exportar.', 'info'); return; }
+      const mat = C.montarMatriz(regs);
+      const aoa = [['Data', 'Saldo anterior', 'Entradas', 'Saídas', 'Saldo do dia', 'Retroativo', 'Saldo atual (WD)', 'Dinheiro', 'Bancos', 'Diferença', 'Variação']]
+        .concat(mat.map(x => [dBR(x.dia), x.saldoAnterior / 100, x.entradas / 100, x.saidas / 100, x.saldoDoDia / 100, x.retroativo / 100, x.saldoAtual / 100, x.dinheiro / 100, x.bancoReal / 100, x.diferenca / 100, x.dDiff / 100]));
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Matriz');
+      XLSX.writeFile(wb, 'conciliacao_matriz.xlsx');
+    };
+    $('btnSalvarCfg').onclick = async () => {
+      try { await set(ref(db, BASE + '/config'), { webhookUrl: $('cfgUrl').value.trim(), token: $('cfgToken').value.trim() }); await carregarDias(); toast('Configuração salva.', 'success'); }
+      catch (e) { console.error(e); toast('Erro: ' + e.message, 'error'); }
+    };
+
+    document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + b.dataset.tab));
+    }));
+    $('btnConciliar').addEventListener('click', conciliar);
+    $('cDia').addEventListener('change', () => { atualizaDia(); });
+    $('seedManual').addEventListener('change', atualizaDia);
+
+    /* ───────── gate: somente admin ───────── */
+    onAuthStateChanged(auth, async u => {
+      if (!u) { irPara('../login.html'); return; }
+      user = u;
+      let perms = {};
+      try { const snap = await get(ref(db, 'admin/usuarios/' + u.uid)); perms = (snap.exists() && snap.val().perms) || {}; } catch (e) { console.warn('[conciliacao] perms:', e); }
+      if (!perms.admin) { alert('Acesso restrito a administradores.'); irPara('../login.html'); return; }
+      carregarLogoGlobal(['#headerLogo']);
+      $('conteudo').style.display = 'block';
+      $('cDia').value = hojeISO();
+      try { await carregarDias(); } catch (e) { console.error(e); toast('Não consegui ler ' + BASE + ' (regra do RTDB aplicada?): ' + e.message, 'error'); }
+      atualizaDia(); renderTudoAbas();
+      logAdmin('acessou Conciliação');
+    });
+  </script>
+</body>
+</html>
