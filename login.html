@@ -356,7 +356,7 @@
       if (isAdmin)                     document.getElementById('cardEmissaoNotas').style.display = 'flex'; // [v1.3] só admin
       if (isAdmin || perms.nps)        document.getElementById('cardNps').style.display         = 'flex';
       if (isAdmin)                     document.getElementById('cardContratos').style.display = 'flex';
-      if (isAdmin)                     document.getElementById('cardConciliacao').style.display = 'flex'; // [v1.0] conciliação só admin
+      if (isAdmin || perms.financeiro) document.getElementById('cardConciliacao').style.display = 'flex'; // [v1.2] conciliação: admin e financeiro
 
       // Revela o portal já montado
       document.getElementById('telaLogin').style.display  = 'none';
