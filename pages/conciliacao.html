@@ -124,7 +124,11 @@
             <div><label class="f-label" for="sMT">Saldo Mais Todos</label><input id="sMT" class="f-input" inputmode="decimal" placeholder="0,00"></div>
             <div><label class="f-label" for="sSant">Saldo Santander</label><input id="sSant" class="f-input" inputmode="decimal" placeholder="0,00"></div>
           </div>
-          <div style="margin-top:12px;max-width:260px;"><label class="f-label" for="sWD">Saldo Webdental do fechamento anterior</label><input id="sWD" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+          <div style="margin-top:12px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+            <div style="width:260px;"><label class="f-label" for="sWD">Saldo Webdental do fechamento anterior</label><input id="sWD" class="f-input" inputmode="decimal" placeholder="0,00"></div>
+            <button class="btn-s" id="btnBuscarSeed" type="button"><i class="fas fa-cloud-arrow-down"></i> Buscar da planilha de fechamento</button>
+          </div>
+          <div class="hint">Preenche pela aba do dia na planilha "Fechamento de Caixa Diário". O campo Banco da planilha vai inteiro em Mais Todos e Santander fica 0,00.</div>
         </div>
       </div>
 
@@ -149,8 +153,10 @@
           <div><label class="f-label" for="vMTApp">Saldo Mais Todos no app (conferência, opcional)</label><input id="vMTApp" class="f-input" inputmode="decimal" placeholder="0,00"></div>
         </div>
         <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-s" id="btnBuscarDia" type="button"><i class="fas fa-cloud-arrow-down"></i> Buscar nas planilhas</button>
           <button class="btn-p" id="btnConciliar"><i class="fas fa-scale-balanced"></i> Conciliar</button>
         </div>
+        <div class="hint">"Buscar nas planilhas" traz o Dinheiro da Caixa Geral Odonto e, se o dia já estiver na planilha de fechamento, o saldo Webdental e o Banco para conferência. Só preenche campos vazios que você pode editar. Exige o Apps Script configurado.</div>
       </div>
 
       <div id="resultado"></div>
@@ -540,6 +546,38 @@
       document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + b.dataset.tab));
     }));
+    /* ───────── leitura das planilhas (Apps Script, só leitura) ───────── */
+    async function buscarDia(dia) {
+      if (!S.cfg.webhookUrl) { toast('Configure a URL do Apps Script na aba Configuração.', 'error'); return null; }
+      const u = S.cfg.webhookUrl + (S.cfg.webhookUrl.includes('?') ? '&' : '?') + 'acao=dia&dia=' + encodeURIComponent(dia) + '&token=' + encodeURIComponent(S.cfg.token || '');
+      try {
+        const j = await (await fetch(u)).json();
+        if (!j.ok) { toast('Planilhas: ' + (j.erro || 'erro desconhecido'), 'error'); return null; }
+        return j;
+      } catch (e) { console.error(e); toast('Não consegui falar com o Apps Script: ' + e.message, 'error'); return null; }
+    }
+    const cm = c => (c == null ? '' : C.fmt(c, true));
+    $('btnBuscarSeed').addEventListener('click', async () => {
+      const dia = $('sDia').value; if (!dia) { toast('Escolha a data do fechamento anterior.', 'error'); return; }
+      const j = await buscarDia(dia); if (!j) return;
+      if (!j.fechamento) { toast('Não há aba de fechamento em ' + dBR(dia) + ' (fim de semana ou feriado?).', 'error'); return; }
+      const f = j.fechamento;
+      if (f.dinheiro == null || f.banco == null || f.wdSaldo == null) { toast('A aba existe mas faltam valores (Dinheiro, Banco ou Saldo Web Dental).', 'error'); return; }
+      $('sDinheiro').value = cm(f.dinheiro); $('sMT').value = cm(f.banco); $('sSant').value = '0,00'; $('sWD').value = cm(f.wdSaldo);
+      toast('Ponto de partida preenchido pelo fechamento de ' + dBR(dia) + '. Confira.', 'success');
+    });
+    $('btnBuscarDia').addEventListener('click', async () => {
+      const dia = $('cDia').value; if (!dia) { toast('Escolha o dia.', 'error'); return; }
+      const j = await buscarDia(dia); if (!j) return;
+      const msgs = [];
+      if (j.caixaGeral && j.caixaGeral.achou && j.caixaGeral.saldo != null) { $('vDinheiro').value = cm(j.caixaGeral.saldo); msgs.push('Dinheiro ' + cm(j.caixaGeral.saldo)); }
+      else toast('A Caixa Geral não tem a data ' + dBR(dia) + ' (' + ((j.caixaGeral && j.caixaGeral.erro) || 'linha não encontrada') + ').', 'error');
+      if (j.fechamento) {
+        if (j.fechamento.wdSaldo != null && !$('vWD').value.trim() && !$('vWD').disabled) { $('vWD').value = cm(j.fechamento.wdSaldo); msgs.push('Webdental ' + cm(j.fechamento.wdSaldo)); }
+        if (j.fechamento.banco != null && !$('vMTApp').value.trim()) { $('vMTApp').value = cm(j.fechamento.banco); msgs.push('Banco (conferência) ' + cm(j.fechamento.banco)); }
+      }
+      if (msgs.length) toast('Da planilha: ' + msgs.join(' · '), 'success');
+    });
     $('btnConciliar').addEventListener('click', conciliar);
     $('cDia').addEventListener('change', () => { atualizaDia(); });
     $('seedManual').addEventListener('change', atualizaDia);
