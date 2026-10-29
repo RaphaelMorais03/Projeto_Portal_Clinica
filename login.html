@@ -258,6 +258,13 @@
           <div class="pc-arrow" style="color:#0A1F44;"><i class="fas fa-arrow-right"></i> Acessar</div>
         </div>
 
+        <!-- [v1.0] Conciliação diária (só admin) -->
+        <div class="portal-card" id="cardConciliacao" style="display:none;" onclick="abrirSistema('pages/conciliacao.html','Conciliação')">
+          <div class="pc-icon" style="background:#0A1F44;"><i class="fas fa-scale-balanced" style="color:white;font-size:22px;"></i></div>
+          <div><div class="pc-name">Conciliação</div><div class="pc-desc">Cruza Webdental, Mais Todos e caixa para achar a diferença do fechamento.</div></div>
+          <div class="pc-arrow" style="color:#0A1F44;"><i class="fas fa-arrow-right"></i> Acessar</div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -349,6 +356,7 @@
       if (isAdmin)                     document.getElementById('cardEmissaoNotas').style.display = 'flex'; // [v1.3] só admin
       if (isAdmin || perms.nps)        document.getElementById('cardNps').style.display         = 'flex';
       if (isAdmin)                     document.getElementById('cardContratos').style.display = 'flex';
+      if (isAdmin)                     document.getElementById('cardConciliacao').style.display = 'flex'; // [v1.0] conciliação só admin
 
       // Revela o portal já montado
       document.getElementById('telaLogin').style.display  = 'none';
