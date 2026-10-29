@@ -126,9 +126,9 @@
         <div class="panel-header"><div class="panel-title"><span class="passo">2</span> Anexe os dois arquivos do dia</div></div>
         <div class="grid g2">
           <div class="dropzone"><label class="f-label" for="fWD">Webdental · Consolidado do Dia (.xls)</label><input type="file" id="fWD" accept=".xls,.xlsx,.html,.htm,.csv"><div class="st" id="stWD">Nenhum arquivo.</div></div>
-          <div class="dropzone"><label class="f-label" for="fMT">Mais Todos · extrato (.csv)</label><input type="file" id="fMT" accept=".csv" multiple><div class="st" id="stMT">Nenhum arquivo.</div></div>
+          <div class="dropzone"><label class="f-label" for="fMT">Mais Todos · extrato (.csv ou .pdf)</label><input type="file" id="fMT" accept=".csv,.pdf" multiple><div class="st" id="stMT">Nenhum arquivo.</div></div>
         </div>
-        <div class="hint">No Mais Todos, baixe o extrato em CSV desde o último dia fechado até o dia que está fechando.</div>
+        <div class="hint">No Mais Todos, baixe o extrato (CSV ou PDF) desde o último dia fechado até o dia que está fechando. O PDF não traz hora nem código da transação: o sistema cria um código próprio, então não carregue o mesmo dia em CSV e em PDF ao mesmo tempo.</div>
       </div>
 
       <div class="panel">
@@ -235,7 +235,7 @@
     const E = s => window.esc(s);
     const MAXL = 200;
     let user = null;
-    const S = { wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, base: { fechamento: {}, caixa: {}, webstats: {} }, inicio: null, admin: false };
+    const S = { saldosMT: {}, wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, base: { fechamento: {}, caixa: {}, webstats: {} }, inicio: null, admin: false };
 
     /* ───────── util ───────── */
     function hojeISO() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
@@ -353,15 +353,46 @@
           (w.invalidas ? ' <span class="warn-t">· ' + w.invalidas + ' linhas ignoradas</span>' : '') + (w.entradas.length + w.saidas.length === 0 ? ' <span class="bad-t">· nada reconhecido: o layout mudou?</span>' : '');
       } catch (e) { console.error(e); S.wd = null; $('stWD').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; toast('Erro ao ler o Consolidado: ' + e.message, 'error'); }
     });
+    /* [v1.4] PDF do extrato: pdf.js carregado só quando precisa (cdnjs, versão fixa) */
+    function carregaPdfJs() {
+      if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+      return new Promise((res, rej) => {
+        const sc = document.createElement('script');
+        sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(window.pdfjsLib); };
+        sc.onerror = () => rej(new Error('não consegui carregar o leitor de PDF (internet?)'));
+        document.head.appendChild(sc);
+      });
+    }
+    async function linhasDoPdf(file) {
+      const lib = await carregaPdfJs();
+      const pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+      const out = [];
+      for (let n = 1; n <= pdf.numPages; n++) {
+        const tc = await (await pdf.getPage(n)).getTextContent();
+        const porY = [];
+        tc.items.forEach(it => { if (!it.str || !it.str.trim()) return; const y = it.transform[5]; let g = porY.find(x => Math.abs(x.y - y) < 2.5); if (!g) { g = { y, it: [] }; porY.push(g); } g.it.push({ x: it.transform[4], t: it.str }); });
+        porY.sort((a, b) => b.y - a.y).forEach(g => out.push(g.it.sort((a, b) => a.x - b.x).map(i => i.t).join(' ')));
+      }
+      return out;
+    }
     $('fMT').addEventListener('change', async ev => {
-      const fs = Array.from(ev.target.files); if (!fs.length) { S.banco = []; $('stMT').textContent = 'Nenhum arquivo.'; return; }
+      const fs = Array.from(ev.target.files); if (!fs.length) { S.banco = []; S.saldosMT = {}; $('stMT').textContent = 'Nenhum arquivo.'; return; }
       try {
-        const porId = {}; let inval = 0;
-        for (const f of fs) { const r = C.parseMaisTodos(await f.text()); inval += r.invalidas; r.linhas.forEach(l => { porId[l.id] = l; }); }
+        const porId = {}; let inval = 0, pdfs = 0; S.saldosMT = {};
+        $('stMT').textContent = 'Lendo…';
+        for (const f of fs) {
+          let txt;
+          if (/\.pdf$/i.test(f.name)) {
+            const cv = C.pdfMaisTodosParaCsv(await linhasDoPdf(f)); txt = cv.csv; pdfs++;
+            Object.keys(cv.saldos).forEach(d => { S.saldosMT[d] = cv.saldos[d]; });
+          } else txt = await f.text();
+          const r = C.parseMaisTodos(txt); inval += r.invalidas; r.linhas.forEach(l => { porId[l.id] = l; });
+        }
         S.banco = Object.keys(porId).map(k => porId[k]);
         const dias = [...new Set(S.banco.map(l => l.dia))].sort();
-        if (!S.banco.length) { $('stMT').innerHTML = '<span class="bad-t">Nada reconhecido. É o extrato CSV do Mais Todos? (PDF não funciona.)</span>'; toast('Não reconheci lançamentos nesse arquivo. Use o extrato em CSV do Mais Todos.', 'error'); return; }
-        $('stMT').innerHTML = '<span class="ok-t"><b>' + S.banco.length + '</b> lançamentos · dias ' + dias.map(dBR).map(E).join(', ') + '</span>' + (inval ? ' <span class="warn-t">· ' + inval + ' linhas ignoradas</span>' : '');
+        if (!S.banco.length) { $('stMT').innerHTML = '<span class="bad-t">Nada reconhecido. É o extrato do Mais Todos?</span>'; toast('Não reconheci lançamentos nesse arquivo. Use o extrato do Mais Todos (CSV ou PDF).', 'error'); return; }
+        $('stMT').innerHTML = '<span class="ok-t"><b>' + S.banco.length + '</b> lançamentos · dias ' + dias.map(dBR).map(E).join(', ') + '</span>' + (inval ? ' <span class="warn-t">· ' + inval + ' linhas ignoradas</span>' : '') + (pdfs ? ' <span class="hint">(PDF: saldo de ' + Object.keys(S.saldosMT).length + ' dia(s) lido para conferência)</span>' : '');
       } catch (e) { console.error(e); S.banco = []; $('stMT').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; toast('Erro ao ler o extrato: ' + e.message, 'error'); }
     });
     $('fSol').addEventListener('change', async ev => {
@@ -391,6 +422,7 @@
       const rec = S.dias[dia];
       const congelado = rec && rec.estado && rec.estado.status === 'fechado';
       if (!congelado && $('vDinheiro').value.trim() === '' && $('vWD').value.trim() === '') preencher(dia, false);
+      if (S.saldosMT[dia] != null && $('vMTApp').value.trim() === '') $('vMTApp').value = C.fmt(S.saldosMT[dia], true);
       const V = { dinheiro: val('vDinheiro'), santander: val('vSant'), wdSaldo: congelado ? rec.reg.saldos.wdSaldo : val('vWD'), maisTodosApp: val('vMTApp') };
       if (V.dinheiro === null) { toast('Falta o Dinheiro em caixa (passo 3).', 'error'); return; }
       if (V.wdSaldo === null) { toast('Falta o Saldo Webdental (passo 3).', 'error'); return; }
