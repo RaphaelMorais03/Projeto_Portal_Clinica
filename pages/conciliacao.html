@@ -623,20 +623,30 @@
       $('stBase').title = fa(fk) + ' | ' + fa(ck) + ' | ' + fa(wk);
     }
     function docDe(txt) { return new DOMParser().parseFromString(txt, 'text/html'); }
+    /* [v1.3] .xlsx: lê as células cruas (datas e números de verdade) e devolve texto no padrão brasileiro,
+       independente da formatação/idioma da planilha */
+    function brl(n) { const c = Math.round(n * 100), neg = c < 0, a = Math.abs(c); return (neg ? '-' : '') + 'R$ ' + String(Math.floor(a / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + String(a % 100).padStart(2, '0'); }
+    function rowsFromSheet(ws) {
+      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', blankrows: false });
+      return aoa.map(r => r.map(c => {
+        if (c instanceof Date) { const d = new Date(c.getTime() + 12 * 3600 * 1000); return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear(); }
+        if (typeof c === 'number') return brl(c);
+        return String(c == null ? '' : c).replace(/\s+/g, ' ').trim();
+      }));
+    }
     async function lerArquivoBase(f) {
       const out = { fech: [], caixa: [], abas: 0, ignoradas: 0 };
-      const docs = [];
+      const listas = [];
       if (/\.(html?|xls)$/i.test(f.name)) {
         const txt = await f.text();
-        if (/<table/i.test(txt.slice(0, 300000))) docs.push(docDe(txt));
+        if (/<table/i.test(txt.slice(0, 300000))) listas.push(C.rowsFromDoc(docDe(txt)));
       }
-      if (!docs.length) {
-        const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
-        wb.SheetNames.forEach(sn => docs.push(docDe(XLSX.utils.sheet_to_html(wb.Sheets[sn]))));
+      if (!listas.length) {
+        const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', cellDates: true });
+        wb.SheetNames.forEach(sn => listas.push(rowsFromSheet(wb.Sheets[sn])));
       }
-      docs.forEach(doc => {
+      listas.forEach(rows => {
         out.abas++;
-        const rows = C.rowsFromDoc(doc);
         const fe = C.extrairFechamentoRows(rows);
         if (fe) { out.fech.push(fe); return; }
         const cg = C.extrairCaixaGeralRows(rows);
@@ -650,9 +660,9 @@
       if (!S.admin) { toast('Só o administrador importa a base.', 'error'); return; }
       const files = Array.from($('fBase').files), ws = $('tWebstats').value.trim();
       if (!files.length && !ws) { toast('Escolha ao menos uma planilha ou cole a tabela do Webstats.', 'error'); return; }
-      const fech = {}, caixa = {}; let abas = 0, ign = 0; const erros = [];
+      const fech = {}, caixa = {}; let abas = 0, ign = 0; const erros = [], porArq = [];
       for (const f of files) {
-        try { const r = await lerArquivoBase(f); abas += r.abas; ign += r.ignoradas; r.fech.forEach(x => { fech[x.dia] = limpo({ dinheiro: x.dinheiro, banco: x.banco, saldoTotal: x.saldoTotal, wdSaldo: x.wdSaldo, diferenca: x.diferenca }); }); r.caixa.forEach(x => { caixa[x.dia] = limpo({ saldo: x.saldo, entradas: x.entradas, saidas: x.saidas }); }); }
+        try { const r = await lerArquivoBase(f); porArq.push(f.name + ': ' + r.abas + ' aba(s), ' + r.fech.length + ' fechamento(s), ' + r.caixa.length + ' dia(s) de caixa, ' + r.ignoradas + ' ignorada(s)'); abas += r.abas; ign += r.ignoradas; r.fech.forEach(x => { fech[x.dia] = limpo({ dinheiro: x.dinheiro, banco: x.banco, saldoTotal: x.saldoTotal, wdSaldo: x.wdSaldo, diferenca: x.diferenca }); }); r.caixa.forEach(x => { caixa[x.dia] = limpo({ saldo: x.saldo, entradas: x.entradas, saidas: x.saidas }); }); }
         catch (e) { console.error(e); erros.push(f.name + ': ' + e.message); }
       }
       let webs = null;
@@ -664,7 +674,7 @@
       if (nw) await update(ref(db, BASE + '/base/webstats'), webs);
       logAdmin('importou base da conciliação (' + nf + ' fechamentos, ' + nc + ' dias caixa, ' + nw + ' webstats)');
       await carregarDias();
-      $('stBase').innerHTML = '<span class="ok-t">Importado: <b>' + nf + '</b> dia(s) de fechamento, <b>' + nc + '</b> dia(s) da Caixa Geral, <b>' + nw + '</b> dia(s) do Webstats.</span>' + (ign ? ' <span class="warn-t">' + ign + ' aba(s) ignorada(s) (layout desconhecido).</span>' : '') + (erros.length ? ' <span class="bad-t">' + E(erros.join(' | ')) + '</span>' : '');
+      $('stBase').innerHTML = '<span class="ok-t">Importado: <b>' + nf + '</b> dia(s) de fechamento, <b>' + nc + '</b> dia(s) da Caixa Geral, <b>' + nw + '</b> dia(s) do Webstats.</span>' + (ign ? ' <span class="warn-t">' + ign + ' aba(s) ignorada(s) (layout desconhecido).</span>' : '') + (erros.length ? ' <span class="bad-t">' + E(erros.join(' | ')) + '</span>' : '') + (porArq.length ? '<br>' + porArq.map(E).join('<br>') : '') + (!nw && !ws ? '<br><span class="warn-t">Webstats não foi colado: ok se você não precisa dele.</span>' : '') + (!nc && files.length ? '<br><span class="warn-t">Nenhum dia da Caixa Geral foi lido: selecione também o arquivo da Caixa Geral Odonto.</span>' : '');
       toast('Base importada: ' + nf + ' fechamentos, ' + nc + ' dias de caixa, ' + nw + ' do Webstats.', 'success');
       $('fBase').value = ''; $('tWebstats').value = '';
       limparDia(); atualizaDia(); preencher($('cDia').value, false);
