@@ -330,6 +330,19 @@
     out.m2 = { bancoTotal: sum(bPix, function (x) { return x.v; }), wdTotal: sum(wdPix, function (x) { return x.v; }),
                pares: pp.pares.length, bancoSemPar: sa, wdSemPar: sb, dicasDigitacao: dicas, excluidos: entExcl, linhas: entradasB };
 
+    /* [v1.6] Entradas lançadas depois (retroativas): o saldo do Webdental já inclui esses valores, mas o relatório do dia não.
+       Se um conjunto das entradas do banco sem par soma exatamente a variação retroativa, elas estão feitas: sem alerta. */
+    out.retroExplicado = 0;
+    if (retro > 0 && out.m2.bancoSemPar.length) {
+      var subR = findSubset(retro, out.m2.bancoSemPar, 1, 8);
+      if (subR) {
+        out.m2.retroativas = subR;
+        out.m2.bancoSemPar = out.m2.bancoSemPar.filter(function (x) { return subR.indexOf(x) < 0; });
+        out.retroExplicado = retro;
+        out.alertas.push({ nivel: 'ok', texto: 'Entradas do banco (' + subR.map(function (x) { return fmt(x.v); }).join(' + ') + ' = ' + fmt(retro) + ') já estão no saldo do Webdental como lançamento retroativo (feito depois do relatório ou com data anterior). Nada a fazer.' });
+      }
+    }
+
     /* ── M3: cartões ── */
     var cartoesWD = ent.filter(function (r) { return r.t === 'credito' || r.t === 'debito'; });
     out.m3 = { credito: { banco: cred, wd: por.credito, dif: cred + cartaoOutros - por.credito },
@@ -396,7 +409,7 @@
     if (r.m1.dif) add(5, 'M1', 'dinheiro_diferenca', r.m1.dif, 'Dinheiro: a planilha variou ' + fmt(r.m1.variacaoPlanilha) + ' e o Webdental ' + fmt(r.m1.wdLiquido) + ' (' + fmt(r.m1.dif) + '). Conferir o caixa físico.', dia);
     if (r.comp.pixExcluidos) add(6, 'M2', 'excluidos_sem_webdental', r.comp.pixExcluidos, 'Entradas no banco marcadas "não é de paciente" somam ' + fmt(r.comp.pixExcluidos) + ' e não existem no saldo do Webdental (entram na diferença).', dia);
     if (r.comp.santander) add(6, 'SA', 'santander_variacao', r.comp.santander, r.santander && r.santander.usado ? 'O saldo do Santander informado difere do extrato em ' + fmt(r.comp.santander) + ' (conferir o saldo da conta e do ContaMax).' : 'Santander variou ' + fmt(r.comp.santander) + ' sem contrapartida no Webdental: conferir o extrato do Santander.', dia);
-    if (r.comp.retroativo) add(6, 'WD', 'retroativo', r.comp.retroativo, 'O saldo do Webdental variou ' + fmt(-r.comp.retroativo) + ' além do movimento do período: lançamento retroativo/ajuste no Webdental. Conferir.', dia);
+    if (r.comp.retroativo && !r.retroExplicado) add(6, 'WD', 'retroativo', r.comp.retroativo, 'O saldo do Webdental variou ' + fmt(-r.comp.retroativo) + ' além do movimento do período: lançamento retroativo/ajuste no Webdental. Conferir.', dia);
     return it;
   }
 
@@ -557,8 +570,17 @@
       if (sd) { saldos[sd[3] + '-' + sd[2] + '-' + sd[1]] = toCents(sd[4]); continue; }
       var m = rx.exec(L[i]); if (!m || i === 0) continue;
       var tipo = L[i - 1], desc = (L[i + 1] || ''), mid = m[2];
-      if (/^Adquirente:/i.test(mid)) {
-        desc = mid.replace(/\s*\d{2}\.\d{3}\.\d{3}\/\d{4}-\d\d\s*$/, '') + ' ' + desc;
+      /* [v1.6] linhas de cartão (Domicílio Bancário) quebram em 2-3 linhas e "Adquirente:" pode vir ANTES da linha da data:
+         junta tudo até o próximo tipo de transferência para não perder a modalidade (Crédito/Débito) */
+      var antes = /^Adquirente:/i.test(tipo) ? tipo : '';
+      if (antes && i >= 2) tipo = L[i - 2];
+      if (antes || /^Adquirente:/i.test(mid)) {
+        var resto = [];
+        for (var q = i + 1; q < L.length && resto.length < 3; q++) {
+          if (/^(Transfer[eê]ncia|Devolu[cç][aã]o|Pagamento|Saldo|Tarifa|Rendimento|\d\d\/\d\d\/\d{4}|Adquirente:)/i.test(L[q])) break;
+          resto.push(L[q]);
+        }
+        desc = ((antes || mid).replace(/\s*\d{2}\.\d{3}\.\d{3}\/\d{4}-\d\d\s*$/, '') + ' ' + resto.join(' ')).replace(/\s+/g, ' ').trim();
       }
       desc = desc.replace(/;/g, ',');
       var v = (m[3] === '-' ? '-' : '') + m[4].replace(/\./g, '');
