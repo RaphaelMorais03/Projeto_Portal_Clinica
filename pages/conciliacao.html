@@ -127,6 +127,11 @@
     .mdl .vals b{display:block;font-size:14px;color:var(--ink);margin-top:3px;}
     .mdl .calc{font-size:13px;margin-top:10px;min-height:20px;}
     .mdl .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
+    /* [v2.6] janela de carregamento (bloqueia a tela enquanto lê a planilha) */
+    .spin{width:22px;height:22px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:giro .8s linear infinite;flex-shrink:0;}
+    @keyframes giro{to{transform:rotate(360deg);}}
+    .barra{height:8px;background:var(--gray-100);border-radius:8px;overflow:hidden;margin:14px 0 8px;}
+    .barra>i{display:block;height:100%;width:0;background:var(--navy);border-radius:8px;transition:width .2s;}
   </style>
 </head>
 <body>
@@ -935,12 +940,23 @@
     $('btnSync').onclick = acao(async () => {
       if (!S.admin) { toast('Só o administrador atualiza o espelho.', 'error'); return; }
       if (!S.cfg.webhookUrl) { toast('Configure o Apps Script em Configuração primeiro.', 'info'); return; }
-      const hoje = hojeISO(); let d = S.inicio ? proxDia(S.inicio.dia) : hoje.slice(0, 8) + '01';
-      const fech = {}, caixa = {}; let n = 0, falhas = 0;
+      const hoje = hojeISO(); const ini = S.inicio ? proxDia(S.inicio.dia) : hoje.slice(0, 8) + '01';
+      const lista = []; for (let d = ini, i = 0; i < 45 && d <= hoje; i++, d = proxDia(d)) lista.push(d);
+      if (!lista.length) { toast('Não há dias novos para ler depois de ' + dBR(S.inicio.dia) + '.', 'info'); return; }
+      const fech = {}, caixa = {}; let n = 0, falhas = 0, parar = false;
       $('btnSync').disabled = true;
+      /* [v2.6] janela com spinner e barra de progresso: a tela fica bloqueada até terminar */
+      const bg = document.createElement('div'); bg.className = 'mdl-bg';
+      bg.innerHTML = '<div class="mdl" role="alertdialog" aria-modal="true" aria-live="polite"><div style="display:flex;gap:12px;align-items:center;"><div class="spin"></div><h3 style="margin:0;">Lendo a planilha…</h3></div>' +
+        '<p style="margin-top:10px;" id="lgTxt">Preparando…</p><div class="barra"><i id="lgBar"></i></div><div class="hint" style="margin:0;">Aguarde, não feche esta janela. Leva alguns segundos.</div>' +
+        '<div class="btns"><button class="btn-s" id="lgCancel" type="button">Cancelar</button></div></div>';
+      document.body.appendChild(bg);
+      bg.querySelector('#lgCancel').onclick = () => { parar = true; bg.querySelector('#lgTxt').textContent = 'Cancelando…'; };
       try {
-        for (let i = 0; i < 45 && d <= hoje; i++, d = proxDia(d)) {
-          $('syncInfo').textContent = 'Lendo ' + dBR(d) + '…';
+        for (let i = 0; i < lista.length && !parar; i++) {
+          const d = lista[i];
+          bg.querySelector('#lgTxt').textContent = 'Lendo o dia ' + dBR(d) + ' (' + (i + 1) + ' de ' + lista.length + ')';
+          bg.querySelector('#lgBar').style.width = Math.round(i / lista.length * 100) + '%';
           const u = S.cfg.webhookUrl + (S.cfg.webhookUrl.includes('?') ? '&' : '?') + 'acao=dia&dia=' + encodeURIComponent(d) + '&token=' + encodeURIComponent(S.cfg.token || '');
           let j; try { j = await (await fetch(u)).json(); } catch (e) { falhas++; continue; }
           if (!j.ok) { toast('Planilhas: ' + (j.erro || 'erro desconhecido'), 'error'); return; }
@@ -948,13 +964,14 @@
           if (f && (f.dinheiro != null || f.wdSaldo != null)) { fech[d] = limpo({ dinheiro: f.dinheiro, banco: f.banco, saldoTotal: f.saldoTotal, wdSaldo: f.wdSaldo, diferenca: f.diferenca }); n++; }
           if (j.caixaGeral && j.caixaGeral.achou && j.caixaGeral.saldo != null) caixa[d] = limpo({ saldo: j.caixaGeral.saldo, entradas: j.caixaGeral.entradas, saidas: j.caixaGeral.saidas });
         }
+        bg.querySelector('#lgBar').style.width = '100%'; bg.querySelector('#lgTxt').textContent = 'Salvando…';
         if (Object.keys(fech).length) await update(ref(db, BASE + '/base/fechamento'), fech);
         if (Object.keys(caixa).length) await update(ref(db, BASE + '/base/caixa'), caixa);
         logAdmin('atualizou espelho das planilhas (' + n + ' dias de fechamento)');
         await carregarDias(); renderTudoAbas(); preencher($('cDia').value, false);
-        $('syncInfo').textContent = 'Atualizado: ' + n + ' dia(s) de fechamento e ' + Object.keys(caixa).length + ' da Caixa Geral' + (falhas ? ' · ' + falhas + ' dia(s) sem resposta' : '') + '.';
-        toast('Espelho atualizado.', 'success');
-      } finally { $('btnSync').disabled = false; }
+        $('syncInfo').textContent = (parar ? 'Cancelado: ' : 'Atualizado: ') + n + ' dia(s) de fechamento e ' + Object.keys(caixa).length + ' da Caixa Geral' + (falhas ? ' · ' + falhas + ' dia(s) sem resposta' : '') + '.';
+        toast(parar ? 'Leitura cancelada; o que já foi lido foi salvo.' : 'Espelho atualizado.', parar ? 'info' : 'success');
+      } finally { bg.remove(); $('btnSync').disabled = false; }
     });
     $('btnBuscarSeed').onclick = acao(async () => {
       const dia = $('sDia').value; if (!dia) { toast('Escolha a data do fechamento anterior.', 'error'); return; }
