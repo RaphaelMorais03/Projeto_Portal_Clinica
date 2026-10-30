@@ -1,4 +1,4 @@
-﻿<!-- VERSION: v1.2 | contratos.html | 03/08/2026 | fix: logo real na guia de encaminhamento -->
+﻿<!-- VERSION: v1.3 | contratos.html | 30/10/2026 | visual: layout Soft UI da Conciliação; fix: contrato e guia sempre emitem com a logo oficial (admin/logo); contrato impresso nas normas ABNT (NBR 14724). v1.2 | 03/08/2026 | fix: logo real na guia de encaminhamento -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -9,116 +9,119 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    /* [v1.3] Visual "Modern SaaS / Soft UI" (mesmo modelo da Conciliação): fundo neutro, cards brancos com borda 1px e sombra mínima.
+       Nomes de classes preservados (só mudou a aparência). */
     :root {
+      --bg:#f9fafb; --line:#e5e7eb; --ink:#111827; --muted:#6b7280;
       --navy:#0A1F44; --navy-mid:#122b5e;
-      --red:#C62828;  --red-h:#ad1f1f;
-      --teal:#61C1D0;
-      --green:#15803d;
-      --amber:#b45309;
-      --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0;
-      --gray-300:#cbd5e1; --gray-400:#94a3b8; --gray-500:#64748b;
-      --gray-600:#475569; --gray-800:#1e293b;
-      --r:10px; --rl:14px;
-      --shadow:0 4px 12px rgba(0,0,0,.08);
+      --red:#C62828;  --red-h:#ad1f1f; --red-bg:#fef2f2;
+      --teal:#0f766e;
+      --green:#15803d; --green-bg:#ecfdf5;
+      --amber:#b45309; --amber-bg:#fffbeb;
+      --gray-50:#f9fafb; --gray-100:#f3f4f6; --gray-200:#e5e7eb;
+      --gray-300:#d1d5db; --gray-400:#9ca3af; --gray-500:#6b7280;
+      --gray-600:#4b5563; --gray-800:#1f2937;
+      --r:10px; --rl:16px;
+      --shadow:0 1px 3px rgba(0,0,0,.03);
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
-    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+    .red-bar{display:none;}
     /* HEADER */
-    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-header{background:#fff;border-bottom:1px solid var(--line);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
     .s-logo{display:flex;align-items:center;gap:12px;}
-    .s-logo-icon{width:38px;height:38px;border-radius:8px;overflow:hidden;flex-shrink:0;}
+    .s-logo-icon{width:36px;height:36px;border-radius:10px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);}
     .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
-    .s-logo-name{font-size:15px;font-weight:800;color:var(--navy);}
-    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .s-logo-name{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
+    .s-logo-sub{font-size:11px;color:var(--muted);}
     .header-right{display:flex;align-items:center;gap:10px;}
-    .user-pill{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:7px;}
-    .user-dot{width:24px;height:24px;border-radius:50%;background:var(--navy);color:white;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;}
-    .btn-header{background:none;border:1.5px solid var(--gray-200);color:var(--gray-500);border-radius:8px;padding:5px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;text-decoration:none;}
-    .btn-header:hover{border-color:var(--navy);color:var(--navy);}
+    .user-pill{background:var(--gray-100);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:7px;}
+    .user-dot{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .btn-header{background:#fff;border:1px solid var(--line);color:var(--gray-600);border-radius:var(--r);padding:7px 14px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;text-decoration:none;}
+    .btn-header:hover{background:var(--gray-100);}
     /* LAYOUT */
-    .page-body{padding:24px 28px;}
-    /* TABS */
-    .tabs{display:flex;gap:4px;border-bottom:2px solid var(--gray-200);margin-bottom:24px;}
-    .tab-btn{padding:10px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px;font-family:inherit;}
-    .tab-btn:hover{color:var(--navy);}
-    .tab-btn.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:700;}
+    .page-body{max-width:1240px;margin:0 auto;padding:24px 20px 60px;}
+    /* TABS (pílula) */
+    .tabs{display:inline-flex;gap:2px;margin-bottom:20px;background:var(--gray-100);border-radius:12px;padding:4px;max-width:100%;overflow-x:auto;}
+    .tab-btn{padding:8px 16px;border:none;background:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:7px;white-space:nowrap;}
+    .tab-btn:hover{color:var(--ink);}
+    .tab-btn.active{color:var(--ink);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06);}
     .tab-pane{display:none;}
     .tab-pane.active{display:block;}
     /* CARDS */
-    .card{background:white;border:1.5px solid var(--gray-200);border-radius:var(--rl);padding:20px;box-shadow:var(--shadow);margin-bottom:20px;}
-    .card-hdr{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);}
+    .card{background:#fff;border:1px solid var(--line);border-radius:var(--rl);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:14px;}
+    .card-hdr{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:16px;display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);}
+    .card-hdr i{width:30px;height:30px;border-radius:9px;background:var(--gray-100);display:inline-flex;align-items:center;justify-content:center;font-size:13px;}
     /* FORM */
-    .f-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);display:block;margin-bottom:5px;}
-    .f-input,.f-select{width:100%;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;color:var(--gray-800);background:white;transition:all .2s;}
-    .f-input:focus,.f-select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.07);}
+    .f-label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;}
+    .f-input,.f-select{width:100%;padding:9px 12px;border:1px solid var(--gray-300);border-radius:var(--r);font-size:14px;font-family:inherit;outline:none;color:var(--ink);background:#fff;}
+    .f-input:focus,.f-select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);}
     .f-input::placeholder{color:var(--gray-400);}
-    .f-input.ok{border-color:var(--green);background:#f0fdf4;}
+    .f-input.ok{border-color:var(--green);background:var(--green-bg);}
     .field{margin-bottom:14px;}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
     .grid3{display:grid;grid-template-columns:80px 1fr 100px;gap:14px;}
     .span2{grid-column:1/-1;}
     /* PROGRESS */
-    .prog-bar{height:4px;background:var(--gray-100);border-radius:4px;overflow:hidden;margin-top:12px;}
-    .prog-fill{height:100%;background:linear-gradient(90deg,var(--navy),var(--teal));border-radius:4px;transition:width .4s;}
-    .prog-lbl{font-size:11px;color:var(--gray-400);margin-top:4px;text-align:right;font-weight:500;}
+    .prog-bar{height:6px;background:var(--gray-100);border-radius:6px;overflow:hidden;margin-top:12px;}
+    .prog-fill{height:100%;background:var(--navy);border-radius:6px;transition:width .3s;}
+    .prog-lbl{font-size:11px;color:var(--muted);margin-top:4px;text-align:right;font-weight:500;}
     /* TOGGLE SECTION */
-    .tog-wrap{background:var(--gray-50);border:1.5px dashed var(--gray-200);border-radius:var(--rl);overflow:hidden;margin-bottom:18px;}
+    .tog-wrap{background:var(--gray-50);border:1.5px dashed var(--gray-300);border-radius:14px;overflow:hidden;margin-bottom:18px;}
     .tog-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;}
     .tog-hdr:hover{background:var(--gray-100);}
-    .tog-title{font-size:12px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px;}
-    .badge-opt{background:#fef3c7;color:#854d0e;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;text-transform:none;letter-spacing:0;}
+    .tog-title{font-size:12px;font-weight:700;color:var(--gray-600);display:flex;align-items:center;gap:8px;}
+    .badge-opt{background:var(--amber-bg);color:var(--amber);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
     .tog-arr{font-size:11px;color:var(--gray-400);transition:transform .2s;}
     .tog-arr.open{transform:rotate(180deg);}
     .tog-body{display:none;padding:4px 16px 16px;}
     .tog-body.open{display:block;}
     /* PREVIEW */
     .preview-col{position:sticky;top:80px;}
-    .preview-card{background:white;border:1.5px solid var(--gray-200);border-radius:var(--rl);box-shadow:var(--shadow);overflow:hidden;}
-    .prev-hdr{background:var(--gray-50);border-bottom:1px solid var(--gray-200);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
-    .prev-ttl{font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
-    .prev-status{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);transition:all .3s;}
-    .prev-status.ok{background:#dcfce7;color:#15803d;}
-    .prev-status.warn{background:#fef3c7;color:#92400e;}
-    .prev-body{padding:16px;max-height:520px;overflow-y:auto;}
-    .prev-text{font-family:'Times New Roman',serif;font-size:11.5px;line-height:1.75;color:var(--gray-800);white-space:pre-wrap;}
+    .preview-card{background:#fff;border:1px solid var(--line);border-radius:var(--rl);box-shadow:var(--shadow);overflow:hidden;}
+    .prev-hdr{background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+    .prev-ttl{font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
+    .prev-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-600);}
+    .prev-status.ok{background:var(--green-bg);color:var(--green);}
+    .prev-status.warn{background:var(--amber-bg);color:var(--amber);}
+    .prev-body{padding:16px;max-height:520px;overflow-y:auto;background:var(--gray-50);}
+    .prev-text{font-family:'Times New Roman',serif;font-size:11.5px;line-height:1.75;color:var(--gray-800);white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;}
     .blank{background:#fef9c3;color:#92400e;border-bottom:1px dashed #d97706;padding:0 2px;}
-    .prev-acts{padding:12px 16px;border-top:1px solid var(--gray-200);display:flex;gap:8px;}
+    .prev-acts{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;}
     /* LAYOUT DOIS COLS */
-    .two-col{display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start;}
+    .two-col{display:grid;grid-template-columns:1fr 420px;gap:20px;align-items:start;}
     /* BUTTONS */
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:var(--r);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;border:none;font-family:inherit;white-space:nowrap;}
-    .btn-primary{background:var(--navy);color:white;}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 16px;border:1px solid transparent;border-radius:var(--r);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+    .btn-primary{background:var(--navy);color:#fff;}
     .btn-primary:hover{background:var(--navy-mid);}
-    .btn-red{background:var(--red);color:white;}
+    .btn-red{background:var(--red);color:#fff;}
     .btn-red:hover{background:var(--red-h);}
-    .btn-outline{background:white;color:var(--gray-600);border:1.5px solid var(--gray-200);}
-    .btn-outline:hover{border-color:var(--navy);color:var(--navy);}
-    .btn-green{background:var(--green);color:white;}
+    .btn-outline{background:#fff;color:var(--gray-800);border-color:var(--gray-300);}
+    .btn-outline:hover{background:var(--gray-100);}
+    .btn-green{background:var(--green);color:#fff;}
     .btn-green:hover{background:#166534;}
     .btn-row{display:flex;gap:10px;padding-top:14px;border-top:1px solid var(--gray-100);margin-top:14px;flex-wrap:wrap;}
     /* TOAST */
-    .toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:white;padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:600;opacity:0;transform:translateX(100%);transition:all .3s;z-index:2000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+    .toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:500;opacity:0;transform:translateX(100%);transition:all .3s;z-index:2000;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.12);}
     .toast.show{opacity:1;transform:translateX(0);}
     .toast.success{background:var(--green);}
     /* SEC LABEL */
-    .sec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
+    .sec-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
     .sec-dot{width:6px;height:6px;border-radius:50%;background:var(--navy);flex-shrink:0;}
     /* GUIA ENCAMINHAMENTO */
     .proc-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;align-items:center;}
-    .btn-add-proc{background:none;border:1.5px dashed var(--gray-300);border-radius:var(--r);padding:8px;width:100%;font-family:inherit;font-size:12px;font-weight:600;color:var(--gray-400);cursor:pointer;transition:all .15s;}
+    .btn-add-proc{background:none;border:1.5px dashed var(--gray-300);border-radius:var(--r);padding:8px;width:100%;font-family:inherit;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;}
     .btn-add-proc:hover{border-color:var(--navy);color:var(--navy);}
-    .btn-rm{background:none;border:none;color:var(--gray-300);cursor:pointer;padding:4px;font-size:14px;transition:color .15s;}
+    .btn-rm{background:none;border:none;color:var(--gray-300);cursor:pointer;padding:4px;font-size:14px;}
     .btn-rm:hover{color:var(--red);}
-    @media(max-width:900px){.two-col{grid-template-columns:1fr;}.preview-col{position:static;}.grid2{grid-template-columns:1fr;}.grid3{grid-template-columns:1fr;}}
-    .card,.preview-card{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
+    @media(max-width:900px){.two-col{grid-template-columns:1fr;}.preview-col{position:static;}.grid2{grid-template-columns:1fr;}.grid3{grid-template-columns:1fr;}.page-body{padding:14px 12px 50px;}.s-header{padding:0 12px;}.user-pill{display:none;}}
   </style>
 </head>
 <body>
   <div class="red-bar"></div>
   <header class="s-header">
     <div class="s-logo">
-      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo"></div>
+      <div class="s-logo-icon"><img src="../assets/favicon.png" alt="Logo" id="headerLogo"></div>
       <div><div class="s-logo-name">Contratos</div><div class="s-logo-sub">Geração de documentos</div></div>
     </div>
     <div class="header-right">
@@ -140,10 +143,10 @@
         <div>
           <!-- IMPORTAR AMEI -->
           <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px;">
-            <div style="background:linear-gradient(135deg,#145A32,#1E8449);padding:14px 18px;color:white;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;" onclick="toggleAmei()">
+            <div style="background:var(--green-bg);padding:14px 18px;color:var(--green);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;border-bottom:1px solid #bbf7d0;" onclick="toggleAmei()">
               <div>
                 <div style="font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;"><i class="fas fa-bolt"></i> Importar dados do sistema Amei</div>
-                <div style="font-size:12px;opacity:.8;margin-top:2px;">Cole os dados do cadastro e preencha automaticamente</div>
+                <div style="font-size:12px;opacity:.85;margin-top:2px;">Cole os dados do cadastro e preencha automaticamente</div>
               </div>
               <span id="amei-arr" style="font-size:12px;transition:transform .2s;">▼</span>
             </div>
@@ -342,7 +345,26 @@
       if (!perms.admin && !perms.contratos) { window.location.replace('../login.html'); return; }
       document.getElementById('userAvatar').textContent = iniciais(user);
       document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
+      // [v1.3] logo oficial (admin/logo) também no cabeçalho da tela, como nas demais páginas
+      if (window.initFirebaseUtils) window.initFirebaseUtils(db, ref, get);
+      if (window.carregarLogoGlobal) carregarLogoGlobal(['#headerLogo']);
     });
+
+    // [v1.3] Garante a logo oficial em todo documento emitido: busca admin/logo no Firebase na hora de gerar
+    // (não depende do cache da sessão). Só cai no favicon.png se o Firebase estiver inacessível E não houver cache.
+    window._garantirLogo = async function() {
+      let url = sessionStorage.getItem('logoDataUrl') || '';
+      try {
+        const snapLogo = await get(ref(db, 'admin/logo'));
+        const d = snapLogo.exists() ? snapLogo.val() : null;
+        if (d && d.dataUrl) {
+          url = d.dataUrl;
+          sessionStorage.setItem('logoDataUrl', d.dataUrl);
+          sessionStorage.setItem('logoVersao', d.versao || d.atualizadoEm || '');
+        }
+      } catch(e) { console.warn('[contratos] logo:', e.message); }
+      return url;
+    };
     document.getElementById('btnSair').addEventListener('click', () =>
       signOut(auth).then(() => window.location.replace('../login.html'))
     );
@@ -390,6 +412,12 @@
     const AMEI_SET = new Set(AMEI_LABELS.map(l=>l.toLowerCase().trim()));
 
     function g(id){return(document.getElementById(id)?.value||'').trim();}
+    // [v1.3] URL absoluta da logo para a janela de impressão (about:blank não resolve caminho relativo)
+    async function obterLogoDoc(){
+      let url='';
+      try{ if(window._garantirLogo) url=await window._garantirLogo(); }catch(e){}
+      return url || sessionStorage.getItem('logoDataUrl') || new URL('../assets/favicon.png', location.href).href;
+    }
     function f(v,ph){return v||ph;}
     function H(val,ph){return val?val:`<span class="blank">${ph}</span>`;}
 
@@ -468,10 +496,10 @@ ${CL('CLÁUSULA SÉTIMA:','O não comparecimento a 02 (duas) sessões consecutiv
 <p class="inciso"><strong>V.</strong>&nbsp;&nbsp; Cumprir com os dias e horários de sessão acordados;</p>
 <p class="inciso"><strong>VI.</strong> Prestar esclarecimentos sobre o trabalho, sempre que solicitado;</p>
 <p class="inciso"><strong>VII.</strong> Zelar pelo bem-estar do cliente durante todo o processo de avaliação;</p>
-<p class="inciso"><strong>VIII.</strong>Manter completo e absoluto sigilo sobre as informações coletadas.</p>
+<p class="inciso"><strong>VIII.</strong>&nbsp;Manter completo e absoluto sigilo sobre as informações coletadas.</p>
 ${CL('CLÁUSULA NONA:','O Laudo Psicológico de Avaliação Neuropsicológica será entregue aos responsáveis no máximo após 15 (quinze) dias úteis da última sessão realizada com a criança ou adolescente.')}${CL('CLÁUSULA DÉCIMA:','Caso o(a) CONTRATANTE desista do processo da Avaliação Neuropsicológica, o valor cobrado não será ressarcido.')}${CL('CLÁUSULA DÉCIMA PRIMEIRA:','O presente contrato dar-se-á por rescindido automaticamente, sem interpelação das partes, quando solvidas todas as obrigações previstas nas cláusulas descritas neste instrumento.')}
-<p style="text-align:center;margin-top:18pt;">São Paulo, <strong>${dia||'___'}</strong> de <strong>${mes||'_________________'}</strong> de <strong>${ano||'_____'}</strong></p>
-<div style="margin-top:24pt;">
+<p style="text-align:center;text-indent:0;margin-top:18pt;break-after:avoid;page-break-after:avoid;">São Paulo, <strong>${dia||'___'}</strong> de <strong>${mes||'_________________'}</strong> de <strong>${ano||'_____'}</strong></p>
+<div class="assinaturas" style="margin-top:24pt;">
   <div style="margin-bottom:20pt;"><div style="border-bottom:1pt solid #000;width:75%;margin-top:20pt;margin-bottom:3pt;"></div><div style="font-size:10pt;"><strong>CONTRATANTE(S)</strong></div></div>
   <div style="margin-bottom:20pt;"><div style="border-bottom:1pt solid #000;width:75%;margin-top:20pt;margin-bottom:3pt;"></div><div style="font-size:10pt;"><strong>CONTRATADA</strong> — SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div></div>
   <div style="margin-bottom:20pt;"><div style="border-bottom:1pt solid #000;width:75%;margin-top:20pt;margin-bottom:3pt;"></div><div style="font-size:10pt;"><strong>Profissional Responsável</strong> — Dra. Lauriana Garcia Pinto · CRP 06/144291</div></div>
@@ -505,33 +533,34 @@ ${CL('CLÁUSULA NONA:','O Laudo Psicológico de Avaliação Neuropsicológica se
       const paciente=g('paciente'), nome=g('nome'), dia=g('dia'), mes=g('mes'), ano=g('ano');
       const win=window.open('','_blank');
       if(!win){toast('Pop-up bloqueado');return;}
-      const _logoNeuro = sessionStorage.getItem('logoDataUrl') || '';
-      const _logoNeuroHtml = _logoNeuro
-        ? `<img src="${_logoNeuro}" alt="Logo" style="height:50px;width:auto;object-fit:contain;">`
-        : `<div class="cab-icone">♥</div><div><div class="cab-nome">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div class="cab-sub">Neuropsicologia Infantil</div></div>`;
+      // [v1.3] sempre a logo oficial (admin/logo); nunca mais o "coração" provisório
+      const _logoNeuro = await obterLogoDoc();
+      const _logoNeuroHtml = `<img src="${_logoNeuro}" alt="Logo" style="height:56px;width:auto;object-fit:contain;">`;
       win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
-@page{size:A4 portrait;margin-top:.5cm;margin-bottom:.5cm;margin-left:2.5cm;margin-right:2.25cm;}
+/* [v1.3] ABNT NBR 14724: A4; margens sup/esq 3 cm e inf/dir 2 cm; Times New Roman 12; espaçamento 1,5; texto justificado;
+   recuo de parágrafo 1,25 cm; paginação no canto superior direito a partir da 2ª página. */
+@page{size:A4 portrait;margin:3cm 2cm 2cm 3cm;
+  @top-right{content:counter(page);font-family:'Times New Roman',serif;font-size:12pt;color:#000;vertical-align:top;padding-top:1.7cm;}}
+@page :first{@top-right{content:none;}}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.0;color:#1a1a2e;background:#fff;}
-.cabecalho{display:flex;align-items:center;justify-content:space-between;padding-bottom:10pt;margin-bottom:14pt;border-bottom:2.5pt solid #C0392B;}
-.cab-logo{display:flex;align-items:center;gap:10pt;}
-.cab-icone{width:36pt;height:36pt;background:linear-gradient(135deg,#C0392B,#922B21);border-radius:8pt;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18pt;font-weight:700;}
-.cab-nome{font-size:13pt;font-weight:700;color:#1A5276;line-height:1.2;}
-.cab-sub{font-size:8pt;color:#9AA0A6;letter-spacing:.04em;text-transform:uppercase;}
-.cab-info{text-align:right;font-size:8pt;color:#5F6368;line-height:1.6;}
-.cab-info strong{color:#1A5276;font-weight:700;}
-.titulo-doc{font-size:14pt;font-weight:700;text-decoration:underline;text-align:center;color:#000;margin-bottom:14pt;line-height:1.2;}
-.corpo{font-size:12pt;line-height:1.0;color:#000;text-align:justify;}
-.corpo p{margin-bottom:6pt;text-align:justify;line-height:1.0;}
-.corpo .clausula-titulo{font-weight:700;margin-top:10pt;margin-bottom:2pt;}
-.corpo .clausula-texto{text-indent:2.25cm;}
-.corpo .sub-clausula{text-indent:2.25cm;}
-.corpo .inciso{margin-left:2.25cm;}
+body{font-family:'Times New Roman',Times,serif;font-size:12pt;line-height:1.5;color:#000;background:#fff;}
+.cabecalho{display:flex;align-items:center;justify-content:space-between;padding-bottom:8pt;margin-bottom:14pt;border-bottom:1.5pt solid #C0392B;}
+.cab-logo{display:flex;align-items:center;}
+.cab-info{text-align:right;font-size:9pt;line-height:1.35;color:#000;}
+.cab-info strong{font-weight:700;}
+.titulo-doc{font-size:12pt;font-weight:700;text-align:center;color:#000;margin-bottom:18pt;line-height:1.5;text-transform:uppercase;}
+.corpo{font-size:12pt;line-height:1.5;color:#000;text-align:justify;}
+.corpo p{margin:0;text-indent:1.25cm;text-align:justify;orphans:3;widows:3;}
+.corpo .clausula-titulo{font-weight:700;margin-top:12pt;text-indent:0;break-after:avoid;page-break-after:avoid;}
+.corpo .clausula-texto{text-indent:1.25cm;}
+.corpo .sub-clausula{text-indent:1.25cm;}
+.corpo .inciso{margin-left:1.25cm;text-indent:0;}
+.corpo .assinaturas{break-inside:avoid;page-break-inside:avoid;}
 strong{font-weight:700;}
-.rodape{margin-top:14pt;padding-top:8pt;border-top:1pt solid #E8EAED;font-size:8pt;color:#9AA0A6;text-align:center;line-height:1.4;}
-.rodape strong{color:#C0392B;font-weight:700;}
+.rodape{margin-top:18pt;padding-top:6pt;border-top:.5pt solid #777;font-size:10pt;line-height:1.2;color:#000;text-align:center;break-inside:avoid;page-break-inside:avoid;}
+.rodape strong{font-weight:700;}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
 </style></head><body>
 <div class="cabecalho">
@@ -635,7 +664,7 @@ strong{font-weight:700;}
       procs=[{proc:'',exec:''}];renderProcs();atualizarGuia();toast('Formulário limpo');
     }
 
-    function imprimirGuia(){
+    async function imprimirGuia(){
       const pac=document.getElementById('g-paciente')?.value?.trim()||'';
       if(!pac){toast('Informe o nome do paciente');return;}
       const now=new Date();
@@ -644,12 +673,11 @@ strong{font-weight:700;}
       const procsRows=procs.filter(p=>p.proc).map(p=>`
         <tr><td style="padding:6pt 4pt;border-bottom:0.5pt solid #E8EAED;">${esc(p.proc)}</td>
             <td style="padding:6pt 4pt;border-bottom:0.5pt solid #E8EAED;text-align:right;color:#555;">${esc(p.exec)}</td></tr>`).join('');
-      const _logoGuia = sessionStorage.getItem('logoDataUrl') || '';
-      const _logoGuiaHtml = _logoGuia
-        ? `<img src="${_logoGuia}" alt="Logo" style="height:44pt;width:auto;object-fit:contain;">`
-        : `<div class="logo-icone">&#9829;</div>`;
       const win=window.open('','_blank');
       if(!win){toast('Pop-up bloqueado');return;}
+      // [v1.3] sempre a logo oficial (admin/logo), igual ao contrato
+      const _logoGuia = await obterLogoDoc();
+      const _logoGuiaHtml = `<img src="${_logoGuia}" alt="Logo" style="height:44pt;width:auto;object-fit:contain;">`;
       win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Encaminhamento — ${esc(pac)}</title>
 <style>
 @page{size:A4;margin:1.5cm 1.5cm 1.5cm 1.5cm;}
@@ -718,7 +746,7 @@ ${document.getElementById('g-exec-nome')?.value?`
     renderProcs();
     atualizarGuia();
   </script>
-<span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v1.1 · 14/07/2026</span>
+<span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v1.3 · 30/10/2026</span>
 </body>
 </html>
 
