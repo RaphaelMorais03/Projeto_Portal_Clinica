@@ -174,6 +174,7 @@
           <div class="dropzone up"><div class="up-t"><span class="passo">1</span> Webdental</div><label class="f-label" for="fWD">Consolidado do Dia (.xls)</label><input type="file" id="fWD" accept=".xls,.xlsx,.html,.htm,.csv"><div class="st" id="stWD">Nenhum arquivo.</div></div>
           <div class="dropzone up"><div class="up-t"><span class="passo">2</span> Mais Todos</div><label class="f-label" for="fMT">Extrato (.pdf ou .csv)</label><input type="file" id="fMT" accept=".csv,.pdf" multiple><div class="st" id="stMT">Nenhum arquivo.</div></div>
         </div>
+        <div class="dropzone up" style="margin-top:14px;"><div class="up-t"><span class="passo" style="background:var(--gray-400);">3</span> Santander <span class="badge b-gray">opcional</span></div><label class="f-label" for="fSant">Extrato (.pdf) do dia que está fechando</label><input type="file" id="fSant" accept=".pdf"><div class="st" id="stSant">Sem este arquivo, digite o saldo do Santander em "Corrigir os valores".</div></div>
         <div class="hint">Não anexe o mesmo dia em PDF e em CSV ao mesmo tempo.</div>
       </div>
 
@@ -300,7 +301,7 @@
     const E = s => window.esc(s);
     const MAXL = 200;
     let user = null;
-    const S = { saldosMT: {}, wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, base: { fechamento: {}, caixa: {}, webstats: {} }, inicio: null, admin: false };
+    const S = { sant: null, saldosMT: {}, wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, base: { fechamento: {}, caixa: {}, webstats: {} }, inicio: null, admin: false };
 
     /* ───────── util ───────── */
     function hojeISO() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
@@ -488,6 +489,24 @@
         tentarAuto();   /* [v1.5] */
       } catch (e) { console.error(e); S.banco = []; $('stMT').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; toast('Erro ao ler o extrato: ' + e.message, 'error'); }
     });
+    /* [v2.7] Extrato do Santander (PDF): movimentos entram na conferência; saldo = último saldo do extrato + ContaMax */
+    $('fSant').addEventListener('change', async ev => {
+      const f = ev.target.files[0]; if (!f) { S.sant = null; $('stSant').textContent = 'Sem este arquivo, digite o saldo do Santander em "Corrigir os valores".'; return; }
+      try {
+        $('stSant').textContent = 'Lendo…';
+        const r = C.parseSantanderPdf(await linhasDoPdf(f));
+        if (!r.linhas.length && r.ultimoSaldo === null) { S.sant = null; $('stSant').innerHTML = '<span class="bad-t">Não reconheci movimentos. É o extrato do Santander Empresas (PDF)?</span>'; toast('Não reconheci esse extrato do Santander.', 'error'); return; }
+        S.sant = r;
+        const fimDia = r.periodo && r.periodo[1], dia = $('cDia').value;
+        const saldo = r.ultimoSaldo !== null && r.contaMax !== null ? r.ultimoSaldo + r.contaMax : null;
+        let msg = '<span class="ok-t"><b>' + r.linhas.length + '</b> lançamento(s)' + (r.periodo ? ' · ' + dBR(r.periodo[0]) + ' a ' + dBR(r.periodo[1]) : '') + '</span>';
+        if (saldo !== null) msg += ' · saldo ' + M(r.ultimoSaldo) + ' + ContaMax ' + M(r.contaMax) + ' = <b>' + M(saldo) + '</b>';
+        if (saldo !== null && fimDia === dia && r.geradoEm === fimDia) { $('vSant').value = C.fmt(saldo, true); atualizaResumo(); msg += ' <span class="ok-t">(usado como Saldo Santander)</span>'; }
+        else if (saldo !== null) msg += ' <span class="warn-t">· não usei como saldo: o ContaMax do extrato é o de ' + dBR(r.geradoEm || '') + ', não do dia ' + dBR(dia) + '. Digite o saldo em "Corrigir os valores".</span>';
+        $('stSant').innerHTML = msg;
+        tentarAuto();
+      } catch (e) { console.error(e); S.sant = null; $('stSant').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; toast('Erro ao ler o extrato do Santander: ' + e.message, 'error'); }
+    });
     $('fSol').addEventListener('change', async ev => {
       const f = ev.target.files[0]; if (!f) return;
       try {
@@ -523,7 +542,7 @@
       if ([V.dinheiro, V.santander, V.wdSaldo, V.maisTodosApp].some(x => Number.isNaN(x))) { toast('Há valor inválido (campo em vermelho).', 'error'); return; }
       if (V.santander === null) V.santander = prev.santander;
       if (S.wd.periodo && (dia < S.wd.periodo[0] || dia > S.wd.periodo[1])) toast('O dia está fora do período do Consolidado (' + dBR(S.wd.periodo[0]) + ' a ' + dBR(S.wd.periodo[1]) + ').', 'error');
-      S.res = C.conciliar({ dia, prevDia: prev.dia, wd: S.wd, banco: S.banco, excluidos: S.excl, valores: V, prev });
+      S.res = C.conciliar({ dia, prevDia: prev.dia, wd: S.wd, banco: S.banco, excluidos: S.excl, valores: V, prev, santander: S.sant ? { linhas: S.sant.linhas } : null });
       S.res._prev = prev; S.res._congelado = !!congelado;
       if (!S.res.wd.entradas && !S.res.wd.saidas) S.res.alertas.unshift({ nivel: 'aviso', texto: 'O Webdental não tem nenhuma entrada ou saída entre ' + dBR(prev.dia) + ' (exclusive) e ' + dBR(dia) + '. Confira o arquivo e as datas.' });
       if (!S.banco.some(l => l.dia > prev.dia && l.dia <= dia)) S.res.alertas.unshift({ nivel: 'aviso', texto: 'O extrato do Mais Todos não tem nenhuma linha no período. Confira o arquivo.' });
@@ -539,7 +558,8 @@
       credito: ['M3', 'Cartão de crédito: banco × Webdental'],
       debito: ['M3', 'Cartão de débito: banco × Webdental'],
       saidas: ['M5', 'Saídas: Webdental lançou a mais (+) ou a menos (−) do que o banco pagou'],
-      santander: ['SA', 'Santander: variação do saldo digitado'],
+      santander: ['SA', 'Santander: saldo informado × movimentos do extrato (ContaMax, etc.)'],
+      santAjuste: ['SA', 'Santander: rendimento do ContaMax'],
       retroativo: ['WD', 'Lançamentos retroativos no Webdental (fora do período)']
     };
     function tbl(heads, rows, nums) {
@@ -685,7 +705,7 @@
       await carregarDias(); atualizaDia(); renderTudoAbas(); renderResultado();
       toast('Dia ' + dBR(r.dia) + ' fechado e salvo.', 'success');
       const prox = proxDia(r.dia);
-      if (confirm('Dia fechado. Seguir para ' + dBR(prox) + '?')) { $('cDia').value = prox; S.wd = null; S.banco = []; S.excl = {}; $('fWD').value = ''; $('fMT').value = ''; $('stWD').textContent = 'Nenhum arquivo.'; $('stMT').textContent = 'Nenhum arquivo.'; limparDia(); atualizaDia(); preencher(prox, false); window.scrollTo(0, 0); }
+      if (confirm('Dia fechado. Seguir para ' + dBR(prox) + '?')) { $('cDia').value = prox; S.wd = null; S.banco = []; S.excl = {}; $('fWD').value = ''; $('fMT').value = ''; $('fSant').value = ''; S.sant = null; $('stSant').textContent = 'Sem este arquivo, digite o saldo do Santander em "Corrigir os valores".'; $('stWD').textContent = 'Nenhum arquivo.'; $('stMT').textContent = 'Nenhum arquivo.'; limparDia(); atualizaDia(); preencher(prox, false); window.scrollTo(0, 0); }
     }
 
     /* ───────── Google Sheets ───────── */

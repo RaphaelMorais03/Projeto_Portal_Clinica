@@ -250,6 +250,19 @@
     cancelar('devolucao_out', 'entrada');
     banco.forEach(function (l) { if (l.cls === 'devolucao_in') l.cls = 'entrada'; if (l.cls === 'devolucao_out') l.cls = 'saida'; });
 
+    /* [v1.5] Santander (extrato opcional): entradas/saídas entram nas mesmas conferências do banco;
+       rendimento vira ajuste; resgate/aplicação do ContaMax é movimento interno (ignorado). Sem extrato nada muda. */
+    var SL = ((inp.santander && inp.santander.linhas) || []).filter(function (l) { return inPeriodo(l.dia, prevDia, dia); }).map(function (l) { return Object.assign({}, l); });
+    var santMov = 0, santAj = 0;
+    SL.forEach(function (l) {
+      var t = norm(l.desc);
+      if (/resgate|aplicacao/.test(t) && !/rendimento/.test(t)) { l.cls = 'interno'; return; }
+      santMov += l.v;
+      if (l.v > 0 && /rendimento/.test(t)) { l.cls = 'ajuste'; santAj += l.v; return; }
+      if (l.v < 0) { l.cls = 'saida'; l.tarifa = /tarifa|iof|juros|encargo|mensalidade/.test(t); }
+      else l.cls = 'entrada';
+      banco.push(l);
+    });
     var mtLiquido = sum(linhas, function (l) { return l.v; });
     var cartoes = banco.filter(function (l) { return l.cls === 'cartao'; });
     var entradasB = banco.filter(function (l) { return l.cls === 'entrada'; });
@@ -277,7 +290,8 @@
       credito: cred + cartaoOutros - por.credito,
       debito: deb - por.debito,
       saidas: wdBancoSai - saiNet,
-      santander: V.santander - P.santander,
+      santander: V.santander - P.santander - santMov,   /* [v1.5] sem extrato santMov = 0 (igual à versão anterior) */
+      santAjuste: santAj,
       retroativo: -retro
     };
     var somaComp = 0; for (var k in comp) somaComp += comp[k];
@@ -286,7 +300,7 @@
     var out = {
       dia: dia, prevDia: prevDia, periodoDias: null,
       saldos: { dinheiro: V.dinheiro, maisTodos: mtSaldo, santander: V.santander, real: real, wdSaldo: V.wdSaldo, diff: diff, prevDiff: prevDiff, dDiff: dDiff },
-      comp: comp, residuo: residuo,
+      comp: comp, residuo: residuo, santander: { linhas: SL, movimento: santMov, ajuste: santAj, usado: !!(inp.santander && inp.santander.linhas) },
       wd: { entradas: wdEnt, saidas: wdSai, porTipo: por, retro: retro },
       banco: { liquido: mtLiquido, credito: cred, debito: deb, saidasLiquidas: saiNet, devolucoesCanceladas: canceladas.length },
       alertas: []
@@ -381,7 +395,7 @@
       ' (' + fmt(r.m3.debito.dif) + '). Possível erro: auditar por NSU.', dia);
     if (r.m1.dif) add(5, 'M1', 'dinheiro_diferenca', r.m1.dif, 'Dinheiro: a planilha variou ' + fmt(r.m1.variacaoPlanilha) + ' e o Webdental ' + fmt(r.m1.wdLiquido) + ' (' + fmt(r.m1.dif) + '). Conferir o caixa físico.', dia);
     if (r.comp.pixExcluidos) add(6, 'M2', 'excluidos_sem_webdental', r.comp.pixExcluidos, 'Entradas no banco marcadas "não é de paciente" somam ' + fmt(r.comp.pixExcluidos) + ' e não existem no saldo do Webdental (entram na diferença).', dia);
-    if (r.comp.santander) add(6, 'SA', 'santander_variacao', r.comp.santander, 'Santander variou ' + fmt(r.comp.santander) + ' sem contrapartida no Webdental: conferir o extrato do Santander.', dia);
+    if (r.comp.santander) add(6, 'SA', 'santander_variacao', r.comp.santander, r.santander && r.santander.usado ? 'O saldo do Santander informado difere do extrato em ' + fmt(r.comp.santander) + ' (conferir o saldo da conta e do ContaMax).' : 'Santander variou ' + fmt(r.comp.santander) + ' sem contrapartida no Webdental: conferir o extrato do Santander.', dia);
     if (r.comp.retroativo) add(6, 'WD', 'retroativo', r.comp.retroativo, 'O saldo do Webdental variou ' + fmt(-r.comp.retroativo) + ' além do movimento do período: lançamento retroativo/ajuste no Webdental. Conferir.', dia);
     return it;
   }
@@ -495,6 +509,45 @@
   /* [v1.4] Extrato do Mais Todos em PDF → texto no formato do CSV (o PDF não traz ID nem hora).
      lines = linhas de texto da página, de cima para baixo. ID sintético = data+tipo+descrição+valor+nº da ocorrência no dia,
      estável se o mesmo PDF (ou um PDF que repita o dia inteiro) for carregado de novo. */
+  /* [v1.5] Extrato PDF do Santander Empresas: Data | Histórico (2 linhas) | Documento | Valor | Saldo.
+     Devolve movimentos (sem nome de paciente salvo em lugar nenhum), último saldo, ContaMax e datas do extrato. */
+  function parseSantanderPdf(lines) {
+    var L = lines.map(function (l) { return String(l == null ? '' : l).replace(/\s+/g, ' ').trim(); }).filter(function (l) { return l; });
+    var rx = /^(\d\d)\/(\d\d)\/(\d{4}) (?:\S+ )?(-?[\d.]+,\d\d) (-?[\d.]+,\d\d)$/;
+    var out = { linhas: [], ultimoSaldo: null, contaMax: null, periodo: null, geradoEm: null };
+    var iRow = [], hdr = -1;
+    L.forEach(function (l, i) {
+      var c = l.replace(/\s+/g, '').toLowerCase();   /* o pdf.js separa letras acentuadas ("Hist ó rico"): compara sem espaços */
+      if (hdr < 0 && /^datahist.{1,3}rico/.test(c)) hdr = i;
+      var mp = /per.{1,3}odos?:(\d\d)\/(\d\d)\/(\d{4})a(\d\d)\/(\d\d)\/(\d{4})/.exec(c);
+      if (mp) out.periodo = [mp[3] + '-' + mp[2] + '-' + mp[1], mp[6] + '-' + mp[5] + '-' + mp[4]];
+      var mg = /data\/hora:(\d\d)\/(\d\d)\/(\d{4})/.exec(c);
+      if (mg) out.geradoEm = mg[3] + '-' + mg[2] + '-' + mg[1];
+      var mc = /^saldodecontamax([\d.]+,\d\d)/.exec(c);
+      if (mc) out.contaMax = toCents(mc[1]);
+      if (i > hdr && hdr >= 0 && rx.test(l)) iRow.push(i);
+    });
+    if (hdr < 0 || !iRow.length) return out;
+    var fim = L.length; for (var q = iRow[iRow.length - 1] + 1; q < L.length; q++) if (/^(saldodecontamax|saldodispon|saldo$)/.test(L[q].replace(/\s+/g, '').toLowerCase())) { fim = q; break; }
+    var seen = {};
+    iRow.forEach(function (ri, k) {
+      var m = rx.exec(L[ri]);
+      var antes = k === 0 ? [L[ri - 1]] : [], depois = [];
+      var prox = k + 1 < iRow.length ? iRow[k + 1] : fim;
+      var meio = L.slice(ri + 1, prox);
+      if (k + 1 < iRow.length) { if (meio.length >= 2) { depois = [meio[0]]; } }       /* 2 linhas entre registros: a 1ª é do atual, a 2ª do seguinte */
+      else depois = meio.slice(0, 1);
+      var h1 = k === 0 ? (antes[0] || '') : (function () { var ant = iRow[k - 1], mm = L.slice(ant + 1, ri); return mm.length >= 2 ? mm[mm.length - 1] : (mm[0] || ''); })();
+      var desc = (h1 + ' ' + (depois[0] || '')).replace(/(\S) ([áàâãéêíóôõúç]+) (?=\S)/gi, '$1$2').replace(/\s+/g, ' ').trim();
+      var v = toCents(m[4]), saldo = toCents(m[5]);
+      var dia = m[3] + '-' + m[2] + '-' + m[1];
+      var key = dia + '|' + desc + '|' + v + '|' + saldo; seen[key] = (seen[key] || 0) + 1;
+      out.linhas.push({ dia: dia, hora: '00:00:00', tipo: 'Santander', desc: desc, v: v, saldo: saldo, id: 'sant-' + hash(key + '#' + seen[key]), conta: 'Santander' });
+      out.ultimoSaldo = saldo;
+    });
+    return out;
+  }
+
   function pdfMaisTodosParaCsv(lines) {
     var rx = /^(\d\d\/\d\d\/\d{4})\s+(.*?)\s*([+-])\s*R\$\s*([\d.]+,\d\d)\s*$/;
     var L = lines.map(function (l) { return String(l == null ? '' : l).replace(/\s+/g, ' ').trim(); }).filter(function (l) { return l; });
@@ -535,5 +588,5 @@
   return { toCents: toCents, fmt: fmt, norm: norm, hash: hash, tipoWD: tipoWD, parseConsolidado: parseConsolidado, parseMaisTodos: parseMaisTodos,
            parearExato: parearExato, findSubset: findSubset, conciliar: conciliar, registroParaSalvar: registroParaSalvar,
            montarMatriz: montarMatriz, auditarNSU: auditarNSU, rowsFromDoc: rowsFromDoc,
-           extrairFechamentoRows: extrairFechamentoRows, extrairCaixaGeralRows: extrairCaixaGeralRows, parseWebstats: parseWebstats, pdfMaisTodosParaCsv: pdfMaisTodosParaCsv };
+           extrairFechamentoRows: extrairFechamentoRows, extrairCaixaGeralRows: extrairCaixaGeralRows, parseWebstats: parseWebstats, pdfMaisTodosParaCsv: pdfMaisTodosParaCsv, parseSantanderPdf: parseSantanderPdf };
 }));
