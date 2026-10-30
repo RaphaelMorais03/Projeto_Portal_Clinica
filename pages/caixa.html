@@ -3316,6 +3316,12 @@ window.odImprimir = function() {
  * relatorios/{uid}/{data}/matchPlanilha. ⚠ (alerta) e "planilha não lida" NUNCA bloqueiam. */
 var CX_PLAN_BLOQUEIO = false;
 
+/* [v3.3] MODAL DE CONFERÊNCIA
+ *   true  = "Verificar caixa" SEMPRE abre o modal de conferência antes do layout de impressão
+ *           (com ⚠/✗ mostra as correções; com tudo ✓ mostra "Tudo conferido" e o botão Continuar).
+ *   false = comportamento antigo: o modal só abre quando há ⚠, ✗ ou a planilha não pôde ser lida. */
+var CX_PLAN_MODAL_SEMPRE = true;
+
 (function () {
   var _gerarAnterior = window.gerarRelatorio;
   if (typeof _gerarAnterior !== 'function') { console.warn('[cxPlan] gerarRelatorio não encontrada — Dados Planilha desativado'); return; }
@@ -3665,7 +3671,7 @@ var CX_PLAN_BLOQUEIO = false;
         try {
           var usuario = sessionStorage.getItem('usuario') || '';
           var cx0 = cxPlanComparar(d0.lancamentos, window._cxPlanSheet, usuario);
-          if (cx0.erro || cx0.cont.ale || cx0.cont.neg) {
+          if (CX_PLAN_MODAL_SEMPRE || cx0.erro || cx0.cont.ale || cx0.cont.neg) {   // [v3.3]
             var dec = await window.cxPlanModal({ d: d0, sheet: window._cxPlanSheet, dataBr: dataBr, usuario: usuario });
             if (!dec.ok) { _restaurar(); return; }   // "Voltar": nada foi gerado nem salvo
             window._cxPlanJust = dec.just || null;
