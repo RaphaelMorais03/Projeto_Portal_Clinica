@@ -1,5 +1,6 @@
 ﻿<!-- VERSION: v3.2 | caixa.html | 21/10/2026 | Dados Planilha: coluna compacta no impresso (thead repetido, linhas sem quebrar, rodapé junto da tabela); modal de conferência antes de gerar (lista ⚠/✗ com motivo, Reler planilha, justificativa em matchPlanilha, chave CX_PLAN_BLOQUEIO); correção de cadastro (CPF/celular/CEP/nº) gravada na planilha via Apps Script (ação "cadastro"). -->
 <!-- VERSION: v3.3 | caixa.html | 22/10/2026 | Caixa Odonto: removidos o botão "Salvar Fechamento" e o campo/coluna "N° NF" (não é mais obrigatório). O fechamento é salvo AUTOMATICAMENTE a cada alteração (e ao imprimir) em clinica-pirituba/caixa_odonto/{data}_{nome}_{uid6}, e volta preenchido ao reabrir a página ou trocar a data; um fechamento por colaborador por dia. Indicador de status ao lado da data. -->
+<!-- VERSION: v3.7 | caixa.html | 30/10/2026 | [v3.7] "NF do Dia" desligado por chave window.CX_NF_DIA=false (sem aba, sem comparação, sem coluna Dados NF, sem leitura/gravação de NF). Código mantido inativo. -->
 <!-- VERSION: v3.8 | caixa.html | 30/10/2026 | [v3.8] Caixa Odonto: crédito começa em 1x (antes 2x); aceita de 1 a 24. -->
 <!-- VERSION: v3.5 | caixa.html | 30/10/2026 | [v3.5] Modo conferência: "Verificar em nome de" vira lista com os operadores da planilha (aba do dia do caixa), com sugestão pelo "Lançado por", botão de reler e opção de digitar. | v3.4 | 30/10/2026 | [v3.4] Modo conferência (caixa.html?conferir=1, perm financeiro/admin): confere o caixa de qualquer colaborador "em nome de", com o modal e a planilha, sem logar na conta dele e sem gravar nada. | v3.3 | 30/10/2026 | [v3.3] "Gerar Relatório" virou "Verificar caixa" (não grava nada); o caixa só é salvo em relatorios/{uid}/{data}, matchPlanilha e nf_dia_relatorios ao clicar em "Imprimir caixa". Voltar sem imprimir pede confirmação. "Último relatório" só guarda caixa já salvo. | v3.1 | 16/10/2026 | Nova coluna "Dados Planilha" no relatório: confere cada receita do caixa com a planilha de NF do dia (mesma planilha da Emissão de notas), somando por paciente. Estados Positivo/Alerta/Negativo (+ Não verificado se a planilha não carregar), resumo e lista "planilha sem caixa" no relatório impresso, botão Reler planilha e auditoria em relatorios/{uid}/{data}/matchPlanilha. -->
 <!-- VERSION: v3.0 | caixa.html | 03/10/2026 | Novo visual (Mockup A + B): seletor Fechar Turno / NF do Dia, banner compacto com avatar/departamento e "Reimprimir último relatório" (localStorage por aparelho), validação inline de CPF/e-mail na NF do Dia + aviso persistente, Recibos com cards de tipo e histórico de recibos emitidos em operacao/{uid}/recibos_hist (reimprimir). Lógica existente intacta: só envolvida. -->
@@ -19,111 +20,111 @@
   <script src="../js/firebase-config.js"></script>
   <script src="../js/shared-utils.js"></script>
   <style>
-    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--shadow:0 4px 20px rgba(10,31,68,.1);}
+    /* [v3.6] Visual alinhado a Conciliação/Contratos (só CSS de tela; relatório impresso e IDs/funções intactos) */
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#0f766e;--teal-h:#0b5f58;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--bg:#f9fafb;--card:#fff;--line:#e5e7eb;--ink:#111827;--muted:#6b7280;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-800:#111827;--shadow:0 1px 3px rgba(0,0,0,.03);--r-card:16px;--r-ctl:10px;}
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
-    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
-    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+    .red-bar{display:none;}
+    .s-header{background:var(--card);border-bottom:1px solid var(--line);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
     .s-logo{display:flex;align-items:center;gap:12px;}
-    .s-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    .s-logo-icon{width:36px;height:36px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);}
     .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
-    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
-    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .s-logo-name{font-size:15px;font-weight:700;color:var(--ink);}
+    .s-logo-sub{font-size:11px;color:var(--muted);}
     .header-right{display:flex;align-items:center;gap:10px;}
-    .date-badge{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--gray-600);}
-    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
-    .back-btn:hover{background:var(--red-h);}
-    .content{max-width:1100px;margin:0 auto;padding:24px 24px 60px;}
-    .panel{background:white;border:1px solid var(--gray-200);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);}
-    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
-    .panel-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
-    .panel-title i{color:var(--red);}
-    .user-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);border-radius:16px;padding:20px 24px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(10,31,68,.25);}
+    .date-badge{background:var(--gray-100);border:1px solid var(--line);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--gray-600);}
+    .back-btn{background:var(--card);color:var(--ink);border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:7px 14px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+    .back-btn:hover{background:var(--gray-100);}
+    .content{max-width:1080px;margin:0 auto;padding:24px 20px 60px;}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:20px 22px;margin-bottom:18px;box-shadow:var(--shadow);}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
+    .panel-title{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:10px;}
+    .panel-title i{width:30px;height:30px;border-radius:9px;background:var(--gray-100);color:var(--navy);display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+    .user-banner{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:16px 22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);}
     .user-banner-info{display:flex;flex-direction:column;gap:4px;}
-    .user-banner-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;}
-    .user-banner-name{font-size:22px;font-weight:900;color:white;letter-spacing:-.3px;}
-    .user-banner-date{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;}
-    .user-banner-icon{width:56px;height:56px;background:rgba(255,255,255,.12);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;}
+    .user-banner-label{font-size:11px;font-weight:600;color:var(--muted);}
+    .user-banner-name{font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
+    .user-banner-date{font-size:12px;color:var(--muted);margin-top:2px;}
+    .user-banner-icon{width:48px;height:48px;background:var(--gray-100);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--navy);}
     .caixa-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
     .caixa-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
-    .caixa-c{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;padding:14px;}
+    .caixa-c{background:var(--gray-50);border:1px solid var(--line);border-radius:var(--r-ctl);padding:14px;}
     .caixa-c.sobra{border-color:#fde68a;background:#fffbeb;}
-    .caixa-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gray-400);margin-bottom:5px;}
+    .caixa-lbl{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;}
     .caixa-c.sobra .caixa-lbl{color:var(--amber);}
-    .caixa-inp{width:100%;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:15px;font-weight:800;color:var(--navy);background:white;outline:none;transition:border-color .2s;}
-    .caixa-inp:focus{border-color:var(--navy);}
-    .saldo-bar{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--navy);border-radius:12px;color:white;margin-bottom:16px;}
-    .f-input,.f-select{padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:14px;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color .2s;width:100%;}
-    .f-input:focus,.f-select:focus{border-color:var(--navy);background:white;}
-    .f-label{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:5px;}
-    .btn-p{padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s,transform .15s;}
-    .btn-p:hover{background:var(--navy-mid);transform:translateY(-1px);}
-    .btn-s{padding:9px 14px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
-    .btn-s:hover{background:var(--gray-200);}
-    .btn-teal{padding:9px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .caixa-inp{width:100%;padding:9px 12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);font-family:inherit;font-size:15px;font-weight:700;color:var(--navy);background:white;outline:none;transition:border-color .15s,box-shadow .15s;}
+    .caixa-inp:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);}
+    .saldo-bar{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--navy);border-radius:var(--r-ctl);color:white;margin-bottom:16px;}
+    .f-input,.f-select{padding:9px 12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);font-family:inherit;font-size:14px;color:var(--ink);background:white;outline:none;transition:border-color .15s,box-shadow .15s;width:100%;}
+    .f-input:focus,.f-select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);}
+    .f-label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;}
+    .btn-p{padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:var(--r-ctl);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
+    .btn-p:hover{background:var(--navy-mid);}
+    .btn-s{padding:9px 14px;background:var(--card);color:var(--gray-700);border:1px solid var(--gray-300);border-radius:var(--r-ctl);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
+    .btn-s:hover{background:var(--gray-100);}
+    .btn-teal{padding:9px 18px;background:var(--teal);color:white;border:none;border-radius:var(--r-ctl);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
     .btn-teal:hover{background:var(--teal-h);}
-    .btn-r{padding:9px 18px;background:var(--red);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-r{padding:9px 18px;background:var(--red);color:white;border:none;border-radius:var(--r-ctl);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
     .btn-r:hover{background:var(--red-h);}
     .preview-screen{display:none;flex-direction:column;height:100vh;background:#e5e7eb;position:fixed;inset:0;z-index:400;}
     .preview-screen.open{display:flex;}
-    .preview-bar{background:white;border-bottom:2px solid var(--gray-200);padding:12px 22px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.05);}
-    .preview-bar-title{font-size:14px;font-weight:800;color:var(--navy);margin-right:auto;}
+    .preview-bar{background:white;border-bottom:1px solid var(--line);padding:12px 22px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+    .preview-bar-title{font-size:14px;font-weight:700;color:var(--ink);margin-right:auto;}
     .preview-wrap{flex:1;overflow-y:auto;padding:24px;}
     .print-doc{width:210mm;min-height:297mm;padding:1.5cm;background:white;margin:0 auto;box-shadow:0 10px 40px rgba(0,0,0,.15);font-family:system-ui,-apple-system,sans-serif;}
-    .info-box{background:#eff6ff;border:1px solid #c7d2fe;border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;color:#3730a3;line-height:1.6;}
+    .info-box{background:#eff6ff;border:1px solid #c7d2fe;border-radius:var(--r-ctl);padding:14px;margin-bottom:16px;font-size:12px;color:#3730a3;line-height:1.6;}
     .nfdia-focus{background:#eff6ff!important;}
     .nfdia-sel{background:#bfdbfe!important;}
     .vale-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--gray-100);}
     .vale-item:last-child{border-bottom:none;}
     @media(max-width:900px){.caixa-nums{grid-template-columns:repeat(2,1fr);}}
-    @media(max-width:768px){.caixa-grid{grid-template-columns:1fr;}.content{padding:14px 14px 60px;}.print-doc{width:100%;}.user-banner{flex-direction:column;align-items:flex-start;gap:12px;}}
+    @media(max-width:820px){.caixa-grid{grid-template-columns:1fr;}.content{padding:14px 14px 60px;}.print-doc{width:100%;}.user-banner{flex-direction:column;align-items:flex-start;gap:12px;}}
     @media print{.preview-bar{display:none!important;}.preview-wrap{padding:0!important;}.print-doc{box-shadow:none!important;margin:0!important;width:100%!important;}}
 
-    /* ABAS CAIXA */
-    .nav-tabs{display:flex;border-bottom:2px solid var(--gray-200);background:white;padding:0 24px;}
-    .nav-tab{padding:12px 20px;border:none;border-bottom:3px solid transparent;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px;}
-    .nav-tab:hover{color:var(--navy);}
-    .nav-tab.active{color:var(--navy);border-bottom-color:var(--navy);}
+    /* ABAS CAIXA — [v3.6] pílula segmentada como em Conciliação (.tabs/.tab-btn) */
+    .nav-tabs{display:flex;gap:2px;background:var(--gray-100);border-radius:12px;padding:4px;width:fit-content;max-width:calc(100% - 40px);overflow-x:auto;margin:20px max(20px,calc((100% - 1080px)/2 + 20px)) 0;}
+    .nav-tab{padding:8px 16px;border:none;background:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .15s,background .15s;display:flex;align-items:center;gap:7px;white-space:nowrap;}
+    .nav-tab:hover{color:var(--ink);}
+    .nav-tab.active{color:var(--ink);background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.06);}
     .tab-pane{display:none;}
     .tab-pane.active{display:block;}
     /* RECIBOS */
-    .recibo-sec{background:white;border:1.5px solid var(--gray-200);border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
-    .recibo-sec-title{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
-    .dif-badge{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin:12px 0;}
+    .recibo-sec{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:20px 22px;margin-bottom:20px;box-shadow:var(--shadow);}
+    .recibo-sec-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;}
+    .dif-badge{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r-ctl);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin:12px 0;}
     .aviso-box{background:#fef3c7;border-left:4px solid #b45309;padding:10px 14px;font-size:12px;color:#92400e;border-radius:0 8px 8px 0;margin-bottom:14px;line-height:1.5;}
-    .panel,.recibo-sec{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
 
-    /* ===== v3.0 — visual Mockup A (Caixa Diário) + Mockup B (Recibos) ===== */
+    /* ===== v3.0 — Caixa Diário + Recibos (restilizado v3.6) ===== */
     .cx-banner{padding:14px 20px;}
-    .cx-banner .user-banner-name{font-size:19px;}
+    .cx-banner .user-banner-name{font-size:18px;}
     .cx-banner-right{margin-left:auto;margin-right:14px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
-    .cx-dept{background:rgba(97,193,208,.2);color:#bdeaf1;border:1px solid rgba(97,193,208,.4);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;}
-    .cx-ultimo{font-size:11px;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
-    .cx-link{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;}
-    .cx-link:hover{background:rgba(255,255,255,.22);}
-    .cx-avatar{width:46px;height:46px;border-radius:50%;font-size:16px;font-weight:800;letter-spacing:.5px;background:var(--teal);color:var(--navy);flex-shrink:0;}
-    .cx-seg{display:flex;gap:4px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.5);border-radius:14px;padding:5px;margin-bottom:16px;}
-    .cx-seg-b{flex:1;border:none;background:transparent;border-radius:10px;padding:11px 14px;font-family:inherit;font-size:13px;font-weight:700;color:var(--gray-500);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;}
-    .cx-seg-b:hover{color:var(--navy);}
-    .cx-seg-b.on{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(10,31,68,.25);}
-    .cx-seg-n{background:var(--red);color:#fff;border-radius:20px;font-size:10px;font-weight:800;padding:1px 8px;}
-    .cx-opc{background:var(--gray-100);color:var(--gray-500);border:1px solid var(--gray-200);border-radius:6px;font-size:9px;font-weight:800;letter-spacing:.6px;padding:2px 7px;margin-left:6px;}
-    .cx-aviso{background:#fff7ed;border:1.5px solid #fdba74;border-left:4px solid #ea580c;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#9a3412;line-height:1.5;cursor:pointer;}
+    .cx-dept{background:#f0fdfa;color:var(--teal);border:1px solid #99f6e4;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;}
+    .cx-ultimo{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+    .cx-link{background:var(--card);border:1px solid var(--gray-300);color:var(--ink);border-radius:8px;padding:4px 10px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;}
+    .cx-link:hover{background:var(--gray-100);}
+    .cx-avatar{width:44px;height:44px;border-radius:50%;font-size:15px;font-weight:700;letter-spacing:.5px;background:var(--navy);color:#fff;flex-shrink:0;}
+    .cx-seg{display:inline-flex;gap:2px;background:var(--gray-100);border-radius:12px;padding:4px;margin-bottom:16px;max-width:100%;overflow-x:auto;}
+    .cx-seg-b{border:none;background:transparent;border-radius:9px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;transition:color .15s,background .15s;}
+    .cx-seg-b:hover{color:var(--ink);}
+    .cx-seg-b.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06);}
+    .cx-seg-n{background:var(--red);color:#fff;border-radius:20px;font-size:10px;font-weight:700;padding:1px 8px;}
+    .cx-opc{background:var(--gray-100);color:var(--gray-500);border:1px solid var(--line);border-radius:6px;font-size:9px;font-weight:700;letter-spacing:.6px;padding:2px 7px;margin-left:6px;}
+    .cx-aviso{background:#fff7ed;border:1px solid #fdba74;border-left:4px solid #ea580c;border-radius:var(--r-ctl);padding:10px 14px;margin-bottom:14px;font-size:12px;color:#9a3412;line-height:1.5;cursor:pointer;}
     .cx-inv{border-color:var(--red)!important;background:#fef2f2!important;}
     .rx-types{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
-    .rx-type{background:rgba(255,255,255,.85);border:2px solid var(--gray-200);border-radius:14px;padding:14px 12px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;transition:all .15s;}
+    .rx-type{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:14px 12px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;transition:border-color .15s,box-shadow .15s;}
     .rx-type i{font-size:20px;margin-bottom:2px;}
-    .rx-type b{font-size:13px;color:var(--navy);}
-    .rx-type span{font-size:10.5px;color:var(--gray-500);}
-    .rx-type:hover{border-color:var(--teal);}
-    .rx-type.on{border-color:var(--navy);box-shadow:0 4px 14px rgba(10,31,68,.18);background:#fff;}
+    .rx-type b{font-size:13px;color:var(--ink);}
+    .rx-type span{font-size:11px;color:var(--muted);}
+    .rx-type:hover{border-color:var(--gray-300);}
+    .rx-type.on{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);background:#fff;}
     .rx-h{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100);}
     .rx-h:last-child{border-bottom:none;}
-    .rx-h-tag{font-size:10px;font-weight:800;border-radius:6px;padding:3px 8px;white-space:nowrap;}
+    .rx-h-tag{font-size:10px;font-weight:700;border-radius:6px;padding:3px 8px;white-space:nowrap;}
     .rx-h-info{flex:1;min-width:0;}
-    .rx-h-info b{display:block;font-size:12.5px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .rx-h-info span{font-size:11px;color:var(--gray-400);}
-    @media(max-width:768px){.rx-types{grid-template-columns:1fr;}.cx-banner-right{margin:0;align-items:flex-start;}.cx-banner{flex-direction:row!important;flex-wrap:wrap;}}
+    .rx-h-info b{display:block;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .rx-h-info span{font-size:11px;color:var(--muted);}
+    @media(max-width:820px){.rx-types{grid-template-columns:1fr;}.cx-banner-right{margin:0;align-items:flex-start;}.cx-banner{flex-direction:row!important;flex-wrap:wrap;}}
   </style>
 </head>
 <body>
@@ -167,7 +168,7 @@
       </div>
 
       <!-- Seletor Fechar Turno / NF do Dia (v3.0) -->
-      <div class="cx-seg" id="cxSeg">
+      <div class="cx-seg" id="cxSeg" style="display:none"><!-- [v3.7] NF do Dia desligado (window.CX_NF_DIA=false) -->
         <button type="button" class="cx-seg-b on" id="cxSegTurno" onclick="cxSeg('turno')"><i class="fas fa-lock"></i> Fechar Turno</button>
         <button type="button" class="cx-seg-b" id="cxSegNf" onclick="cxSeg('nf')"><i class="fas fa-file-invoice-dollar"></i> NF do Dia <span class="cx-seg-n" id="cxSegNfN" style="display:none">0</span></button>
       </div>
@@ -419,6 +420,8 @@
   </div>
 
   <script>
+    /* [v3.7] NF do Dia desligado (não é mais usado). true religa: aba #cxSeg, comparação com o AMEI, coluna "Dados NF", leitura do rascunho e gravação em nf_dia_relatorios. Dados já gravados no Firebase ficam intactos. */
+    window.CX_NF_DIA = false;
     /* ── HELPERS ── */
     function pv(v) { return parseFloat((v||'0').replace(/\./g,'').replace(',','.')) || 0; }
     function fm(v) { return 'R$ ' + v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
@@ -2109,7 +2112,7 @@
       };
 
       // Compara o que foi preenchido em "Preencher NF do Dia" com o copia-e-cola do AMEI
-      const cmpNf = window.CX_MODO_CONFERIR ? { resultados: [], orfaos: [] } : nfDiaComparar(d.lancamentos);   // [v3.4] conferência ignora o NF do Dia de quem está conferindo
+      const cmpNf = (window.CX_MODO_CONFERIR || !window.CX_NF_DIA) ? { resultados: [], orfaos: [] } : nfDiaComparar(d.lancamentos);   // [v3.4] conferência ignora o NF do Dia de quem está conferindo
       const numDivergencias = cmpNf.resultados.filter(r => r.status === 'divergente').length + cmpNf.orfaos.length;
       if (numDivergencias > 0) {
         const linhasTxt = cmpNf.resultados
@@ -2125,7 +2128,7 @@
       }
 
       // Coluna "Dados NF" só aparece se houver algo preenchido em "Preencher NF do Dia"
-      const temNf = !window.CX_MODO_CONFERIR && window._nfDia && window._nfDia.some(r => (r.nome||'').trim());
+      const temNf = window.CX_NF_DIA && !window.CX_MODO_CONFERIR && window._nfDia && window._nfDia.some(r => (r.nome||'').trim());
 
       // [v3.1] Dados Planilha — confere cada receita com a planilha de NF do dia (leitura feita antes, em gerarRelatorio→wrapper)
       const cxUsuario = window.cxOperador();   // [v3.4] em conferência = colaborador informado
@@ -2445,9 +2448,11 @@
       });
 
       // NF do Dia — rascunho por usuário/data; carrega o que já tiver sido salvo
+      if (window.CX_NF_DIA) {   // [v3.7] NF do Dia desligado: não lê mais o rascunho
       _on(ref(_db, `operacao/${user.uid}/nf_dia/${window.TK_FB}`), snap => {
         if (typeof window.nfDiaCarregar === 'function') window.nfDiaCarregar(snap.val() || []);
       });
+      }
 
       init();
     });
