@@ -104,6 +104,20 @@
     .chip b{font-weight:700;}
     .guia{display:none;background:var(--violet-bg);border:1px solid #ddd6fe;border-radius:var(--r-card);padding:16px 18px;margin-bottom:14px;color:#4c1d95;font-size:13px;line-height:1.6;}
     .guia b{color:#3b0764;}.guia .x{float:right;background:none;border:none;cursor:pointer;color:#6d28d9;font-size:16px;}
+    /* [v2.0] modelo Emissão de notas */
+    .narrow{max-width:760px;margin:0 auto;}
+    .up{text-align:left;}.up-t{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .como{margin-top:14px;background:var(--violet-bg);border:1px solid #ddd6fe;border-radius:14px;padding:14px 16px;color:#4c1d95;font-size:13px;line-height:1.6;}
+    .como ol{margin:6px 0 0 18px;}.como .x{float:right;background:none;border:none;cursor:pointer;color:#6d28d9;font-size:16px;}
+    .proc-list{display:flex;flex-direction:column;gap:8px;}
+    .proc-i{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);}
+    .proc-i i{width:22px;height:22px;border-radius:50%;background:var(--gray-100);display:inline-flex;align-items:center;justify-content:center;font-size:10px;}
+    .proc-i.on{color:var(--ink);}.proc-i.on i{background:var(--green-bg);color:var(--green);}
+    .bloco3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;}
+    @media(max-width:820px){.bloco3{grid-template-columns:1fr;}}
+    .bloco3 .k{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+    .bloco3 .v{font-size:20px;font-weight:700;margin-top:4px;}
+    .bloco3 .l{font-size:12px;color:var(--gray-600);margin-top:4px;line-height:1.5;}
   </style>
 </head>
 <body>
@@ -127,27 +141,36 @@
     </div>
 
     <!-- ═════════ ABA CONCILIAR ═════════ -->
-    <div class="tab-pane active" id="pane-conciliar">
-      <div class="guia" id="guia"><button class="x" id="guiaX" title="Fechar" type="button">&times;</button><b>Como funciona (aparece só nesta primeira vez):</b><br>1. Escolha o dia. &nbsp;2. Anexe o Consolidado do Webdental e o extrato do Mais Todos. &nbsp;3. Pronto: o sistema preenche os valores, concilia sozinho e mostra só o que precisa ser corrigido no Webdental. Depois é só fechar o dia.</div>
-      <div class="panel">
-        <div class="panel-header"><div class="panel-title"><span class="passo">1</span> Qual dia você vai fechar?</div><span id="estadoDia"></span></div>
+    <!-- [v2.0] modelo "Emissão de notas": 1 coluna, 3 estados (anexar → conferindo → pronto), instruções de 1 linha -->
+    <div class="tab-pane active" id="pane-conciliar"><div class="narrow">
+      <div class="panel hero">
+        <div class="panel-header" style="margin-bottom:10px;"><div class="panel-title"><i class="fas fa-scale-balanced"></i> Conciliação do dia</div><span id="estadoDia"></span></div>
         <div class="grid g2">
-          <div><label class="f-label" for="cDia">Dia</label><input type="date" id="cDia" class="f-input"></div>
+          <div><label class="f-label" for="cDia">Dia que você vai fechar</label><input type="date" id="cDia" class="f-input"></div>
           <div><label class="f-label">Último dia já fechado</label><div id="prevInfo" class="hint" style="margin-top:9px;font-size:13px;color:var(--gray-800);">—</div></div>
         </div>
+        <div class="como" id="guia"><button class="x" id="guiaX" title="Esconder" type="button">&times;</button>
+          <b>Como fazer (2 minutos):</b>
+          <ol><li>No <b>Webdental</b>, baixe o <b>Consolidado do Dia</b> do <u>último dia fechado até o dia de hoje</u>.</li>
+          <li>No <b>Mais Todos</b>, baixe o <b>extrato</b> (PDF ou CSV) do mesmo período.</li>
+          <li>Anexe os dois abaixo. <b>O resto é automático</b>: o sistema mostra só o que precisa corrigir no Webdental.</li></ol></div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header"><div class="panel-title"><span class="passo">2</span> Anexe os dois arquivos do dia</div></div>
+      <div class="panel" id="stepArquivos">
         <div class="grid g2">
-          <div class="dropzone"><label class="f-label" for="fWD">Webdental · Consolidado do Dia (.xls)</label><input type="file" id="fWD" accept=".xls,.xlsx,.html,.htm,.csv"><div class="st" id="stWD">Nenhum arquivo.</div></div>
-          <div class="dropzone"><label class="f-label" for="fMT">Mais Todos · extrato (.csv ou .pdf)</label><input type="file" id="fMT" accept=".csv,.pdf" multiple><div class="st" id="stMT">Nenhum arquivo.</div></div>
+          <div class="dropzone up"><div class="up-t"><span class="passo">1</span> Webdental</div><label class="f-label" for="fWD">Consolidado do Dia (.xls)</label><input type="file" id="fWD" accept=".xls,.xlsx,.html,.htm,.csv"><div class="st" id="stWD">Nenhum arquivo.</div></div>
+          <div class="dropzone up"><div class="up-t"><span class="passo">2</span> Mais Todos</div><label class="f-label" for="fMT">Extrato (.pdf ou .csv)</label><input type="file" id="fMT" accept=".csv,.pdf" multiple><div class="st" id="stMT">Nenhum arquivo.</div></div>
         </div>
-        <div class="hint">No Mais Todos, baixe o extrato (CSV ou PDF) desde o último dia fechado até o dia que está fechando. O PDF não traz hora nem código da transação: o sistema cria um código próprio, então não carregue o mesmo dia em CSV e em PDF ao mesmo tempo.</div>
+        <div class="hint">Não anexe o mesmo dia em PDF e em CSV ao mesmo tempo.</div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header"><div class="panel-title"><span class="passo">3</span> Valores do dia</div><button class="btn-s" id="btnBuscarDia" type="button"><i class="fas fa-wand-magic-sparkles"></i> Preencher pela base</button></div>
+      <div class="panel" id="procBox" style="display:none;">
+        <div class="panel-title" style="margin-bottom:12px;"><i class="fas fa-gears"></i> Conferindo o dia…</div>
+        <div class="proc-list" id="procList"></div>
+      </div>
+
+      <div class="panel" id="stepValores">
+        <div class="panel-header" style="margin-bottom:8px;"><div class="panel-title" style="font-size:13px;"><i class="fas fa-coins"></i> Valores usados</div><button class="btn-s" id="btnBuscarDia" type="button"><i class="fas fa-wand-magic-sparkles"></i> Preencher pela base</button></div>
         <div class="resumo" id="resumoValores"></div>
         <details style="margin-top:12px;" id="valoresBox"><summary><i class="fas fa-pen"></i> Corrigir os valores</summary><div class="in">
         <div class="grid g3">
@@ -176,11 +199,11 @@
             </div>
           </div>
         </div></details>
-        <div style="margin-top:18px;"><button class="btn-p big" id="btnConciliar"><i class="fas fa-scale-balanced"></i> Conciliar</button></div>
+        <div style="margin-top:14px;"><button class="btn-s" id="btnConciliar"><i class="fas fa-rotate"></i> Conciliar de novo</button> <span class="hint">Roda sozinho ao anexar os dois arquivos.</span></div>
       </div>
 
       <div id="resultado"></div>
-    </div>
+    </div></div>
 
     <!-- ═════════ ABA MATRIZ ═════════ -->
     <div class="tab-pane" id="pane-matriz">
@@ -359,7 +382,16 @@
       const dia = $('cDia').value; if (!dia || !S.wd || !S.banco.length || !getPrev()) return;
       preencher(dia, false); atualizaResumo(true);
       if (!$('vDinheiro').value.trim() || !$('vWD').value.trim()) { $('valoresBox').open = true; return; }
-      conciliar(); toast('Conciliação feita automaticamente. Se mudar algum valor, clique em Conciliar.', 'info');
+      /* [v2.0] mostra os passos (estado "conferindo") e só então concilia */
+      const passos = ['Lendo os arquivos', 'Conferindo PIX e transferências', 'Conferindo cartões', 'Conferindo saídas', 'Conferindo o dinheiro em caixa'];
+      $('procList').innerHTML = passos.map(t => '<div class="proc-i"><i class="fas fa-check"></i>' + E(t) + '</div>').join('');
+      $('procBox').style.display = 'block'; $('resultado').innerHTML = '';
+      const its = $('procList').children; let k = 0;
+      const tk = setInterval(() => {
+        if (k < its.length) { its[k++].classList.add('on'); return; }
+        clearInterval(tk); $('procBox').style.display = 'none';
+        try { conciliar(); } catch (e) { console.error(e); toast('Não deu certo: ' + e.message, 'error'); }
+      }, 140);
     }
     function limparDia() { ['vDinheiro', 'vSant', 'vMTApp'].forEach(i => { $(i).value = ''; }); if (!$('vWD').disabled) $('vWD').value = ''; $('resultado').innerHTML = ''; S.res = null; atualizaResumo(true); }
 
@@ -555,8 +587,18 @@
       r.alertas.forEach(a => { h += '<div class="alerta ' + a.nivel + '"><i class="fas fa-triangle-exclamation"></i> ' + E(a.texto) + '</div>'; });
       if (velha && velha.diferenca != null) h += '<div class="hint" style="margin-bottom:10px;">Na planilha antiga, a diferença deste dia ficou em <b>' + M(velha.diferenca) + '</b>; aqui a diferença acumulada é <b>' + M(s.diff) + '</b>' + (velha.diferenca === s.diff ? ' (igual).' : ' (diferente: veja em "Ver o cálculo").') + '</div>';
 
+      /* [v2.0] modelo Controle de Caixa: Dinheiro / Banco / Total x Webdental */
+      const banco = s.maisTodos + s.santander;
+      h += '<div class="bloco3">' +
+        '<div class="card"><div class="k">Dinheiro</div><div class="v">' + M(s.dinheiro) + '</div><div class="l">saldo da planilha Caixa Geral</div></div>' +
+        '<div class="card"><div class="k">Banco</div><div class="v">' + M(banco) + '</div><div class="l">Mais Todos ' + M(s.maisTodos) + '<br>Santander ' + M(s.santander) + '</div></div>' +
+        '<div class="card ' + (s.diff === 0 ? 'good' : 'alert') + '"><div class="k">Total real × Webdental</div><div class="v">' + sgn(s.diff) + '</div><div class="l">real ' + M(s.real) + ' · Webdental ' + M(s.wdSaldo) + '</div></div></div>';
+      if (s.diff !== 0) {
+        if (Math.abs(s.diff) > 4999) h += '<div class="alerta aviso"><i class="fas fa-triangle-exclamation"></i> A diferença (' + sgn(s.diff) + ') passa de R$ 49,99. Não faça quebra de caixa: procure a causa na lista abaixo.</div>';
+        else h += '<div class="alerta aviso"><i class="fas fa-circle-info"></i> A diferença (' + sgn(s.diff) + ') está dentro do limite de R$ 49,99. Só faça quebra de caixa depois de esgotar a lista abaixo e com autorização do sócio.</div>';
+      }
       h += '<div class="panel-header" style="margin-top:6px;"><div class="panel-title" style="font-size:13px;"><i class="fas fa-clipboard-list"></i> O que fazer (' + n + ')</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-s" id="btnCopiarLog"><i class="fas fa-copy"></i> Copiar lista</button><button class="btn-s" id="btnSheets"><i class="fas fa-table"></i> Enviar ao Sheets</button>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-s" id="btnCopiarResumo"><i class="fas fa-clipboard"></i> Copiar resumo</button><button class="btn-s" id="btnCopiarLog"><i class="fas fa-copy"></i> Copiar lista</button><button class="btn-s" id="btnSheets"><i class="fas fa-table"></i> Enviar ao Sheets</button>' +
         '<button class="btn-g" id="btnFechar"><i class="fas fa-lock"></i> Fechar o dia</button></div></div>';
       if (!n) h += '<div class="alerta" style="background:var(--green-bg);color:var(--green);"><i class="fas fa-check"></i> Nada a fazer.</div>';
       r.log.forEach(i => {
@@ -586,6 +628,10 @@
         const txt = 'Conciliação ' + dBR(r.dia) + '\n' + r.log.map(i => '- ' + i.texto).join('\n');
         try { await navigator.clipboard.writeText(txt); toast('Lista copiada.', 'success'); }
         catch (e) { toast('O navegador não deixou copiar. Selecione o texto da lista e copie manualmente.', 'error'); }
+      });
+      $('btnCopiarResumo').onclick = acao(async () => {   /* [v2.0] ordem de preenchimento da planilha de fechamento */
+        const t = 'Fechamento ' + dBR(r.dia) + '\nDinheiro: ' + M(s.dinheiro) + '\nMais Todos: ' + M(s.maisTodos) + '\nSantander: ' + M(s.santander) + '\nBanco: ' + M(s.maisTodos + s.santander) + '\nSaldo Webdental: ' + M(s.wdSaldo) + '\nDiferença: ' + sgn(s.diff);
+        try { await navigator.clipboard.writeText(t); toast('Resumo copiado.', 'success'); } catch (e) { toast('O navegador não deixou copiar.', 'error'); }
       });
       $('btnFechar').onclick = acao(fechar);
       $('btnSheets').onclick = acao(enviarSheets);
@@ -817,8 +863,8 @@
       const ult = fechados().pop(), prev0 = ult || (S.inicio && S.inicio.dia);
       $('cDia').value = prev0 ? proxDia(prev0) : hojeISO();
       atualizaDia(); renderTudoAbas(); preencher($('cDia').value, false); atualizaResumo();
-      try { if (!localStorage.getItem('conc_guia_v1')) $('guia').style.display = 'block'; } catch (e) { $('guia').style.display = 'block'; }
-      $('guiaX').onclick = () => { $('guia').style.display = 'none'; try { localStorage.setItem('conc_guia_v1', '1'); } catch (e) {} };
+      try { if (localStorage.getItem('conc_guia_v2')) $('guia').style.display = 'none'; } catch (e) {}   /* [v2.0] */
+      $('guiaX').onclick = () => { $('guia').style.display = 'none'; try { localStorage.setItem('conc_guia_v2', '1'); } catch (e) {} };
       logAdmin('acessou Conciliação');
     });
   </script>
