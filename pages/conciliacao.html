@@ -118,6 +118,15 @@
     .bloco3 .k{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
     .bloco3 .v{font-size:20px;font-weight:700;margin-top:4px;}
     .bloco3 .l{font-size:12px;color:var(--gray-600);margin-top:4px;line-height:1.5;}
+    /* [v2.3] janela "Continuar daqui" */
+    .mdl-bg{position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;}
+    .mdl{background:var(--card);border-radius:18px;max-width:520px;width:100%;padding:22px 24px;box-shadow:0 10px 30px rgba(0,0,0,.18);}
+    .mdl h3{font-size:16px;margin-bottom:6px;}.mdl p{font-size:13px;color:var(--gray-600);line-height:1.55;margin-bottom:12px;}
+    .mdl .vals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+    .mdl .vals div{background:var(--gray-50);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:11px;color:var(--muted);}
+    .mdl .vals b{display:block;font-size:14px;color:var(--ink);margin-top:3px;}
+    .mdl .calc{font-size:13px;margin-top:10px;min-height:20px;}
+    .mdl .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
   </style>
 </head>
 <body>
@@ -728,14 +737,36 @@
       }), [1, 2, 3, 4]);
       document.querySelectorAll('.esp-b').forEach(b => b.onclick = acao(() => continuarDaqui(b.dataset.dia)));
     }
+    function perguntaMT(dia, b, f) {
+      return new Promise(res => {
+        const prox = proxDia(dia), sug = S.saldosMT[dia] != null ? C.fmt(S.saldosMT[dia], true) : '';
+        const bg = document.createElement('div'); bg.className = 'mdl-bg';
+        bg.innerHTML = '<div class="mdl" role="dialog" aria-modal="true"><h3>Continuar a conciliação a partir de ' + E(dBR(dia)) + '</h3>' +
+          '<p>Vamos considerar <b>' + E(dBR(dia)) + '</b> como o último dia já conferido. A próxima conciliação será a de <b>' + E(dBR(prox)) + '</b>, partindo destes valores da planilha:</p>' +
+          '<div class="vals"><div>Dinheiro<b>' + E(M(b.dinheiro)) + '</b></div><div>Banco (Mais Todos + Santander)<b>' + E(M(f.banco)) + '</b></div><div>Saldo Webdental<b>' + E(M(b.wdSaldo)) + '</b></div></div>' +
+          '<label class="f-label" for="mdlMT">Falta uma informação: quanto o <b>Mais Todos</b> tinha no fim de ' + E(dBR(dia)) + '?</label>' +
+          '<input id="mdlMT" class="f-input" inputmode="decimal" placeholder="Ex.: 30.183,59" value="' + E(sug) + '">' +
+          '<div class="hint">Veja o "Saldo do dia" no extrato do Mais Todos (PDF) ou no app. O restante do Banco é o Santander.</div>' +
+          '<div class="calc" id="mdlCalc"></div>' +
+          '<div class="btns"><button class="btn-s" id="mdlNo" type="button">Cancelar</button><button class="btn-p" id="mdlOk" type="button">Continuar a partir de ' + E(dBR(dia)) + '</button></div></div>';
+        document.body.appendChild(bg);
+        const inp = bg.querySelector('#mdlMT'), calc = bg.querySelector('#mdlCalc');
+        const atual = () => { const t = inp.value.trim(); if (!t) { calc.innerHTML = ''; return null; } const c = C.toCents(t); if (c === null) { calc.innerHTML = '<span class="bad-t">Valor inválido. Use o formato 30.183,59.</span>'; return NaN; } const sa = f.banco - c; calc.innerHTML = sa < 0 ? '<span class="bad-t">O Mais Todos não pode ser maior que o Banco (' + E(M(f.banco)) + ').</span>' : 'Santander = ' + E(M(f.banco)) + ' − ' + E(M(c)) + ' = <b>' + E(M(sa)) + '</b>'; return c; };
+        const fim = v => { document.removeEventListener('keydown', esc); bg.remove(); res(v); };
+        const esc = ev => { if (ev.key === 'Escape') fim(null); };
+        document.addEventListener('keydown', esc);
+        inp.addEventListener('input', atual); atual(); inp.focus();
+        bg.querySelector('#mdlNo').onclick = () => fim(null);
+        bg.querySelector('#mdlOk').onclick = () => { const c = atual(); if (c === null) { toast('Digite o saldo do Mais Todos.', 'error'); return; } if (Number.isNaN(c) || f.banco - c < 0) return; fim(c); };
+        inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') bg.querySelector('#mdlOk').click(); });
+      });
+    }
     async function continuarDaqui(dia) {
       if (!S.admin) { toast('Só o administrador define o ponto de partida.', 'error'); return; }
       const b = valoresDaBase(dia), f = S.base.fechamento[dia];
       if (b.dinheiro == null || b.wdSaldo == null || !f || f.banco == null) { toast('Faltam valores desse dia na planilha (Dinheiro, Webdental ou Banco).', 'error'); return; }
-      const sug = S.saldosMT[dia] != null ? C.fmt(S.saldosMT[dia], true) : '';
-      const t = prompt('Saldo do Mais Todos em ' + dBR(dia) + ' (veja no extrato/app).\nO Santander será Banco (' + M(f.banco) + ') − Mais Todos.', sug);
-      if (t === null) { toast('Cancelado.', 'info'); return; }
-      const mt = C.toCents(t); if (mt === null) { toast('Saldo do Mais Todos inválido.', 'error'); return; }
+      const mt = await perguntaMT(dia, b, f);   /* [v2.3] janela explicativa no lugar do prompt() */
+      if (mt === null) { toast('Cancelado. Nada foi alterado.', 'info'); return; }
       const ini = { dia, dinheiro: b.dinheiro, maisTodos: mt, santander: f.banco - mt, wdSaldo: b.wdSaldo };
       if (ini.santander < 0) { toast('O Mais Todos (' + M(mt) + ') ficou maior que o Banco da planilha (' + M(f.banco) + '). Confira o saldo digitado.', 'error'); return; }   /* [v2.1] */
       await set(ref(db, BASE + '/inicio'), Object.assign(ini, { por: user.email || user.uid, em: new Date().toISOString() }));
