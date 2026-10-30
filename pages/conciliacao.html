@@ -301,7 +301,7 @@
     const E = s => window.esc(s);
     const MAXL = 200;
     let user = null;
-    const S = { sant: null, saldosMT: {}, wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, base: { fechamento: {}, caixa: {}, webstats: {} }, inicio: null, admin: false };
+    const S = { santTyped: false, sant: null, saldosMT: {}, wd: null, banco: [], excl: {}, sol: null, solArq: '', res: null, dias: {}, cfg: {}, base: { fechamento: {}, caixa: {}, webstats: {} }, inicio: null, admin: false };
 
     /* ───────── util ───────── */
     function hojeISO() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
@@ -404,6 +404,7 @@
       if (falta) $('valoresBox').open = true; else if (recolhe === true) $('valoresBox').open = false;
     }
     ['vDinheiro', 'vWD', 'vSant'].forEach(i => $(i).addEventListener('input', () => atualizaResumo()));
+    $('vSant').addEventListener('input', () => { S.santTyped = true; });   /* [v2.8] só digitação do usuário conta (valor preenchido por código não dispara 'input') */
     /* [v1.5] concierge: com tudo em mãos, concilia sozinho (sem toasts de erro se faltar algo) */
     function tentarAuto() {
       const dia = $('cDia').value; if (!dia || !S.wd || !S.banco.length || !getPrev()) return;
@@ -420,7 +421,7 @@
         try { conciliar(); } catch (e) { console.error(e); toast('Não deu certo: ' + e.message, 'error'); }
       }, 140);
     }
-    function limparDia() { ['vDinheiro', 'vSant', 'vMTApp'].forEach(i => { $(i).value = ''; }); if (!$('vWD').disabled) $('vWD').value = ''; $('resultado').innerHTML = ''; S.res = null; atualizaResumo(true); }
+    function limparDia() { S.santTyped = false; ['vDinheiro', 'vSant', 'vMTApp'].forEach(i => { $(i).value = ''; }); if (!$('vWD').disabled) $('vWD').value = ''; $('resultado').innerHTML = ''; S.res = null; atualizaResumo(true); }
 
     /* ───────── leitura dos arquivos ───────── */
     async function lerWD(file) {
@@ -500,9 +501,15 @@
         const fimDia = r.periodo && r.periodo[1], dia = $('cDia').value;
         const saldo = r.ultimoSaldo !== null && r.contaMax !== null ? r.ultimoSaldo + r.contaMax : null;
         let msg = '<span class="ok-t"><b>' + r.linhas.length + '</b> lançamento(s)' + (r.periodo ? ' · ' + dBR(r.periodo[0]) + ' a ' + dBR(r.periodo[1]) : '') + '</span>';
-        if (saldo !== null) msg += ' · saldo ' + M(r.ultimoSaldo) + ' + ContaMax ' + M(r.contaMax) + ' = <b>' + M(saldo) + '</b>';
-        if (saldo !== null && fimDia === dia && r.geradoEm === fimDia) { $('vSant').value = C.fmt(saldo, true); atualizaResumo(); msg += ' <span class="ok-t">(usado como Saldo Santander)</span>'; }
-        else if (saldo !== null) msg += ' <span class="warn-t">· não usei como saldo: o ContaMax do extrato é o de ' + dBR(r.geradoEm || '') + ', não do dia ' + dBR(dia) + '. Digite o saldo em "Corrigir os valores".</span>';
+        if (saldo !== null && fimDia === dia && r.geradoEm === fimDia) {
+          msg += ' · saldo ' + M(r.ultimoSaldo) + ' + ContaMax ' + M(r.contaMax) + ' = <b>' + M(saldo) + '</b>'; $('vSant').value = C.fmt(saldo, true); atualizaResumo(); msg += ' <span class="ok-t">(usado como Saldo Santander)</span>'; }
+        else {
+          /* [v2.8] o ContaMax do PDF é o de quando o arquivo foi gerado (hoje), não o do dia: calcula pelo extrato (saldo anterior + movimentos do dia) */
+          const pv = achaPrev(dia), norm = C.norm;
+          const mov = r.linhas.filter(l => l.dia > (pv ? pv.dia : '') && l.dia <= dia && !(/resgate|aplicacao/.test(norm(l.desc)) && !/rendimento/.test(norm(l.desc)))).reduce((a, l) => a + l.v, 0);
+          if (pv && !S.santTyped) { $('vSant').value = C.fmt(pv.santander + mov, true); atualizaResumo(); msg += ' <span class="ok-t">· Saldo Santander calculado pelo extrato: anterior ' + M(pv.santander) + ' ' + (mov < 0 ? '−' : '+') + ' movimentos ' + M(Math.abs(mov)) + ' = <b>' + M(pv.santander + mov) + '</b></span> <span class="hint">(o ContaMax do PDF é o de ' + dBR(r.geradoEm || '') + ', não foi usado; para outro valor, digite em "Corrigir os valores")</span>'; }
+          else msg += ' <span class="hint">· mantive o saldo digitado (o ContaMax do PDF é o de ' + dBR(r.geradoEm || '') + ').</span>';
+        }
         $('stSant').innerHTML = msg;
         tentarAuto();
       } catch (e) { console.error(e); S.sant = null; $('stSant').innerHTML = '<span class="bad-t">Erro ao ler: ' + E(e.message) + '</span>'; toast('Erro ao ler o extrato do Santander: ' + e.message, 'error'); }
