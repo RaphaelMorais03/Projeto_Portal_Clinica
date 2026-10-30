@@ -84,7 +84,7 @@
     .log-i{display:flex;gap:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;font-size:13px;line-height:1.5;background:var(--card);}
     .log-i .p{flex-shrink:0;}
     .alerta{padding:10px 14px;border-radius:12px;margin-bottom:8px;font-size:13px;font-weight:500;}
-    .alerta.erro{background:var(--red-bg);color:var(--red);}.alerta.aviso{background:var(--amber-bg);color:var(--amber);}
+    .alerta.ok{background:var(--green-bg);color:var(--green);}.alerta.erro{background:var(--red-bg);color:var(--red);}.alerta.aviso{background:var(--amber-bg);color:var(--amber);}
     .dropzone{border:1.5px dashed var(--gray-300);border-radius:14px;padding:14px;background:var(--gray-50);}
     .dropzone .st{font-size:12px;margin-top:8px;color:var(--gray-600);}
     .toast-box{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
@@ -638,7 +638,7 @@
       if (ok && !n) h += '<div class="verdict ok"><i class="fas fa-circle-check"></i><div>Tudo certo neste dia<small>Sem divergência entre Webdental, banco e caixa. Pode fechar o dia.</small></div></div>';
       else if (ok) h += '<div class="verdict av"><i class="fas fa-triangle-exclamation"></i><div>O total fecha, mas há ' + n + ' ponto(s) para conferir<small>Os valores se compensam. Veja a lista abaixo antes de fechar.</small></div></div>';
       else h += '<div class="verdict no"><i class="fas fa-circle-xmark"></i><div>Há ' + n + ' ponto(s) para corrigir no Webdental · diferença do dia ' + sgn(s.dDiff) + '<small>Faça as ações da lista abaixo e depois confira de novo.</small></div></div>';
-      r.alertas.forEach(a => { h += '<div class="alerta ' + a.nivel + '"><i class="fas fa-triangle-exclamation"></i> ' + E(a.texto) + '</div>'; });
+      r.alertas.forEach(a => { h += '<div class="alerta ' + a.nivel + '"><i class="fas ' + (a.nivel === 'ok' ? 'fa-circle-check' : 'fa-triangle-exclamation') + '"></i> ' + E(a.texto) + '</div>'; });
       if (velha && velha.diferenca != null) h += '<div class="hint" style="margin-bottom:10px;">Na planilha antiga, a diferença deste dia ficou em <b>' + M(velha.diferenca) + '</b>; aqui a diferença acumulada é <b>' + M(s.diff) + '</b>' + (velha.diferenca === s.diff ? ' (igual).' : ' (diferente: veja em "Ver o cálculo").') + '</div>';
 
       /* [v2.0] modelo Controle de Caixa: Dinheiro / Banco / Total x Webdental */
