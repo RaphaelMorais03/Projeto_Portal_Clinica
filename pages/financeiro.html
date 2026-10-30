@@ -850,6 +850,30 @@
     window._fbSet    = (path, data) => set(ref(db, path), data);
     window._fbRemove = (path)       => remove(ref(db, path));
 
+    // [v3.4.1] Antes os onValue não tinham tratamento de erro: se o Firebase negava a leitura (Rules) ou a conexão
+    // falhava, o "Carregando..." girava para sempre sem nenhuma mensagem. Agora a falha aparece na tela, com o código do erro.
+    window.falhaCarga = function(idLista, caminho, err) {
+      try {
+        const el = document.getElementById(idLista); if (!el) return;
+        const code = (err && (err.code || err.message)) ? String(err.code || err.message) : 'desconhecido';
+        const negado = /permission|PERMISSION_DENIED/i.test(code);
+        el.innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation" style="color:#dc2626;"></i>' +
+          '<p><b>Não consegui carregar os dados.</b><br>' +
+          (negado ? 'O Firebase negou a leitura de <code>' + window.esc(caminho) + '</code>. Verifique a permissão deste usuário e as Rules.' : 'Verifique a conexão e tente de novo.') +
+          '<br><small>Erro: ' + window.esc(code) + '</small></p>' +
+          '<button class="btn-s" onclick="location.reload()" style="margin-top:8px;"><i class="fas fa-rotate"></i> Tentar de novo</button></div>';
+      } catch (e) { console.error('[financeiro] falhaCarga:', e); }
+    };
+    // [v3.4.1] Vigia: se ainda estiver em "Carregando..." depois de 15s (sem erro nem dados), avisa em vez de ficar em branco.
+    setTimeout(function() {
+      ['listaColabs', 'listaHistorico'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el && el.querySelector('.fa-spinner')) {
+          const p = el.querySelector('p'); if (p) p.innerHTML = 'Está demorando mais que o normal… Verifique a conexão. Se persistir, abra o Console (F12) e me envie o erro.';
+        }
+      });
+    }, 15000);
+
     onAuthStateChanged(auth, async user => {
       if (!user) { irPara('../login.html'); return; }
       if (!sessionStorage.getItem('usuario')) {
@@ -872,7 +896,7 @@
       onValue(ref(db, 'financeiro/colaboradores'), snap => {
         colaboradores = snap.exists() ? snap.val() : {};
         renderColabs();
-      });
+      }, err => { console.error('[financeiro] erro ao ler financeiro/colaboradores:', err); window.falhaCarga('listaColabs', 'financeiro/colaboradores', err); });   // [v3.4.1]
 
       // Recibos
       onValue(ref(db, 'financeiro/recibos'), snap => {
@@ -885,7 +909,7 @@
         sel.innerHTML = '<option value="">Todos os meses</option>' +
           meses.map(m => `<option value="${m}">${m}</option>`).join('');
         if (document.getElementById('paneHistorico').classList.contains('active')) renderHistorico();
-      });
+      }, err => { console.error('[financeiro] erro ao ler financeiro/recibos:', err); window.falhaCarga('listaHistorico', 'financeiro/recibos', err); });   // [v3.4.1]
 
       // Log
       set(ref(db, 'admin_logs/' + Date.now()), { tipo:'info', msg:(user.email||user.uid)+' acessou Financeiro', ts:new Date().toISOString() }).catch(()=>{});
