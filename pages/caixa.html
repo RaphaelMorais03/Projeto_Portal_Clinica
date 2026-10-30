@@ -1,6 +1,6 @@
 ﻿<!-- VERSION: v3.2 | caixa.html | 21/10/2026 | Dados Planilha: coluna compacta no impresso (thead repetido, linhas sem quebrar, rodapé junto da tabela); modal de conferência antes de gerar (lista ⚠/✗ com motivo, Reler planilha, justificativa em matchPlanilha, chave CX_PLAN_BLOQUEIO); correção de cadastro (CPF/celular/CEP/nº) gravada na planilha via Apps Script (ação "cadastro"). -->
 <!-- VERSION: v3.3 | caixa.html | 22/10/2026 | Caixa Odonto: removidos o botão "Salvar Fechamento" e o campo/coluna "N° NF" (não é mais obrigatório). O fechamento é salvo AUTOMATICAMENTE a cada alteração (e ao imprimir) em clinica-pirituba/caixa_odonto/{data}_{nome}_{uid6}, e volta preenchido ao reabrir a página ou trocar a data; um fechamento por colaborador por dia. Indicador de status ao lado da data. -->
-<!-- VERSION: v3.3 | caixa.html | 30/10/2026 | [v3.3] "Gerar Relatório" virou "Verificar caixa" (não grava nada); o caixa só é salvo em relatorios/{uid}/{data}, matchPlanilha e nf_dia_relatorios ao clicar em "Imprimir caixa". Voltar sem imprimir pede confirmação. "Último relatório" só guarda caixa já salvo. | v3.1 | 16/10/2026 | Nova coluna "Dados Planilha" no relatório: confere cada receita do caixa com a planilha de NF do dia (mesma planilha da Emissão de notas), somando por paciente. Estados Positivo/Alerta/Negativo (+ Não verificado se a planilha não carregar), resumo e lista "planilha sem caixa" no relatório impresso, botão Reler planilha e auditoria em relatorios/{uid}/{data}/matchPlanilha. -->
+<!-- VERSION: v3.4 | caixa.html | 30/10/2026 | [v3.4] Modo conferência (caixa.html?conferir=1, perm financeiro/admin): confere o caixa de qualquer colaborador "em nome de", com o modal e a planilha, sem logar na conta dele e sem gravar nada. | v3.3 | 30/10/2026 | [v3.3] "Gerar Relatório" virou "Verificar caixa" (não grava nada); o caixa só é salvo em relatorios/{uid}/{data}, matchPlanilha e nf_dia_relatorios ao clicar em "Imprimir caixa". Voltar sem imprimir pede confirmação. "Último relatório" só guarda caixa já salvo. | v3.1 | 16/10/2026 | Nova coluna "Dados Planilha" no relatório: confere cada receita do caixa com a planilha de NF do dia (mesma planilha da Emissão de notas), somando por paciente. Estados Positivo/Alerta/Negativo (+ Não verificado se a planilha não carregar), resumo e lista "planilha sem caixa" no relatório impresso, botão Reler planilha e auditoria em relatorios/{uid}/{data}/matchPlanilha. -->
 <!-- VERSION: v3.0 | caixa.html | 03/10/2026 | Novo visual (Mockup A + B): seletor Fechar Turno / NF do Dia, banner compacto com avatar/departamento e "Reimprimir último relatório" (localStorage por aparelho), validação inline de CPF/e-mail na NF do Dia + aviso persistente, Recibos com cards de tipo e histórico de recibos emitidos em operacao/{uid}/recibos_hist (reimprimir). Lógica existente intacta: só envolvida. -->
 <!-- VERSION: v2.3 | caixa.html | 01/10/2026 | "Descrição padrão" (Colar e mapear) passa a usar o campo "departamento" que JÁ existe no cadastro do colaborador (Admin → Cadastros), em vez de um seletor novo: Recepção Medicina → REF A CONSULTA REALIZADA, Pós Consulta → REF A EXAMES REALIZADOS, Odontologia → REF A PROCEDIMENTO ODONTOLÓGICO REALIZADO. Departamentos que não emitem NF (Financeiro, Call Center, Administrativo) ficam de fora de propósito — o botão avisa e não faz nada pra eles. --><!-- VERSION: v2.2 | caixa.html | 01/10/2026 | "Colar e mapear" ganha fluxo completo: seletor de departamento (Consulta/Exames) salvo por colaborador, validação automática ao mapear (Nome + CPF com dígito verificador + Valor — bloqueia "Enviar" e lista linha a linha o que falta corrigir), botão "Buscar CEP" com barra de progresso que preenche Logradouro/Bairro/Cidade/UF sozinho (reaproveita a busca BrasilAPI/ViaCEP que já existe), e botão "Descrição padrão" que aplica o texto certo (REF A CONSULTA REALIZADA / REF A EXAMES REALIZADOS) conforme o departamento do colaborador logado — editável linha a linha depois. E-mail vazio já entra como naotememail@gmail.com ao enviar, sem precisar digitar. --><!-- VERSION: v2.1 | caixa.html | 01/10/2026 | Nova caixa "Colar e mapear" dentro de Preencher NF do Dia: o colaborador cola qualquer bloco (ex: só CPF + Valor, um por linha, copiado de outra planilha) e escolhe em dropdowns o que é cada coluna — igual ao "Gerar Planilha" do Dashboard — antes de confirmar. Ao clicar "Adicionar à planilha", as linhas entram nas células em branco da grade principal, ficam salvas sozinhas, e a caixa de colar limpa e já fica pronta pro próximo lote (lembra o mapeamento usado pra colagens do mesmo formato, então nas próximas vezes já vem pré-selecionado). Pensada pra quem cola os dados aos poucos o dia inteiro ou só no fim do dia de uma vez. --><!-- VERSION: v2.0 | caixa.html | 01/10/2026 | Preencher NF do Dia ganha mapeamento automático de colunas ao colar: em vez de depender da ordem/posição das colunas (só funcionava certo colando o bloco inteiro de 8-9 colunas a partir do Nome), agora reconhece o tipo de cada valor colado pelo formato (CPF, CEP, telefone, e-mail, "R$ valor", UF, número da casa, texto livre) e manda pra célula certa — então colar só "CPF + Valor" (ou qualquer combinação, fora de ordem, com coluna em branco no meio) cai no lugar certo sem precisar ajustar manualmente depois. --><!-- VERSION: v1.9 | caixa.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — inverte a ordem: agora tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console e agiliza a busca. --><!-- VERSION: v1.8 | caixa.html | 28/09/2026 | Busca de CEP fica mais rápida e resiliente: dispara ViaCEP e BrasilAPI EM PARALELO (timeout de 4s cada) e usa a que responder primeiro — se um dos dois serviços estiver fora do ar (ViaCEP andou dando ERR_CONNECTION_TIMED_OUT), o outro ainda resolve rápido, sem esperar a rodada de retry no mesmo serviço que caiu. --><!-- VERSION: v1.7 | caixa.html | 28/09/2026 | Preencher NF do Dia ganha Ctrl+Z (desfaz a última mudança: digitar, colar, adicionar/remover linha) e seleção de células em bloco arrastando o mouse (Shift+clique também estende a seleção) — Delete/Backspace com bloco selecionado limpa todas as células de uma vez. --><!-- VERSION: v1.6 | caixa.html | 28/09/2026 | Painel Relatório de Caixa na mesma largura do Preencher NF do Dia (remove max-width:640px). --><!-- v1.5: Preencher NF do Dia agora nasce com 100 linhas em branco (grade de planilha de verdade) + botão "+ Adicionar 100 linhas". Colar do Excel/exportação (9 ou 8 colunas: Nome, CPF, Pagamento, Valor, E-mail, Celular, CEP, Nº da Casa, Operador) agora ignora automaticamente Pagamento e Operador quando a colagem começa na coluna Nome. Busca de CEP (ViaCEP) ganhou timeout de 6s + 1 retentativa automática antes de avisar erro, pra evitar tela travada quando o serviço está instável. --><!-- VERSION: v1.4 | caixa.html | 25/09/2026 | Corrige bug do Valor duplicando zero (ex: 40,00 virando 40,000 salvo): a máscara agora roda ANTES de guardar o valor da célula, não depois — antes ficava um passo atrasado. Colar de 1 célula só (Excel costuma copiar com \r\n mesmo de uma célula) agora também passa pela máscara da coluna, então colar "40" no Valor já vira "0,40" certinho. Atalhos de planilha: Enter desce pra mesma coluna na linha de baixo (cria linha nova se precisar) e Tab anda entre as células (botões de ação saem da ordem do Tab). -->
 <!-- v1.3: Preencher NF do Dia virou uma planilha de verdade: tabela com colunas fixas (Nome, CPF, E-mail, Telefone, CEP+busca, Endereço, Valor, Descrição), aceita colar direto do Excel/planilha (tab/quebra de linha vira colunas/linhas), salva sozinho 1,2s depois de parar de digitar (sem botão Salvar), botão "Verificar células" que só avisa o que parece errado sem travar nada, e continua opcional pra gerar o Relatório de Caixa. -->
@@ -1994,6 +1994,7 @@
     /* ── auditoria: grava o resultado em relatorios/{uid}/{data}/matchPlanilha ── */
     // Não bloqueia nada: se as Rules recusarem o campo novo, só avisa no console (o relatório segue normal).
     function cxPlanSalvar(cx, ctx) {
+      if (window.CX_MODO_CONFERIR) return;   // [v3.4] conferência do financeiro nunca grava
       if (!window.fbSet || !window.USER_UID || !ctx || !ctx.snapData) return;
       var pay = {
         geradoEm: new Date().toISOString(), lidoEm: cx.lidoEm || null, aba: cx.aba || null, operador: ctx.usuario || null,
@@ -2028,8 +2029,8 @@
         });
         box.innerHTML = cxPlanResumoInner(cx);
         window._cxPlanCxAtual = cx;   // [v3.3] é este resultado que "Imprimir caixa" grava na auditoria
-        if (ctx.salvo) cxPlanSalvar(cx, ctx);   // [v3.3] antes de imprimir NADA é gravado (evita criar relatorios/{uid}/{data} só com matchPlanilha)
-        if (ctx.salvo) try {   // mantém o "Último relatório" deste aparelho igual ao que está na tela (só depois de salvo)
+        if (ctx.salvo && !window.CX_MODO_CONFERIR) cxPlanSalvar(cx, ctx);   // [v3.3] antes de imprimir NADA é gravado (evita criar relatorios/{uid}/{data} só com matchPlanilha)
+        if (ctx.salvo && !window.CX_MODO_CONFERIR) try {   // mantém o "Último relatório" deste aparelho igual ao que está na tela (só depois de salvo)
           var chave = 'cx_ultimo_rel_' + (window.USER_UID || sessionStorage.getItem('uid') || '_'), ts = Date.now();
           try { var u = JSON.parse(localStorage.getItem(chave) || 'null'); if (u && u.ts) ts = u.ts; } catch (e2) { }
           localStorage.setItem(chave, JSON.stringify({ ts: ts, html: document.getElementById('relatorioDoc').innerHTML }));
@@ -2040,6 +2041,14 @@
       } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = antes; }
       }
+    };
+
+    /* [v3.4] MODO CONFERÊNCIA (financeiro): caixa.html?conferir=1, só para perm financeiro/admin (ver bloco no fim do arquivo).
+       Nele o operador da conferência é o colaborador informado no campo "Verificar em nome de", e NADA é gravado no Firebase. */
+    window.CX_MODO_CONFERIR = false;
+    window.cxOperador = function() {
+      if (window.CX_MODO_CONFERIR) { var i = document.getElementById('cxConfOperador'); return i ? String(i.value || '').trim() : ''; }
+      return sessionStorage.getItem('usuario') || '';
     };
 
     /* ── GERAR RELATÓRIO ── */
@@ -2095,7 +2104,7 @@
       };
 
       // Compara o que foi preenchido em "Preencher NF do Dia" com o copia-e-cola do AMEI
-      const cmpNf = nfDiaComparar(d.lancamentos);
+      const cmpNf = window.CX_MODO_CONFERIR ? { resultados: [], orfaos: [] } : nfDiaComparar(d.lancamentos);   // [v3.4] conferência ignora o NF do Dia de quem está conferindo
       const numDivergencias = cmpNf.resultados.filter(r => r.status === 'divergente').length + cmpNf.orfaos.length;
       if (numDivergencias > 0) {
         const linhasTxt = cmpNf.resultados
@@ -2111,14 +2120,14 @@
       }
 
       // Coluna "Dados NF" só aparece se houver algo preenchido em "Preencher NF do Dia"
-      const temNf = window._nfDia && window._nfDia.some(r => (r.nome||'').trim());
+      const temNf = !window.CX_MODO_CONFERIR && window._nfDia && window._nfDia.some(r => (r.nome||'').trim());
 
       // [v3.1] Dados Planilha — confere cada receita com a planilha de NF do dia (leitura feita antes, em gerarRelatorio→wrapper)
-      const cxUsuario = sessionStorage.getItem('usuario') || '';
+      const cxUsuario = window.cxOperador();   // [v3.4] em conferência = colaborador informado
       const cxP       = cxPlanComparar(d.lancamentos, window._cxPlanSheet, cxUsuario);
       const cxDocId   = 'cxp' + Date.now() + Math.floor(Math.random() * 1000);
 
-      const aten       = sessionStorage.getItem('usuario') || 'Responsável';
+      const aten       = window.cxOperador() || 'Responsável';   // [v3.4]
       const now        = new Date();
       const ds         = DIAS[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()] + ' de ' + now.getFullYear();
       const hr         = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
@@ -2243,6 +2252,7 @@
           '<div style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.5rem;background:#61C1D0;border-radius:12px;border:3px solid #980000;color:white;font-size:.9rem;font-weight:800;">👤 ' + esc(aten.toUpperCase()) + '</div>' +
           nfIndicador +
           cxPlanBlocosHtml(cxP, cxDocId) + // [v3.1] Planilha: ✓ · ⚠ · ✗
+          (window.CX_MODO_CONFERIR ? '<div style="display:inline-block;margin-top:8px;padding:6px 14px;border-radius:8px;background:#fef3c7;border:1px solid #fcd34d;color:#92400e;font-size:11px;font-weight:800;">🔎 CONFERÊNCIA DO FINANCEIRO — conferido por ' + esc(sessionStorage.getItem('usuario') || '—') + ' — NÃO salvo no dashboard</div>' : '') + // [v3.4]
         '</div>' +
         /* Cards de totais */
         '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:10px;">Total por forma de pagamento</div>' +
@@ -2282,7 +2292,7 @@
       // [v3.1] guarda o contexto (Reler planilha)
       // [v3.3] salvo/salvando + persistir: nada é gravado na verificação; tudo sai junto em "Imprimir caixa"
       const nfLinhasSnap = temNf ? JSON.parse(JSON.stringify(window._nfDia.filter(r => (r.nome||'').trim()))) : null; // [v3.3] foto do NF do Dia no momento da verificação
-      const ctxPlan = { docId: cxDocId, lancs: d.lancamentos, dataBr: caixaDataAmei || tkParaNomeAba(window.TK_FB), snapData: snapData, usuario: cxUsuario, salvo: false, salvando: false };
+      const ctxPlan = { docId: cxDocId, lancs: d.lancamentos, dataBr: caixaDataAmei || tkParaNomeAba(window.TK_FB), snapData: snapData, usuario: cxUsuario, salvo: !!window.CX_MODO_CONFERIR, salvando: false };   // [v3.4] conferência já nasce 'salva' = nunca grava, nunca pergunta ao voltar
       window._cxPlanCxAtual = cxP;   // [v3.3] resultado mais recente da conferência (Reler planilha atualiza)
       ctxPlan.persistir = function() {
         const p = persistirSnap();                                  // 1) relatorios/{uid}/{data}
@@ -3159,6 +3169,7 @@ window.odImprimir = function() {
   // [v3.3] "Último relatório" passa a guardar só caixa JÁ SALVO (chamado por cxPersistirPendente depois de gravar).
   // Antes guardava na verificação; reabrir um caixa não salvo e imprimir não gravaria nada.
   window._cxGuardarUltimo = function(){
+    if (window.CX_MODO_CONFERIR) return;   // [v3.4]
     try {
       if ($('telaPreview').classList.contains('open')) {
         localStorage.setItem(chaveUlt(), JSON.stringify({ts: Date.now(), html: $('relatorioDoc').innerHTML}));
@@ -3322,6 +3333,9 @@ var CX_PLAN_BLOQUEIO = false;
  *   false = comportamento antigo: o modal só abre quando há ⚠, ✗ ou a planilha não pôde ser lida. */
 var CX_PLAN_MODAL_SEMPRE = true;
 
+/* [v3.4] MODO CONFERÊNCIA (financeiro): false = o financeiro só visualiza; true = também corrige o cadastro das linhas do colaborador (envia à planilha pelo webhook). */
+window.CX_CONFERIR_PERMITE_CORRECAO = false;
+
 (function () {
   var _gerarAnterior = window.gerarRelatorio;
   if (typeof _gerarAnterior !== 'function') { console.warn('[cxPlan] gerarRelatorio não encontrada — Dados Planilha desativado'); return; }
@@ -3333,6 +3347,12 @@ var CX_PLAN_MODAL_SEMPRE = true;
 
   function isoDe(dataBr) { var p = String(dataBr || '').split('/'); return p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : ''; }
   function ehAdmin() { try { return !!JSON.parse(sessionStorage.getItem('perms') || '{}').admin; } catch (e) { return false; } }
+  // [v3.4] Em conferência (financeiro) as correções de cadastro ficam DESLIGADAS (só admin corrige),
+  // a menos que window.CX_CONFERIR_PERMITE_CORRECAO seja true (chave logo abaixo de CX_PLAN_MODAL_SEMPRE).
+  function podeEd(it) {
+    if (window.CX_MODO_CONFERIR && window.CX_CONFERIR_PERMITE_CORRECAO !== true) return !!(M && M.admin);
+    return !!(it && (it.dono || (M && M.admin)));
+  }
   function webhook() {
     var u = '', t = '';
     try { u = (localStorage.getItem(LS_URL) || '').trim(); t = (localStorage.getItem(LS_TOKEN) || '').trim(); } catch (e) { }
@@ -3459,7 +3479,7 @@ var CX_PLAN_MODAL_SEMPRE = true;
   function editorHtml(g) {
     var linhas = (g.it && g.it.edit) || [];
     if (!linhas.length) return '';
-    var pode = !!(g.it.dono || M.admin), h = '';
+    var pode = podeEd(g.it), h = '';   // [v3.4]
     linhas.forEach(function (ln) {
       h += '<div class="cxpm-ed"><div class="cxpm-ed-t">Corrigir cadastro' + (linhas.length > 1 ? ' — linha ' + ln.n + ' da planilha' : '') + '</div><div class="cxpm-ed-g">';
       ln.campos.forEach(function (c) {
@@ -3482,7 +3502,7 @@ var CX_PLAN_MODAL_SEMPRE = true;
     if (!M) return;
     var cx = M.cx, lancs = M.d.lancamentos, h = '';
     var hasNeg = cx.cont.neg > 0, grp = cx.erro ? [] : grupos(cx, lancs);
-    var algumEditavel = grp.some(function (g) { return g.it && g.it.edit && g.it.edit.length && (g.it.dono || M.admin); });
+    var algumEditavel = grp.some(function (g) { return g.it && g.it.edit && g.it.edit.length && podeEd(g.it); });   // [v3.4]
 
     h += '<div class="cxpm-h"><div><div class="cxpm-t"><i class="fas fa-table-list"></i> Conferência com a planilha de NF</div>' +
       '<div class="cxpm-s">' + (cx.erro ? 'Planilha não lida' : 'Aba ' + esc(cx.aba || '') + ' · lida às ' + esc(cx.lidoEm || '') + ' · operador ' + esc(M.usuario.toUpperCase())) + '</div></div>' +
@@ -3566,7 +3586,7 @@ var CX_PLAN_MODAL_SEMPRE = true;
     });
     if (bad) return;
     if (!qtd) { M.aviso = { tipo: 'warn', txt: 'Preencha pelo menos um campo antes de gravar.' }; render(); return; }
-    if (!(a.it.dono || M.admin)) { M.aviso = { tipo: 'err', txt: 'Só o operador dessa linha (ou o admin) pode corrigir.' }; render(); return; }
+    if (!podeEd(a.it)) { M.aviso = { tipo: 'err', txt: window.CX_MODO_CONFERIR ? 'Modo conferência: correções desligadas (somente leitura).' : 'Só o operador dessa linha (ou o admin) pode corrigir.' }; render(); return; }   // [v3.4]
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando…'; }
     var out;
     try {
@@ -3648,6 +3668,11 @@ var CX_PLAN_MODAL_SEMPRE = true;
   window.gerarRelatorio = async function () {
     var ctx = this, args = arguments;
     var paste = document.getElementById('cxPaste'), txt = paste ? String(paste.value || '').trim() : '';
+    if (window.CX_MODO_CONFERIR && !window.cxOperador()) {   // [v3.4] conferência exige o nome do colaborador
+      toast('Informe o nome do colaborador em "Verificar em nome de".', 'error');
+      var _ci = document.getElementById('cxConfOperador'); if (_ci) _ci.focus();
+      return;
+    }
     var btn = document.getElementById('btnGerar');
     var _restaurar = function () { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-clipboard-check"></i> Verificar caixa'; } };   // [v3.3]
     window._cxPlanSheet = null;
@@ -3669,7 +3694,7 @@ var CX_PLAN_MODAL_SEMPRE = true;
       // [v3.2] modal de conferência — qualquer erro AQUI é ignorado (o relatório sai do mesmo jeito)
       if (window._cxPlanSheet && d0 && d0.lancamentos) {
         try {
-          var usuario = sessionStorage.getItem('usuario') || '';
+          var usuario = window.cxOperador();   // [v3.4]
           var cx0 = cxPlanComparar(d0.lancamentos, window._cxPlanSheet, usuario);
           if (CX_PLAN_MODAL_SEMPRE || cx0.erro || cx0.cont.ale || cx0.cont.neg) {   // [v3.3]
             var dec = await window.cxPlanModal({ d: d0, sheet: window._cxPlanSheet, dataBr: dataBr, usuario: usuario });
@@ -3687,6 +3712,76 @@ var CX_PLAN_MODAL_SEMPRE = true;
   };
   // aquece a lista de abas (pubhtml) em segundo plano — deixa o primeiro "Gerar Relatório" mais rápido
   setTimeout(function () { try { cxPlanPubhtml(false).catch(function () { }); } catch (e) { } }, 5000);
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * [v3.4] MODO CONFERÊNCIA (financeiro)  —  caixa.html?conferir=1
+ *  O financeiro confere o caixa de QUALQUER colaborador sem entrar na conta dele:
+ *  cola o caixa do AMEI, informa o colaborador ("Verificar em nome de") e roda a mesma
+ *  conferência com a planilha (modal + relatório). NADA é gravado: nem relatorios/, nem
+ *  matchPlanilha, nem nf_dia_relatorios, nem "Último relatório". Não usa nenhum path novo
+ *  do Firebase e não depende de mudança nas Rules.
+ *  Só abre para quem tem perm financeiro ou admin (checagem no client, como o resto do portal).
+ *  O operador é casado com a planilha pelo primeiro nome (cxPlanOperadorOk).
+ * ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  var q = ''; try { q = new URLSearchParams(location.search).get('conferir'); } catch (e) { }
+  if (q !== '1') return;
+
+  function perms() { try { return JSON.parse(sessionStorage.getItem('perms') || '{}'); } catch (e) { return {}; } }
+  var tent = 0;
+  (function tentar() {
+    if (!sessionStorage.getItem('perms') && tent++ < 20) { setTimeout(tentar, 250); return; }   // espera o login carregar as permissões
+    var p = perms();
+    if (!(p.financeiro || p.admin)) {
+      try { toast('Modo conferência: só para quem tem a permissão Financeiro.', 'error'); } catch (e) { }
+      return;
+    }
+    ativar();
+  })();
+
+  function ativar() {
+    var btn = document.getElementById('btnGerar'), paste = document.getElementById('cxPaste');
+    if (!btn || !paste || document.getElementById('cxConfOperador')) return;
+    window.CX_MODO_CONFERIR = true;
+
+    var box = document.createElement('div');
+    box.id = 'cxConfBox';
+    box.style.cssText = 'margin:0 0 14px;padding:14px 16px;border-radius:12px;background:#fffbeb;border:1.5px solid #fcd34d;';
+    box.innerHTML =
+      '<div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:6px;"><i class="fas fa-magnifying-glass-chart"></i> Modo conferência (financeiro) — nada é salvo</div>' +
+      '<div style="font-size:12px;color:#78350f;margin-bottom:10px;">1) Cole abaixo o caixa do AMEI do colaborador. 2) Confirme o nome dele. 3) Clique em <b>Verificar caixa</b>. Isso não cria nem altera nenhum caixa no dashboard.</div>' +
+      '<label class="f-label" for="cxConfOperador" style="margin-bottom:4px;display:block;">Verificar em nome de (como aparece na planilha)</label>' +
+      '<input id="cxConfOperador" type="text" autocomplete="off" placeholder="Ex.: Maria Silva" style="width:100%;padding:10px 12px;border:1.5px solid #fcd34d;border-radius:10px;font-family:inherit;font-size:14px;outline:none;background:#fff;">' +
+      '<div id="cxConfDica" style="font-size:11px;color:#92400e;margin-top:5px;"></div>' +
+      '<a href="financeiro.html" style="display:inline-block;margin-top:10px;font-size:12px;font-weight:700;color:#92400e;"><i class="fas fa-arrow-left"></i> Voltar ao Financeiro</a>';
+    var alvo = btn.parentNode;               // div que envolve o botão
+    alvo.parentNode.insertBefore(box, alvo.parentNode.firstChild);   // topo do painel do caixa
+
+    var inp = document.getElementById('cxConfOperador'), dica = document.getElementById('cxConfDica');
+    var manual = false, timer = null;
+    inp.addEventListener('input', function () { manual = !!inp.value.trim(); });
+
+    // sugere o colaborador pelo "Lançado por" mais frequente do que foi colado (sempre editável)
+    paste.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (manual) return;
+        try {
+          var d = parseCaixa(paste.value), cont = {}, melhor = '', n = 0;
+          (d.lancamentos || []).forEach(function (l) {
+            var k = String(l.lancadoPor || '').trim(); if (!k || k === '—') return;
+            cont[k] = (cont[k] || 0) + 1; if (cont[k] > n) { n = cont[k]; melhor = k; }
+          });
+          if (melhor) { inp.value = melhor; dica.textContent = 'Sugerido pelo "Lançado por" do caixa colado — confira e corrija se preciso.'; }
+        } catch (e) { }
+      }, 500);
+    });
+
+    // rótulos
+    var imp = document.getElementById('btnCxImprimir'); if (imp) imp.innerHTML = '<i class="fas fa-print"></i> Imprimir conferência';
+    var tt = document.querySelector('.preview-bar-title'); if (tt) tt.textContent = 'Conferência de caixa (não salva)';
+  }
 })();
 </script>
 
