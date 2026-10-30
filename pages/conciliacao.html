@@ -231,6 +231,12 @@
 
     <!-- ═════════ ABA ABERTOS ═════════ -->
     <div class="tab-pane" id="pane-abertos">
+      <!-- [v2.4] dias do mês (vindos da planilha) com Concluir / Reabrir -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-calendar-check"></i> Dias do mês</div><span class="hint" id="diasResumo" style="margin:0;"></span></div>
+        <div id="diasBox"></div>
+        <div class="hint">"Concluir" marca o dia como terminado e o trava: não dá para conciliar nem fechar de novo. Para mexer outra vez, o administrador clica em "Reabrir". A marca não altera nenhum saldo.</div>
+      </div>
       <div class="panel">
         <div class="panel-header"><div class="panel-title"><i class="fas fa-list-check"></i> Pendências dos dias fechados</div></div>
         <div id="abertosBox"></div>
@@ -352,6 +358,7 @@
       const fechado = rec && rec.estado && rec.estado.status === 'fechado';
       $('estadoDia').innerHTML = fechado ? '<span class="badge b-ok"><i class="fas fa-lock"></i> Dia fechado</span> <button class="btn-s so-admin" style="display:inline-flex;" id="btnReabrir"><i class="fas fa-lock-open"></i> Reabrir</button>'
         : (rec && rec.estado ? '<span class="badge b-warn">Reaberto</span>' : '');
+      if (concluido(dia)) $('estadoDia').innerHTML += ' <span class="badge b-ok"><i class="fas fa-lock"></i> Concluído</span>';   /* [v2.4] */
       $('vWD').disabled = !!fechado;
       $('wdLock').textContent = fechado ? '(congelado)' : '';
       if (fechado) $('vWD').value = C.fmt(rec.reg.saldos.wdSaldo, true);
@@ -497,6 +504,7 @@
     function conciliar() {
       const dia = $('cDia').value;
       if (!dia) { toast('Escolha o dia.', 'error'); return; }
+      if (concluido(dia)) { toast('Este dia está CONCLUÍDO e trancado. Peça ao administrador para reabrir em Pendências.', 'error'); return; }   /* [v2.4] */
       if (!S.wd) { toast('Anexe o Consolidado do Dia do Webdental (passo 2).', 'error'); return; }
       if (!S.banco.length) { toast('Anexe o extrato CSV do Mais Todos (passo 2).', 'error'); return; }
       const prev = getPrev(); if (!prev) { toast(S.admin ? 'Defina o ponto de partida em Configuração.' : 'Falta o ponto de partida. Peça ao administrador para defini-lo.', 'error'); return; }
@@ -656,6 +664,7 @@
     /* ───────── fechar / salvar ───────── */
     async function fechar() {
       const r = S.res; if (!r) { toast('Faça a conciliação antes de fechar.', 'error'); return; }
+      if (concluido(r.dia)) { toast('Este dia está CONCLUÍDO e trancado. Peça ao administrador para reabrir em Pendências.', 'error'); return; }   /* [v2.4] */
       if (r.residuo !== 0) { toast('O cálculo não fechou (resíduo ' + M(r.residuo) + '). Não vou salvar; avise o administrador.', 'error'); return; }
       if (r._congelado) { toast('Este dia já está fechado. Para alterar, o administrador precisa reabrir.', 'info'); return; }
       if (!confirm('Fechar ' + dBR(r.dia) + '?\n\nDiferença do dia: ' + sgn(r.saldos.dDiff) + '\nPontos na lista: ' + r.log.length + '\n\nO saldo Webdental (' + M(r.saldos.wdSaldo) + ') fica congelado.')) { toast('Fechamento cancelado.', 'info'); return; }
@@ -664,6 +673,7 @@
       const doc = { reg, estado: { status: 'fechado', por: user.email || user.uid, em: new Date().toISOString() } };
       if (antigo.reaberturas) doc.reaberturas = antigo.reaberturas;
       if (antigo.resolvidos) doc.resolvidos = antigo.resolvidos;
+      if (antigo.conclusao) doc.conclusao = antigo.conclusao;   /* [v2.4] não apaga a marca de conclusão */
       try { await set(ref(db, BASE + '/' + r.dia), doc); }
       catch (e) { console.error(e); toast('Não foi possível salvar: ' + e.message + ' (regra do RTDB aplicada?)', 'error'); return; }
       logAdmin('fechou a conciliação de ' + r.dia);
@@ -774,7 +784,41 @@
       await carregarDias(); const prox = proxDia(dia); $('cDia').value = prox; limparDia(); atualizaDia(); preencher(prox, false); renderTudoAbas();
       toast('Ponto de partida em ' + dBR(dia) + ' (Santander ' + M(ini.santander) + '). Continue pelo dia ' + dBR(prox) + '.', 'success');
     }
-    function renderTudoAbas() { renderMatriz(); renderAbertos(); renderEspelho(); }
+    /* [v2.4] conclusão manual do dia (marca separada do "Fechar o dia"): clinica-pirituba/conciliacao/{dia}/conclusao */
+    function concluido(dia) { const c = S.dias[dia] && S.dias[dia].conclusao; return !!(c && c.status === 'concluido'); }
+    function renderDias() {
+      const mes = hojeISO().slice(0, 7);
+      const ks = [...new Set(Object.keys(S.base.fechamento).concat(Object.keys(S.base.caixa), fechados()))].filter(k => k.slice(0, 7) === mes).sort().reverse();
+      if (!ks.length) { $('diasBox').innerHTML = '<div class="hint">Nenhum dia do mês atual ainda. ' + (S.admin ? 'Use "Atualizar da planilha" em Dias fechados.' : 'Peça ao administrador para atualizar.') + '</div>'; $('diasResumo').textContent = ''; return; }
+      const nc = ks.filter(concluido).length;
+      $('diasResumo').textContent = nc + ' de ' + ks.length + ' concluído(s)';
+      $('diasBox').innerHTML = tbl(['Data', 'Dinheiro', 'Banco', 'Webdental', 'Diferença (planilha)', 'Situação', ''], ks.map(k => {
+        const f = S.base.fechamento[k] || {}, c = S.base.caixa[k] || {}, cc = (S.dias[k] && S.dias[k].conclusao) || {};
+        const din = f.dinheiro != null ? f.dinheiro : c.saldo, ok = concluido(k);
+        const sit = ok ? '<span class="badge b-ok"><i class="fas fa-lock"></i> Concluído</span><div class="hint" style="margin:2px 0 0;">' + E((cc.por || '').split('@')[0]) + ' · ' + E((cc.em || '').slice(8, 10) + '/' + (cc.em || '').slice(5, 7)) + '</div>' : '<span class="badge b-warn">Pendente</span>';
+        const bt = ok ? (S.admin ? '<button class="btn-s dia-re" data-dia="' + E(k) + '" style="padding:5px 10px;"><i class="fas fa-lock-open"></i> Reabrir</button>' : '<span class="hint">Só o admin reabre</span>')
+                      : '<button class="btn-g dia-ok" data-dia="' + E(k) + '" style="padding:5px 10px;"><i class="fas fa-check"></i> Concluir</button>';
+        return '<tr' + (ok ? ' style="opacity:.75;"' : '') + '><td>' + dBR(k) + '</td><td class="n">' + (din != null ? M(din) : '—') + '</td><td class="n">' + (f.banco != null ? M(f.banco) : '—') + '</td><td class="n">' + (f.wdSaldo != null ? M(f.wdSaldo) : '—') + '</td><td class="n">' + (f.diferenca != null ? M(f.diferenca) : '—') + '</td><td>' + sit + '</td><td>' + bt + '</td></tr>';
+      }), [1, 2, 3, 4]);
+      document.querySelectorAll('.dia-ok').forEach(b => b.onclick = acao(() => concluirDia(b.dataset.dia)));
+      document.querySelectorAll('.dia-re').forEach(b => b.onclick = acao(() => reabrirConclusao(b.dataset.dia)));
+    }
+    async function concluirDia(dia) {
+      if (!confirm('Concluir ' + dBR(dia) + '?\n\nO dia fica trancado: não dá para conciliar nem fechar de novo até o administrador reabrir.')) { toast('Nada foi alterado.', 'info'); return; }
+      await set(ref(db, BASE + '/' + dia + '/conclusao'), { status: 'concluido', por: user.email || user.uid, em: new Date().toISOString() });
+      logAdmin('concluiu o dia ' + dia + ' na conciliação');
+      await carregarDias(); atualizaDia(); renderTudoAbas(); toast('Dia ' + dBR(dia) + ' concluído e trancado.', 'success');
+    }
+    async function reabrirConclusao(dia) {
+      if (!S.admin) { toast('Só o administrador pode reabrir um dia concluído.', 'error'); return; }
+      const motivo = prompt('Por que reabrir ' + dBR(dia) + '? (fica registrado)'); if (motivo === null) { toast('Nada foi alterado.', 'info'); return; }
+      if (!motivo.trim()) { toast('Escreva o motivo para reabrir.', 'error'); return; }
+      const ts = Date.now(), ant = (S.dias[dia] && S.dias[dia].conclusao) || {};
+      await set(ref(db, BASE + '/' + dia + '/conclusao'), { status: 'aberto', por: user.email || user.uid, em: new Date().toISOString(), motivo: motivo.trim().slice(0, 300), concluidoPor: ant.por || null, concluidoEm: ant.em || null });
+      logAdmin('reabriu o dia concluído ' + dia + ' na conciliação');
+      await carregarDias(); atualizaDia(); renderTudoAbas(); toast('Dia ' + dBR(dia) + ' reaberto. Pode mexer; conclua de novo quando terminar.', 'info');
+    }
+    function renderTudoAbas() { renderMatriz(); renderAbertos(); renderEspelho(); renderDias(); }
 
     $('btnExportMatriz').onclick = acao(() => {
       const regs = fechados().map(k => S.dias[k].reg); if (!regs.length) { toast('Ainda não há dias fechados para exportar.', 'info'); return; }
