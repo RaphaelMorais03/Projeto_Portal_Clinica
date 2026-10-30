@@ -211,7 +211,7 @@
       <div class="panel">
         <div class="panel-header"><div class="panel-title"><i class="fas fa-clone"></i> Espelho das planilhas</div><button class="btn-p so-admin" id="btnSync" type="button"><i class="fas fa-rotate"></i> Atualizar da planilha</button></div>
         <div id="espelhoBox"></div>
-        <div class="hint" id="syncInfo">Mostra os dias da planilha (Dinheiro, Banco, Webdental). Para continuar a conciliação a partir de um deles, o administrador clica em "Continuar daqui".</div>
+        <div class="hint" id="syncInfo">Mostra só os dias do mês atual (Dinheiro, Banco, Webdental). Para continuar a conciliação a partir de um deles, o administrador clica em "Continuar daqui".</div>
       </div>
       <div class="panel">
         <div class="panel-header"><div class="panel-title"><i class="fas fa-table"></i> Dias fechados</div><button class="btn-s" id="btnExportMatriz"><i class="fas fa-file-excel"></i> Exportar Excel</button></div>
@@ -715,8 +715,9 @@
     }
     /* [v2.1] espelho: dias vindos das planilhas (somente leitura) + "Continuar daqui" */
     function renderEspelho() {
-      const ks = [...new Set(Object.keys(S.base.fechamento).concat(Object.keys(S.base.caixa)))].sort().reverse().slice(0, 45);
-      if (!ks.length) { $('espelhoBox').innerHTML = '<div class="hint">Nenhum dia da planilha ainda. ' + (S.admin ? 'Clique em "Atualizar da planilha" (ou importe em Configuração).' : 'Peça ao administrador para atualizar.') + '</div>'; return; }
+      const mes = hojeISO().slice(0, 7);   /* [v2.2] só o mês vigente */
+      const ks = [...new Set(Object.keys(S.base.fechamento).concat(Object.keys(S.base.caixa)))].filter(k => k.slice(0, 7) === mes).sort().reverse();
+      if (!ks.length) { $('espelhoBox').innerHTML = '<div class="hint">Nenhum dia do mês atual da planilha ainda. ' + (S.admin ? 'Clique em "Atualizar da planilha" (ou importe em Configuração).' : 'Peça ao administrador para atualizar.') + '</div>'; return; }
       const fe = new Set(fechados());
       $('espelhoBox').innerHTML = tbl(['Data', 'Dinheiro', 'Banco', 'Webdental', 'Diferença (planilha)', 'Situação', ''], ks.map(k => {
         const f = S.base.fechamento[k] || {}, c = S.base.caixa[k] || {};
