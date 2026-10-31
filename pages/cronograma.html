@@ -185,7 +185,7 @@
     .cal-det{background:white;border:1px solid var(--gray-200);border-radius:12px;padding:14px;margin-top:14px;}
     .cal-det-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:6px;}
     .cal-det h3{font-size:15px;color:var(--navy);}
-    .cal-det table{table-layout:fixed;}.cal-det th:nth-child(1){width:15%;}.cal-det th:nth-child(2){width:22%;}.cal-det th:nth-child(3){width:25%;}.cal-det th:nth-child(4){width:13%;}.cal-det th:nth-child(5){width:17%;}.cal-det th:nth-child(6){width:8%;}
+    .cal-det table{table-layout:fixed;}.cal-det th:nth-child(1){width:15%;}.cal-det th:nth-child(2){width:21%;}.cal-det th:nth-child(3){width:20%;}.cal-det th:nth-child(4){width:11%;}.cal-det th:nth-child(5){width:16%;}.cal-det th:nth-child(6){width:17%;}
     .cal-det td{overflow-wrap:anywhere;}
     .cal-det-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
     .cal-per{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);background:var(--gray-100);padding:6px 10px;border-radius:8px;margin:12px 0 6px;}
@@ -201,7 +201,14 @@
     .cal-in{width:76px;padding:5px 8px;font-size:12px;}
     .cal-del{width:28px;height:28px;background:rgba(198,40,40,.08);border:none;border-radius:7px;cursor:pointer;color:var(--red);font-size:12px;}
     .cal-del:hover{background:var(--red);color:white;}
-    .cal-add{display:grid;grid-template-columns:120px 1fr 1fr 150px auto;gap:8px;align-items:end;margin-top:14px;padding:14px;background:var(--gray-50);border:1.5px dashed var(--gray-300);border-radius:12px;}
+    /* [v1.2 cal] escalas deduzidas (estimado), edição de sala/período, ações do mês */
+    .cal-est{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;vertical-align:1px;}
+    .cal-obs{display:block;font-size:10px;color:#b45309;font-weight:700;}
+    .cal-sel{width:100%;max-width:130px;padding:5px 6px;font-size:12px;}
+    .cal-lin{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+    .cal-conf{width:28px;height:28px;background:rgba(22,163,74,.1);border:none;border-radius:7px;cursor:pointer;color:var(--green);font-size:12px;}
+    .cal-conf:hover{background:var(--green);color:white;}
+    .cal-add{display:grid;grid-template-columns:130px 1fr 1fr 150px auto;gap:8px;align-items:end;margin-top:14px;padding:14px;background:var(--gray-50);border:1.5px dashed var(--gray-300);border-radius:12px;}
     .cal-add .f-input,.cal-add .f-select{padding:8px 10px;font-size:13px;}
     /* Agenda do dia por sala (manhã/tarde) — estilo agenda de recursos */
     .cal-ag{grid-column:1/-1;display:grid;grid-template-columns:minmax(96px,130px) repeat(var(--cols,2),minmax(0,1fr));gap:6px;align-items:stretch;}
@@ -474,6 +481,7 @@
           <label class="f-label" for="calFiltro" style="margin:0;">Profissional</label>
           <select class="f-select" id="calFiltro"><option value="">Todos</option></select>
           <span id="calImportarWrap"></span>
+          <span id="calMesAcoes"></span><!-- [v1.2 cal] abrir/fechar o mês do profissional filtrado -->
         </div>
         <div class="cal-kpis" id="calKpis"></div>
         <div class="cal-leg"><span class="l-todas">Todas abertas</span><span class="l-parcial">Parcialmente abertas</span><span class="l-nenhuma">Nenhuma aberta</span><span>Dia já passado</span><span style="color:#1d4ed8;">Número azul = agendados no dia</span></div>
@@ -1082,10 +1090,15 @@
   <script>
   (function () {
     'use strict';
-    var SEED_URL  = '../data/cronograma-seed.json';
-    var SEED_DIAS = ['2026-10-26','2026-10-27','2026-10-28','2026-10-29','2026-10-30','2026-10-31','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07'];
+    // [v1.2 cal] duas fontes de importação. 'legado' = já importada na v1.1 sem marcador: dia que já existe conta como importado.
+    var SEEDS = [
+      { k: 'impresso',  url: '../data/cronograma-seed.json',           legado: true },
+      { k: 'novembro',  url: '../data/cronograma-novembro-seed.json',  legado: false }
+    ];
+    var seedDados = null;   // [{k, legado, dias}] — carregado 1x (só para admin)
     var PERIODOS  = ['Manhã', 'Tarde'];
-    var SALAS_ADD = ['01','02','03','04','05','06','07','08','09','10','FISIO','US','ACOL1','ACOL2'];
+    var PERIODOS_TODOS = ['Manhã', 'Tarde', 'A definir'];
+    var SALAS_ADD = ['01','02','03','04','05','06','07','08','09','10','FISIO','US','ACOL1','ACOL2'];   // [v1.2] '' = Sem sala é oferecido à parte
 
     var DIAS = {};          // 'AAAA-MM-DD' -> { agendados, itens }
     var carregado = {};     // 'AAAA-MM' -> true após o 1º snapshot (ou erro)
@@ -1129,10 +1142,11 @@
       return Object.keys(d.itens).map(function (id) {
         var x = d.itens[id] || {};
         return { id: id, sala: String(x.sala || ''), doc: String(x.doc || ''), role: String(x.role || ''),
-          periodo: x.periodo === 'Tarde' ? 'Tarde' : 'Manhã', aberta: x.aberta === true,
-          agendados: (typeof x.agendados === 'number') ? x.agendados : null };
+          periodo: x.periodo === 'Tarde' ? 'Tarde' : (x.periodo === 'A definir' ? 'A definir' : 'Manhã'), aberta: x.aberta === true,
+          agendados: (typeof x.agendados === 'number') ? x.agendados : null,
+          est: x.est === true, obs: String(x.obs || '') };   // [v1.2 cal] est = período/sala deduzidos (confirmar); obs = aviso curto
       }).sort(function (a, b) {
-        return salaChave(a.sala) - salaChave(b.sala) || ((a.periodo === 'Tarde') - (b.periodo === 'Tarde')) || a.doc.localeCompare(b.doc, 'pt');
+        return salaChave(a.sala) - salaChave(b.sala) || (PERIODOS_TODOS.indexOf(a.periodo) - PERIODOS_TODOS.indexOf(b.periodo)) || a.doc.localeCompare(b.doc, 'pt');
       });
     }
     function filtrados(is) {
@@ -1229,26 +1243,49 @@
       else if (!itensMes) av = '<div class="cal-msg info">Esse profissional não tem agenda neste mês.</div>';
       document.getElementById('calAviso').innerHTML = av;
 
-      var faltam = SEED_DIAS.filter(function (s) { return s.indexOf(ym) === 0 && !DIAS[s]; });
-      document.getElementById('calImportarWrap').innerHTML = (admin && carregado[ym] && !erro[ym] && faltam.length)
-        ? '<button class="btn-teal" id="calImportar" style="font-size:12px;padding:7px 14px;"><i class="fas fa-file-import"></i> Importar semanas do cronograma impresso</button>' : '';
+      // [v1.2 cal] botão aparece só se faltar escala (de qualquer fonte) em algum mês já lido; mostra quantas
+      var nFalta = (admin && carregado[ym] && !erro[ym]) ? contarFaltas(ym) : 0;
+      if (admin && carregado[ym] && !erro[ym] && !seedDados) carregarSeeds();
+      document.getElementById('calImportarWrap').innerHTML = nFalta
+        ? '<button class="btn-teal" id="calImportar" style="font-size:12px;padding:7px 14px;"><i class="fas fa-file-import"></i> Importar ' + nFalta + ' escala' + (nFalta > 1 ? 's' : '') + '</button>' : '';
+
+      var mesAc = '';
+      if (admin && E.filtro && carregado[ym] && !erro[ym] && itensMes) mesAc =
+        '<button class="btn-s" data-mes="abrir" style="font-size:12px;padding:7px 12px;"><i class="fas fa-lock-open"></i> Abrir o mês deste profissional</button>' +
+        '<button class="btn-s" data-mes="fechar" style="font-size:12px;padding:7px 12px;"><i class="fas fa-lock"></i> Fechar o mês</button>';
+      document.getElementById('calMesAcoes').innerHTML = mesAc;
 
       window.calRenderDetalhe();
     };
 
     // ── DETALHE DO DIA ──
+    function selSala(x) {
+      var o = '<option value=""' + (x.sala === '' ? ' selected' : '') + '>Sem sala</option>';
+      var lista = SALAS_ADD.slice(); if (x.sala && lista.indexOf(x.sala) < 0) lista.push(x.sala);
+      lista.forEach(function (s) { o += '<option value="' + esc(s) + '"' + (s === x.sala ? ' selected' : '') + '>' + esc(salaRotulo(s)) + '</option>'; });
+      return '<select class="f-select cal-in cal-sel cal-sala-item" data-id="' + esc(x.id) + '" aria-label="Sala">' + o + '</select>';
+    }
+    function selPeriodo(x) {
+      return '<select class="f-select cal-in cal-sel cal-per-item" data-id="' + esc(x.id) + '" aria-label="Período">' +
+        PERIODOS_TODOS.map(function (p) { return '<option value="' + esc(p) + '"' + (p === x.periodo ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select>';
+    }
     function tabelaPeriodo(per, itens, adm) {
       var l = itens.filter(function (x) { return x.periodo === per; });
-      var h = '<div class="cal-per">' + (per === 'Manhã' ? '☀️ ' : '🌙 ') + per + ' · ' + l.length + '</div>';
+      if (per === 'A definir' && !l.length) return '';   // [v1.2 cal] seção só aparece se houver item sem período
+      var h = '<div class="cal-per">' + (per === 'Manhã' ? '☀️ ' : per === 'Tarde' ? '🌙 ' : '❓ ') + per + ' · ' + l.length + '</div>';
       if (!l.length) return h + '<div style="font-size:12px;color:var(--gray-400);padding:4px 6px;">Ninguém escalado.</div>';
-      h += '<div class="cal-tw"><table><tr><th>Sala</th><th>Profissional</th><th>Especialidade</th><th>Agend.</th><th>Agenda</th>' + (adm ? '<th></th>' : '') + '</tr>';
+      h += '<div class="cal-tw"><table><tr><th>Sala</th><th>Profissional</th><th>Especialidade</th><th>Agend.</th><th>Agenda</th>' + (adm ? '<th>Período</th>' : '') + '</tr>';
       l.forEach(function (x) {
         var cls = x.aberta ? 'ab' : 'na', ico = x.aberta ? 'fa-lock-open' : 'fa-lock', txt = x.aberta ? 'Aberta' : 'Não aberta';
         var pill = adm ? '<button class="cal-pill ' + cls + '" data-acao="toggle" data-id="' + esc(x.id) + '" title="Clique para alterar"><i class="fas ' + ico + '"></i> ' + txt + '</button>'
                        : '<span class="cal-pill ' + cls + '"><i class="fas ' + ico + '"></i> ' + txt + '</span>';
         var agd = adm ? '<input type="number" min="0" class="f-input cal-in cal-agd-item" data-id="' + esc(x.id) + '" value="' + (x.agendados === null ? '' : x.agendados) + '" placeholder="–">' : (x.agendados === null ? '–' : x.agendados);
-        h += '<tr><td>' + esc(salaRotulo(x.sala)) + '</td><td><b>' + esc(x.doc) + '</b></td><td>' + esc(x.role) + '</td><td>' + agd + '</td><td>' + pill + '</td>' +
-          (adm ? '<td><button class="cal-del" data-acao="remover" data-id="' + esc(x.id) + '" title="Remover"><i class="fas fa-trash"></i></button></td>' : '') + '</tr>';
+        var est = x.est ? '<span class="cal-est" title="Período e/ou sala deduzidos dos cronogramas anteriores. Confirme ou corrija.">estimado</span>' : '';
+        var obs = x.obs ? '<span class="cal-obs">' + esc(x.obs) + '</span>' : '';
+        h += '<tr><td>' + (adm ? selSala(x) : esc(salaRotulo(x.sala))) + '</td><td><b>' + esc(x.doc) + '</b>' + est + obs + '</td><td>' + esc(x.role) + '</td><td>' + agd + '</td><td>' + pill + '</td>' +
+          (adm ? '<td><div class="cal-lin">' + selPeriodo(x) +
+            (x.est ? '<button class="cal-conf" data-acao="confirmar" data-id="' + esc(x.id) + '" title="Confirmar sala e período"><i class="fas fa-check"></i></button>' : '') +
+            '<button class="cal-del" data-acao="remover" data-id="' + esc(x.id) + '" title="Remover"><i class="fas fa-trash"></i></button></div></td>' : '') + '</tr>';
       });
       return h + '</table></div>';
     }
@@ -1266,21 +1303,22 @@
           '<button class="btn-s" data-acao="agd-dia" style="padding:6px 10px;font-size:12px;">Salvar</button>';
         if (itens.length) h += '<button class="btn-s" data-acao="todas-abertas" style="padding:6px 10px;font-size:12px;"><i class="fas fa-lock-open"></i> Marcar todas abertas</button>' +
           '<button class="btn-s" data-acao="todas-nao" style="padding:6px 10px;font-size:12px;"><i class="fas fa-lock"></i> Marcar todas não abertas</button>';
+        if (itens.some(function (x) { return x.est; })) h += '<button class="btn-s" data-acao="confirmar-dia" style="padding:6px 10px;font-size:12px;"><i class="fas fa-check"></i> Confirmar escala do dia</button>';
       } else h += '<span style="font-size:13px;font-weight:800;color:#1d4ed8;">Agendados no dia: ' + (agd === null ? '–' : agd) + '</span>';
       h += '</div></div>';
       if (E.filtro) h += '<div class="cal-msg info" style="margin:8px 0 0;">Mostrando só o profissional filtrado.</div>';
       if (!itens.length) h += '<div style="font-size:13px;color:var(--gray-400);padding:10px 2px;">Nenhum profissional escalado neste dia.</div>';
-      else h += tabelaPeriodo('Manhã', itens, adm) + tabelaPeriodo('Tarde', itens, adm);
+      else h += tabelaPeriodo('Manhã', itens, adm) + tabelaPeriodo('Tarde', itens, adm) + tabelaPeriodo('A definir', itens, adm);
 
       if (adm) {
         var docs = {}, roles = {};
         Object.keys(DIAS).forEach(function (k) { itensDoDia(k).forEach(function (x) { if (x.doc) docs[x.doc] = 1; if (x.role) roles[x.role] = 1; }); });
         if (typeof MEDICOS !== 'undefined') Object.keys(MEDICOS).forEach(function (r) { roles[r] = 1; });
         h += '<div class="cal-add">' +
-          '<div><label class="f-label" for="calAddSala">Sala</label><select class="f-select" id="calAddSala">' + SALAS_ADD.map(function (s) { return '<option value="' + s + '">' + esc(salaRotulo(s)) + '</option>'; }).join('') + '</select></div>' +
+          '<div><label class="f-label" for="calAddSala">Sala</label><select class="f-select" id="calAddSala"><option value="">Sem sala</option>' + SALAS_ADD.map(function (s) { return '<option value="' + s + '">' + esc(salaRotulo(s)) + '</option>'; }).join('') + '</select></div>' +
           '<div><label class="f-label" for="calAddDoc">Profissional</label><input class="f-input" id="calAddDoc" list="calDocs" maxlength="80" placeholder="Nome"></div>' +
           '<div><label class="f-label" for="calAddRole">Especialidade</label><input class="f-input" id="calAddRole" list="calRoles" maxlength="60" placeholder="Ex.: Cardiologia"></div>' +
-          '<div><label class="f-label" for="calAddPeriodo">Período</label><select class="f-select" id="calAddPeriodo"><option value="Manhã">Manhã</option><option value="Tarde">Tarde</option><option value="Ambos">Manhã e Tarde</option></select></div>' +
+          '<div><label class="f-label" for="calAddPeriodo">Período</label><select class="f-select" id="calAddPeriodo"><option value="Manhã">Manhã</option><option value="Tarde">Tarde</option><option value="Ambos">Manhã e Tarde</option><option value="A definir">A definir</option></select></div>' +
           '<button class="btn-p" data-acao="adicionar" style="height:38px;"><i class="fas fa-plus"></i> Adicionar</button></div>' +
           '<datalist id="calDocs">' + Object.keys(docs).sort().map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>' +
           '<datalist id="calRoles">' + Object.keys(roles).sort().map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>';
@@ -1296,7 +1334,7 @@
       if (!doc) { toast('Informe o profissional', 'error'); return; }
       var pers = per === 'Ambos' ? PERIODOS : [per], rnd = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       Promise.all(pers.map(function (p) {
-        return salvar('crono/dias/' + is + '/itens/' + p.charAt(0) + '_' + sala + '_' + rnd, { sala: sala, doc: doc, role: role, periodo: p, aberta: false });
+        return salvar('crono/dias/' + is + '/itens/' + p.charAt(0) + '_' + (sala || 'S') + '_' + rnd, { sala: sala, doc: doc, role: role, periodo: p, aberta: false });
       })).then(function (r) { if (r.every(Boolean)) { toast('Adicionado ao dia', 'success'); window.calRenderDetalhe(true); } });
     }
 
@@ -1315,23 +1353,86 @@
         if (n !== null && (isNaN(n) || n < 0)) { toast('Informe um número válido', 'error'); return; }
         salvar(base + '/agendados', n).then(function (ok) { if (ok) toast('Agendados do dia salvo', 'success'); });
       }
+      else if (acao === 'confirmar') { if (it) salvar(base + '/itens/' + id + '/est', null).then(function (ok) { if (ok) window.calRenderDetalhe(true); }); }
+      else if (acao === 'confirmar-dia') {
+        var est = filtrados(is).filter(function (x) { return x.est; });
+        Promise.all(est.map(function (x) { return salvar(base + '/itens/' + x.id + '/est', null); })).then(function (r) { if (r.every(Boolean)) { toast('Escala do dia confirmada', 'success'); window.calRenderDetalhe(true); } });
+      }
       else if (acao === 'adicionar') adicionar();
     }
 
+    // [v1.2 cal] abrir/fechar todos os dias (de hoje em diante) do mês para o profissional filtrado
+    function acaoMes(ev) {
+      var b = ev.target.closest('[data-mes]'); if (!b || !ehAdmin() || !E.filtro) return;
+      var abrir = b.getAttribute('data-mes') === 'abrir', ym = E.ano + '-' + pad(E.mes + 1), hoje = hojeIso(), alvo = [], doc = '';
+      Object.keys(DIAS).forEach(function (k) {
+        if (k.indexOf(ym) !== 0 || k < hoje) return;
+        itensDoDia(k).forEach(function (x) { if (norm(x.doc) === E.filtro) { doc = x.doc; if (x.aberta !== abrir) alvo.push(k + '/itens/' + x.id); } });
+      });
+      if (!alvo.length) { toast('Nada a alterar neste mês', 'info'); return; }
+      if (!confirm((abrir ? 'Marcar como ABERTAS ' : 'Marcar como NÃO abertas ') + alvo.length + ' agenda(s) de ' + doc + ' neste mês (de hoje em diante)?')) return;
+      Promise.all(alvo.map(function (a) { return salvar('crono/dias/' + a + '/aberta', abrir); })).then(function (r) {
+        if (r.every(Boolean)) toast(alvo.length + ' agenda(s) atualizada(s)', 'success');
+      });
+    }
+
+    // [v1.2 cal] Importação MESCLADA: nunca sobrescreve um item existente; só acrescenta o que falta.
+    // Dia que já existe recebe apenas os itens ausentes; cada fonte marca crono/dias/{dia}/seeds/{k} para não reaparecer se o admin remover um item.
+    function carregarSeeds() {
+      if (seedDados || seedDados === false) return;
+      seedDados = false;   // em andamento
+      Promise.all(SEEDS.map(function (s) {
+        return fetch(s.url, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+          .then(function (j) { return { k: s.k, legado: s.legado, dias: (j && j.dias) || {} }; });
+      })).then(function (r) { seedDados = r; window.calRender(); });
+    }
+    function faltasDoDia(dia, seed) {
+      var d = DIAS[dia], marcado = d && d.seeds && d.seeds[seed.k] === true;
+      if (marcado || (seed.legado && d)) return null;                         // já importado antes
+      var itens = (seed.dias[dia] && seed.dias[dia].itens) || {}, ex = (d && d.itens) || {}, falta = {};
+      Object.keys(itens).forEach(function (id) { if (!ex[id]) falta[id] = itens[id]; });
+      return falta;
+    }
+    function contarFaltas(ym) {
+      if (!seedDados) return 0;
+      var n = 0;
+      seedDados.forEach(function (s) {
+        Object.keys(s.dias).forEach(function (dia) {
+          if (dia.indexOf(ym) !== 0) return;
+          var f = faltasDoDia(dia, s); if (f) n += Object.keys(f).length;
+        });
+      });
+      return n;
+    }
     function importarSeed() {
-      if (!ehAdmin()) return;
-      if (!confirm('Importar as semanas de 26/out e 02/nov do cronograma impresso?\nDias que já têm dados no calendário NÃO são alterados.')) return;
+      if (!ehAdmin() || !seedDados) return;
+      var ym = E.ano + '-' + pad(E.mes + 1), total = contarFaltas(ym);
+      if (!total) return;
+      if (!confirm('Importar ' + total + ' escala(s) deste mês?\nItens que já existem NÃO são alterados. Itens vindos da lista de novembro entram como "estimado" quando período/sala foram deduzidos.')) return;
       var fu = window.__fb;
       if (!fu || !fu.get) { toast('Firebase ainda não carregou. Tente de novo.', 'error'); return; }
-      fetch(SEED_URL, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(async function (seed) {
-        var dias = (seed && seed.dias) || {}, feitos = 0, pulados = 0;
-        for (var k of Object.keys(dias)) {
-          var snap = await fu.get(fu.ref(fu.db, 'crono/dias/' + k));
-          if (snap.exists()) { pulados++; continue; }
-          if (await salvar('crono/dias/' + k, dias[k])) feitos++;
+      (async function () {
+        var feitos = 0, falhas = 0;
+        for (var s of seedDados) {
+          for (var dia of Object.keys(s.dias)) {
+            if (dia.indexOf(ym) !== 0) continue;
+            var snap = await fu.get(fu.ref(fu.db, 'crono/dias/' + dia));   // lê de novo: evita sobrescrever o que mudou agora
+            var atual = snap.exists() ? snap.val() : null, ex = (atual && atual.itens) || {};
+            if ((atual && atual.seeds && atual.seeds[s.k] === true) || (s.legado && atual)) continue;
+            var seedDia = s.dias[dia], itens = seedDia.itens || {}, ids = Object.keys(itens).filter(function (id) { return !ex[id]; });
+            if (!atual) {
+              var novo = { itens: itens, seeds: {} }; novo.seeds[s.k] = true;
+              if (typeof seedDia.agendados === 'number') novo.agendados = seedDia.agendados;
+              if (await salvar('crono/dias/' + dia, novo)) feitos += ids.length; else falhas++;
+            } else {
+              var ok = true;
+              for (var id of ids) { if (await salvar('crono/dias/' + dia + '/itens/' + id, itens[id])) feitos++; else { ok = false; falhas++; } }
+              if (ok) await salvar('crono/dias/' + dia + '/seeds/' + s.k, true);
+            }
+          }
         }
-        toast('Importação: ' + feitos + ' dia(s) novo(s), ' + pulados + ' já existiam', feitos ? 'success' : 'info');
-      }).catch(function (e) { toast('Falha na importação: ' + e.message, 'error'); });
+        toast('Importação: ' + feitos + ' escala(s) nova(s)' + (falhas ? ', ' + falhas + ' falha(s)' : ''), falhas ? 'error' : (feitos ? 'success' : 'info'));
+      })().catch(function (e) { toast('Falha na importação: ' + e.message, 'error'); });
     }
 
     // ── NAVEGAÇÃO / EVENTOS ──
@@ -1355,12 +1456,20 @@
       var det = document.getElementById('calDetalhe');
       det.addEventListener('click', acaoDetalhe);
       det.addEventListener('change', function (ev) {
-        var t = ev.target; if (!t.classList || !t.classList.contains('cal-agd-item') || !ehAdmin() || !E.diaSel) return;
+        var t = ev.target; if (!t.classList || !ehAdmin() || !E.diaSel) return;
+        // [v1.2 cal] admin corrige sala/período; ao editar, a escala deixa de ser "estimada"
+        if (t.classList.contains('cal-sala-item') || t.classList.contains('cal-per-item')) {
+          var campo = t.classList.contains('cal-sala-item') ? 'sala' : 'periodo', b = 'crono/dias/' + E.diaSel + '/itens/' + t.getAttribute('data-id');
+          Promise.all([salvar(b + '/' + campo, t.value), salvar(b + '/est', null)]).then(function () { window.calRenderDetalhe(true); });
+          return;
+        }
+        if (!t.classList.contains('cal-agd-item')) return;
         var raw = t.value.trim(), n = raw === '' ? null : parseInt(raw, 10);
         if (n !== null && (isNaN(n) || n < 0)) { toast('Informe um número válido', 'error'); return; }
         salvar('crono/dias/' + E.diaSel + '/itens/' + t.getAttribute('data-id') + '/agendados', n);
       });
       document.getElementById('calImportarWrap').addEventListener('click', function (ev) { if (ev.target.closest('#calImportar')) importarSeed(); });
+      document.getElementById('calMesAcoes').addEventListener('click', acaoMes);
     }
 
     window.calAbrir = function () {
@@ -1391,8 +1500,9 @@
         return;
       }
       var lanes = ['Manhã', 'Tarde'];
-      if (itens.some(function (x) { return x.periodo !== 'Manhã' && x.periodo !== 'Tarde' && x.periodo !== 'Manhã e Tarde'; })) lanes.push('Sem período');
-      function nasLanes(x) { return x.periodo === 'Manhã e Tarde' ? ['Manhã', 'Tarde'] : (x.periodo === 'Manhã' || x.periodo === 'Tarde') ? [x.periodo] : ['Sem período']; }
+      if (itens.some(function (x) { return x.periodo === 'A definir'; })) lanes.push('A definir');   // [v1.2 cal]
+      if (itens.some(function (x) { return x.periodo !== 'Manhã' && x.periodo !== 'Tarde' && x.periodo !== 'Manhã e Tarde' && x.periodo !== 'A definir'; })) lanes.push('Sem período');
+      function nasLanes(x) { return x.periodo === 'Manhã e Tarde' ? ['Manhã', 'Tarde'] : (x.periodo === 'Manhã' || x.periodo === 'Tarde' || x.periodo === 'A definir') ? [x.periodo] : ['Sem período']; }
       var salas = [], vistas = {};
       itens.forEach(function (x) { if (!vistas[x.sala]) { vistas[x.sala] = 1; salas.push(x.sala); } });
       salas.sort(function (a, b) { return salaChave(a) - salaChave(b) || a.localeCompare(b); });
@@ -1403,7 +1513,7 @@
       if (aviso) h += aviso;
       h += '<div></div>' + lanes.map(function (l) {
         var n = itens.filter(function (x) { return nasLanes(x).indexOf(l) >= 0; }).length;
-        return '<div class="cal-ag-h">' + (l === 'Manhã' ? '☀️ ' : l === 'Tarde' ? '🌙 ' : '') + esc(l) + ' · ' + n + '</div>';
+        return '<div class="cal-ag-h">' + (l === 'Manhã' ? '☀️ ' : l === 'Tarde' ? '🌙 ' : l === 'A definir' ? '❓ ' : '') + esc(l) + ' · ' + n + '</div>';
       }).join('');
       salas.forEach(function (s) {
         var ok = window.setupDone && window.setupDone[s];
@@ -1411,7 +1521,7 @@
           (off === 0 && s ? '<button class="cal-ag-setup' + (ok ? ' ok' : '') + '" data-sala="' + esc(s) + '" title="Marcar sala como configurada">' + (ok ? '✅ Configurada' : '⚙️ Configurar') + '</button>' : '') + '</div>';
         lanes.forEach(function (l) {
           h += '<div class="cal-ag-cell">' + itens.filter(function (x) { return x.sala === s && nasLanes(x).indexOf(l) >= 0; }).map(function (x) {
-            return '<div class="cal-card cal-c' + cor(x.role || x.doc) + '"><div class="cal-card-doc">' + esc(x.doc) + '</div><div class="cal-card-role">' + esc(x.role) + '</div>' +
+            return '<div class="cal-card cal-c' + cor(x.role || x.doc) + '"><div class="cal-card-doc">' + esc(x.doc) + (x.est ? '<span class="cal-est" title="Período/sala deduzidos">estimado</span>' : '') + '</div><div class="cal-card-role">' + esc(x.role) + '</div>' + (x.obs ? '<span class="cal-obs">' + esc(x.obs) + '</span>' : '') +
               (x.aberta === true ? '<span class="cal-pill ab sm"><i class="fas fa-lock-open"></i> Aberta</span>' : x.aberta === false ? '<span class="cal-pill na sm"><i class="fas fa-lock"></i> Não aberta</span>' : '') +
               (x.agendados !== null ? '<span class="cal-card-agd">' + x.agendados + ' agendados</span>' : '') + '</div>';
           }).join('') + '</div>';
