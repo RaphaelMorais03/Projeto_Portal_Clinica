@@ -1,0 +1,1507 @@
+{
+ "_info": "Seed do cronograma semanal impresso (semanas 26/out e 02/nov/2026). Transcrito das imagens; conferir antes de usar. 'aberta' começa false.",
+ "dias": {
+  "2026-10-26": {
+   "agendados": 396,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Caridad",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Juan",
+     "role": "Cardiologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Brenner",
+     "role": "Psiquiatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_US": {
+     "sala": "US",
+     "doc": "Luis Massoni",
+     "role": "Ultrassom",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Francisco",
+     "role": "Neurologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Ronaldo",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Equipe Neuro",
+     "role": "Acolhimento",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_09": {
+     "sala": "09",
+     "doc": "Caroline",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_01": {
+     "sala": "01",
+     "doc": "Caridad",
+     "role": "Oftalmologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_03": {
+     "sala": "03",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_04": {
+     "sala": "04",
+     "doc": "André Ortuno",
+     "role": "Geriatria/Clínico",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_05": {
+     "sala": "05",
+     "doc": "Brenner",
+     "role": "Psiquiatria",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_US": {
+     "sala": "US",
+     "doc": "Luis Massoni",
+     "role": "Ultrassom",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_08": {
+     "sala": "08",
+     "doc": "Fabio",
+     "role": "Mastologia/Gineco",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_09": {
+     "sala": "09",
+     "doc": "Caroline",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_FISIO": {
+     "sala": "FISIO",
+     "doc": "Isabela",
+     "role": "Fisioterapia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-10-27": {
+   "agendados": 119,
+   "itens": {
+    "M_02": {
+     "sala": "02",
+     "doc": "Heitor",
+     "role": "Psiquiatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Marco Antônio",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Vinicius",
+     "role": "Dermatologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "André P.",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Carlos",
+     "role": "Clínico/Geriatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_09": {
+     "sala": "09",
+     "doc": "Priscila",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_FISIO": {
+     "sala": "FISIO",
+     "doc": "Isabela",
+     "role": "Fisioterapia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Heitor",
+     "role": "Psiquiatria",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_04": {
+     "sala": "04",
+     "doc": "Breno Bauab",
+     "role": "Otorrino",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_05": {
+     "sala": "05",
+     "doc": "Anne Kelly",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_US": {
+     "sala": "US",
+     "doc": "Murilo",
+     "role": "Ultrassom",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_06": {
+     "sala": "06",
+     "doc": "André P.",
+     "role": "Ortopedia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_09": {
+     "sala": "09",
+     "doc": "Priscila",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-10-28": {
+   "agendados": 166,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Teófilo",
+     "role": "Vascular",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Silvia",
+     "role": "Otorrino",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Camila Mukai",
+     "role": "Gastro",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Vera",
+     "role": "Endocrinologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_08": {
+     "sala": "08",
+     "doc": "Fabio",
+     "role": "Mastologia/Gineco",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_FISIO": {
+     "sala": "FISIO",
+     "doc": "Isabela",
+     "role": "Fisioterapia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_03": {
+     "sala": "03",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_04": {
+     "sala": "04",
+     "doc": "André Ortuno",
+     "role": "Geriatria/Clínico",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_05": {
+     "sala": "05",
+     "doc": "Juliano",
+     "role": "Dermatologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_US": {
+     "sala": "US",
+     "doc": "Breno Gomes",
+     "role": "Ultrassom",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_08": {
+     "sala": "08",
+     "doc": "Leticia",
+     "role": "Ginecologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-10-29": {
+   "agendados": 306,
+   "itens": {
+    "M_02": {
+     "sala": "02",
+     "doc": "Heitor",
+     "role": "Psiquiatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Cinthya",
+     "role": "Nutrição",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Álvaro",
+     "role": "Cardiologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Ecocardiograma",
+     "role": "Exame",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "André P.",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Teste Ergo.",
+     "role": "Acolhimento",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_09": {
+     "sala": "09",
+     "doc": "Priscila",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Heitor",
+     "role": "Psiquiatria",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_03": {
+     "sala": "03",
+     "doc": "Cinthya",
+     "role": "Nutrição",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_04": {
+     "sala": "04",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_05": {
+     "sala": "05",
+     "doc": "Vinicius",
+     "role": "Dermatologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_US": {
+     "sala": "US",
+     "doc": "Breno Gomes",
+     "role": "Ultrassom",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_06": {
+     "sala": "06",
+     "doc": "André P.",
+     "role": "Ortopedia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_07": {
+     "sala": "07",
+     "doc": "Francisco",
+     "role": "Neurologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_08": {
+     "sala": "08",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Equipe Neuro",
+     "role": "Acolhimento",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_09": {
+     "sala": "09",
+     "doc": "Priscila",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_FISIO": {
+     "sala": "FISIO",
+     "doc": "Isabela",
+     "role": "Fisioterapia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-10-30": {
+   "agendados": 166,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Ruben",
+     "role": "Vascular",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_US": {
+     "sala": "US",
+     "doc": "Vanessa",
+     "role": "Ultrassom",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Luiz Fahed",
+     "role": "Pediatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Ronaldo",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_08": {
+     "sala": "08",
+     "doc": "Leticia",
+     "role": "Ginecologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Lauriana",
+     "role": "Neuropsicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_FISIO": {
+     "sala": "FISIO",
+     "doc": "Isabela",
+     "role": "Fisioterapia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_03": {
+     "sala": "03",
+     "doc": "Anne Kelly",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_05": {
+     "sala": "05",
+     "doc": "André Ortuno",
+     "role": "Geriatria/Clínico",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_06": {
+     "sala": "06",
+     "doc": "Luiz Fahed",
+     "role": "Pediatria",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Lauriana",
+     "role": "Neuropsicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-10-31": {
+   "agendados": 183,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Caridad",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "André Yuzo",
+     "role": "Gastro",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Larissa",
+     "role": "Otorrino",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Saily",
+     "role": "Clínico/Pediatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Willy",
+     "role": "Neurologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_08": {
+     "sala": "08",
+     "doc": "Leticia",
+     "role": "Ginecologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Equipe Neuro",
+     "role": "Acolhimento",
+     "periodo": "Manhã",
+     "aberta": false
+    }
+   }
+  },
+  "2026-11-02": {
+   "agendados": 287,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Juan",
+     "role": "Cardiologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Larissa",
+     "role": "Otorrino",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Ecocardiograma",
+     "role": "Exame",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_US": {
+     "sala": "US",
+     "doc": "Vanessa",
+     "role": "Ultrassom",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Francisco",
+     "role": "Neurologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Ronaldo",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_08": {
+     "sala": "08",
+     "doc": "Leticia",
+     "role": "Ginecologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Teste Ergo.",
+     "role": "Acolhimento",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "André Ortuno",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_FISIO": {
+     "sala": "FISIO",
+     "doc": "Equipe Neuro",
+     "role": "Fisioterapia",
+     "periodo": "Manhã",
+     "aberta": false
+    }
+   }
+  },
+  "2026-11-03": {
+   "agendados": 299,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Diovani",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Heitor",
+     "role": "Psiquiatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Vinicius",
+     "role": "Dermatologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "André P.",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Carlos",
+     "role": "Clínico/Geriatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_09": {
+     "sala": "09",
+     "doc": "Priscila",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_FISIO": {
+     "sala": "FISIO",
+     "doc": "Isabela",
+     "role": "Fisioterapia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_01": {
+     "sala": "01",
+     "doc": "Diovani",
+     "role": "Oftalmologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Heitor",
+     "role": "Psiquiatria",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_03": {
+     "sala": "03",
+     "doc": "Camila Santos",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_04": {
+     "sala": "04",
+     "doc": "Breno Bauab",
+     "role": "Otorrino",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_05": {
+     "sala": "05",
+     "doc": "Anne Kelly",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_US": {
+     "sala": "US",
+     "doc": "Murilo",
+     "role": "Ultrassom",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_06": {
+     "sala": "06",
+     "doc": "André P.",
+     "role": "Ortopedia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_09": {
+     "sala": "09",
+     "doc": "Priscila",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-11-04": {
+   "agendados": 283,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Teófilo",
+     "role": "Vascular",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Silvia",
+     "role": "Otorrino",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_US": {
+     "sala": "US",
+     "doc": "Vanessa",
+     "role": "Ultrassom",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Griselda",
+     "role": "Neurologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_08": {
+     "sala": "08",
+     "doc": "Fabio",
+     "role": "Mastologia/Gineco",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Equipe Neuro",
+     "role": "Acolhimento",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_09": {
+     "sala": "09",
+     "doc": "Camila Santos",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_FISIO": {
+     "sala": "FISIO",
+     "doc": "Isabela",
+     "role": "Fisioterapia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_03": {
+     "sala": "03",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_05": {
+     "sala": "05",
+     "doc": "Juliano",
+     "role": "Dermatologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_US": {
+     "sala": "US",
+     "doc": "Breno Gomes",
+     "role": "Ultrassom",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_07": {
+     "sala": "07",
+     "doc": "Griselda",
+     "role": "Neurologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_08": {
+     "sala": "08",
+     "doc": "Leticia",
+     "role": "Ginecologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Equipe Neuro",
+     "role": "Acolhimento",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_09": {
+     "sala": "09",
+     "doc": "Camila Santos",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-11-05": {
+   "agendados": 442,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Heitor",
+     "role": "Psiquiatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Cinthya",
+     "role": "Nutrição",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "André P.",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Álvaro",
+     "role": "Cardiologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Ecocardiograma",
+     "role": "Exame",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_US": {
+     "sala": "US",
+     "doc": "Vanessa",
+     "role": "Ultrassom",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Vera",
+     "role": "Endocrinologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Teste Ergo.",
+     "role": "Acolhimento",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_09": {
+     "sala": "09",
+     "doc": "Priscila",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_01": {
+     "sala": "01",
+     "doc": "Heitor",
+     "role": "Psiquiatria",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_03": {
+     "sala": "03",
+     "doc": "André P.",
+     "role": "Ortopedia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_04": {
+     "sala": "04",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_05": {
+     "sala": "05",
+     "doc": "Vinicius",
+     "role": "Dermatologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_US": {
+     "sala": "US",
+     "doc": "Vanessa",
+     "role": "Ultrassom",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_06": {
+     "sala": "06",
+     "doc": "Glauco",
+     "role": "Urologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_07": {
+     "sala": "07",
+     "doc": "Vera",
+     "role": "Endocrinologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_08": {
+     "sala": "08",
+     "doc": "Fabio",
+     "role": "Mastologia/Gineco",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_09": {
+     "sala": "09",
+     "doc": "Priscila",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Maria Ap.",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-11-06": {
+   "agendados": 180,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Grasiela",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Cinthya",
+     "role": "Nutrição",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Luiz Fahed",
+     "role": "Pediatria",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Ronaldo",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Lauriana",
+     "role": "Neuropsicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_FISIO": {
+     "sala": "FISIO",
+     "doc": "Isabela",
+     "role": "Fisioterapia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "T_01": {
+     "sala": "01",
+     "doc": "Yuledis",
+     "role": "Oftalmologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_03": {
+     "sala": "03",
+     "doc": "Anne Kelly",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_04": {
+     "sala": "04",
+     "doc": "Cinthya",
+     "role": "Nutrição",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_US": {
+     "sala": "US",
+     "doc": "Breno Gomes",
+     "role": "Ultrassom",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_06": {
+     "sala": "06",
+     "doc": "Luiz Fahed",
+     "role": "Pediatria",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_07": {
+     "sala": "07",
+     "doc": "Glauco",
+     "role": "Urologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_09": {
+     "sala": "09",
+     "doc": "Camila Santos",
+     "role": "Psicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    },
+    "T_10": {
+     "sala": "10",
+     "doc": "Lauriana",
+     "role": "Neuropsicologia",
+     "periodo": "Tarde",
+     "aberta": false
+    }
+   }
+  },
+  "2026-11-07": {
+   "agendados": 193,
+   "itens": {
+    "M_01": {
+     "sala": "01",
+     "doc": "Caridad",
+     "role": "Oftalmologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_02": {
+     "sala": "02",
+     "doc": "Equipe Oftalmo",
+     "role": "Exames oftalmológicos",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_03": {
+     "sala": "03",
+     "doc": "Saily",
+     "role": "Pediatria/Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_04": {
+     "sala": "04",
+     "doc": "Silvia",
+     "role": "Otorrino",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_05": {
+     "sala": "05",
+     "doc": "Juliano",
+     "role": "Dermatologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_US": {
+     "sala": "US",
+     "doc": "Vanessa",
+     "role": "Ultrassom",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_06": {
+     "sala": "06",
+     "doc": "Willy",
+     "role": "Neurologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_07": {
+     "sala": "07",
+     "doc": "Marco Antônio",
+     "role": "Ortopedia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_08": {
+     "sala": "08",
+     "doc": "Leticia",
+     "role": "Ginecologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_ACOL2": {
+     "sala": "ACOL2",
+     "doc": "Equipe Neuro",
+     "role": "Acolhimento",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_09": {
+     "sala": "09",
+     "doc": "Camila Santos",
+     "role": "Psicologia",
+     "periodo": "Manhã",
+     "aberta": false
+    },
+    "M_10": {
+     "sala": "10",
+     "doc": "Antônio",
+     "role": "Clínico",
+     "periodo": "Manhã",
+     "aberta": false
+    }
+   }
+  }
+ }
+}
