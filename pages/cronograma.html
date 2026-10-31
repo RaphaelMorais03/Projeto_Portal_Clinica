@@ -208,6 +208,16 @@
     .cal-lin{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
     .cal-conf{width:28px;height:28px;background:rgba(22,163,74,.1);border:none;border-radius:7px;cursor:pointer;color:var(--green);font-size:12px;}
     .cal-conf:hover{background:var(--green);color:white;}
+    /* [v1.3 cal] Montar semana: médicos do dia já vêm da escala; admin só escolhe a sala */
+    .cal-semp{background:white;border:1px solid var(--gray-200);border-radius:12px;padding:14px;margin-top:14px;}
+    .cal-semp h3{font-size:15px;color:var(--navy);}
+    .cal-semp table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+    .cal-semp th{text-align:left;color:var(--gray-500);font-size:10px;padding:6px;border-bottom:1px solid var(--gray-200);text-transform:uppercase;}
+    .cal-semp td{padding:5px 6px;border-bottom:1px solid var(--gray-100);vertical-align:middle;overflow-wrap:anywhere;}
+    .cal-semp tr.sem td:nth-child(3){background:#fffbeb;}
+    .cal-semp tr.conf td:nth-child(3){background:#fee2e2;}
+    .cal-dh{font-size:12px;font-weight:800;color:var(--navy);background:var(--gray-100);padding:6px 10px;border-radius:8px;margin:12px 0 6px;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;}
+    .cal-dh .alerta{color:#b45309;}.cal-dh .ok{color:var(--green);}.cal-dh .erro{color:#b91c1c;}
     .cal-add{display:grid;grid-template-columns:130px 1fr 1fr 150px auto;gap:8px;align-items:end;margin-top:14px;padding:14px;background:var(--gray-50);border:1.5px dashed var(--gray-300);border-radius:12px;}
     .cal-add .f-input,.cal-add .f-select{padding:8px 10px;font-size:13px;}
     /* Agenda do dia por sala (manhã/tarde) — estilo agenda de recursos */
@@ -481,12 +491,14 @@
           <label class="f-label" for="calFiltro" style="margin:0;">Profissional</label>
           <select class="f-select" id="calFiltro"><option value="">Todos</option></select>
           <span id="calImportarWrap"></span>
+          <span id="calSemanaBtn"></span><!-- [v1.3 cal] botão Montar semana (admin) -->
           <span id="calMesAcoes"></span><!-- [v1.2 cal] abrir/fechar o mês do profissional filtrado -->
         </div>
         <div class="cal-kpis" id="calKpis"></div>
         <div class="cal-leg"><span class="l-todas">Todas abertas</span><span class="l-parcial">Parcialmente abertas</span><span class="l-nenhuma">Nenhuma aberta</span><span>Dia já passado</span><span style="color:#1d4ed8;">Número azul = agendados no dia</span></div>
         <div id="calAviso"><div class="cal-msg">Carregando agendas...</div></div>
         <div class="cal-grade" id="calGrade"></div>
+        <div class="cal-semp" id="calSemana" style="display:none"></div><!-- [v1.3 cal] -->
         <div class="cal-det" id="calDetalhe" style="display:none"></div>
       </div>
     </div>
@@ -1104,7 +1116,7 @@
     var carregado = {};     // 'AAAA-MM' -> true após o 1º snapshot (ou erro)
     var erro = {};          // 'AAAA-MM' -> código do erro de leitura
     var escutando = {};     // 'AAAA-MM' -> listener ativo
-    var E = { ano: 0, mes: 0, filtro: '', diaSel: null, iniciado: false };
+    var E = { ano: 0, mes: 0, filtro: '', diaSel: null, iniciado: false, semana: null };
     var filtroHtml = '';
 
     // ── utilitários ──
@@ -1255,6 +1267,10 @@
         '<button class="btn-s" data-mes="fechar" style="font-size:12px;padding:7px 12px;"><i class="fas fa-lock"></i> Fechar o mês</button>';
       document.getElementById('calMesAcoes').innerHTML = mesAc;
 
+      document.getElementById('calSemanaBtn').innerHTML = admin
+        ? '<button class="btn-teal" data-sem="abrir" style="font-size:12px;padding:7px 14px;"><i class="fas fa-table-cells"></i> ' + (E.semana ? 'Fechar montagem da semana' : 'Montar semana') + '</button>' : '';
+      if (!admin && E.semana) E.semana = null;
+      window.calRenderSemana();
       window.calRenderDetalhe();
     };
 
@@ -1325,6 +1341,83 @@
       }
       box.innerHTML = h; box.style.display = 'block';
     };
+
+    // ── [v1.3 cal] MONTAR SEMANA: médicos do dia vêm da escala; o admin só distribui nas salas ──
+    function segundaDe(is) { var d = dataDeIso(is), w = d.getDay(); d.setDate(d.getDate() - (w === 0 ? 6 : w - 1)); return iso(d); }
+    function somaDias(is, n) { var d = dataDeIso(is); d.setDate(d.getDate() + n); return iso(d); }
+    function diasDaSemana(seg) { var l = []; for (var i = 0; i < 6; i++) l.push(somaDias(seg, i)); return l; }   // seg a sáb
+    function garantirSemana(seg) { [seg, somaDias(seg, -7), somaDias(seg, 5)].forEach(function (d) { garantirMes(d.slice(0, 7)); }); }
+    function conflitos(itens) {
+      var c = {}, r = {};
+      itens.forEach(function (x) { if (x.sala && x.periodo !== 'A definir') { var k = x.periodo + '|' + x.sala; c[k] = (c[k] || 0) + 1; } });
+      itens.forEach(function (x) { if (c[x.periodo + '|' + x.sala] > 1) r[x.id] = 1; });
+      return r;
+    }
+    window.calRenderSemana = function (force) {
+      var box = document.getElementById('calSemana'); if (!box) return;
+      if (!E.semana || !ehAdmin()) { box.style.display = 'none'; box.innerHTML = ''; return; }
+      var ae = document.activeElement;
+      if (!force && ae && box.contains(ae) && ae.tagName === 'SELECT') return;
+      var seg = E.semana, dias = diasDaSemana(seg); garantirSemana(seg);
+      var fmt = function (is) { return dataDeIso(is).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }); };
+      var totSem = 0, totConf = 0, totEst = 0, h = '<div class="cal-det-top"><h3>Montar semana · ' + esc(fmt(dias[0])) + ' a ' + esc(fmt(dias[5])) + '</h3><div class="cal-det-acoes">' +
+        '<button class="btn-s" data-sem="ant" style="padding:6px 10px;font-size:12px;"><i class="fas fa-chevron-left"></i> Semana anterior</button>' +
+        '<button class="btn-s" data-sem="prox" style="padding:6px 10px;font-size:12px;">Próxima semana <i class="fas fa-chevron-right"></i></button>' +
+        '<button class="btn-teal" data-sem="sugerir" style="padding:6px 12px;font-size:12px;"><i class="fas fa-wand-magic-sparkles"></i> Sugerir salas pela semana anterior</button>' +
+        '<button class="btn-s" data-sem="confirmar" style="padding:6px 10px;font-size:12px;"><i class="fas fa-check"></i> Confirmar semana</button></div></div>';
+      var corpo = '';
+      dias.forEach(function (is) {
+        var itens = itensDoDia(is), cf = conflitos(itens), sem = itens.filter(function (x) { return !x.sala && x.periodo !== 'A definir'; }).length;
+        var est = itens.filter(function (x) { return x.est; }).length, nc = Object.keys(cf).length;
+        totSem += sem; totConf += nc; totEst += est;
+        corpo += '<div class="cal-dh"><span>' + esc(cap(fmt(is))) + ' · ' + itens.length + ' escala' + (itens.length === 1 ? '' : 's') + '</span><span>' +
+          (nc ? '<span class="erro">' + nc + ' em conflito</span> ' : '') + (sem ? '<span class="alerta">' + sem + ' sem sala</span> ' : '') +
+          (!nc && !sem && itens.length ? '<span class="ok">salas ok</span>' : '') + '</span></div>';
+        if (!itens.length) { corpo += '<div style="font-size:12px;color:var(--gray-400);padding:2px 6px;">Sem escala neste dia.</div>'; return; }
+        corpo += '<div class="cal-tw"><table><tr><th style="width:26%">Profissional</th><th style="width:22%">Especialidade</th><th style="width:20%">Sala</th><th style="width:18%">Período</th><th style="width:14%">Agenda</th></tr>';
+        itens.forEach(function (x) {
+          var cls = cf[x.id] ? 'conf' : (!x.sala && x.periodo !== 'A definir' ? 'sem' : '');
+          var sSala = '<select class="f-select cal-in cal-sel cal-s-sala" data-dia="' + is + '" data-id="' + esc(x.id) + '" aria-label="Sala">' +
+            '<option value="">Sem sala</option>' + SALAS_ADD.map(function (s) { return '<option value="' + s + '"' + (s === x.sala ? ' selected' : '') + '>' + esc(salaRotulo(s)) + '</option>'; }).join('') + '</select>';
+          var sPer = '<select class="f-select cal-in cal-sel cal-s-per" data-dia="' + is + '" data-id="' + esc(x.id) + '" aria-label="Período">' +
+            PERIODOS_TODOS.map(function (p) { return '<option value="' + esc(p) + '"' + (p === x.periodo ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select>';
+          corpo += '<tr class="' + cls + '"><td><b>' + esc(x.doc) + '</b>' + (x.est ? '<span class="cal-est">estimado</span>' : '') + '</td><td>' + esc(x.role) + '</td><td>' + sSala + '</td><td>' + sPer + '</td>' +
+            '<td><span class="cal-pill ' + (x.aberta ? 'ab' : 'na') + ' sm">' + (x.aberta ? 'Aberta' : 'Não aberta') + '</span></td></tr>';
+        });
+        corpo += '</table></div>';
+      });
+      h += '<div class="cal-msg ' + (totConf ? 'erro' : 'info') + '" style="margin:8px 0 0;">' + totSem + ' sem sala · ' + totConf + ' em conflito · ' + totEst + ' estimadas. Dois profissionais na mesma sala e período ficam em vermelho.</div>';
+      box.innerHTML = h + corpo; box.style.display = 'block';
+    };
+    function sugerirSemana() {
+      var dias = diasDaSemana(E.semana), jobs = [], n = 0;
+      dias.forEach(function (is) {
+        var atual = itensDoDia(is), ant = itensDoDia(somaDias(is, -7)), ocup = {};
+        atual.forEach(function (x) { if (x.sala && x.periodo !== 'A definir') ocup[x.periodo + '|' + x.sala] = 1; });
+        atual.forEach(function (x) {
+          if (x.sala || x.periodo === 'A definir') return;
+          var m = ant.filter(function (y) { return norm(y.doc) === norm(x.doc) && y.periodo === x.periodo && y.sala; })[0];
+          if (!m || ocup[x.periodo + '|' + m.sala]) return;
+          ocup[x.periodo + '|' + m.sala] = 1; n++;
+          jobs.push(salvar('crono/dias/' + is + '/itens/' + x.id + '/sala', m.sala));
+        });
+      });
+      if (!jobs.length) { toast('Nada a sugerir: sem correspondência livre na semana anterior', 'info'); return; }
+      Promise.all(jobs).then(function (r) { if (r.every(Boolean)) toast(n + ' sala(s) sugerida(s) pela semana anterior. Revise e confirme.', 'success'); window.calRenderSemana(true); });
+    }
+    function acaoSemana(ev) {
+      var b = ev.target.closest('[data-sem]'); if (!b || !ehAdmin() || !E.semana) return;
+      var a = b.getAttribute('data-sem');
+      if (a === 'ant') E.semana = somaDias(E.semana, -7); else if (a === 'prox') E.semana = somaDias(E.semana, 7);
+      else if (a === 'sugerir') { sugerirSemana(); return; }
+      else if (a === 'confirmar') {
+        var jobs = []; diasDaSemana(E.semana).forEach(function (is) { itensDoDia(is).forEach(function (x) { if (x.est) jobs.push(salvar('crono/dias/' + is + '/itens/' + x.id + '/est', null)); }); });
+        if (!jobs.length) { toast('Nada a confirmar nesta semana', 'info'); return; }
+        Promise.all(jobs).then(function (r) { if (r.every(Boolean)) toast('Semana confirmada', 'success'); window.calRenderSemana(true); });
+        return;
+      }
+      window.calRenderSemana(true);
+    }
 
     // ── AÇÕES DO ADMIN ──
     function adicionar() {
@@ -1470,6 +1563,19 @@
       });
       document.getElementById('calImportarWrap').addEventListener('click', function (ev) { if (ev.target.closest('#calImportar')) importarSeed(); });
       document.getElementById('calMesAcoes').addEventListener('click', acaoMes);
+      document.getElementById('calSemanaBtn').addEventListener('click', function (ev) {
+        if (!ev.target.closest('[data-sem="abrir"]') || !ehAdmin()) return;
+        E.semana = E.semana ? null : segundaDe(E.diaSel || hojeIso()); window.calRender();
+      });
+      var sem = document.getElementById('calSemana');
+      sem.addEventListener('click', acaoSemana);
+      sem.addEventListener('change', function (ev) {
+        var s = ev.target; if (!s.classList || !ehAdmin()) return;
+        var campo = s.classList.contains('cal-s-sala') ? 'sala' : (s.classList.contains('cal-s-per') ? 'periodo' : '');
+        if (!campo) return;
+        var b = 'crono/dias/' + s.getAttribute('data-dia') + '/itens/' + s.getAttribute('data-id');
+        Promise.all([salvar(b + '/' + campo, s.value), salvar(b + '/est', null)]).then(function () { window.calRenderSemana(true); });
+      });
     }
 
     window.calAbrir = function () {
