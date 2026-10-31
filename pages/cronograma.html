@@ -147,6 +147,49 @@
     @media print{body{background:white;}.red-bar,.s-header,.content,.modal-bg,.pdf-modal-wrap,.cx-modal-wrap,.toast-box{display:none!important;}.print-doc{box-shadow:none;margin:0;padding:2cm 1.5cm;width:100%;}table.print-tbl th{background:#4a4a4a!important;color:white!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}table.print-tbl tr:nth-child(even) td{background:#f5f5f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.status-ag,.status-en,.print-total,.print-date-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
     @media(max-width:768px){.stats-bar{grid-template-columns:1fr 1fr;}.week-grid{grid-template-columns:repeat(3,1fr);}.content{padding:14px 14px 60px;}.print-doc{width:100%;}}
     .panel,.stat-card,.tabs,.week-item,.editor-sala-row{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
+    /* [v1.0 cal] Aba Ocupação — todas as classes com prefixo .cal- (sem colisão) */
+    .cal-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .cal-filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+    .cal-chip{padding:6px 12px;border:1.5px solid var(--gray-200);background:white;border-radius:20px;font-family:inherit;font-size:12px;font-weight:700;color:var(--gray-600);cursor:pointer;text-transform:capitalize;transition:all .15s;}
+    .cal-chip:hover{border-color:var(--navy);color:var(--navy);}
+    .cal-chip.ativo{background:var(--navy);border-color:var(--navy);color:white;}
+    .cal-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+    .cal-kpi{background:white;border:1px solid var(--gray-200);border-radius:12px;padding:12px 14px;}
+    .cal-kpi small{display:block;color:var(--gray-500);font-size:11px;font-weight:600;}
+    .cal-kpi b{font-size:24px;font-weight:900;color:var(--navy);letter-spacing:-1px;}
+    .cal-kpi.ag b{color:var(--green);}.cal-kpi.ca b{color:var(--red);}
+    .cal-leg{display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--gray-500);margin:0 0 12px;}
+    .cal-leg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--gray-300);}
+    .cal-leg .l-ag::before{background:#22c55e;}.cal-leg .l-ca::before{background:#ef4444;}
+    .cal-grade{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+    .cal-dow{text-align:center;font-size:11px;font-weight:800;color:var(--gray-500);padding:4px 0;text-transform:uppercase;}
+    .cal-dia{background:white;border:2px solid transparent;border-radius:10px;min-height:92px;padding:8px;cursor:pointer;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(0,0,0,.06);transition:border-color .15s;}
+    .cal-dia:hover{border-color:var(--navy);}
+    .cal-dia.vazio{background:transparent;box-shadow:none;cursor:default;border:none;}
+    .cal-dia.hoje{border-color:#f59e0b;}
+    .cal-dia.sel{border-color:var(--navy);background:#eef2ff;}
+    .cal-dia.fds{opacity:.8;}
+    .cal-num{font-size:11px;color:var(--gray-500);font-weight:700;}
+    .cal-total{font-size:22px;font-weight:900;line-height:1;color:var(--navy);}
+    .cal-cap{font-size:10px;color:var(--gray-500);}
+    .cal-mini{display:flex;gap:8px;font-size:11px;font-weight:700;}
+    .cal-mini .ag{color:var(--green);}.cal-mini .ca{color:var(--red);}
+    .cal-barra{display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--gray-200);margin-top:auto;}
+    .cal-barra i{display:block;height:100%;}
+    .cal-barra .ag{background:#22c55e;}.cal-barra .ca{background:#ef4444;}
+    .cal-h0{background:white;}.cal-h1{background:#f0fdf4;}.cal-h2{background:#dcfce7;}.cal-h3{background:#bbf7d0;}.cal-h4{background:#86efac;}
+    .cal-det{background:white;border:1px solid var(--gray-200);border-radius:12px;padding:14px;margin-top:14px;}
+    .cal-det h3{margin:0 0 10px;font-size:15px;color:var(--navy);}
+    .cal-det table{width:100%;border-collapse:collapse;font-size:13px;}
+    .cal-det th{text-align:left;color:var(--gray-500);font-size:11px;padding:6px;border-bottom:1px solid var(--gray-200);text-transform:uppercase;}
+    .cal-det td{padding:6px;border-bottom:1px solid var(--gray-100);}
+    .cal-tag{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+    .cal-tag.ag{background:var(--green-bg);color:#166534;}.cal-tag.ca{background:#fee2e2;color:#991b1b;}
+    .cal-msg{padding:12px 14px;background:var(--amber-bg);border-radius:10px;color:#92400e;font-size:13px;margin-bottom:12px;}
+    .cal-msg.erro{background:#fee2e2;color:#991b1b;}
+    .cal-msg.demo{background:#fef9c3;color:#854d0e;font-weight:700;}
+    .cal-msg button{margin-left:8px;}
+    @media(max-width:700px){.cal-dia{min-height:60px;padding:4px;}.cal-total{font-size:16px;}.cal-mini,.cal-cap{display:none;}}
   </style>
 </head>
 <body>
@@ -279,6 +322,8 @@
       <button class="tab-btn"        id="tabSemana"   onclick="tab('semana')"><i class="fas fa-calendar-week"></i> Semana</button>
       <button class="tab-btn"        id="tabAbertura" onclick="tab('abertura')"><i class="fas fa-door-open"></i> Abertura</button>
       <button class="tab-btn"        id="tabNotas"    onclick="tab('notas')"><i class="fas fa-list-check"></i> Notas</button>
+      <!-- [v1.0 cal] nova aba -->
+      <button class="tab-btn"        id="tabOcupacao" onclick="tab('ocupacao')"><i class="fas fa-calendar-days"></i> Ocupação</button>
     </div>
 
     <div class="tab-pane active" id="paneAgenda">
@@ -384,6 +429,28 @@
       </div>
     </div>
 
+    <!-- [v1.0 cal] Aba Ocupação: calendário mensal com agendamentos vindos da API -->
+    <div class="tab-pane" id="paneOcupacao">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-calendar-days"></i> Ocupação da Agenda</div>
+          <div class="cal-nav">
+            <button class="day-nav-btn" onclick="calNavegar(-1)" title="Mês anterior"><i class="fas fa-chevron-left"></i></button>
+            <div class="day-name" id="calTitulo" style="min-width:150px;text-transform:capitalize;">—</div>
+            <button class="day-nav-btn" onclick="calNavegar(1)" title="Próximo mês"><i class="fas fa-chevron-right"></i></button>
+            <button class="btn-s" onclick="calHoje()" style="font-size:12px;padding:7px 12px;">Hoje</button>
+            <button class="btn-s" onclick="calAtualizar()" title="Buscar de novo na API" style="font-size:12px;padding:7px 12px;"><i class="fas fa-rotate"></i></button>
+          </div>
+        </div>
+        <div class="cal-filtros" id="calFiltros"></div>
+        <div class="cal-kpis" id="calKpis"></div>
+        <div class="cal-leg"><span class="l-ag">Agendado</span><span class="l-ca">Cancelado</span><span>Fundo mais verde = dia mais cheio</span></div>
+        <div id="calAviso"></div>
+        <div class="cal-grade" id="calGrade"></div>
+        <div class="cal-det" id="calDetalhe" style="display:none"></div>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -455,7 +522,7 @@
 
   // ── TABS ──
   window.tab = function(t) {
-    ['agenda','semana','abertura','notas'].forEach(x => {
+    ['agenda','semana','abertura','notas','ocupacao'].forEach(x => { // [v1.0 cal] + 'ocupacao'
       const T = x.charAt(0).toUpperCase() + x.slice(1);
       const btn  = document.getElementById('tab' + T);
       const pane = document.getElementById('pane' + T);
@@ -467,6 +534,7 @@
     const pane = document.getElementById('pane' + T);
     if (btn)  btn.classList.add('active');
     if (pane) pane.classList.add('active');
+    if (t === 'ocupacao' && typeof window.calAbrir === 'function') window.calAbrir(); // [v1.0 cal] carrega ao abrir a aba
   };
 
   // ── AGENDA DO DIA ──
@@ -972,6 +1040,260 @@
   init();
   </script>
 
+  <!-- ═══════════════════════════════════════════════════════════════
+       [v1.0 cal] OCUPAÇÃO — calendário de agendamentos (prefixo cal*)
+       Não altera nenhuma função existente. Único ponto de contato com
+       a API: calBuscarAgendamentos(). Configuração: CAL_API abaixo.
+       ═══════════════════════════════════════════════════════════════ -->
+  <script>
+  // ── CONFIGURAÇÃO DA API (edite só aqui) ──
+  window.CAL_API = {
+    url: '',            // ← cole aqui a URL (ex.: Apps Script /exec). Vazio = "API não configurada".
+    metodo: 'POST',     // 'POST': envia JSON {inicio, fim, idToken} como text/plain (evita preflight CORS)
+                        // 'GET' : envia ?inicio=YYYY-MM-DD&fim=YYYY-MM-DD (SEM token — não coloque dado sensível em URL)
+    enviarToken: true,  // POST: anexa o ID token do Firebase do usuário logado para o servidor validar
+    paramInicio: 'inicio',
+    paramFim: 'fim',
+    headers: {},        // só se a API aceitar CORS com esses headers. NUNCA coloque chave/token secreto aqui.
+    timeoutMs: 20000
+  };
+  window.CAL_CAPACIDADE_DIA = null; // ex.: 24 → mostra "18/24" em cada dia. null = só contagem.
+
+  // Nomes possíveis de cada campo na resposta da API (usa o primeiro que existir). Acrescente os da sua API.
+  window.CAL_CAMPOS = {
+    data:         ['data', 'dataAgendamento', 'data_agendamento', 'date', 'dt_agenda', 'inicio', 'start'],
+    hora:         ['hora', 'horario', 'hora_inicio', 'horaInicio', 'time'],
+    paciente:     ['paciente', 'nomePaciente', 'nome_paciente', 'patient', 'nome'],
+    profissional: ['profissional', 'medico', 'médico', 'nomeProfissional', 'doctor'],
+    especialidade:['especialidade', 'specialty'],
+    status:       ['status', 'statusAgendamento', 'status_agendamento', 'situacao', 'situação'],
+    classificacao:['classificacao', 'classificação', 'classificacaoAgendamento', 'classificacao_agendamento']
+  };
+
+  // Status (minúsculo, sem acento) → 'ag' (agendado) ou 'ca' (cancelado). Só usado quando a API NÃO traz "classificação".
+  // Status que não estiverem aqui contam como 'ag' e aparecem num aviso na tela para você completar este mapa.
+  window.CAL_STATUS_CLASSE = {
+    'agendado':'ag', 'marcado':'ag', 'confirmado':'ag', 'encaixe':'ag', 'atendido':'ag', 'presente':'ag', 'chegou':'ag',
+    'desmarcado':'ca', 'cancelado':'ca', 'faltou':'ca', 'falta':'ca', 'remarcado':'ca', 'nao compareceu':'ca'
+  };
+
+  var calEstado = { ano:0, mes:0, dados:[], filtroStatus:'todos', diaSel:null, iniciado:false, carregadoEm:0, req:0, demo:false, semMapa:{} };
+  var calCache = {};
+
+  // ── NORMALIZAÇÃO (aceita nomes de campos/formatos variados) ──
+  function calPick(o, chaves) {
+    for (var i = 0; i < chaves.length; i++) { var v = o[chaves[i]]; if (v !== undefined && v !== null && v !== '') return v; }
+    return '';
+  }
+  function calNormTexto(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
+  function calNormData(v) { // → 'YYYY-MM-DD' (sem usar Date: evita deslocamento de fuso)
+    var s = String(v == null ? '' : v).trim(), m;
+    if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return m[1] + '-' + m[2] + '-' + m[3];
+    if ((m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/))) return m[3] + '-' + m[2] + '-' + m[1];
+    return '';
+  }
+  function calNormHora(v, dataBruta) {
+    var m = String(v == null ? '' : v).match(/(\d{1,2}):(\d{2})/);
+    if (!m && dataBruta) m = String(dataBruta).match(/[T ](\d{2}):(\d{2})/);
+    return m ? ('0' + m[1]).slice(-2) + ':' + m[2] : '';
+  }
+  window.calNormalizar = function (resp) {
+    if (resp && resp.ok === false) throw new Error(resp.erro || resp.error || 'A API retornou erro');
+    var lista = Array.isArray(resp) ? resp : (resp && (resp.agendamentos || resp.data || resp.items || resp.results)) || [];
+    if (!Array.isArray(lista)) throw new Error('Formato de resposta inesperado (esperava uma lista de agendamentos)');
+    var C = window.CAL_CAMPOS, out = [];
+    lista.forEach(function (x) {
+      if (!x || typeof x !== 'object') return;
+      var dataBruta = calPick(x, C.data), data = calNormData(dataBruta);
+      if (!data) return; // sem data válida não dá para posicionar no calendário
+      out.push({
+        data: data,
+        hora: calNormHora(calPick(x, C.hora), dataBruta),
+        paciente: String(calPick(x, C.paciente)),
+        profissional: String(calPick(x, C.profissional)),
+        especialidade: String(calPick(x, C.especialidade)),
+        status: String(calPick(x, C.status)).trim(),
+        classificacao: String(calPick(x, C.classificacao)).trim()
+      });
+    });
+    return out;
+  };
+
+  // ── ÚNICO PONTO DE COMUNICAÇÃO COM A API ──
+  window.calBuscarAgendamentos = async function (inicio, fim) {
+    if (calEstado.demo) return calGerarMock(inicio, fim);
+    var cfg = window.CAL_API;
+    if (!cfg.url) throw new Error('API não configurada. Preencha CAL_API.url no cronograma.html.');
+    var ctrl = new AbortController(), timer = setTimeout(function () { ctrl.abort(); }, cfg.timeoutMs || 20000), resp;
+    try {
+      if (String(cfg.metodo).toUpperCase() === 'GET') {
+        var u = new URL(cfg.url);
+        u.searchParams.set(cfg.paramInicio, inicio); u.searchParams.set(cfg.paramFim, fim);
+        resp = await fetch(u.toString(), { headers: cfg.headers || {}, signal: ctrl.signal });
+      } else {
+        var body = {}; body[cfg.paramInicio] = inicio; body[cfg.paramFim] = fim;
+        if (cfg.enviarToken && typeof window.calGetIdToken === 'function') { var tk = await window.calGetIdToken(); if (tk) body.idToken = tk; }
+        var hdr = Object.assign({ 'Content-Type': 'text/plain;charset=utf-8' }, cfg.headers || {});
+        resp = await fetch(cfg.url, { method: 'POST', headers: hdr, body: JSON.stringify(body), signal: ctrl.signal });
+      }
+      if (!resp.ok) throw new Error('A API respondeu HTTP ' + resp.status);
+      return window.calNormalizar(await resp.json());
+    } catch (e) {
+      if (e && e.name === 'AbortError') throw new Error('A API demorou demais para responder');
+      throw e;
+    } finally { clearTimeout(timer); }
+  };
+
+  // Dados FICTÍCIOS (botão "Ver exemplo") — nunca usados sem o usuário pedir e sempre com faixa de aviso
+  function calGerarMock(inicio, fim) {
+    var nomes = ['Paciente Exemplo A', 'Paciente Exemplo B', 'Paciente Exemplo C', 'Paciente Exemplo D'];
+    var profs = ['Dr. Exemplo', 'Dra. Exemplo', 'Dr. Teste'];
+    var sts = ['agendado', 'agendado', 'agendado', 'marcado', 'confirmado', 'desmarcado', 'cancelado'];
+    var out = [], d = new Date(inicio + 'T12:00:00'), f = new Date(fim + 'T12:00:00'), seed = 7;
+    function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    while (d <= f) {
+      var dow = d.getDay();
+      if (dow !== 0) {
+        var qtd = Math.floor(rnd() * (dow === 6 ? 8 : 26));
+        for (var i = 0; i < qtd; i++) out.push({ data: calIso(d), hora: ('0' + (8 + Math.floor(rnd() * 10))).slice(-2) + ':' + (rnd() > .5 ? '00' : '30'), paciente: nomes[Math.floor(rnd() * nomes.length)], profissional: profs[Math.floor(rnd() * profs.length)], especialidade: '', status: sts[Math.floor(rnd() * sts.length)], classificacao: '' });
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    return out;
+  }
+
+  // ── UTILITÁRIOS ──
+  function calIso(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function calClasse(a) {
+    if (a.classificacao) return calNormTexto(a.classificacao).indexOf('cancel') === 0 ? 'ca' : 'ag';
+    var k = calNormTexto(a.status), c = window.CAL_STATUS_CLASSE[k];
+    if (!c) { calEstado.semMapa[k || '(vazio)'] = 1; return 'ag'; }
+    return c;
+  }
+  function calStatusLista() {
+    var s = {}; calEstado.dados.forEach(function (a) { s[calNormTexto(a.status)] = 1; });
+    return Object.keys(s).sort();
+  }
+  function calFiltrados() {
+    return calEstado.dados.filter(function (a) { return calEstado.filtroStatus === 'todos' || calNormTexto(a.status) === calEstado.filtroStatus; });
+  }
+
+  // ── CARGA / RENDER ──
+  window.calCarregar = async function (forcar) {
+    var ini = calIso(new Date(calEstado.ano, calEstado.mes, 1)), fim = calIso(new Date(calEstado.ano, calEstado.mes + 1, 0));
+    var chave = (calEstado.demo ? 'demo|' : '') + ini, minha = ++calEstado.req, av = document.getElementById('calAviso');
+    calEstado.semMapa = {}; calEstado.diaSel = null;
+    if (!forcar && calCache[chave]) { calEstado.dados = calCache[chave]; av.innerHTML = ''; calRender(); return; }
+    av.innerHTML = '<div class="cal-msg"><i class="fas fa-spinner fa-spin"></i> Carregando agendamentos...</div>';
+    try {
+      var lista = await window.calBuscarAgendamentos(ini, fim);
+      if (minha !== calEstado.req) return; // usuário já navegou para outro mês
+      calCache[chave] = calEstado.dados = lista; calEstado.carregadoEm = Date.now();
+      av.innerHTML = ''; calRender();
+    } catch (e) {
+      if (minha !== calEstado.req) return;
+      calEstado.dados = [];
+      var naoConf = !window.CAL_API.url && !calEstado.demo;
+      av.innerHTML = naoConf
+        ? '<div class="cal-msg">A API de agendamentos ainda não foi conectada (CAL_API.url vazio). <button class="btn-s" onclick="calToggleDemo()" style="font-size:12px;padding:5px 10px;">Ver com dados de exemplo</button></div>'
+        : '<div class="cal-msg erro"><i class="fas fa-circle-exclamation"></i> Não foi possível carregar os agendamentos: ' + esc(e.message) + ' <button class="btn-s" onclick="calAtualizar()" style="font-size:12px;padding:5px 10px;">Tentar de novo</button></div>';
+      calRender();
+    }
+  };
+
+  window.calRender = function () {
+    var nomeMes = new Date(calEstado.ano, calEstado.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    document.getElementById('calTitulo').textContent = nomeMes;
+
+    var fh = '<button class="cal-chip ' + (calEstado.filtroStatus === 'todos' ? 'ativo' : '') + '" data-st="todos">Todos</button>';
+    calStatusLista().forEach(function (s) { fh += '<button class="cal-chip ' + (calEstado.filtroStatus === s ? 'ativo' : '') + '" data-st="' + esc(s) + '">' + esc(s || '(sem status)') + '</button>'; });
+    document.getElementById('calFiltros').innerHTML = fh;
+
+    var porDia = {}, tot = { t: 0, ag: 0, ca: 0 };
+    calFiltrados().forEach(function (a) {
+      var x = porDia[a.data] || (porDia[a.data] = { t: 0, ag: 0, ca: 0 }), c = calClasse(a);
+      x.t++; x[c]++; tot.t++; tot[c]++;
+    });
+    var maxDia = 0, diasCom = Object.keys(porDia);
+    diasCom.forEach(function (k) { if (porDia[k].t > maxDia) maxDia = porDia[k].t; });
+    var taxa = tot.t ? Math.round(tot.ca / tot.t * 100) : 0;
+    document.getElementById('calKpis').innerHTML =
+      '<div class="cal-kpi"><small>Total no mês</small><b>' + tot.t + '</b></div>' +
+      '<div class="cal-kpi ag"><small>Agendados</small><b>' + tot.ag + '</b></div>' +
+      '<div class="cal-kpi ca"><small>Cancelados</small><b>' + tot.ca + '</b></div>' +
+      '<div class="cal-kpi"><small>Taxa de cancelamento</small><b>' + taxa + '%</b></div>' +
+      '<div class="cal-kpi"><small>Média por dia com agenda</small><b>' + (diasCom.length ? (tot.t / diasCom.length).toFixed(1).replace('.', ',') : '0') + '</b></div>';
+
+    // Avisos (demo / status sem mapeamento) — ficam junto do aviso de carga
+    var av = document.getElementById('calAviso'), extra = '';
+    if (calEstado.demo) extra += '<div class="cal-msg demo">⚠️ DADOS FICTÍCIOS — apenas demonstração. <button class="btn-s" onclick="calToggleDemo()" style="font-size:12px;padding:5px 10px;">Sair do exemplo</button></div>';
+    var sm = Object.keys(calEstado.semMapa);
+    if (sm.length) extra += '<div class="cal-msg">Status sem mapeamento (contados como "agendado"): <b>' + sm.map(esc).join(', ') + '</b>. Acrescente em CAL_STATUS_CLASSE.</div>';
+    if (!av.querySelector('.cal-msg.erro') && !av.querySelector('.fa-spinner') && !(!window.CAL_API.url && !calEstado.demo)) av.innerHTML = extra;
+
+    var h = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(function (n) { return '<div class="cal-dow">' + n + '</div>'; }).join('');
+    var primeiro = new Date(calEstado.ano, calEstado.mes, 1).getDay(), diasMes = new Date(calEstado.ano, calEstado.mes + 1, 0).getDate(), hoje = calIso(new Date());
+    for (var v = 0; v < primeiro; v++) h += '<div class="cal-dia vazio"></div>';
+    for (var d = 1; d <= diasMes; d++) {
+      var iso = calEstado.ano + '-' + ('0' + (calEstado.mes + 1)).slice(-2) + '-' + ('0' + d).slice(-2);
+      var dw = new Date(calEstado.ano, calEstado.mes, d).getDay(), x = porDia[iso] || { t: 0, ag: 0, ca: 0 };
+      var nivel = !x.t ? 0 : Math.min(4, Math.ceil(x.t / (maxDia || 1) * 4));
+      var cls = 'cal-dia cal-h' + nivel + (iso === hoje ? ' hoje' : '') + (iso === calEstado.diaSel ? ' sel' : '') + ((dw === 0 || dw === 6) ? ' fds' : '');
+      h += '<div class="' + cls + '" data-dia="' + iso + '"><div class="cal-num">' + d + '</div><div class="cal-total">' + (x.t || '–') + '</div>' +
+        (window.CAL_CAPACIDADE_DIA ? '<div class="cal-cap">' + x.t + '/' + window.CAL_CAPACIDADE_DIA + '</div>' : '') +
+        (x.t ? '<div class="cal-mini"><span class="ag">✓ ' + x.ag + '</span><span class="ca">✕ ' + x.ca + '</span></div><div class="cal-barra"><i class="ag" style="width:' + (x.ag / x.t * 100) + '%"></i><i class="ca" style="width:' + (x.ca / x.t * 100) + '%"></i></div>' : '') +
+        '</div>';
+    }
+    document.getElementById('calGrade').innerHTML = h;
+    calRenderDetalhe();
+  };
+
+  window.calRenderDetalhe = function () {
+    var box = document.getElementById('calDetalhe');
+    if (!calEstado.diaSel) { box.style.display = 'none'; return; }
+    var itens = calFiltrados().filter(function (a) { return a.data === calEstado.diaSel; }).sort(function (a, b) { return String(a.hora).localeCompare(String(b.hora)); });
+    var p = calEstado.diaSel.split('-');
+    var h = '<h3>' + p[2] + '/' + p[1] + '/' + p[0] + ' — ' + itens.length + ' agendamento(s)</h3>';
+    if (!itens.length) h += '<div style="color:var(--gray-400);font-size:13px;">Nenhum agendamento neste dia.</div>';
+    else {
+      h += '<div style="overflow-x:auto;"><table><tr><th>Hora</th><th>Paciente</th><th>Profissional</th><th>Status</th><th>Classificação</th></tr>';
+      itens.forEach(function (a) {
+        var c = calClasse(a);
+        h += '<tr><td>' + esc(a.hora) + '</td><td>' + esc(a.paciente) + '</td><td>' + esc(a.profissional) + '</td><td>' + esc(a.status) + '</td><td><span class="cal-tag ' + c + '">' + (c === 'ca' ? 'Cancelado' : 'Agendado') + '</span></td></tr>';
+      });
+      h += '</table></div>';
+    }
+    box.innerHTML = h; box.style.display = 'block';
+  };
+
+  // ── NAVEGAÇÃO / EVENTOS ──
+  window.calNavegar = function (delta) {
+    calEstado.mes += delta;
+    if (calEstado.mes < 0) { calEstado.mes = 11; calEstado.ano--; } else if (calEstado.mes > 11) { calEstado.mes = 0; calEstado.ano++; }
+    calEstado.filtroStatus = 'todos'; calCarregar(false);
+  };
+  window.calHoje = function () { var n = new Date(); calEstado.ano = n.getFullYear(); calEstado.mes = n.getMonth(); calEstado.filtroStatus = 'todos'; calCarregar(false); };
+  window.calAtualizar = function () { calCarregar(true); };
+  window.calToggleDemo = function () { calEstado.demo = !calEstado.demo; calEstado.filtroStatus = 'todos'; calCarregar(true); };
+
+  // Chamado por tab('ocupacao'): inicia na 1ª vez; depois só recarrega se os dados tiverem > 5 min
+  window.calAbrir = function () {
+    if (!calEstado.iniciado) {
+      calEstado.iniciado = true;
+      var n = new Date(); calEstado.ano = n.getFullYear(); calEstado.mes = n.getMonth();
+      document.getElementById('calFiltros').addEventListener('click', function (e) {
+        var b = e.target.closest('.cal-chip'); if (!b) return;
+        calEstado.filtroStatus = b.getAttribute('data-st'); calEstado.diaSel = null; calRender();
+      });
+      document.getElementById('calGrade').addEventListener('click', function (e) {
+        var el = e.target.closest('.cal-dia[data-dia]'); if (!el) return;
+        calEstado.diaSel = el.getAttribute('data-dia'); calRender();
+      });
+      calCarregar(false);
+    } else if (Date.now() - calEstado.carregadoEm > 300000) calCarregar(true);
+  };
+  </script>
+
   <script type="module">
     import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged }  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
@@ -984,6 +1306,8 @@
 
     window.salvarAgendaFirebaseSDK = payload => set(ref(_db, 'crono/agenda'), payload);
     window.fbSet = (path, data) => set(ref(_db, path), data);
+    // [v1.0 cal] ID token do usuário logado — usado pela aba Ocupação para autenticar na API/proxy
+    window.calGetIdToken = async () => (_auth.currentUser ? _auth.currentUser.getIdToken() : null);
 
     // Cleanup de listeners ao sair
     const _unsubs = [];
