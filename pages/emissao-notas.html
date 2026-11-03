@@ -1,3 +1,4 @@
+<!-- VERSION: v1.1 | emissao-notas.html | 03/11/2026 | [v1.1] CPF repetido com nomes diferentes (tomador terceiro, ex.: nota no CPF da mãe de paciente menor) não trava mais o paciente (chave NFE_BLOQUEIA_CPF_DUPLICADO=false). Paciente sem endereço utilizável (Logradouro/Bairro em branco após consulta de CEP) entra com o endereço padrão da clínica: CEP 02939-000, nº 367, Av. Doutor Felipe Pinel (chave NFE_USA_END_PADRAO); não troca o endereço se a consulta de CEP do paciente falhou; avisado na caixa de avisos. -->
 <!-- VERSION: v1.0 | emissao-notas.html | 16/10/2026 | feat: nova página "Emissão de notas" (somente admin) — fluxo direto Emitir lote + Retorno Sinaxys, a partir do mockup NF em Lote v6.0 · Direto. Regras de validação/CEP/Sinaxys copiadas do dashboard v6.0 (commit a4afba5). -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -966,8 +967,13 @@ var NFE = (function () {
     r.warns = warns; r._cpf = cpfD;
     return r;
   }
+  /* [v1.1] CPF repetido com nomes diferentes é NORMAL aqui: o tomador da nota pode ser um terceiro (ex.: paciente menor de idade,
+     nota no CPF da mãe — o mesmo CPF aparece com o nome do filho e da mãe, ou de 2 filhos). Por isso NÃO trava mais o paciente.
+     Para voltar ao comportamento antigo (marca "revisão manual" e tira do lote), troque a chave abaixo para true. */
+  var NFE_BLOQUEIA_CPF_DUPLICADO = false;
   function avaliarTodos(rows) {
     rows.forEach(avaliar);
+    if (!NFE_BLOQUEIA_CPF_DUPLICADO) return rows;   // [v1.1] CPF duplicado liberado
     var byCpf = {};
     rows.forEach(function (r) { if (r._cpf) (byCpf[r._cpf] = byCpf[r._cpf] || []).push(r); });
     Object.keys(byCpf).forEach(function (c) {
@@ -1009,6 +1015,45 @@ var NFE = (function () {
       if (!v['Cidade']) v['Cidade'] = res.cidade;
       if (!v['UF']) v['UF'] = res.uf;
     }
+  }
+  /* [v1.1] ENDEREÇO PADRÃO DA CLÍNICA — paciente sem endereço utilizável (Logradouro ou Bairro em branco mesmo depois da consulta de CEP)
+     entra com o endereço da clínica em vez de ficar pendente. Os valores de Logradouro/Bairro/Cidade/UF vêm da consulta do CEP padrão
+     (BrasilAPI/ViaCEP); os valores abaixo só entram se essa consulta falhar.
+     NÃO troca o endereço quando a consulta de CEP do próprio paciente falhou (API fora do ar): aí a linha continua pendente,
+     para uma queda momentânea não trocar o endereço real de todo mundo.
+     Só roda na preparação automática do lote — a correção manual ("Corrigir pendentes") nunca é sobrescrita.
+     Para desligar, troque NFE_USA_END_PADRAO para false. */
+  var NFE_USA_END_PADRAO = true;
+  var NFE_END_PADRAO = { CEP: '02939-000', Numero: '367', Logradouro: 'Avenida Doutor Felipe Pinel', Bairro: 'Pirituba', Cidade: 'São Paulo', UF: 'SP' };
+  function precisaEndPadrao(r) {
+    var v = r.v;
+    if (v['Logradouro'] && v['Bairro']) return false;                 // endereço já utilizável
+    var c = nflNormCEPDigits(v['CEP']);
+    if (c.length === 8 && !/^00/.test(c)) {                           // tem CEP de formato válido: só troca se a consulta funcionou
+      var res = nflViaCepCache[c];
+      if (!res || !res.ok) return false;                              // consulta falhou/indisponível → mantém e deixa pendente
+    }
+    return true;                                                      // sem CEP, CEP inválido, ou CEP genérico (sem rua/bairro)
+  }
+  async function aplicarEnderecoPadrao(rows) {
+    if (!NFE_USA_END_PADRAO) return 0;
+    var alvo = rows.filter(precisaEndPadrao);
+    if (!alvo.length) return 0;
+    var pad = { Logradouro: NFE_END_PADRAO.Logradouro, Bairro: NFE_END_PADRAO.Bairro, Cidade: NFE_END_PADRAO.Cidade, UF: NFE_END_PADRAO.UF };
+    var res = await nflFetchViaCep(nflNormCEPDigits(NFE_END_PADRAO.CEP));   // nunca lança; usa o mesmo cache dos pacientes
+    if (res && res.ok) {
+      if (res.logradouro) pad.Logradouro = res.logradouro;
+      if (res.bairro) pad.Bairro = nflEncurtarBairro(res.bairro);
+      if (res.cidade) pad.Cidade = res.cidade;
+      if (res.uf) pad.UF = res.uf;
+    }
+    alvo.forEach(function (r) {
+      var v = r.v, antes = [v['CEP'], v['Logradouro'], v['Número'], v['Bairro']].filter(Boolean).join(' · ');
+      v['CEP'] = NFE_END_PADRAO.CEP; v['Número'] = NFE_END_PADRAO.Numero; v['Complemento'] = '';
+      v['Logradouro'] = pad.Logradouro; v['Bairro'] = pad.Bairro; v['Cidade'] = pad.Cidade; v['UF'] = pad.UF;
+      r.endPadrao = true; r.endAntes = antes;                         // avisado em renderPronto
+    });
+    return alvo.length;
   }
   function finalizarRegistro(r) {
     var v = r.v;
@@ -1103,6 +1148,7 @@ var NFE = (function () {
     passo('operador', 'done', S.ops.filter(function (o) { return !o.tipo; }).length ? 'há operador novo' : 'por operador');
     passo('cep', 'run', '0/…');
     await buscarCeps(S.rows, function (a, b) { passo('cep', 'run', a + '/' + b); });
+    await aplicarEnderecoPadrao(S.rows);   // [v1.1] sem endereço utilizável → endereço padrão da clínica (CEP 02939-000, nº 367)
     S.rows.forEach(finalizarRegistro);
     avaliarTodos(S.rows);
     passo('cep', 'done', 'via BrasilAPI/ViaCEP');
@@ -1131,6 +1177,8 @@ var NFE = (function () {
     $('pendExtra').style.display = pend.length ? '' : 'none';
     /* avisos automáticos (ajustes feitos pela regra Sinaxys) */
     var av = []; S.rows.forEach(function (r) { if (r.valorAdivinhado) av.push((r.v['Paciente'] || '?') + ': valor interpretado como R$ ' + r.v['Valor'] + ' (sem ponto decimal no original)'); });
+    /* [v1.1] avisa quem entrou com o endereço padrão da clínica (e o que havia antes), para conferência */
+    S.rows.forEach(function (r) { if (r.endPadrao) av.push((r.v['Paciente'] || '?') + ': endereço incompleto' + (r.endAntes ? ' (' + r.endAntes + ')' : '') + ' → usado o endereço padrão da clínica (CEP ' + NFE_END_PADRAO.CEP + ', nº ' + NFE_END_PADRAO.Numero + ')'); });
     var ab = $('avisosBox');
     if (av.length) { ab.style.display = ''; $('avisosList').innerHTML = av.slice(0, 30).map(function (t) { return '<li>' + E(t) + '</li>'; }).join(''); } else ab.style.display = 'none';
     renderOps();
