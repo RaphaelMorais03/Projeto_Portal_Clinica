@@ -617,6 +617,8 @@
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-user-doctor"></i> Médicos do cronograma</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <!-- [v1.4.1] atalho: abre Atendimentos já com a prévia de médicos cadastrados para o dia -->
+            <button class="btn-s" onclick="cronSub('atend');cronAtPuxar()" title="Escolha um dia e traga os médicos cadastrados para ele; depois é só ajustar o horário"><i class="fas fa-users-gear"></i> Puxar para um dia</button>
             <button class="btn-s" onclick="cronMedTabela()" title="Preenche idade de atendimento e nº por agenda a partir da tabela da parede"><i class="fas fa-table-list"></i> Aplicar tabela de atendimento</button>
             <button class="btn-s" onclick="cronMedTrazer()" title="Traz os profissionais de Admin › Profissionais e dos cadastros do Fechamento"><i class="fas fa-file-import"></i> Trazer dos Profissionais</button>
             <button class="btn-p" onclick="cronMedAbrir()"><i class="fas fa-plus"></i> Novo médico</button>
