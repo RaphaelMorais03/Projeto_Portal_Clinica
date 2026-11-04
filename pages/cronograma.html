@@ -316,6 +316,19 @@
     .cron-v-h{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--gray-500);text-align:center;padding:4px;}
     .cron-v-sala{background:var(--gray-100);border-radius:8px;padding:6px 8px;font-size:11px;font-weight:800;color:var(--navy);display:flex;align-items:center;}
     .cron-v-cell{min-height:32px;border:1.5px dashed var(--gray-200);border-radius:8px;padding:3px;display:flex;flex-direction:column;gap:3px;}
+    /* [v1.6] Verificar em paisagem: 6 colunas (dias), MANHÃ em cima e TARDE embaixo */
+    .cron-vw{display:grid;grid-template-columns:repeat(6,minmax(176px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px;}
+    .cron-vcol{border:1.5px solid var(--gray-200);border-radius:12px;background:white;min-width:0;overflow:hidden;}
+    .cron-vcol-h{background:var(--navy);color:#fff;font-size:12px;font-weight:800;padding:8px 10px;text-align:center;}
+    .cron-vcol-h .pend{display:block;font-size:10px;color:#fecaca;font-weight:700;}
+    .cron-vband{background:var(--gray-100);color:var(--navy);font-size:10px;font-weight:800;letter-spacing:1px;text-align:center;padding:3px;border-top:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);}
+    .cron-vband small{font-weight:600;letter-spacing:0;color:var(--gray-500);}
+    .cron-vrow{display:grid;grid-template-columns:34px minmax(0,1fr);gap:3px;padding:2px 4px;align-items:stretch;}
+    .cron-vcol .cron-v-sala{padding:2px 3px;font-size:10px;justify-content:center;text-align:center;}
+    .cron-vcol .cron-v-cell{min-height:24px;padding:2px;}
+    .cron-vcol .cron-vchip{font-size:10.5px;padding:2px 5px;}
+    .cron-vedit{border:none;background:transparent;cursor:pointer;color:inherit;opacity:.65;font-size:10px;padding:0 3px;}
+    .cron-vedit:hover{opacity:1;}
     .cron-v-cell.over{border-color:var(--teal);background:#ecfeff;}
     .cron-v-cell.dup{border-color:var(--red);background:#fef2f2;}
     .cron-vchip{cursor:grab;user-select:none;}
@@ -747,17 +760,33 @@
         <button class="modal-close-btn" onclick="cronVerFechar()" title="Fechar"><i class="fas fa-xmark"></i></button>
       </div>
       <div class="modal-scroll">
-        <div style="max-width:1060px;margin:0 auto;">
+        <div style="max-width:none;margin:0 auto;">
           <div id="cronVerResumo"></div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
             <button class="btn-teal" onclick="cronVerSugerir()"><i class="fas fa-wand-magic-sparkles"></i> Sugerir salas</button>
             <button class="btn-s" onclick="cronVerSalvar()" id="cronVerBtnSalvar"><i class="fas fa-floppy-disk"></i> Salvar salas</button>
-            <button class="btn-r" onclick="cronVerPdf()" id="cronVerBtnPdf"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
+            <button class="btn-p" onclick="cronVerImprimir()" id="cronVerBtnImp"><i class="fas fa-print"></i> Imprimir</button>
+            <button class="btn-r" onclick="cronVerPdf()" id="cronVerBtnPdf"><i class="fas fa-file-pdf"></i> Baixar PDF</button>
           </div>
-          <div class="cron-v-aviso"><i class="fas fa-circle-info"></i> Arraste o nome do profissional para outra sala (ou clique no nome e depois na sala). Só dá para trocar de sala dentro do mesmo dia e período.</div>
+          <div class="cron-v-aviso"><i class="fas fa-circle-info"></i> Arraste o nome do profissional para outra sala (ou clique no nome e depois na sala). Use o lápis <i class="fas fa-pen"></i> para trocar o médico, o período ou remover. Confira tudo e só então imprima.</div>
           <div id="cronVerCorpo"></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- [v1.6] editar um atendimento dentro do Verificar -->
+  <div class="modal-bg" id="cronModalVerEd" style="z-index:600;">
+    <div class="cron-modal">
+      <div class="cron-mhead"><span id="cronVedTitulo">Editar atendimento</span><button class="modal-close-btn" onclick="cronVedFechar()" title="Fechar"><i class="fas fa-xmark"></i></button></div>
+      <div style="display:grid;gap:10px;">
+        <div><label class="f-label" for="cronVedMed">Médico / profissional</label><select class="f-select" id="cronVedMed"></select></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label class="f-label" for="cronVedPer">Período</label><select class="f-select" id="cronVedPer"><option>Manhã</option><option>Tarde</option></select></div>
+          <div><label class="f-label" for="cronVedSala">Sala</label><select class="f-select" id="cronVedSala"></select></div>
+        </div>
+      </div>
+      <div class="cron-mfoot"><button class="btn-r" onclick="cronVedRemover()" style="margin-right:auto;"><i class="fas fa-trash"></i> Remover</button><button class="btn-s" onclick="cronVedFechar()">Cancelar</button><button class="btn-p" onclick="cronVedSalvar()"><i class="fas fa-check"></i> Aplicar</button></div>
     </div>
   </div>
 
@@ -2665,7 +2694,7 @@
     };
 
     // ── HISTÓRICO ──
-    var ACAO_LBL = { sala: 'Sala', periodo: 'Período', status: 'Status', obs: 'Observação', aberta: 'Abertura', removido: 'Removido', criado: 'Criado', remarcado: 'Remarcado', estendido: 'Estendido', importacao: 'Importação' };
+    var ACAO_LBL = { sala: 'Sala', periodo: 'Período', status: 'Status', obs: 'Observação', aberta: 'Abertura', removido: 'Removido', criado: 'Criado', remarcado: 'Remarcado', estendido: 'Estendido', importacao: 'Importação', medico: 'Médico' };
     function renderHist() {
       var l = S.historico, box = $('cronHistLista');
       if (!l.length) { box.innerHTML = '<div class="cal-msg info">Nenhuma alteração registrada ainda.</div>'; return; }
@@ -2715,36 +2744,33 @@
       }).join('') + '</ul></div>';
       if (R.av.length) h += '<div class="cron-v-aviso"><b>Avisos (não bloqueiam):</b> ' + esc(R.av.join(' · ')) + '</div>';
       $('cronVerResumo').innerHTML = h;
+      $('cronVerBtnImp').disabled = R.bl.length > 0; $('cronVerBtnImp').style.opacity = R.bl.length ? '.5' : '1';   // [v1.6]
       $('cronVerBtnPdf').disabled = R.bl.length > 0; $('cronVerBtnPdf').style.opacity = R.bl.length ? '.5' : '1';
       $('cronVerBtnSalvar').disabled = !pend; $('cronVerBtnSalvar').style.opacity = pend ? '1' : '.5';
-      var corpo = '';
-      V.dias.forEach(function (d) {
-        var lista = V.itens.filter(function (x) { return x.dia === d; });
-        var lanes = ['Manhã', 'Tarde']; if (lista.some(function (x) { return x.periodo === 'A definir'; })) lanes.push('A definir');
+      // [v1.6] paisagem: cada dia é uma coluna; MANHÃ em cima, TARDE embaixo (mesmos data-d/data-s/data-p do arrastar)
+      var listasV = V.dias.map(function (d) { return V.itens.filter(function (x) { return x.dia === d; }); });
+      var salasV = salasDaSemana(listasV);
+      V.itens.forEach(function (x) { if (x.salaNova && salasV.indexOf(x.salaNova) < 0) salasV.push(x.salaNova); });
+      var temSem = V.itens.some(function (x) { return !x.salaNova; }), lanes = ['Manhã', 'Tarde'];
+      if (V.itens.some(function (x) { return x.periodo === 'A definir'; })) lanes.push('A definir');
+      var corpo = '<div class="cron-vw">' + V.dias.map(function (d, i) {
+        var lista = listasV[i], sab = dataDe(d).getDay() === 6;
         var nPend = lista.filter(function (x) { return !x.aberta || !x.salaNova || x.periodo === 'A definir' || (R.dup[d + '|' + x.periodo + '|' + x.salaNova] || []).length > 1; }).length;
-        var salas = ['']; SALAS.forEach(function (s) { salas.push(s); });
-        lista.forEach(function (x) { if (x.salaNova && salas.indexOf(x.salaNova) < 0) salas.push(x.salaNova); });
-        var aberto = V.open[d] !== undefined ? V.open[d] : (nPend > 0);
-        corpo += '<details class="cron-v-dia" data-d="' + d + '"' + (aberto ? ' open' : '') + '><summary>' + DOWL[dataDe(d).getDay()] + ' ' + brCurta(d) + ' · ' + lista.length + ' atendimento(s)' + (nPend ? '<span class="pend">⚠ ' + nPend + ' pendência(s)</span>' : '') + '</summary>';
-        if (!lista.length) corpo += '<div class="cron-help" style="padding:0 14px 12px;">Sem atendimentos.</div>';
-        else {
-          corpo += '<div class="cron-v-grid" style="--cols:' + lanes.length + '"><div></div>' + lanes.map(function (l) { return '<div class="cron-v-h">' + esc(l) + '</div>'; }).join('');
-          salas.forEach(function (s) {
-            var temAlgum = lista.some(function (x) { return x.salaNova === s; });
-            if (s === '' && !temAlgum) return;
-            corpo += '<div class="cron-v-sala">' + esc(salaRotulo(s)) + '</div>' + lanes.map(function (l) {
-              var xs = lista.filter(function (x) { return x.salaNova === s && x.periodo === l; });
-              var dup = xs.length > 1;
-              return '<div class="cron-v-cell' + (dup ? ' dup' : '') + '" data-d="' + d + '" data-s="' + esc(s) + '" data-p="' + esc(l) + '">' + xs.map(function (x) {
-                var c = stEf(x), bad = !x.aberta || dup || !x.salaNova;
-                return '<div class="cron-chip cron-vchip s-' + c + (bad ? ' bad' : '') + (V.sel === x.dia + '|' + x.id ? ' sel' : '') + '" draggable="true" data-k="' + esc(x.dia + '|' + x.id) + '" title="' + esc(rotuloCompleto(x) + (x.aberta ? ' · agenda aberta' : ' · agenda NÃO aberta')) + '"><span class="cron-t">' + esc(rotuloCompleto(x)) + '</span><i class="fas fa-' + (x.aberta ? 'lock-open' : 'lock') + '"></i></div>';
-              }).join('') + '</div>';
-            }).join('');
+        var col = '<div class="cron-vcol" data-d="' + d + '"><div class="cron-vcol-h">' + esc(DOWL[dataDe(d).getDay()]) + ' ' + brCurta(d) + (nPend ? '<span class="pend">⚠ ' + nPend + ' pendência(s)</span>' : '') + '</div>';
+        lanes.forEach(function (l) {
+          col += '<div class="cron-vband">' + esc(l.toUpperCase()) + (sab && l === 'Tarde' ? ' <small>(não sai na impressão)</small>' : '') + '</div>';
+          (temSem ? [''] : []).concat(salasV).forEach(function (s) {
+            var xs = lista.filter(function (x) { return x.salaNova === s && x.periodo === l; });
+            if (s === '' && !xs.length) return;
+            var dup = xs.length > 1, rot = s === '' ? 'SEM' : (ESPECIAIS[s] ? s : s);
+            col += '<div class="cron-vrow"><div class="cron-v-sala" title="' + esc(salaRotulo(s)) + '">' + esc(rot) + '</div><div class="cron-v-cell' + (dup ? ' dup' : '') + '" data-d="' + d + '" data-s="' + esc(s) + '" data-p="' + esc(l) + '">' + xs.map(function (x) {
+              var c = stEf(x), bad = !x.aberta || dup || !x.salaNova, k = esc(x.dia + '|' + x.id);
+              return '<div class="cron-chip cron-vchip s-' + c + (bad ? ' bad' : '') + (V.sel === x.dia + '|' + x.id ? ' sel' : '') + '" draggable="true" data-k="' + k + '" title="' + esc(rotuloCompleto(x) + (x.aberta ? ' · agenda aberta' : ' · agenda NÃO aberta')) + '"><span class="cron-t">' + esc(rotuloCompleto(x)) + '</span><button type="button" class="cron-vedit" data-ed="' + k + '" title="Editar médico / período"><i class="fas fa-pen"></i></button><i class="fas fa-' + (x.aberta ? 'lock-open' : 'lock') + '"></i></div>';
+            }).join('') + '</div></div>';
           });
-          corpo += '</div>';
-        }
-        corpo += '</details>';
-      });
+        });
+        return col + '</div>';
+      }).join('') + '</div>';
       $('cronVerCorpo').innerHTML = corpo;
     }
     function acharItem(k) { return V.itens.filter(function (x) { return x.dia + '|' + x.id === k; })[0]; }
@@ -2790,6 +2816,100 @@
       var R = validar(); if (R.bl.length) { toast('Resolva as pendências antes de gerar o PDF', 'error'); return; }
       salvarSalas().then(function (ok) { if (!ok) return; renderVer(); gerarPdf(); });
     };
+    // [v1.6] editar atendimento dentro do Verificar (médico, período, sala; remover)
+    var VED = null;
+    window.cronVedAbrir = function (k) {
+      var x = acharItem(k); if (!x) return; VED = k;
+      var r = medDe(x), ids = Object.keys(S.medicos).filter(function (id) { return S.medicos[id] && S.medicos[id].ativo !== false; }).sort(function (a, b) { return nomeMed(S.medicos[a]).localeCompare(nomeMed(S.medicos[b]), 'pt'); });
+      $('cronVedTitulo').textContent = 'Editar — ' + DOWC[dataDe(x.dia).getDay()] + ' ' + brCurta(x.dia);
+      $('cronVedMed').innerHTML = '<option value="">' + (r ? '' : '(sem cadastro) ') + esc(x.doc || 'manter atual') + ' — manter</option>' + ids.map(function (id) {
+        var m = S.medicos[id]; return '<option value="' + esc(id) + '"' + (r && r.id === id ? ' selected' : '') + '>' + esc(nomeMed(m) + (m.especialidade ? ' — ' + m.especialidade : '')) + '</option>';
+      }).join('');
+      $('cronVedPer').value = x.periodo === 'Tarde' ? 'Tarde' : 'Manhã';
+      $('cronVedSala').innerHTML = optSalas(x.salaNova, 'Sem sala');
+      abrirModal('cronModalVerEd');
+    };
+    window.cronVedFechar = function () { VED = null; fecharModal('cronModalVerEd'); };
+    window.cronVedSalvar = function () {
+      var x = acharItem(VED); if (!x) return window.cronVedFechar();
+      (async function () {
+        var b = baseItem(x.dia, x.id), mid = $('cronVedMed').value, per = $('cronVedPer').value, nome = rotuloNome(x);
+        if (mid && S.medicos[mid] && (!medDe(x) || medDe(x).id !== mid)) {
+          var m = S.medicos[mid];
+          if (!(await gravar(b + '/doc', String(m.nome || '').trim())) || !(await gravar(b + '/role', m.especialidade || '')) || !(await gravar(b + '/medicoId', mid))) return;
+          await hist({ dia: x.dia, itemId: x.id, doc: nomeMed(m), acao: 'medico', de: nome, para: nomeMed(m), obs: 'editado no Verificar' });
+          x.doc = String(m.nome || '').trim(); x.role = m.especialidade || ''; x.medicoId = mid;
+        }
+        if (per !== x.periodo) {
+          if (!(await gravar(b + '/periodo', per))) return;
+          await hist({ dia: x.dia, itemId: x.id, doc: rotuloNome(x), acao: 'periodo', de: x.periodo, para: per, obs: 'editado no Verificar' });
+          x.periodo = per;
+        }
+        x.salaNova = $('cronVedSala').value;   // sala segue o fluxo "Salvar salas"
+        window.cronVedFechar(); renderVer(); toast('Alteração aplicada', 'success');
+      })().catch(function (e) { toast('Falha: ' + e.message, 'error'); });
+    };
+    window.cronVedRemover = function () {
+      var x = acharItem(VED); if (!x) return;
+      if (!confirm('Remover ' + rotuloNome(x) + ' (' + x.periodo + ') de ' + brData(x.dia) + '?')) return;
+      gravar(baseItem(x.dia, x.id), null).then(function (ok) {
+        if (!ok) return;
+        hist({ dia: x.dia, itemId: x.id, doc: rotuloNome(x), acao: 'removido', de: x.periodo + ' ' + x.sala, para: '', obs: 'removido no Verificar' });
+        V.itens = V.itens.filter(function (y) { return y !== x; }); window.cronVedFechar(); renderVer();
+      });
+    };
+
+    // [v1.6] IMPRESSÃO — folha A4 paisagem (padrão do Caixa: janela própria + window.print); logo vem do banco (admin/logo) via sessionStorage
+    function htmlImpressao() {
+      var dias = V.dias, listas = dias.map(function (d) { return V.itens.filter(function (x) { return x.dia === d; }).map(function (x) { return Object.assign({}, x, { sala: x.salaNova }); }); });
+      var salas = salasDaSemana(listas);
+      var total = 0; dias.forEach(function (d) { var n = (S.dias[d] || {}).agendados; if (typeof n === 'number') total += n; });
+      var logo = sessionStorage.getItem('logoDataUrl') || '';
+      var logoH = logo ? '<img src="' + logo + '" alt="Logo">' : '<span class="lt">AMEI</span>';
+      function bloco(per) {
+        return salas.map(function (sl, ri) {
+          var cel = dias.map(function (d, i) {
+            if (per === 'Tarde' && dataDe(d).getDay() === 6) return '<td></td>';   // sábado à tarde não tem agenda: fica em branco
+            var ln = linhasPeriodo(listas[i], per, [sl])[0], esp = !!ESPECIAIS[sl];
+            var t = ln.itens.map(function (x) { var e = espDe(x); return esc(rotuloNome(x).toUpperCase()) + (esp || !e ? '' : ' <i>(' + esc(e.toUpperCase()) + ')</i>'); }).join(' / ');
+            return '<td><b>' + esc(ln.rot) + '</b> ' + t + '</td>';
+          }).join('');
+          var vazio = dias.every(function (d, i) { return !linhasPeriodo(listas[i], per, [sl])[0].itens.length; });
+          return '<tr class="' + (vazio ? 'v' : '') + '">' + cel + '</tr>';
+        }).join('');
+      }
+      var g = new Date();
+      return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cronograma semanal ' + esc(brData(dias[0])) + '</title><style>' +
+        '@page{size:A4 landscape;margin:7mm}*{box-sizing:border-box;margin:0;padding:0}' +
+        'body{font-family:Arial,Helvetica,sans-serif;color:#111827;-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff}' +
+        '.top{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0A1F44;padding-bottom:2.2mm;margin-bottom:2.5mm}.lg{display:flex;align-items:center;gap:3.5mm}' +
+        '.logo{width:13mm;height:13mm;display:flex;align-items:center;justify-content:center;flex-shrink:0}.logo img{max-width:100%;max-height:100%;object-fit:contain}.lt{font-size:9pt;font-weight:800;color:#0A1F44}' +
+        '.top h1{font-size:15pt;letter-spacing:.5px;color:#0A1F44}.top small{font-size:8pt;color:#374151;display:block;margin-top:.6mm;font-weight:700;letter-spacing:.6px}' +
+        '.per{font-size:10pt;font-weight:700;color:#0A1F44;text-align:right}.per small{display:block;font-weight:800;font-size:8.5pt;margin-top:.8mm;color:#0A1F44;letter-spacing:.3px}' +
+        'table{width:100%;border-collapse:collapse;table-layout:fixed}th{background:#0A1F44;color:#fff;font-size:7.5pt;padding:1.6mm 1mm;border:1px solid #0A1F44;line-height:1.15}th small{font-weight:500;font-size:7pt}' +
+        'td{border:1px solid #d1d5db;padding:.55mm 1.3mm;font-size:7.5pt;font-weight:600;line-height:1.16;vertical-align:top;height:4.75mm;overflow:hidden}td b{color:#0A1F44;font-weight:800}td i{font-style:normal;font-weight:500;color:#4b5563}' +
+        'tr.v td{height:3.7mm}tr.band td{background:#e5e7eb;text-align:center;font-weight:800;font-size:6.8pt;letter-spacing:1px;padding:.6mm;height:auto;color:#0A1F44}' +
+        'tr.ag td{text-align:center;font-weight:700;background:#f3f4f6;font-size:7pt;padding:1mm;height:auto}' +
+        '.foot{font-size:7pt;color:#374151;font-weight:700;margin-top:1.8mm;letter-spacing:.2px}' +
+        '</style></head><body>' +
+        '<div class="top"><div class="lg"><div class="logo">' + logoH + '</div><div><h1>CRONOGRAMA SEMANAL</h1><small>AMOR SAÚDE SP PIRITUBA</small></div></div>' +
+        '<div class="per">' + esc(brCurta(dias[0]) + ' a ' + brData(dias[5])) + '<small>TOTAL AGENDADOS: ' + total + '</small></div></div>' +
+        '<table><thead><tr>' + dias.map(function (d) { return '<th>' + NOMES_DIA[dataDe(d).getDay()] + '<br><small>' + diaCurto(d) + '</small></th>'; }).join('') + '</tr></thead><tbody>' +
+        '<tr class="band">' + dias.map(function () { return '<td>MANHÃ</td>'; }).join('') + '</tr>' + bloco('Manhã') +
+        '<tr class="band">' + dias.map(function (d) { return dataDe(d).getDay() === 6 ? '<td></td>' : '<td>TARDE</td>'; }).join('') + '</tr>' + bloco('Tarde') +
+        '<tr class="ag">' + dias.map(function (d) { var n = (S.dias[d] || {}).agendados; return '<td>Agendados: ' + (typeof n === 'number' ? n : '—') + '</td>'; }).join('') + '</tr></tbody></table>' +
+        '<div class="foot">CONFERIDO EM: ' + pad(g.getDate()) + '/' + pad(g.getMonth() + 1) + '/' + g.getFullYear() + ' ' + pad(g.getHours()) + ':' + pad(g.getMinutes()) + '</div>' +
+        '<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script></body></html>';
+    }
+    window.cronVerImprimir = function () {
+      var R = validar(); if (R.bl.length) { toast('Resolva as pendências antes de imprimir', 'error'); return; }
+      salvarSalas().then(function (ok) {
+        if (!ok) return; renderVer();
+        var w = window.open('', '_blank');
+        if (!w) { toast('Pop-up bloqueado. Permita pop-ups para imprimir.', 'error'); return; }
+        w.document.open(); w.document.write(htmlImpressao()); w.document.close();
+      });
+    };
     function ligarVerificar() {
       var corpo = $('cronVerCorpo');
       corpo.addEventListener('dragstart', function (ev) {
@@ -2804,6 +2924,7 @@
         V.drag = null; moverPara(k, c.getAttribute('data-d'), c.getAttribute('data-s'), c.getAttribute('data-p'));
       });
       corpo.addEventListener('click', function (ev) {
+        var ed = ev.target.closest('.cron-vedit'); if (ed) { ev.stopPropagation(); window.cronVedAbrir(ed.getAttribute('data-ed')); return; }   // [v1.6]
         var chipEl = ev.target.closest('.cron-vchip');
         if (chipEl) { var k = chipEl.getAttribute('data-k'); V.sel = V.sel === k ? null : k; renderVer(); return; }
         var cell = ev.target.closest('.cron-v-cell');
