@@ -1,0 +1,251 @@
+{
+ "_info": "Tabela 'Atendimento médico - AmorSaúde Pirituba' (folha na parede), transcrita da foto de 04/11/2026. Conferir antes de usar. Nomes como na folha (parciais); o cronograma casa com os médicos cadastrados e mostra uma prévia.",
+ "linhas": [
+  {
+   "nome": "André de Freitas",
+   "especialidade": "5 especialidades",
+   "idade": "A partir de 14 anos",
+   "porAgenda": "160 agendamentos"
+  },
+  {
+   "nome": "André Yuzo",
+   "especialidade": "Gastroenterologista",
+   "idade": "A partir de 14 anos",
+   "porAgenda": "65 agendamentos"
+  },
+  {
+   "nome": "Antônio Carlos",
+   "especialidade": "Clínica Médica",
+   "idade": "A partir de 15 anos",
+   "porAgenda": "40 agendamentos"
+  },
+  {
+   "nome": "André Ortuno",
+   "especialidade": "Clínica Médica/Geriatria",
+   "idade": "A partir de 16 anos",
+   "porAgenda": "Não fazer encaixe"
+  },
+  {
+   "nome": "André Piacentini",
+   "especialidade": "Ortopedia",
+   "idade": "A partir de 12 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Álvaro Humberto",
+   "especialidade": "Cardiologia",
+   "idade": "A partir de 18 anos",
+   "porAgenda": "40 agendamentos"
+  },
+  {
+   "nome": "Breno Buab",
+   "especialidade": "Otorrinolaringologia",
+   "idade": "A partir de 04 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Breno Cavalcante",
+   "especialidade": "Ultrassom",
+   "idade": "A partir de 02 anos",
+   "porAgenda": "45 agendamentos"
+  },
+  {
+   "nome": "Carlos Alexandre",
+   "especialidade": "Clínica Médica/Geriatria",
+   "idade": "A partir de 12 anos",
+   "porAgenda": "45 agendamentos"
+  },
+  {
+   "nome": "Camila Mukai",
+   "especialidade": "Gastroenterologia",
+   "idade": "A partir de 16 anos",
+   "porAgenda": "Mínimo 25 agend."
+  },
+  {
+   "nome": "Caridad Vega",
+   "especialidade": "Oftalmologia",
+   "idade": "A partir de 08 anos",
+   "porAgenda": "35 agendamentos"
+  },
+  {
+   "nome": "Diovani Costa",
+   "especialidade": "Oftalmologia",
+   "idade": "A partir de 07 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Fabio Guimarães",
+   "especialidade": "Ginecologia/Mastologia",
+   "idade": "Todas as idades",
+   "porAgenda": "Mínimo 20 agend."
+  },
+  {
+   "nome": "Francisco Sanches",
+   "especialidade": "Neurologista",
+   "idade": "A partir de 05 anos",
+   "porAgenda": "40 agendamentos"
+  },
+  {
+   "nome": "Heitor Zuleta",
+   "especialidade": "Psiquiatria",
+   "idade": "A partir de 18 anos",
+   "porAgenda": "Não fazer encaixe"
+  },
+  {
+   "nome": "Glauco Chiaradia",
+   "especialidade": "Urologia",
+   "idade": "A partir de 18 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Griselda Rojas",
+   "especialidade": "Neurologia",
+   "idade": "A partir de 05 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Juan Ignacio",
+   "especialidade": "Cardiologia",
+   "idade": "A partir de 10 anos",
+   "porAgenda": "65 agendamentos"
+  },
+  {
+   "nome": "Juliano Cesar",
+   "especialidade": "Dermatologia",
+   "idade": "Todas as idades",
+   "porAgenda": "28 a 30 agend."
+  },
+  {
+   "nome": "Larissa Matos",
+   "especialidade": "Otorrinolaringologia",
+   "idade": "A partir de 05 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Leticia Sucell",
+   "especialidade": "Ginecologia e obstetria",
+   "idade": "Todas as idades",
+   "porAgenda": "55 agendamentos"
+  },
+  {
+   "nome": "Luiz Massoni",
+   "especialidade": "Ultrassom",
+   "idade": "Todas as idades",
+   "porAgenda": "Não fazer encaixe"
+  },
+  {
+   "nome": "Luiz Fernando Fahed",
+   "especialidade": "Pediatria",
+   "idade": "De 05 meses à 14 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Marcos Antônio",
+   "especialidade": "Ortopedia",
+   "idade": "A partir de 05 anos",
+   "porAgenda": "45 agendamentos"
+  },
+  {
+   "nome": "Ronaldo Borkowski",
+   "especialidade": "Ortopedia",
+   "idade": "A partir de 05 anos",
+   "porAgenda": "30 agendamentos"
+  },
+  {
+   "nome": "Rubens Horacio",
+   "especialidade": "Angiologista (Vascular)",
+   "idade": "A partir de 16 anos",
+   "porAgenda": "30 agendamentos"
+  },
+  {
+   "nome": "Saily Hinojosa",
+   "especialidade": "Pediatria/Clínica médica",
+   "idade": "De 05 meses à 14 anos",
+   "porAgenda": "25 agendamentos"
+  },
+  {
+   "nome": "Sergio Alejandro",
+   "especialidade": "Ecocardiograma",
+   "idade": "A partir de 12 anos",
+   "porAgenda": "55 agendamentos"
+  },
+  {
+   "nome": "Silvia Regina",
+   "especialidade": "Otorrinolaringologia",
+   "idade": "Todas as idades",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Teófilo Martin",
+   "especialidade": "Angiologista",
+   "idade": "A partir de 14 anos",
+   "porAgenda": "30 agendamentos"
+  },
+  {
+   "nome": "Vanessa Sakamoto",
+   "especialidade": "Ultrassom",
+   "idade": "A partir de 02 anos",
+   "porAgenda": "40 manhã / 24 tarde"
+  },
+  {
+   "nome": "Vera Lucia",
+   "especialidade": "Endocrinologia",
+   "idade": "A partir de 15 anos",
+   "porAgenda": "55 agendamentos"
+  },
+  {
+   "nome": "Vinicius Alencar",
+   "especialidade": "Dermatologia",
+   "idade": "A partir de 05 anos",
+   "porAgenda": "30 consultas"
+  },
+  {
+   "nome": "Willy Vladimir",
+   "especialidade": "Neurologia",
+   "idade": "A partir de 02 anos",
+   "porAgenda": "40 agendamentos"
+  },
+  {
+   "nome": "Yuledis Legra Legra",
+   "especialidade": "Oftalmologia",
+   "idade": "A partir de 12 anos",
+   "porAgenda": "40 agendamentos"
+  },
+  {
+   "nome": "Marlene",
+   "especialidade": "Teste Ergométrico",
+   "idade": "A partir de 13 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "João",
+   "especialidade": "MAPA",
+   "idade": "A partir de 08 anos",
+   "porAgenda": "Não fazer encaixe"
+  },
+  {
+   "nome": "Vinicius Rodrigo",
+   "especialidade": "HOLTER 24H",
+   "idade": "A partir de 11 anos",
+   "porAgenda": "Não fazer encaixe"
+  },
+  {
+   "nome": "Vinicius Rodrigo",
+   "especialidade": "EXAMES NEURO",
+   "idade": "Todas as idades",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Cinthya dos Santos",
+   "especialidade": "Nutrição",
+   "idade": "A partir dos 14 anos",
+   "porAgenda": "Horários disponíveis"
+  },
+  {
+   "nome": "Isabela",
+   "especialidade": "Fisioterapia",
+   "idade": "A partir dos 14 anos",
+   "porAgenda": "Não fazer encaixe"
+  }
+ ]
+}
