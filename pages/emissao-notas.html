@@ -86,11 +86,12 @@
   .pronto-h .t{font-size:15px;font-weight:800;color:var(--navy);}
   .pronto-h .s{font-size:12px;color:var(--g500);margin-top:2px;}
 
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;} /* [v1.2] 3 cards: Consulta / Exame / Odonto */
   .bcard{border-radius:14px;padding:18px;cursor:pointer;transition:all .15s;border:1.5px solid;}
   .bcard:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.08);}
   .bcard.cons{background:var(--teal-bg);border-color:#99f6e4;color:#0f766e;}
   .bcard.exa{background:var(--blue-bg);border-color:#93c5fd;color:#1e40af;}
+  .bcard.odo{background:var(--purple-bg);border-color:#d8b4fe;color:var(--purple);} /* [v1.2] odontologia */
   .bcard .ic{font-size:20px;margin-bottom:8px;}
   .bcard .n{font-size:30px;font-weight:900;letter-spacing:-1.5px;line-height:1;}
   .bcard .l{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;opacity:.8;}
@@ -313,6 +314,12 @@
           <div class="bcard exa" onclick="NFE.baixar('Exame')">
             <div class="ic"><i class="fas fa-flask"></i></div>
             <div class="n" id="nExa">0</div><div class="l">Exames</div>
+            <div class="btn"><i class="fas fa-download"></i> Baixar .xlsx</div>
+          </div>
+          <!-- [v1.2] lote da odontologia -->
+          <div class="bcard odo" onclick="NFE.baixar('Odonto')">
+            <div class="ic"><i class="fas fa-tooth"></i></div>
+            <div class="n" id="nOdo">0</div><div class="l">Odontologia</div>
             <div class="btn"><i class="fas fa-download"></i> Baixar .xlsx</div>
           </div>
         </div>
@@ -794,7 +801,7 @@ var NFE = (function () {
       assinatura: ['paciente', 'cpf', 'valor', 'pagamento', 'operador', 'email', 'tel', 'cep', 'num'] }
   };
   var LS_URL = 'nfl_webhook_url', LS_TOKEN = 'nfl_webhook_token', LS_DIA = 'nflx_dia_ativo';   /* mesmas chaves do dashboard */
-  var DESC = { Consulta: 'REF A CONSULTA REALIZADA', Exame: 'REF A EXAMES REALIZADOS' };
+  var DESC = { Consulta: 'REF A CONSULTA REALIZADA', Exame: 'REF A EXAMES REALIZADOS', Odonto: 'REF A TRATAMENTO ODONTOLÓGICO' }; /* [v1.2] Odonto */
 
   /* ─────────── utilidades ─────────── */
   var $ = function (id) { return document.getElementById(id); };
@@ -926,7 +933,7 @@ var NFE = (function () {
     var d = {};
     Object.keys(NFL_OPERADOR_TIPO).forEach(function (k) { var n = nflNormTxt(k); if (n) d[n] = NFL_OPERADOR_TIPO[k]; });
     var fb = S.opFb || {};
-    Object.keys(fb).forEach(function (k) { var t = fb[k]; if (t !== 'Consulta' && t !== 'Exame') return; var n = nflNormTxt(k); if (n) d[n] = t; });
+    Object.keys(fb).forEach(function (k) { var t = fb[k]; if (t !== 'Consulta' && t !== 'Exame' && t !== 'Odonto') return; /* [v1.2] Odonto */ var n = nflNormTxt(k); if (n) d[n] = t; });
     return d;
   }
   function tipoConhecido(cell) {
@@ -963,7 +970,7 @@ var NFE = (function () {
     nr.warns.forEach(function (w) { warns.push(w); });
     var telD = nflOnlyDigits(v['Telefone']);
     if (cpfD && telD && cpfD === telD) warns.push('CPF igual ao telefone');
-    if (!r.tipo) warns.push('Tipo (Consulta/Exame) não definido');
+    if (!r.tipo) warns.push('Tipo (Consulta/Exame/Odonto) não definido');
     r.warns = warns; r._cpf = cpfD;
     return r;
   }
@@ -1077,7 +1084,7 @@ var NFE = (function () {
     { id: 'buscar', lbl: 'Lendo a planilha NOTAS FISCAIS 3.0' },
     { id: 'layout', lbl: 'Reconhecendo layout da planilha' },
     { id: 'mapear', lbl: 'Mapeando colunas pelo cabeçalho' },
-    { id: 'operador', lbl: 'Identificando tipo (Consulta/Exame)' },
+    { id: 'operador', lbl: 'Identificando tipo (Consulta/Exame/Odonto)' },
     { id: 'cep', lbl: 'Buscando CEP dos pacientes' }
   ];
   function montarPassos() {
@@ -1165,10 +1172,10 @@ var NFE = (function () {
 
   function renderPronto() {
     var ok = prontos(), pend = pendentes();
-    var nc = ok.filter(function (r) { return r.tipo === 'Consulta'; }).length, ne = ok.filter(function (r) { return r.tipo === 'Exame'; }).length;
+    var nc = ok.filter(function (r) { return r.tipo === 'Consulta'; }).length, ne = ok.filter(function (r) { return r.tipo === 'Exame'; }).length, no = ok.filter(function (r) { return r.tipo === 'Odonto'; }).length; /* [v1.2] */
     $('prontoT').textContent = ok.length + ' paciente(s) pronto(s)' + (pend.length ? ' · ' + pend.length + ' pendência(s)' : '');
-    $('prontoS').textContent = nc + ' consultas · ' + ne + ' exames · ' + pend.length + ' pendências' + (S.ignoradas ? ' · ' + S.ignoradas + ' linha(s) quebrada(s) ignorada(s)' : '');
-    $('nCons').textContent = nc; $('nExa').textContent = ne;
+    $('prontoS').textContent = nc + ' consultas · ' + ne + ' exames · ' + no + ' odonto · ' + pend.length + ' pendências' + (S.ignoradas ? ' · ' + S.ignoradas + ' linha(s) quebrada(s) ignorada(s)' : '');
+    $('nCons').textContent = nc; $('nExa').textContent = ne; $('nOdo').textContent = no;
     var pb = $('pendBox');
     if (pend.length) {
       pb.style.display = 'flex'; $('pendN').textContent = pend.length;
@@ -1193,6 +1200,7 @@ var NFE = (function () {
       return '<div class="op"><span class="nome">' + E(o.nome) + '</span><span class="novo">novo</span><div class="radios">'
         + '<label><input type="radio" name="op-' + idx + '" onchange="NFE.marcarOp(' + idx + ',\'Consulta\')"><span>Consulta</span></label>'
         + '<label><input type="radio" name="op-' + idx + '" onchange="NFE.marcarOp(' + idx + ',\'Exame\')"><span>Exame</span></label>'
+        + '<label><input type="radio" name="op-' + idx + '" onchange="NFE.marcarOp(' + idx + ',\'Odonto\')"><span>Odonto</span></label>' /* [v1.2] */
         + '</div></div>';
     }).join('');
   }
@@ -1230,7 +1238,7 @@ var NFE = (function () {
           + '<input data-r="' + idx + '" data-f="' + E(c) + '" class="' + (miss ? 'missing' : '') + '" value="' + E(r.v[c]) + '" oninput="this.classList.remove(\'missing\')"></div>';
       }).join('');
       var tipoSel = '<div class="full"><label>Tipo' + (!r.tipo ? ' <span class="req">*</span>' : '') + '</label><select data-r="' + idx + '" data-f="__tipo" class="' + (!r.tipo ? 'missing' : '') + '" onchange="this.classList.remove(\'missing\')">'
-        + '<option value=""' + (!r.tipo ? ' selected' : '') + '>—</option><option' + (r.tipo === 'Consulta' ? ' selected' : '') + '>Consulta</option><option' + (r.tipo === 'Exame' ? ' selected' : '') + '>Exame</option></select></div>';
+        + '<option value=""' + (!r.tipo ? ' selected' : '') + '>—</option><option' + (r.tipo === 'Consulta' ? ' selected' : '') + '>Consulta</option><option' + (r.tipo === 'Exame' ? ' selected' : '') + '>Exame</option><option' + (r.tipo === 'Odonto' ? ' selected' : '') + '>Odonto</option></select></div>'; /* [v1.2] */
       return '<div class="fix"><div class="fix-h"><b>' + E(r.v['Paciente'] || '(sem nome)') + '</b><span class="badge">' + E(r.warns.slice(0, 2).join(' · ')) + (r.warns.length > 2 ? '…' : '') + '</span></div><div class="fix-f">' + campos + tipoSel + '</div></div>';
     }).join('') || '<div class="mdl-s">Sem pendências.</div>';
     $('fixMdl').classList.add('open');
@@ -1264,7 +1272,7 @@ var NFE = (function () {
   function baixar(tipo) {
     var rows = prontos().filter(function (r) { return r.tipo === tipo; });
     if (!rows.length) { toast('Nenhum paciente pronto em ' + tipo + '.', 'error'); return; }
-    var pref = tipo === 'Consulta' ? 'consultas' : 'exames', iso = diaAtivo();
+    var pref = tipo === 'Consulta' ? 'consultas' : (tipo === 'Odonto' ? 'odontologia' : 'exames'), iso = diaAtivo(); /* [v1.2] */
     for (var i = 0; i < rows.length; i += NFL_MAX_LOTE) {
       var suf = rows.length > NFL_MAX_LOTE ? '_parte' + (Math.floor(i / NFL_MAX_LOTE) + 1) : '';
       XLSX.writeFile(wbDe(rows.slice(i, i + NFL_MAX_LOTE)), nomeArquivo(pref, iso, suf));
