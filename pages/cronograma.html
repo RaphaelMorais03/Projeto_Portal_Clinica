@@ -648,8 +648,11 @@
       <div class="cron-sub" id="cronSubAtend"><div class="panel">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-pen-to-square"></i> Atendimentos do dia</div>
-          <div style="display:flex;align-items:center;gap:8px;"><label class="f-label" for="cronAtDia" style="margin:0;">Dia</label><input type="date" class="f-input" id="cronAtDia" style="width:auto;padding:7px 10px;font-size:13px;"></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><label class="f-label" for="cronAtDia" style="margin:0;">Dia</label><input type="date" class="f-input" id="cronAtDia" style="width:auto;padding:7px 10px;font-size:13px;">
+            <button class="btn-s" onclick="cronAtPuxar()" title="Traz os médicos cadastrados para este dia; você só ajusta o horário"><i class="fas fa-users-gear"></i> Puxar cadastrados</button></div>
         </div>
+        <!-- [v1.4] prévia: médicos cadastrados → atendimentos do dia -->
+        <div id="cronAtPuxarBox" style="display:none;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#f9fafb;"></div>
         <div class="cron-add">
           <div><label class="f-label" for="cronAddMed">Adicionar médico neste dia</label><select class="f-select" id="cronAddMed"></select></div>
           <div><label class="f-label" for="cronAddPer">Período</label><select class="f-select" id="cronAddPer"><option value="Manhã">Manhã</option><option value="Tarde">Tarde</option></select></div>
@@ -2474,6 +2477,57 @@
       var id = 'man_' + mid + '_' + (per === 'Tarde' ? 'T' : 'M') + '_' + Math.random().toString(36).slice(2, 5);
       var it = { sala: sala, doc: String(m.nome || '').trim(), role: m.especialidade || '', periodo: per, aberta: false, status: 'previsto', medicoId: mid, origem: 'manual' };
       gravar(baseItem(dia, id), it).then(function (ok) { if (ok) { toast('Atendimento adicionado', 'success'); hist({ dia: dia, itemId: id, doc: nomeMed(m), acao: 'criado', de: '', para: per }); } });
+    };
+
+    // [v1.4] Puxar médicos cadastrados para o dia: prévia com período editável por linha; grava só o que for marcado
+    var PUX = [];
+    window.cronAtPuxar = function () {
+      var dia = diaAtend(), box = $('cronAtPuxarBox'), wd = dataDe(dia).getDay(), l = medsOrdenados(true);
+      garantirMes(dia.slice(0, 7));
+      if (!l.length) { box.style.display = 'block'; box.innerHTML = '<span class="cron-help">Nenhum médico ativo cadastrado. Use "Trazer dos Profissionais" ou "Novo médico" em Médicos.</span> <button class="btn-s" onclick="cronAtPuxarFechar()">Fechar</button>'; return; }
+      var noDia = itens(dia, false), ja = {};
+      noDia.forEach(function (x) { var id = chaveMed(x); if (id) ja[id] = (ja[id] || 0) + 1; });
+      PUX = l.filter(function (r) { return !ja[r.id]; });
+      var qtdJa = l.length - PUX.length, temFixos = PUX.some(function (r) { return String(r.m.diasFixos || '').split(',').indexOf(String(wd)) >= 0; });
+      box.style.display = 'block';
+      if (!PUX.length) { box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;"><span><i class="fas fa-circle-check" style="color:#15803d;"></i> Todos os médicos ativos já estão neste dia.</span><button class="btn-s" onclick="cronAtPuxarFechar()">Fechar</button></div>'; return; }
+      box.innerHTML = '<div style="font-weight:700;margin-bottom:4px;">Puxar para ' + esc(brData(dia)) + ' (' + esc(NOMES_DIA[wd]) + ')' + (qtdJa ? ' <span style="font-weight:400;color:#6b7280;">· ' + qtdJa + ' já está(ão) no dia</span>' : '') + '</div>' +
+        '<div class="cron-help" style="margin:0 0 8px;">' + (temFixos ? 'Vêm marcados os médicos cujo <b>dia fixo</b> é este dia da semana.' : 'Nenhum médico tem este dia como fixo; marque quem vai atender.') + ' Escolha o período de cada um (ou deixe <b>A definir</b> e ajuste depois na lista). Quem tiver sala habitual livre já vem com ela.</div>' +
+        '<div style="margin-bottom:6px;font-size:12px;"><a href="#" onclick="cronAtPuxarTodos(true);return false;">Marcar todos</a> · <a href="#" onclick="cronAtPuxarTodos(false);return false;">Desmarcar todos</a></div>' +
+        '<div style="max-height:300px;overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:4px 10px;">' +
+        PUX.map(function (r, i) {
+          var fixo = String(r.m.diasFixos || '').split(',').indexOf(String(wd)) >= 0;
+          return '<div style="display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px solid #f3f4f6;"><input type="checkbox" class="cronPuxChk" data-i="' + i + '"' + (fixo ? ' checked' : '') + '> <span style="flex:1;"><b>' + esc(nomeMed(r.m)) + '</b>' + (r.m.especialidade ? ' <span style="color:#6b7280;">· ' + esc(r.m.especialidade) + '</span>' : '') + (fixo ? ' <span class="cal-est">dia fixo</span>' : '') + '</span>' +
+            '<select class="f-select cronPuxPer" data-i="' + i + '" style="width:auto;padding:5px 8px;font-size:12px;"><option>A definir</option><option>Manhã</option><option>Tarde</option><option value="Ambos">Manhã e Tarde</option></select></div>';
+        }).join('') + '</div>' +
+        '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button class="btn-s" onclick="cronAtPuxarFechar()">Cancelar</button><button class="btn-p" onclick="cronAtPuxarGravar()"><i class="fas fa-check"></i> Adicionar ao dia</button></div>';
+    };
+    window.cronAtPuxarTodos = function (v) { Array.prototype.forEach.call(document.querySelectorAll('.cronPuxChk'), function (c) { c.checked = v; }); };
+    window.cronAtPuxarFechar = function () { var b = $('cronAtPuxarBox'); b.style.display = 'none'; b.innerHTML = ''; PUX = []; };
+    window.cronAtPuxarGravar = function () {
+      var dia = diaAtend(), sel = [];
+      Array.prototype.forEach.call(document.querySelectorAll('.cronPuxChk'), function (c) {
+        if (!c.checked) return; var i = +c.getAttribute('data-i'), s = document.querySelector('.cronPuxPer[data-i="' + i + '"]');
+        if (PUX[i]) sel.push({ r: PUX[i], per: s ? s.value : 'A definir' });
+      });
+      if (!sel.length) { toast('Nenhum médico selecionado', 'error'); return; }
+      var ocupada = {}; itens(dia, false).forEach(function (x) { if (x.sala) ocupada[x.periodo + '|' + x.sala] = 1; });
+      var tarefas = [], base = Date.now().toString(36);
+      sel.forEach(function (s, n) {
+        var m = s.r.m, pers = s.per === 'Ambos' ? ['Manhã', 'Tarde'] : [s.per];
+        pers.forEach(function (per) {
+          var sala = m.salaHabitual && per !== 'A definir' && !ocupada[per + '|' + m.salaHabitual] ? m.salaHabitual : '';
+          if (sala) ocupada[per + '|' + sala] = 1;
+          var id = 'cad_' + s.r.id + '_' + (per === 'Tarde' ? 'T' : per === 'Manhã' ? 'M' : 'D') + '_' + base + n;
+          tarefas.push({ id: id, per: per, nome: nomeMed(m), it: { sala: sala, doc: String(m.nome || '').trim(), role: m.especialidade || '', periodo: per, aberta: false, status: 'previsto', medicoId: s.r.id, origem: 'cadastro' } });
+        });
+      });
+      Promise.all(tarefas.map(function (t) { return gravar(baseItem(dia, t.id), t.it); })).then(function (r) {
+        var ok = 0; r.forEach(function (v, i) { if (v) { ok++; hist({ dia: dia, itemId: tarefas[i].id, doc: tarefas[i].nome, acao: 'criado', de: '', para: tarefas[i].per, obs: 'puxado do cadastro' }); } });
+        if (ok) toast(ok + ' atendimento(s) adicionado(s). Ajuste os horários na lista.', 'success');
+        if (ok < r.length) toast((r.length - ok) + ' não foram gravados', 'error');
+        window.cronAtPuxarFechar();
+      });
     };
 
     // ── remarcar / estender ──
