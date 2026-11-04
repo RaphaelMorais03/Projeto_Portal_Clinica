@@ -318,6 +318,19 @@
     .cron-vchip{cursor:grab;user-select:none;}
     .cron-vchip.sel{outline:2px solid var(--navy);}
     .cron-vchip.bad{box-shadow:0 0 0 2px var(--red);}
+    /* [v1.3.1] semana no formato da folha impressa */
+    .cron-wk2{width:100%;border-collapse:collapse;table-layout:fixed;min-width:900px;}
+    .cron-wk2 th{background:white;border:1.5px solid #111;padding:4px;font-size:11px;font-weight:800;text-align:center;color:#111;}
+    .cron-wk2 th small{font-size:11px;font-weight:700;}
+    .cron-wk2 th.hoje{background:#fde68a;}
+    .cron-wk2 td{border:1.5px solid #111;padding:0;vertical-align:top;}
+    .cron-wk2 tr.band td{background:#d9d9d9;text-align:center;font-style:italic;font-weight:800;font-size:10px;padding:2px;}
+    .cron-wk2 tr.ag td{text-align:center;font-weight:800;font-size:12px;padding:6px;}
+    .cron-ln{padding:2px 6px;border-bottom:1px solid #111;font-weight:800;font-size:11px;line-height:1.35;color:#111;overflow-wrap:anywhere;}
+    .cron-ln:last-child{border-bottom:none;}
+    .cron-ln.vz{color:#6b7280;font-weight:600;}
+    .cron-ln.s-prev,.cron-ln.s-conf,.cron-ln.s-aberta,.cron-ln.s-est{border-left-width:4px;border-left-style:solid;border-bottom-color:#111;}
+    .cron-ln i{font-size:9px;opacity:.7;}
     @media(max-width:700px){.cron-grid2{grid-template-columns:1fr;}.cron-add{grid-template-columns:1fr;}.cron-v-grid{grid-template-columns:78px repeat(var(--cols,2),minmax(0,1fr));}.cron-seg button{padding:7px 10px;}}
   </style>
 </head>
@@ -1952,26 +1965,66 @@
       $('cronAviso').setAttribute('data-info', tot + ' atendimento(s) · ' + Object.keys(meds).length + ' profissional(is) no mês');
       return h;
     }
+    // [v1.3.1] Layout da folha impressa: cada dia é uma coluna; MANHÃ em cima e TARDE embaixo; linhas fixas "1.", "2.", ...
+    var ORDEM = ['01', '02', '03', '04', '05', 'US', '06', '07', '08', 'ACOL1', 'ACOL2', '09', '10', 'FISIO'];
+    var ESPECIAIS = { US: 'ULTRASSOM:', ACOL1: 'ACOLHIMENTO 1:', ACOL2: 'ACOLHIMENTO 2:', FISIO: 'Fisioterapia:' };
+    var NOMES_DIA = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
+    var MES_ABR = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    function rotLinha(s) { return /^\d+$/.test(s) ? parseInt(s, 10) + '.' : (ESPECIAIS[s] || (s + '.')); }
+    function textoItem(x, especial) {
+      var n = rotuloNome(x).toUpperCase(), e = espDe(x);
+      return especial || !e ? n : n + ' (' + e.toUpperCase() + ')';
+    }
+    function diaCurto(d) { var p = d.split('-'); return p[2] + '/' + MES_ABR[+p[1] - 1]; }
+    // salas da semana: ordem da folha + salas fora do padrão que aparecerem
+    function salasDaSemana(listas) {
+      var s = ORDEM.slice();
+      listas.forEach(function (l) { l.forEach(function (x) { if (x.sala && s.indexOf(x.sala) < 0) s.push(x.sala); }); });
+      return s;
+    }
+    // linhas de um período: [{rot, itens, txt}] — itens sem sala entram numa linha "SEM SALA:"
+    function linhasPeriodo(lista, per, salas) {
+      var xs = lista.filter(function (x) { return x.periodo === per; });
+      var out = salas.map(function (s) {
+        var is = xs.filter(function (x) { return x.sala === s; }), esp = !!ESPECIAIS[s], rot = rotLinha(s);
+        return { sala: s, rot: rot, itens: is, txt: rot + (is.length ? ' ' + is.map(function (x) { return textoItem(x, esp); }).join(' / ') : '') };
+      });
+      var sem = xs.filter(function (x) { return !x.sala; });
+      if (sem.length) out.push({ sala: '', rot: 'SEM SALA:', itens: sem, txt: 'SEM SALA: ' + sem.map(function (x) { return textoItem(x, false); }).join(' / ') });
+      return out;
+    }
     function htmlSemana() {
-      var seg = segundaDe(S.ref), dias = [], hoje = hojeIso(), por = {}, ks = {}, canc = [];
+      var seg = segundaDe(S.ref), dias = [], hoje = hojeIso(), canc = [], listas = [];
       for (var i = 0; i < 6; i++) dias.push(iso(addDias(seg, i)));
       dias.forEach(function (d) {
-        itens(d, true).filter(passaFiltro).forEach(function (x) {
-          if (inativo(x)) { canc.push(rotuloNome(x) + ' (' + DOWC[dataDe(d).getDay()] + ' ' + brCurta(d) + ' ' + x.periodo + ')'); return; }
-          var k = x.sala + '|' + x.periodo; ks[k] = { sala: x.sala, per: x.periodo };
-          (por[k] = por[k] || {}); (por[k][d] = por[k][d] || []).push(x);
-        });
+        var l = itens(d, true).filter(passaFiltro);
+        l.forEach(function (x) { if (inativo(x)) canc.push(rotuloNome(x) + ' (' + DOWC[dataDe(d).getDay()] + ' ' + brCurta(d) + ' ' + x.periodo + ')'); });
+        listas.push(l.filter(function (x) { return !inativo(x); }));
       });
-      var ch = Object.keys(ks).sort(function (a, b) { return salaChave(ks[a].sala) - salaChave(ks[b].sala) || (PERS.indexOf(ks[a].per) - PERS.indexOf(ks[b].per)); });
-      if (!ch.length) return '<div class="cal-msg info">Sem atendimentos nesta semana.</div>' + (canc.length ? '<div class="cron-help">Cancelados/remarcados: ' + esc(canc.join('; ')) + '</div>' : '');
-      var h = '<div class="cron-tw"><table class="cron-wk"><thead><tr><th>Sala / período</th>' + dias.map(function (d) {
-        return '<th class="' + (d === hoje ? 'hoje' : '') + '">' + DOWC[dataDe(d).getDay()] + '<br>' + brCurta(d) + '</th>';
+      var total = listas.reduce(function (a, l) { return a + l.length; }, 0);
+      if (!total) return '<div class="cal-msg info">Sem atendimentos nesta semana.</div>' + (canc.length ? '<div class="cron-help">Cancelados/remarcados: ' + esc(canc.join('; ')) + '</div>' : '');
+      var salas = salasDaSemana(listas);
+      function celula(l, per, d) {
+        if (per === 'Tarde' && dataDe(d).getDay() === 6 && !l.some(function (x) { return x.periodo === 'Tarde'; })) return '';   // sábado sem tarde, como na folha
+        return linhasPeriodo(l, per, salas).map(function (ln) {
+          var c = ln.itens.length ? ' s-' + stEf(ln.itens[0]) : ' vz', tip = ln.itens.map(function (x) { return rotuloCompleto(x) + ' · ' + ST_LBL[stEf(x)] + (x.aberta ? ' · agenda aberta' : ''); }).join('\n');
+          return '<div class="cron-ln' + c + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + esc(ln.txt) + (ln.itens.some(function (x) { return x.aberta; }) && ln.itens.length ? ' <i class="fas fa-lock-open"></i>' : '') + '</div>';
+        }).join('');
+      }
+      var semA = listas.some(function (l) { return l.some(function (x) { return x.periodo === 'A definir'; }); });
+      var h = '<div class="cron-tw"><table class="cron-wk2"><thead><tr>' + dias.map(function (d) {
+        return '<th class="' + (d === hoje ? 'hoje' : '') + '">' + NOMES_DIA[dataDe(d).getDay()] + '<br><small>' + diaCurto(d) + '</small></th>';
       }).join('') + '</tr></thead><tbody>';
-      ch.forEach(function (k) {
-        h += '<tr class="' + (ks[k].per === 'Tarde' ? 't' : 'm') + '"><th>' + esc(salaRotulo(ks[k].sala)) + '<small>' + esc(ks[k].per) + '</small></th>' + dias.map(function (d) {
-          return '<td>' + ((por[k][d] || []).map(function (x) { return chip(x, true, false); }).join('')) + '</td>';
+      h += '<tr class="band">' + dias.map(function () { return '<td>MANHÃ</td>'; }).join('') + '</tr>';
+      h += '<tr>' + dias.map(function (d, i) { return '<td>' + celula(listas[i], 'Manhã', d) + '</td>'; }).join('') + '</tr>';
+      h += '<tr class="band">' + dias.map(function () { return '<td>TARDE</td>'; }).join('') + '</tr>';
+      h += '<tr>' + dias.map(function (d, i) { return '<td>' + celula(listas[i], 'Tarde', d) + '</td>'; }).join('') + '</tr>';
+      if (semA) {
+        h += '<tr class="band"><td colspan="6">PERÍODO A DEFINIR</td></tr><tr>' + dias.map(function (d, i) {
+          return '<td>' + linhasPeriodo(listas[i], 'A definir', ['']).filter(function (ln) { return ln.itens.length; }).map(function (ln) { return '<div class="cron-ln s-prev">' + esc(ln.txt) + '</div>'; }).join('') + '</td>';
         }).join('') + '</tr>';
-      });
+      }
+      h += '<tr class="ag">' + dias.map(function (d) { var n = (S.dias[d] || {}).agendados; return '<td>Agendados: ' + (typeof n === 'number' ? n : '—') + '</td>'; }).join('') + '</tr>';
       h += '</tbody></table></div>';
       if (canc.length) h += '<div class="cron-help" style="margin-top:10px;"><b>Cancelados/remarcados:</b> ' + esc(canc.join('; ')) + '</div>';
       return h;
@@ -2540,53 +2593,68 @@
       });
     }
 
-    // ── PDF SEMANAL (jsPDF, A4 paisagem): salas em linhas × dias em colunas, Manhã/Tarde separados ──
+    // ── PDF SEMANAL (jsPDF, A4 paisagem) — [v1.3.1] mesmo layout da folha impressa: dia em coluna, MANHÃ em cima e TARDE embaixo ──
     function gerarPdf() {
       var J = window.jspdf && window.jspdf.jsPDF;
       if (!J) { toast('Biblioteca de PDF não carregou. Recarregue a página.', 'error'); return; }
-      var doc = new J({ orientation: 'landscape', unit: 'mm', format: 'a4' }), W = 297, H = 210, M = 10, CS = 32, CW = (W - 2 * M - CS) / 6, LH = 3.7, dias = V.dias;
-      var por = {}, ks = {};
-      V.itens.forEach(function (x) {
-        var k = x.salaNova + '|' + x.periodo; ks[k] = { sala: x.salaNova, per: x.periodo };
-        (por[k] = por[k] || {}); (por[k][x.dia] = por[k][x.dia] || []).push(rotuloCompleto(x));
-      });
-      var ch = Object.keys(ks).sort(function (a, b) { return salaChave(ks[a].sala) - salaChave(ks[b].sala) || (PERS.indexOf(ks[a].per) - PERS.indexOf(ks[b].per)); });
+      var doc = new J({ orientation: 'landscape', unit: 'mm', format: 'a4' }), W = 297, H = 210, M = 8, dias = V.dias, CW = (W - 2 * M) / 6;
+      var listas = dias.map(function (d) { return V.itens.filter(function (x) { return x.dia === d; }).map(function (x) { return Object.assign({}, x, { sala: x.salaNova }); }); });
+      var salas = salasDaSemana(listas);
+      var lM = listas.map(function (l) { return linhasPeriodo(l, 'Manhã', salas); }), lT = listas.map(function (l) { return linhasPeriodo(l, 'Tarde', salas); });
+      var sabSemTarde = dias.map(function (d, i) { return dataDe(d).getDay() === 6 && !listas[i].some(function (x) { return x.periodo === 'Tarde'; }); });
+      var nLinhas = Math.max.apply(null, lM.concat(lT).map(function (a) { return a.length; }));
+      var topo = 12 + 10 + 11;            // título + cabeçalho dos dias
+      var disp = H - M - 8 - topo;        // altura útil para bandas + linhas + agendados
+      // linhas alinhadas entre as colunas: altura de cada linha = maior quebra entre os dias
+      function plano(f) {
+        var LH = f * 0.4, pad = 1.3, rows = [];
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(f);
+        function bloco(L, ocultaSab) {
+          for (var r = 0; r < nLinhas; r++) {
+            var cel = dias.map(function (d, i) { return (ocultaSab[i] || !L[i][r]) ? [] : doc.splitTextToSize(L[i][r].txt, CW - 2.2); }), n = Math.max.apply(null, cel.map(function (c) { return c.length; }).concat([1]));
+            rows.push({ t: 'ln', cel: cel, h: n * LH + pad, ocultaSab: ocultaSab });
+          }
+        }
+        rows.push({ t: 'band', txt: 'MANHÃ', h: 4.4 }); bloco(lM, dias.map(function () { return false; }));
+        rows.push({ t: 'band', txt: 'TARDE', h: 4.4 }); bloco(lT, sabSemTarde);
+        rows.push({ t: 'ag', h: 5.6 });
+        return { rows: rows, LH: LH, total: rows.reduce(function (a, r) { return a + r.h; }, 0) };
+      }
+      var f = 8, pl = plano(f);
+      while (pl.total > disp && f > 5) { f -= 0.5; pl = plano(f); }
       function cabecalho() {
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(10, 31, 68); doc.text('SIM CLÍNICA MÉDICA E ODONTOLÓGICA · Pirituba', M, 12);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(71, 85, 105); doc.text('Cronograma semanal: ' + brData(dias[0]) + ' a ' + brData(dias[5]), M, 18);
-        var y = 22; doc.setFillColor(10, 31, 68); doc.setDrawColor(10, 31, 68); doc.rect(M, y, CS, 8, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text('Sala', M + 2, y + 5.3);
-        dias.forEach(function (d, i) { var x = M + CS + i * CW; doc.rect(x, y, CW, 8, 'F'); doc.text(DOWC[dataDe(d).getDay()] + ' ' + brCurta(d), x + CW / 2, y + 5.3, { align: 'center' }); });
-        return y + 8;
+        doc.setDrawColor(0); doc.setLineWidth(0.4); doc.rect(M, 6, W - 2 * M, 12);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(0); doc.text('CRONOGRAMA SEMANAL', W / 2, 14.8, { align: 'center' });
+        doc.setLineWidth(0.25);
+        dias.forEach(function (d, i) {
+          var x = M + i * CW; doc.rect(x, 18, CW, 11);
+          doc.setFontSize(8); doc.text(NOMES_DIA[dataDe(d).getDay()], x + CW / 2, 22.2, { align: 'center' });
+          doc.text(diaCurto(d), x + CW / 2, 26.6, { align: 'center' });
+        });
+        return 29;
       }
       var y = cabecalho();
-      ch.forEach(function (k) {
-        var info = ks[k], cel = dias.map(function (d) {
-          var labels = (por[k][d] || []).slice().sort(function (a, b) { return a.localeCompare(b, 'pt'); });
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-          return labels.map(function (t) { return doc.splitTextToSize(t, CW - 3); });
-        });
-        var altura = 9;
-        cel.forEach(function (c) { var s = 3; c.forEach(function (ls) { s += ls.length * LH + 1.2; }); if (s > altura) altura = s; });
-        if (y + altura > H - 12) { doc.addPage(); y = cabecalho(); }
-        var tarde = info.per === 'Tarde';
-        doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.2);
-        doc.setFillColor(226, 232, 240); doc.rect(M, y, CS, altura, 'FD');
-        doc.setTextColor(10, 31, 68); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(salaRotulo(info.sala), M + 2, y + 4.5);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(71, 85, 105); doc.text(info.per, M + 2, y + 8.5);
-        cel.forEach(function (c, i) {
-          var x = M + CS + i * CW; if (tarde) doc.setFillColor(241, 245, 249); else doc.setFillColor(255, 255, 255);
-          doc.rect(x, y, CW, altura, 'FD');
-          doc.setTextColor(30, 41, 59); doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-          var yy = y + 4; c.forEach(function (ls) { doc.text(ls, x + 1.5, yy); yy += ls.length * LH + 1.2; });
-        });
-        y += altura;
+      doc.setFontSize(f); doc.setLineWidth(0.2);
+      pl.rows.forEach(function (r) {
+        if (y + r.h > H - M - 4) { doc.addPage(); y = cabecalho(); doc.setFontSize(f); doc.setLineWidth(0.2); }
+        if (r.t === 'band') {
+          // [v1.3.1] cor de preenchimento redefinida a cada coluna: o texto desenhado antes sobrescreve o estado do jsPDF
+          dias.forEach(function (d, i) { var x = M + i * CW; doc.setFillColor(217, 217, 217); doc.rect(x, y, CW, r.h, 'FD'); doc.setFont('helvetica', 'bolditalic'); doc.setFontSize(7); doc.text(r.txt, x + CW / 2, y + r.h - 1.2, { align: 'center' }); });
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(f);
+        } else if (r.t === 'ag') {
+          dias.forEach(function (d, i) { var x = M + i * CW, n = (S.dias[d] || {}).agendados; doc.rect(x, y, CW, r.h); doc.setFontSize(8); doc.text('Agendados: ' + (typeof n === 'number' ? n : ''), x + CW / 2, y + r.h - 1.7, { align: 'center' }); });
+        } else {
+          r.cel.forEach(function (ls, i) {
+            if (!ls.length) return;
+            var x = M + i * CW; doc.rect(x, y, CW, r.h); doc.setTextColor(0); doc.text(ls, x + 1.1, y + pl.LH * 0.82 + 0.35);
+          });
+        }
+        y += r.h;
       });
-      var n = doc.getNumberOfPages(), gerado = new Date();
+      var g = new Date(), n = doc.getNumberOfPages();
       for (var p = 1; p <= n; p++) {
-        doc.setPage(p); doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(100, 116, 139);
-        doc.text('Gerado em ' + pad(gerado.getDate()) + '/' + pad(gerado.getMonth() + 1) + '/' + gerado.getFullYear() + ' ' + pad(gerado.getHours()) + ':' + pad(gerado.getMinutes()), M, H - 6);
-        doc.text('Página ' + p + ' de ' + n, W - M, H - 6, { align: 'right' });
+        doc.setPage(p); doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(100, 116, 139);
+        doc.text('Gerado em ' + pad(g.getDate()) + '/' + pad(g.getMonth() + 1) + '/' + g.getFullYear() + ' ' + pad(g.getHours()) + ':' + pad(g.getMinutes()) + (n > 1 ? ' · página ' + p + '/' + n : ''), M, H - 4);
       }
       doc.save('cronograma-semana-' + dias[0] + '.pdf');
       toast('PDF gerado', 'success');
