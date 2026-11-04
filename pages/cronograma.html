@@ -11,6 +11,9 @@
   <script src="../js/shared-utils.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>if(typeof pdfjsLib!=="undefined")pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
+  <!-- [v1.3] planilha modelo/importação (XLSX.js) e PDF semanal (jsPDF) — mesmas versões já usadas em outras páginas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--shadow:0 4px 20px rgba(10,31,68,.1);}
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
@@ -226,6 +229,96 @@
     @media(max-width:700px){.cal-dia{min-height:62px;padding:4px;}.cal-prof,.cal-agd{display:none;}.cal-ab{font-size:10px;}.cal-add{grid-template-columns:1fr 1fr;}.cal-ag{grid-template-columns:78px repeat(var(--cols,2),minmax(0,1fr));}.cal-card-doc{font-size:12px;}
       /* [v1.1 cal] 5 abas não cabiam em 390px: só texto, menos padding, e rola se mesmo assim faltar espaço */
       .tabs{overflow-x:auto;}.tab-btn{padding:10px 6px;font-size:11px;gap:4px;}.tab-btn i{display:none;}}
+      /* [v1.3] Cronograma limpo + Configuração + Verificar/PDF — prefixo cron- */
+    .cron-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .cron-seg{display:inline-flex;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:10px;padding:3px;gap:2px;}
+    .cron-seg button{border:none;background:none;padding:7px 16px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;color:var(--gray-500);cursor:pointer;}
+    .cron-seg button.on{background:var(--navy);color:white;}
+    .cron-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--gray-500);margin:0 0 12px;}
+    .cron-leg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:2px solid;}
+    .cron-leg .l-prev::before{background:#fef3c7;border-color:#f59e0b;}
+    .cron-leg .l-conf::before{background:#dbeafe;border-color:#3b82f6;}
+    .cron-leg .l-aberta::before{background:#dcfce7;border-color:#22c55e;}
+    .cron-leg .l-est::before{background:#ede9fe;border-color:#8b5cf6;}
+    .cron-leg .l-canc::before{background:#f1f5f9;border-color:#94a3b8;}
+    .cron-chip{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;border-left:3px solid;margin-bottom:3px;line-height:1.25;}
+    .cron-chip .cron-t{overflow-wrap:anywhere;}
+    .cron-chip b{font-size:10px;opacity:.7;}
+    .cron-chip i{font-size:10px;opacity:.75;}
+    .s-prev{background:#fef3c7;border-color:#f59e0b;color:#92400e;}
+    .s-conf{background:#dbeafe;border-color:#3b82f6;color:#1e40af;}
+    .s-aberta{background:#dcfce7;border-color:#22c55e;color:#166534;}
+    .s-est{background:#ede9fe;border-color:#8b5cf6;color:#5b21b6;}
+    .s-canc,.s-rem{background:var(--gray-100);border-color:var(--gray-400);color:var(--gray-400);text-decoration:line-through;}
+    .cron-dia{background:white;border:2px solid var(--gray-200);border-radius:10px;min-height:104px;padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:1px;transition:box-shadow .15s;}
+    .cron-dia:hover{box-shadow:0 2px 10px rgba(10,31,68,.15);}
+    .cron-dia:focus-visible{outline:2px solid var(--navy);outline-offset:1px;}
+    .cron-dia.vazio{background:transparent;border:none;cursor:default;box-shadow:none;}
+    .cron-dia.hoje{box-shadow:0 0 0 2px #f59e0b;}
+    .cron-dia.fds{background:var(--gray-50);}
+    .cron-mais,.cron-canc{font-size:10px;color:var(--gray-400);font-weight:700;}
+    .cron-tw{overflow-x:auto;}
+    .cron-wk{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;min-width:760px;}
+    .cron-wk th,.cron-wk td{border:1px solid var(--gray-200);padding:5px 6px;vertical-align:top;}
+    .cron-wk thead th{background:var(--navy);color:white;font-size:11px;text-align:center;}
+    .cron-wk thead th.hoje{background:#b45309;}
+    .cron-wk tbody th{background:var(--gray-100);color:var(--navy);text-align:left;width:104px;font-size:12px;}
+    .cron-wk tbody th small{display:block;color:var(--gray-500);font-weight:600;font-size:10px;}
+    .cron-wk tr.t td{background:var(--gray-50);}
+    .cron-dia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:6px;}
+    .cron-card{border:1.5px solid var(--gray-200);border-left:5px solid;border-radius:10px;padding:10px 12px;background:white;display:flex;flex-direction:column;gap:3px;}
+    .cron-card.s-prev{border-left-color:#f59e0b;}.cron-card.s-conf{border-left-color:#3b82f6;}.cron-card.s-aberta{border-left-color:#22c55e;}.cron-card.s-est{border-left-color:#8b5cf6;}.cron-card.s-canc,.cron-card.s-rem{border-left-color:var(--gray-400);}
+    .cron-card{color:var(--gray-800);text-decoration:none;background:white;}
+    .cron-card .sala{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gray-500);}
+    .cron-card .nome{font-size:14px;font-weight:800;color:var(--navy);}
+    .cron-card .esp{font-size:12px;color:var(--gray-500);}
+    .cron-card.s-canc .nome,.cron-card.s-rem .nome{text-decoration:line-through;color:var(--gray-400);}
+    .cron-pill{display:inline-flex;align-self:flex-start;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;}
+    .cron-subnav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;background:white;border:1px solid var(--gray-200);border-radius:14px;padding:6px;box-shadow:var(--shadow);}
+    .cron-subnav button{border:none;background:none;border-radius:10px;padding:9px 14px;font-family:inherit;font-size:12px;font-weight:700;color:var(--gray-400);cursor:pointer;display:flex;align-items:center;gap:6px;}
+    .cron-subnav button:hover{color:var(--navy);background:var(--gray-50);}
+    .cron-subnav button.on{color:white;background:var(--navy);}
+    .cron-sub{display:none;}.cron-sub.active{display:block;}
+    .cron-help{font-size:13px;color:var(--gray-600);margin-bottom:12px;line-height:1.5;}
+    .cron-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+    .cron-tbl th{text-align:left;color:var(--gray-500);font-size:10px;padding:6px;border-bottom:1px solid var(--gray-200);text-transform:uppercase;letter-spacing:.4px;}
+    .cron-tbl td{padding:6px;border-bottom:1px solid var(--gray-100);vertical-align:middle;}
+    .cron-tbl .f-input,.cron-tbl .f-select{padding:5px 7px;font-size:12px;}
+    .cron-tbl tr.ok td:last-child{color:var(--green);font-weight:700;}
+    .cron-tbl tr.er td{background:#fef2f2;}
+    .cron-tbl tr.jx td{background:var(--gray-50);color:var(--gray-500);}
+    .cron-ico{width:28px;height:28px;border:none;border-radius:7px;cursor:pointer;font-size:12px;background:var(--gray-100);color:var(--gray-600);}
+    .cron-ico:hover{background:var(--navy);color:white;}
+    .cron-ico.del{background:rgba(198,40,40,.08);color:var(--red);}
+    .cron-ico.del:hover{background:var(--red);color:white;}
+    .cron-add{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:8px;align-items:end;margin:0 0 14px;padding:14px;background:var(--gray-50);border:1.5px dashed var(--gray-300);border-radius:12px;}
+    .cron-modal{background:white;border-radius:16px;width:100%;max-width:560px;max-height:calc(100vh - 32px);overflow:auto;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+    .cron-mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font-size:16px;font-weight:900;color:var(--navy);}
+    .cron-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .cron-grid2 .full{grid-column:1/-1;}
+    .cron-dias-chk{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;}
+    .cron-dias-chk label{display:flex;align-items:center;gap:5px;cursor:pointer;}
+    .cron-mfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+    .cron-v-sum{padding:12px 14px;border-radius:12px;margin-bottom:14px;font-size:13px;}
+    .cron-v-sum.ok{background:var(--green-bg);color:#166534;}
+    .cron-v-sum.bad{background:#fee2e2;color:#991b1b;}
+    .cron-v-sum ul{margin:8px 0 0 18px;}
+    .cron-v-sum li{margin-bottom:3px;}
+    .cron-v-sum button{margin-left:8px;}
+    .cron-v-aviso{padding:9px 12px;border-radius:10px;margin-bottom:12px;font-size:12px;background:var(--amber-bg);color:#92400e;}
+    .cron-v-dia{border:1.5px solid var(--gray-200);border-radius:12px;margin-bottom:10px;background:white;}
+    .cron-v-dia summary{cursor:pointer;padding:10px 14px;font-size:13px;font-weight:800;color:var(--navy);}
+    .cron-v-dia summary .pend{color:var(--red);margin-left:8px;font-size:12px;}
+    .cron-v-grid{display:grid;grid-template-columns:110px repeat(var(--cols,2),minmax(0,1fr));gap:4px;padding:0 10px 10px;}
+    .cron-v-h{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--gray-500);text-align:center;padding:4px;}
+    .cron-v-sala{background:var(--gray-100);border-radius:8px;padding:6px 8px;font-size:11px;font-weight:800;color:var(--navy);display:flex;align-items:center;}
+    .cron-v-cell{min-height:32px;border:1.5px dashed var(--gray-200);border-radius:8px;padding:3px;display:flex;flex-direction:column;gap:3px;}
+    .cron-v-cell.over{border-color:var(--teal);background:#ecfeff;}
+    .cron-v-cell.dup{border-color:var(--red);background:#fef2f2;}
+    .cron-vchip{cursor:grab;user-select:none;}
+    .cron-vchip.sel{outline:2px solid var(--navy);}
+    .cron-vchip.bad{box-shadow:0 0 0 2px var(--red);}
+    @media(max-width:700px){.cron-grid2{grid-template-columns:1fr;}.cron-add{grid-template-columns:1fr;}.cron-v-grid{grid-template-columns:78px repeat(var(--cols,2),minmax(0,1fr));}.cron-seg button{padding:7px 10px;}}
   </style>
 </head>
 <body>
@@ -354,15 +447,17 @@
     </div>
 
     <div class="tabs">
-      <!-- [v1.1 cal] Calendário é a 1ª aba -->
-      <button class="tab-btn active" id="tabOcupacao" onclick="tab('ocupacao')"><i class="fas fa-calendar-days"></i> Calendário</button>
-      <button class="tab-btn"        id="tabAgenda"   onclick="tab('agenda')"><i class="fas fa-calendar-day"></i> Agenda</button>
+      <!-- [v1.3] Cronograma (limpo) e Configuração: só admin (exibidos por cronAplicarPerfil). A aba antiga "Calendário" foi realocada para Configuração → Abertura de agendas. -->
+      <button class="tab-btn"        id="tabCronograma" onclick="tab('cronograma')" style="display:none"><i class="fas fa-table-cells"></i> Cronograma</button>
+      <button class="tab-btn"        id="tabOcupacao" onclick="tab('ocupacao')" style="display:none"><i class="fas fa-calendar-days"></i> Calendário</button>
+      <button class="tab-btn active" id="tabAgenda"   onclick="tab('agenda')"><i class="fas fa-calendar-day"></i> Agenda</button>
       <button class="tab-btn"        id="tabSemana"   onclick="tab('semana')"><i class="fas fa-calendar-week"></i> Semana</button>
       <button class="tab-btn"        id="tabAbertura" onclick="tab('abertura')"><i class="fas fa-door-open"></i> Abertura</button>
       <button class="tab-btn"        id="tabNotas"    onclick="tab('notas')"><i class="fas fa-list-check"></i> Notas</button>
+      <button class="tab-btn"        id="tabConfig"   onclick="tab('config')" style="display:none"><i class="fas fa-gear"></i> Configuração</button>
     </div>
 
-    <div class="tab-pane" id="paneAgenda">
+    <div class="tab-pane active" id="paneAgenda">
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-stethoscope"></i> Agenda do dia</div>
@@ -465,8 +560,90 @@
       </div>
     </div>
 
-    <!-- [v1.1 cal] Calendário de agendas: quais profissionais atendem em cada dia e se a agenda já foi aberta -->
-    <div class="tab-pane active" id="paneOcupacao">
+    <!-- [v1.3] CRONOGRAMA (tela limpa, só leitura) — somente admin -->
+    <div class="tab-pane" id="paneCronograma">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-table-cells"></i> Cronograma</div>
+          <div class="cron-seg" id="cronSeg">
+            <button type="button" data-v="mes" class="on">Mês</button>
+            <button type="button" data-v="semana">Semana</button>
+            <button type="button" data-v="dia">Dia</button>
+          </div>
+        </div>
+        <div class="cron-bar">
+          <div class="cal-nav">
+            <button class="day-nav-btn" onclick="cronNav(-1)" title="Anterior"><i class="fas fa-chevron-left"></i></button>
+            <div class="day-name" id="cronTitulo" style="min-width:190px;">—</div>
+            <button class="day-nav-btn" onclick="cronNav(1)" title="Próximo"><i class="fas fa-chevron-right"></i></button>
+            <button class="btn-s" onclick="cronHoje()" style="font-size:12px;padding:7px 12px;">Hoje</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <select class="f-select" id="cronFiltro" style="width:auto;min-width:210px;padding:7px 10px;font-size:13px;"><option value="">Todos os profissionais</option></select>
+            <button class="btn-r" id="cronBtnPrint" onclick="cronAbrirVerificar()" style="display:none;font-size:12px;padding:7px 14px;"><i class="fas fa-print"></i> Imprimir semana</button>
+          </div>
+        </div>
+        <div class="cron-leg"><span class="l-prev">Previsto</span><span class="l-conf">Confirmado</span><span class="l-aberta">Agenda aberta</span><span class="l-est">Estendido</span><span class="l-canc">Cancelado / remarcado</span></div>
+        <div id="cronAviso"></div>
+        <div id="cronBody"></div>
+      </div>
+    </div>
+
+    <!-- [v1.3] CONFIGURAÇÃO DO CRONOGRAMA (edição) — somente admin -->
+    <div class="tab-pane" id="paneConfig">
+      <div class="cron-subnav" id="cronSubnav">
+        <button type="button" data-sub="medicos" class="on"><i class="fas fa-user-doctor"></i> Médicos</button>
+        <button type="button" data-sub="import"><i class="fas fa-file-excel"></i> Importar planilha</button>
+        <button type="button" data-sub="coleta"><i class="fas fa-clipboard-check"></i> Coleta do mês</button>
+        <button type="button" data-sub="atend"><i class="fas fa-pen-to-square"></i> Atendimentos</button>
+        <button type="button" data-sub="abertura"><i class="fas fa-door-open"></i> Abertura de agendas</button>
+        <button type="button" data-sub="hist"><i class="fas fa-clock-rotate-left"></i> Histórico</button>
+      </div>
+
+      <div class="cron-sub active" id="cronSubMedicos"><div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-user-doctor"></i> Médicos do cronograma</div>
+          <button class="btn-p" onclick="cronMedAbrir()"><i class="fas fa-plus"></i> Novo médico</button>
+        </div>
+        <div class="cron-tw" id="cronMedLista"></div>
+      </div></div>
+
+      <div class="cron-sub" id="cronSubImport"><div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-file-excel"></i> Importar agendas do mês</div>
+          <button class="btn-s" onclick="cronBaixarModelo()"><i class="fas fa-download"></i> Baixar modelo (.xlsx)</button>
+        </div>
+        <p class="cron-help">Preencha o modelo com uma linha por atendimento (Data, Médico, Período e, se quiser, Sala e Obs). Em Período use <b>Manhã</b>, <b>Tarde</b> ou <b>Manhã e Tarde</b>. O sistema mostra uma prévia e <b>só grava depois da sua confirmação</b>; atendimentos que já existem não são alterados. A sala pode ficar vazia: ela é definida no Verificar antes de imprimir.</p>
+        <input type="file" id="cronFile" accept=".xlsx,.xls,.csv" class="f-input" style="max-width:440px;">
+        <div id="cronImpRes" style="margin-top:14px;"></div>
+      </div></div>
+
+      <div class="cron-sub" id="cronSubColeta"><div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-clipboard-check"></i> Agenda recebida?</div>
+          <div style="display:flex;align-items:center;gap:8px;"><label class="f-label" for="cronColetaMes" style="margin:0;">Mês</label><input type="month" class="f-input" id="cronColetaMes" style="width:auto;padding:7px 10px;font-size:13px;"></div>
+        </div>
+        <div id="cronColetaResumo" class="cron-help"></div>
+        <div class="cron-tw" id="cronColetaLista"></div>
+      </div></div>
+
+      <div class="cron-sub" id="cronSubAtend"><div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-pen-to-square"></i> Atendimentos do dia</div>
+          <div style="display:flex;align-items:center;gap:8px;"><label class="f-label" for="cronAtDia" style="margin:0;">Dia</label><input type="date" class="f-input" id="cronAtDia" style="width:auto;padding:7px 10px;font-size:13px;"></div>
+        </div>
+        <div class="cron-add">
+          <div><label class="f-label" for="cronAddMed">Adicionar médico neste dia</label><select class="f-select" id="cronAddMed"></select></div>
+          <div><label class="f-label" for="cronAddPer">Período</label><select class="f-select" id="cronAddPer"><option value="Manhã">Manhã</option><option value="Tarde">Tarde</option></select></div>
+          <div><label class="f-label" for="cronAddSala">Sala</label><select class="f-select" id="cronAddSala"></select></div>
+          <button class="btn-p" onclick="cronAddAtend()" style="height:38px;"><i class="fas fa-plus"></i> Adicionar</button>
+        </div>
+        <div class="cron-tw" id="cronAtLista"></div>
+      </div></div>
+
+      <div class="cron-sub" id="cronSubAbertura">
+        <!-- [v1.3] calendário de abertura (v1.1/v1.2) realocado sem alterar IDs ou funções; a aba antiga fica oculta -->
+        <div id="paneOcupacao">
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-calendar-days"></i> Calendário de Agendas</div>
@@ -489,8 +666,68 @@
         <div class="cal-grade" id="calGrade"></div>
         <div class="cal-det" id="calDetalhe" style="display:none"></div>
       </div>
+        </div>
+      </div>
+
+      <div class="cron-sub" id="cronSubHist"><div class="panel">
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-clock-rotate-left"></i> Histórico de alterações</div></div>
+        <div class="cron-tw" id="cronHistLista"></div>
+      </div></div>
     </div>
 
+  </div>
+
+  <!-- [v1.3] Modais do cronograma (cadastro de médico, remarcar/estender, verificar antes de imprimir) -->
+  <div class="modal-bg" id="cronModalMed">
+    <div class="cron-modal">
+      <div class="cron-mhead"><span id="cronMedTitulo">Novo médico</span><button class="modal-close-btn" onclick="cronMedFechar()" title="Fechar"><i class="fas fa-xmark"></i></button></div>
+      <input type="hidden" id="cronMedId">
+      <div class="cron-grid2">
+        <div><label class="f-label" for="cronMedNome">Nome (como aparece no cronograma)</label><input class="f-input" id="cronMedNome" placeholder="Juan"></div>
+        <div><label class="f-label" for="cronMedSobrenome">Sobrenome</label><input class="f-input" id="cronMedSobrenome" placeholder="Ibarra"></div>
+        <div><label class="f-label" for="cronMedEsp">Especialidade</label><input class="f-input" id="cronMedEsp" placeholder="Cardiologia"></div>
+        <div><label class="f-label" for="cronMedSala">Sala habitual</label><select class="f-select" id="cronMedSala"></select></div>
+        <div><label class="f-label" for="cronMedEnc">Limite de encaixes</label><input class="f-input" id="cronMedEnc" type="number" min="0" step="1" placeholder="Ex.: 3"></div>
+        <div><label class="f-label" for="cronMedProf">Vínculo com Profissionais (opcional)</label><select class="f-select" id="cronMedProf"></select></div>
+        <div class="full"><label class="f-label">Dias fixos na semana (referência)</label>
+          <div class="cron-dias-chk" id="cronMedDias">
+            <label><input type="checkbox" value="1"> Seg</label><label><input type="checkbox" value="2"> Ter</label><label><input type="checkbox" value="3"> Qua</label><label><input type="checkbox" value="4"> Qui</label><label><input type="checkbox" value="5"> Sex</label><label><input type="checkbox" value="6"> Sáb</label>
+          </div>
+        </div>
+        <div class="full"><label class="f-label" for="cronMedObs">Observações</label><input class="f-input" id="cronMedObs" placeholder="Opcional"></div>
+        <div class="full"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="cronMedAtivo" checked> Médico ativo (aparece na coleta e na planilha modelo)</label></div>
+      </div>
+      <div class="cron-mfoot"><button class="btn-s" onclick="cronMedFechar()">Cancelar</button><button class="btn-p" onclick="cronMedSalvar()"><i class="fas fa-check"></i> Salvar</button></div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="cronModalAcao">
+    <div class="cron-modal">
+      <div class="cron-mhead"><span id="cronAcTitulo">—</span><button class="modal-close-btn" onclick="cronAcFechar()" title="Fechar"><i class="fas fa-xmark"></i></button></div>
+      <div id="cronAcCorpo"></div>
+      <div class="cron-mfoot"><button class="btn-s" onclick="cronAcFechar()">Cancelar</button><button class="btn-p" onclick="cronAcConfirmar()"><i class="fas fa-check"></i> Confirmar</button></div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="cronModalVer">
+    <div class="modal-full">
+      <div class="modal-bar">
+        <span class="modal-bar-title" id="cronVerTitulo">Verificar cronograma</span>
+        <button class="modal-close-btn" onclick="cronVerFechar()" title="Fechar"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-scroll">
+        <div style="max-width:1060px;margin:0 auto;">
+          <div id="cronVerResumo"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+            <button class="btn-teal" onclick="cronVerSugerir()"><i class="fas fa-wand-magic-sparkles"></i> Sugerir salas</button>
+            <button class="btn-s" onclick="cronVerSalvar()" id="cronVerBtnSalvar"><i class="fas fa-floppy-disk"></i> Salvar salas</button>
+            <button class="btn-r" onclick="cronVerPdf()" id="cronVerBtnPdf"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
+          </div>
+          <div class="cron-v-aviso"><i class="fas fa-circle-info"></i> Arraste o nome do profissional para outra sala (ou clique no nome e depois na sala). Só dá para trocar de sala dentro do mesmo dia e período.</div>
+          <div id="cronVerCorpo"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -562,7 +799,7 @@
 
   // ── TABS ──
   window.tab = function(t) {
-    ['agenda','semana','abertura','notas','ocupacao'].forEach(x => { // [v1.0 cal] + 'ocupacao'
+    ['agenda','semana','abertura','notas','ocupacao','cronograma','config'].forEach(x => { // [v1.0 cal] + 'ocupacao'; [v1.3] + 'cronograma','config'
       const T = x.charAt(0).toUpperCase() + x.slice(1);
       const btn  = document.getElementById('tab' + T);
       const pane = document.getElementById('pane' + T);
@@ -575,6 +812,8 @@
     if (btn)  btn.classList.add('active');
     if (pane) pane.classList.add('active');
     if (t === 'ocupacao' && typeof window.calAbrir === 'function') window.calAbrir(); // [v1.0 cal] carrega ao abrir a aba
+    if (t === 'cronograma' && typeof window.cronRender === 'function') window.cronRender();     // [v1.3]
+    if (t === 'config' && typeof window.cronConfigAbrir === 'function') window.cronConfigAbrir(); // [v1.3]
   };
 
   // ── AGENDA DO DIA ──
@@ -1144,8 +1383,9 @@
         return { id: id, sala: String(x.sala || ''), doc: String(x.doc || ''), role: String(x.role || ''),
           periodo: x.periodo === 'Tarde' ? 'Tarde' : (x.periodo === 'A definir' ? 'A definir' : 'Manhã'), aberta: x.aberta === true,
           agendados: (typeof x.agendados === 'number') ? x.agendados : null,
-          est: x.est === true, obs: String(x.obs || '') };   // [v1.2 cal] est = período/sala deduzidos (confirmar); obs = aviso curto
-      }).sort(function (a, b) {
+          est: x.est === true, obs: String(x.obs || ''), status: String(x.status || '') };   // [v1.2 cal] est = período/sala deduzidos (confirmar); obs = aviso curto; [v1.3] status
+      }).filter(function (x) { return x.status !== 'cancelado' && x.status !== 'remarcado'; })   // [v1.3] cancelado/remarcado saem da Agenda do dia e da abertura (continuam no Cronograma/Configuração)
+      .sort(function (a, b) {
         return salaChave(a.sala) - salaChave(b.sala) || (PERIODOS_TODOS.indexOf(a.periodo) - PERIODOS_TODOS.indexOf(b.periodo)) || a.doc.localeCompare(b.doc, 'pt');
       });
     }
@@ -1538,10 +1778,877 @@
   })();
   </script>
 
+
+  <script>
+  /* [v1.3] CRONOGRAMA — tela limpa (Mês/Semana/Dia) + Configuração + Verificar/PDF — prefixo cron*
+     Dados novos (RTDB, dentro de crono/): crono/medicos/{id}, crono/coleta/{AAAA-MM}/{medicoId}, crono/historico/{ts_rand}
+     Reaproveita crono/dias/{AAAA-MM-DD}/itens/{id}; campos novos e opcionais no item: status, medicoId, origem, remarcadoPara, remarcadoDe.
+     Não altera IDs nem funções globais existentes. */
+  (function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var DOWC = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    var DOWL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    var SALAS_CONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
+    var SALAS = SALAS_CONS.concat(['FISIO', 'US', 'ACOL1', 'ACOL2']);
+    var PERS = ['Manhã', 'Tarde', 'A definir'];
+    var ST_LBL = { canc: 'Cancelado', rem: 'Remarcado', aberta: 'Aberta', conf: 'Confirmado', est: 'Estendido', prev: 'Previsto' };
+    var S = {
+      medicos: {}, idx: {}, dias: {}, ouvindo: {}, carregado: {}, erro: {}, coleta: {}, coletaOuv: {}, historico: [],
+      view: 'mes', ref: new Date(), filtro: '', iniciado: false, autoAba: false, tocou: false, sub: 'medicos', profs: null, imp: null, acao: null
+    };
+    S.ref.setHours(12, 0, 0, 0);
+
+    // ── utilitários ──
+    function pad(n) { return ('0' + n).slice(-2); }
+    function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function isoDe(a, m0, d) { return a + '-' + pad(m0 + 1) + '-' + pad(d); }
+    function hojeIso() { return iso(new Date()); }
+    function dataDe(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
+    function brData(s) { var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+    function brCurta(s) { var p = s.split('-'); return p[2] + '/' + p[1]; }
+    function addDias(d, n) { var r = new Date(d.getTime()); r.setDate(r.getDate() + n); return r; }
+    function segundaDe(d) { var r = new Date(d.getTime()); r.setHours(12, 0, 0, 0); r.setDate(r.getDate() - ((r.getDay() + 6) % 7)); return r; }
+    function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    function norm(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
+    function salaChave(s) {
+      s = String(s || '').toUpperCase();
+      if (/^\d+$/.test(s)) return parseInt(s, 10);
+      var m = { FISIO: 100, US: 101, ACOL1: 102, ACOL2: 103 };
+      return m[s] || 200;
+    }
+    function salaRotulo(s) {
+      s = String(s || ''); var m = { FISIO: 'Fisioterapia', US: 'Ultrassom', ACOL1: 'Acolhimento 1', ACOL2: 'Acolhimento 2' };
+      if (m[s.toUpperCase()]) return m[s.toUpperCase()];
+      return /^\d+$/.test(s) ? 'Sala ' + pad(parseInt(s, 10)) : (s ? 'Sala ' + s : 'Sem sala');
+    }
+    function isAdmin() {
+      if (typeof window.calIsAdmin === 'boolean') return window.calIsAdmin;
+      try { return JSON.parse(sessionStorage.getItem('perms') || '{}').admin === true; } catch (e) { return false; }
+    }
+    function quem() { return sessionStorage.getItem('usuario') || sessionStorage.getItem('email') || ''; }
+    function abrirModal(id) { $(id).classList.add('open'); }
+    function fecharModal(id) { $(id).classList.remove('open'); }
+
+    // ── gravação (reaproveita window.fbSet) ──
+    function gravar(path, valor) {
+      if (typeof window.fbSet !== 'function') { toast('Firebase ainda não carregou. Tente de novo.', 'error'); return Promise.resolve(false); }
+      return window.fbSet(path, valor).then(function () { return true; }).catch(function (e) {
+        toast('Não foi possível salvar: ' + ((e && (e.code || e.message)) || 'erro'), 'error'); return false;
+      });
+    }
+    function hist(o) {
+      if (typeof window.fbSet !== 'function') return Promise.resolve(false);
+      var r = { dia: o.dia || '', itemId: o.itemId || '', doc: o.doc || '', acao: o.acao || '', de: String(o.de == null ? '' : o.de), para: String(o.para == null ? '' : o.para), obs: o.obs || '', por: quem(), em: new Date().toISOString() };
+      var k = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+      return window.fbSet('crono/historico/' + k, r).then(function () { return true; }).catch(function (e) { console.warn('[cronograma] histórico:', e && e.message); return false; });
+    }
+
+    // ── leitura ──
+    function garantirMes(ym) {
+      if (S.ouvindo[ym] || typeof window.calFbEscutarMes !== 'function') return;
+      S.ouvindo[ym] = true;
+      window.calFbEscutarMes(ym, function (val) {
+        Object.keys(S.dias).forEach(function (k) { if (k.indexOf(ym) === 0) delete S.dias[k]; });
+        Object.keys(val || {}).forEach(function (k) { S.dias[k] = val[k]; });
+        S.carregado[ym] = true; delete S.erro[ym]; redesenhar();
+      }, function (e) { S.erro[ym] = (e && (e.code || e.message)) || 'erro'; S.carregado[ym] = true; redesenhar(); });
+    }
+    function inativo(x) { return x.status === 'cancelado' || x.status === 'remarcado'; }
+    function itens(dia, todos) {
+      var d = S.dias[dia]; if (!d || !d.itens) return [];
+      var l = Object.keys(d.itens).map(function (id) {
+        var x = d.itens[id] || {};
+        return { dia: dia, id: id, sala: String(x.sala || ''), doc: String(x.doc || ''), role: String(x.role || ''),
+          periodo: x.periodo === 'Tarde' ? 'Tarde' : (x.periodo === 'A definir' ? 'A definir' : 'Manhã'),
+          aberta: x.aberta === true, est: x.est === true, obs: String(x.obs || ''), status: String(x.status || ''),
+          medicoId: String(x.medicoId || ''), remarcadoPara: String(x.remarcadoPara || ''),
+          agendados: (typeof x.agendados === 'number') ? x.agendados : null };
+      });
+      if (!todos) l = l.filter(function (x) { return !inativo(x); });
+      return l.sort(function (a, b) {
+        return salaChave(a.sala) - salaChave(b.sala) || (PERS.indexOf(a.periodo) - PERS.indexOf(b.periodo)) || a.doc.localeCompare(b.doc, 'pt');
+      });
+    }
+    function itemBruto(dia, id) { var d = S.dias[dia]; return (d && d.itens && d.itens[id]) || null; }
+
+    // ── médicos: nome de exibição ("Juan I. (Cardiologia)") ──
+    var TITULO = /^(dr|dra|drs|prof|profa)\.?\s+/i;
+    var PREP = { de: 1, da: 1, do: 1, dos: 1, das: 1, e: 1 };
+    function limpaNome(s) { return norm(String(s || '').replace(TITULO, '')); }
+    function indexar() {
+      S.idx = {};
+      Object.keys(S.medicos).forEach(function (id) {
+        var m = S.medicos[id] || {};
+        [limpaNome(m.nome), limpaNome((m.nome || '') + ' ' + (m.sobrenome || ''))].forEach(function (k) {
+          if (!k) return; S.idx[k] = (S.idx[k] && S.idx[k] !== id) ? '?' : id;
+        });
+      });
+    }
+    function medDe(x) {
+      var id = (x.medicoId && S.medicos[x.medicoId]) ? x.medicoId : S.idx[limpaNome(x.doc)];
+      return (id && id !== '?' && S.medicos[id]) ? { id: id, m: S.medicos[id] } : null;
+    }
+    function inicialSobrenome(s) {
+      var p = String(s || '').trim().split(/\s+/);
+      for (var i = 0; i < p.length; i++) { if (p[i] && !PREP[norm(p[i])]) return p[i].charAt(0).toUpperCase() + '.'; }
+      return '';
+    }
+    function rotuloNome(x) {
+      var r = medDe(x);
+      if (r) { var n = String(r.m.nome || '').trim(), s = inicialSobrenome(r.m.sobrenome); return s ? n + ' ' + s : n; }
+      var p = String(x.doc || '').replace(TITULO, '').trim().split(/\s+/);
+      if (p.length >= 2 && !/\.$/.test(p[p.length - 1])) return p[0] + ' ' + p[p.length - 1].charAt(0).toUpperCase() + '.';
+      return p.join(' ');
+    }
+    function espDe(x) { var r = medDe(x); return (r && r.m.especialidade) || x.role || ''; }
+    function rotuloCompleto(x) { var e = espDe(x); return rotuloNome(x) + (e ? ' (' + e + ')' : ''); }
+    function stEf(x) {
+      if (x.status === 'cancelado') return 'canc';
+      if (x.status === 'remarcado') return 'rem';
+      if (x.status === 'estendido') return 'est';
+      if (x.aberta) return 'aberta';
+      if (x.status === 'confirmado') return 'conf';
+      return 'prev';
+    }
+    function chaveMed(x) { var r = medDe(x); return r ? r.id : 'n:' + limpaNome(x.doc); }
+    function passaFiltro(x) { return !S.filtro || chaveMed(x) === S.filtro; }
+
+    // ── CRONOGRAMA LIMPO ──
+    function chip(x, completo, mini) {
+      var c = stEf(x), t = completo ? rotuloCompleto(x) : rotuloNome(x);
+      var tip = rotuloCompleto(x) + ' · ' + ST_LBL[c] + (x.aberta ? ' · agenda aberta' : '') + (x.obs ? ' · ' + x.obs : '');
+      return '<div class="cron-chip s-' + c + '" title="' + esc(tip) + '"><span class="cron-t">' + esc(t) + '</span>' +
+        (mini ? '<b>' + (x.periodo === 'Manhã' ? 'M' : x.periodo === 'Tarde' ? 'T' : '?') + '</b>' : (x.aberta && c !== 'canc' && c !== 'rem' ? '<i class="fas fa-lock-open"></i>' : '')) + '</div>';
+    }
+    function mesesVisiveis() {
+      if (S.view === 'semana') { var seg = segundaDe(S.ref); return [iso(seg).slice(0, 7), iso(addDias(seg, 5)).slice(0, 7)]; }
+      return [iso(S.ref).slice(0, 7)];
+    }
+    function preencherFiltro() {
+      var mapa = {};
+      Object.keys(S.dias).forEach(function (d) { itens(d, true).forEach(function (x) { var k = chaveMed(x); if (!mapa[k]) mapa[k] = rotuloNome(x); }); });
+      var ch = Object.keys(mapa).sort(function (a, b) { return mapa[a].localeCompare(mapa[b], 'pt'); });
+      var h = '<option value="">Todos os profissionais</option>' + ch.map(function (k) { return '<option value="' + esc(k) + '">' + esc(mapa[k]) + '</option>'; }).join('');
+      var sel = $('cronFiltro');
+      if (S.filtro && !mapa[S.filtro]) S.filtro = '';
+      if (sel.getAttribute('data-h') !== h) { sel.innerHTML = h; sel.setAttribute('data-h', h); }
+      sel.value = S.filtro;
+    }
+    function htmlMes() {
+      var a = S.ref.getFullYear(), m = S.ref.getMonth(), n = new Date(a, m + 1, 0).getDate(), pr = new Date(a, m, 1).getDay(), hoje = hojeIso();
+      var h = '<div class="cal-grade">' + DOWC.map(function (d) { return '<div class="cal-dow">' + d + '</div>'; }).join('');
+      var tot = 0, meds = {};
+      for (var v = 0; v < pr; v++) h += '<div class="cron-dia vazio"></div>';
+      for (var d = 1; d <= n; d++) {
+        var is = isoDe(a, m, d), lista = itens(is, true).filter(passaFiltro), at = lista.filter(function (x) { return !inativo(x); }), canc = lista.length - at.length;
+        at.forEach(function (x) { tot++; meds[chaveMed(x)] = 1; });
+        h += '<div class="cron-dia' + (is === hoje ? ' hoje' : '') + (new Date(a, m, d).getDay() === 0 ? ' fds' : '') + '" data-dia="' + is + '" tabindex="0"><div class="cal-num">' + d + '</div>' +
+          at.slice(0, 4).map(function (x) { return chip(x, false, true); }).join('') +
+          (at.length > 4 ? '<div class="cron-mais">+' + (at.length - 4) + ' mais</div>' : '') +
+          (canc ? '<div class="cron-canc">' + canc + ' cancelado(s)</div>' : '') + '</div>';
+      }
+      h += '</div>';
+      $('cronAviso').setAttribute('data-info', tot + ' atendimento(s) · ' + Object.keys(meds).length + ' profissional(is) no mês');
+      return h;
+    }
+    function htmlSemana() {
+      var seg = segundaDe(S.ref), dias = [], hoje = hojeIso(), por = {}, ks = {}, canc = [];
+      for (var i = 0; i < 6; i++) dias.push(iso(addDias(seg, i)));
+      dias.forEach(function (d) {
+        itens(d, true).filter(passaFiltro).forEach(function (x) {
+          if (inativo(x)) { canc.push(rotuloNome(x) + ' (' + DOWC[dataDe(d).getDay()] + ' ' + brCurta(d) + ' ' + x.periodo + ')'); return; }
+          var k = x.sala + '|' + x.periodo; ks[k] = { sala: x.sala, per: x.periodo };
+          (por[k] = por[k] || {}); (por[k][d] = por[k][d] || []).push(x);
+        });
+      });
+      var ch = Object.keys(ks).sort(function (a, b) { return salaChave(ks[a].sala) - salaChave(ks[b].sala) || (PERS.indexOf(ks[a].per) - PERS.indexOf(ks[b].per)); });
+      if (!ch.length) return '<div class="cal-msg info">Sem atendimentos nesta semana.</div>' + (canc.length ? '<div class="cron-help">Cancelados/remarcados: ' + esc(canc.join('; ')) + '</div>' : '');
+      var h = '<div class="cron-tw"><table class="cron-wk"><thead><tr><th>Sala / período</th>' + dias.map(function (d) {
+        return '<th class="' + (d === hoje ? 'hoje' : '') + '">' + DOWC[dataDe(d).getDay()] + '<br>' + brCurta(d) + '</th>';
+      }).join('') + '</tr></thead><tbody>';
+      ch.forEach(function (k) {
+        h += '<tr class="' + (ks[k].per === 'Tarde' ? 't' : 'm') + '"><th>' + esc(salaRotulo(ks[k].sala)) + '<small>' + esc(ks[k].per) + '</small></th>' + dias.map(function (d) {
+          return '<td>' + ((por[k][d] || []).map(function (x) { return chip(x, true, false); }).join('')) + '</td>';
+        }).join('') + '</tr>';
+      });
+      h += '</tbody></table></div>';
+      if (canc.length) h += '<div class="cron-help" style="margin-top:10px;"><b>Cancelados/remarcados:</b> ' + esc(canc.join('; ')) + '</div>';
+      return h;
+    }
+    function htmlDia() {
+      var is = iso(S.ref), l = itens(is, true).filter(passaFiltro);
+      if (!l.length) return '<div style="text-align:center;padding:40px;color:var(--gray-400);"><i class="fas fa-moon" style="font-size:32px;opacity:.3;display:block;margin-bottom:10px;"></i>Sem atendimentos neste dia</div>';
+      return PERS.filter(function (p) { return l.some(function (x) { return x.periodo === p; }); }).map(function (p) {
+        var xs = l.filter(function (x) { return x.periodo === p; });
+        return '<div class="cal-per">' + (p === 'Manhã' ? '☀️ ' : p === 'Tarde' ? '🌙 ' : '❓ ') + esc(p) + ' · ' + xs.filter(function (a) { return !inativo(a); }).length + '</div><div class="cron-dia-grid">' + xs.map(function (x) {
+          var c = stEf(x);
+          return '<div class="cron-card s-' + c + '"><span class="sala">' + esc(salaRotulo(x.sala)) + '</span><span class="nome">' + esc(rotuloNome(x)) + '</span><span class="esp">' + esc(espDe(x)) + '</span>' +
+            '<span class="cron-pill s-' + c + '">' + ST_LBL[c] + (x.aberta && c !== 'aberta' && c !== 'canc' && c !== 'rem' ? ' · aberta' : '') + '</span>' +
+            (x.remarcadoPara ? '<span class="esp">Remarcado para ' + esc(brData(x.remarcadoPara)) + '</span>' : '') +
+            (x.obs ? '<span class="esp">' + esc(x.obs) + '</span>' : '') + (x.agendados !== null ? '<span class="esp">' + x.agendados + ' agendados</span>' : '') + '</div>';
+        }).join('') + '</div>';
+      }).join('');
+    }
+    window.cronRender = function () {
+      var body = $('cronBody'); if (!body) return;
+      mesesVisiveis().forEach(garantirMes);
+      var ms = mesesVisiveis(), titulo;
+      if (S.view === 'mes') titulo = cap(S.ref.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
+      else if (S.view === 'semana') { var sg = segundaDe(S.ref); titulo = brData(iso(sg)).slice(0, 5) + ' a ' + brData(iso(addDias(sg, 5))); }
+      else titulo = DOWL[S.ref.getDay()] + ', ' + brData(iso(S.ref));
+      $('cronTitulo').textContent = titulo;
+      Array.prototype.forEach.call($('cronSeg').querySelectorAll('button'), function (b) { b.classList.toggle('on', b.getAttribute('data-v') === S.view); });
+      $('cronBtnPrint').style.display = S.view === 'semana' ? 'inline-flex' : 'none';
+      preencherFiltro();
+      var av = '', erro = ms.filter(function (m) { return S.erro[m]; })[0];
+      if (erro) av = '<div class="cal-msg erro">Não foi possível ler o cronograma (' + esc(S.erro[erro]) + ').</div>';
+      else if (!ms.every(function (m) { return S.carregado[m]; })) av = '<div class="cal-msg">Carregando cronograma...</div>';
+      body.innerHTML = S.view === 'mes' ? htmlMes() : S.view === 'semana' ? htmlSemana() : htmlDia();
+      var info = $('cronAviso').getAttribute('data-info');
+      $('cronAviso').innerHTML = av || (S.view === 'mes' && info ? '<div class="cron-help">' + esc(info) + '</div>' : '');
+    };
+    window.cronNav = function (dir) {
+      if (S.view === 'mes') S.ref = new Date(S.ref.getFullYear(), S.ref.getMonth() + dir, 1, 12);
+      else S.ref = addDias(S.ref, dir * (S.view === 'semana' ? 7 : 1));
+      window.cronRender();
+    };
+    window.cronHoje = function () { S.ref = new Date(); S.ref.setHours(12, 0, 0, 0); window.cronRender(); };
+
+    // ── redesenho central (listeners do Firebase chamam isto) ──
+    function aba(id) { var p = $(id); return p && p.classList.contains('active'); }
+    function redesenhar() {
+      if (aba('paneCronograma')) window.cronRender();
+      if (aba('paneConfig')) renderSub();
+    }
+
+    // ── CONFIGURAÇÃO: sub-abas ──
+    function optSalas(sel, vazio) {
+      return '<option value="">' + vazio + '</option>' + SALAS.map(function (s) { return '<option value="' + s + '"' + (sel === s ? ' selected' : '') + '>' + esc(salaRotulo(s)) + '</option>'; }).join('');
+    }
+    function medsOrdenados(soAtivos) {
+      return Object.keys(S.medicos).map(function (id) { return { id: id, m: S.medicos[id] || {} }; })
+        .filter(function (r) { return !soAtivos || r.m.ativo !== false; })
+        .sort(function (a, b) { return String(a.m.nome || '').localeCompare(String(b.m.nome || ''), 'pt'); });
+    }
+    function nomeMed(m) { return String(m.nome || '') + (m.sobrenome ? ' ' + m.sobrenome : ''); }
+    window.cronSub = function (n) {
+      S.sub = n;
+      Array.prototype.forEach.call($('cronSubnav').querySelectorAll('button'), function (b) { b.classList.toggle('on', b.getAttribute('data-sub') === n); });
+      var mapa = { medicos: 'cronSubMedicos', import: 'cronSubImport', coleta: 'cronSubColeta', atend: 'cronSubAtend', abertura: 'cronSubAbertura', hist: 'cronSubHist' };
+      Object.keys(mapa).forEach(function (k) { $(mapa[k]).classList.toggle('active', k === n); });
+      if (n === 'abertura' && typeof window.calAbrir === 'function') window.calAbrir();   // calendário de abertura (legado) realocado aqui
+      renderSub();
+    };
+    function renderSub() {
+      if (S.sub === 'medicos') renderMedicos();
+      else if (S.sub === 'coleta') renderColeta();
+      else if (S.sub === 'atend') renderAtend();
+      else if (S.sub === 'hist') renderHist();
+    }
+    window.cronConfigAbrir = function () { iniciar(); window.cronSub(S.sub); };
+
+    // ── MÉDICOS (CRUD) ──
+    var DIAS_LBL = { 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sáb' };
+    function renderMedicos() {
+      var l = medsOrdenados(false), box = $('cronMedLista');
+      if (!l.length) { box.innerHTML = '<div class="cal-msg info">Nenhum médico cadastrado. Clique em "Novo médico".</div>'; return; }
+      box.innerHTML = '<table class="cron-tbl"><thead><tr><th>Médico</th><th>Especialidade</th><th>Sala habitual</th><th>Encaixes</th><th>Dias fixos</th><th>Situação</th><th></th></tr></thead><tbody>' + l.map(function (r) {
+        var m = r.m, dias = String(m.diasFixos || '').split(',').filter(Boolean).map(function (d) { return DIAS_LBL[d] || ''; }).join(', ');
+        return '<tr><td><b>' + esc(nomeMed(m)) + '</b></td><td>' + esc(m.especialidade || '') + '</td><td>' + esc(m.salaHabitual ? salaRotulo(m.salaHabitual) : '—') + '</td><td>' +
+          (typeof m.limiteEncaixes === 'number' ? m.limiteEncaixes : '—') + '</td><td>' + esc(dias || '—') + '</td><td>' + (m.ativo === false ? 'Inativo' : 'Ativo') +
+          '</td><td style="white-space:nowrap;"><button class="cron-ico" data-med="' + esc(r.id) + '" data-ac="edit" title="Editar"><i class="fas fa-pen"></i></button> <button class="cron-ico del" data-med="' + esc(r.id) + '" data-ac="del" title="Excluir"><i class="fas fa-trash"></i></button></td></tr>';
+      }).join('') + '</tbody></table>';
+    }
+    function carregarProfs() {
+      var fu = window.__fb; if (S.profs !== null || !fu || !fu.get) return;
+      S.profs = {};
+      fu.get(fu.ref(fu.db, 'admin/profissionais')).then(function (s) { S.profs = s.exists() ? s.val() : {}; }).catch(function () { S.profs = {}; });
+    }
+    window.cronMedAbrir = function (id) {
+      carregarProfs();
+      var m = (id && S.medicos[id]) || {};
+      $('cronMedTitulo').textContent = id ? 'Editar médico' : 'Novo médico';
+      $('cronMedId').value = id || '';
+      $('cronMedNome').value = m.nome || ''; $('cronMedSobrenome').value = m.sobrenome || ''; $('cronMedEsp').value = m.especialidade || '';
+      $('cronMedSala').innerHTML = optSalas(m.salaHabitual || '', 'Sem sala fixa');
+      $('cronMedEnc').value = typeof m.limiteEncaixes === 'number' ? m.limiteEncaixes : '';
+      var ps = S.profs || {}, pk = Object.keys(ps).sort(function (a, b) { return String((ps[a] || {}).nome || '').localeCompare(String((ps[b] || {}).nome || ''), 'pt'); });
+      $('cronMedProf').innerHTML = '<option value="">Sem vínculo</option>' + pk.map(function (k) { return '<option value="' + esc(k) + '"' + (m.profKey === k ? ' selected' : '') + '>' + esc((ps[k] || {}).nome || k) + '</option>'; }).join('');
+      var dias = String(m.diasFixos || '').split(',');
+      Array.prototype.forEach.call($('cronMedDias').querySelectorAll('input'), function (c) { c.checked = dias.indexOf(c.value) >= 0; });
+      $('cronMedObs').value = m.obs || ''; $('cronMedAtivo').checked = m.ativo !== false;
+      abrirModal('cronModalMed');
+    };
+    window.cronMedFechar = function () { fecharModal('cronModalMed'); };
+    window.cronMedSalvar = function () {
+      var nome = $('cronMedNome').value.trim(); if (!nome) { toast('Informe o nome', 'error'); return; }
+      var encRaw = $('cronMedEnc').value.trim(), enc = encRaw === '' ? null : parseInt(encRaw, 10);
+      if (enc !== null && (isNaN(enc) || enc < 0)) { toast('Limite de encaixes inválido', 'error'); return; }
+      var id = $('cronMedId').value, sobre = $('cronMedSobrenome').value.trim(), chave = limpaNome(nome + ' ' + sobre);
+      var dup = Object.keys(S.medicos).some(function (k) { return k !== id && limpaNome(nomeMed(S.medicos[k] || {})) === chave; });
+      if (dup && !confirm('Já existe um médico com esse nome e sobrenome. Salvar mesmo assim?')) return;
+      var dias = Array.prototype.filter.call($('cronMedDias').querySelectorAll('input'), function (c) { return c.checked; }).map(function (c) { return c.value; }).join(',');
+      var ant = (id && S.medicos[id]) || {}, agora = new Date().toISOString();
+      var obj = { nome: nome, sobrenome: sobre, especialidade: $('cronMedEsp').value.trim(), salaHabitual: $('cronMedSala').value, limiteEncaixes: enc,
+        diasFixos: dias, ativo: $('cronMedAtivo').checked, profKey: $('cronMedProf').value, obs: $('cronMedObs').value.trim(), criadoEm: ant.criadoEm || agora, atualizadoEm: agora };
+      var nid = id || ('med_' + Date.now().toString(36));
+      gravar('crono/medicos/' + nid, obj).then(function (ok) { if (ok) { toast('Médico salvo', 'success'); window.cronMedFechar(); } });
+    };
+    function excluirMedico(id) {
+      var m = S.medicos[id]; if (!m) return;
+      if (!confirm('Excluir ' + nomeMed(m) + ' do cadastro do cronograma?\nOs atendimentos já lançados continuam; só o cadastro (sala habitual, encaixes) é removido.')) return;
+      gravar('crono/medicos/' + id, null).then(function (ok) { if (ok) toast('Médico excluído', 'success'); });
+    }
+
+    // ── IMPORTAR PLANILHA ──
+    window.cronBaixarModelo = function () {
+      if (typeof XLSX === 'undefined') { toast('Biblioteca de planilhas não carregou. Recarregue a página.', 'error'); return; }
+      var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.aoa_to_sheet([['Data', 'Médico', 'Período', 'Sala', 'Obs'], ['09/11/2026', 'Juan', 'Manhã', '', 'EXEMPLO - apague esta linha']]);
+      ws['!cols'] = [{ wch: 14 }, { wch: 28 }, { wch: 16 }, { wch: 8 }, { wch: 38 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'Agendas');
+      var med = [['Médico (digite assim)', 'Especialidade', 'Situação']].concat(medsOrdenados(false).map(function (r) { return [nomeMed(r.m), r.m.especialidade || '', r.m.ativo === false ? 'Inativo' : 'Ativo']; }));
+      var w2 = XLSX.utils.aoa_to_sheet(med); w2['!cols'] = [{ wch: 30 }, { wch: 24 }, { wch: 10 }];
+      XLSX.utils.book_append_sheet(wb, w2, 'Médicos');
+      var w3 = XLSX.utils.aoa_to_sheet([['Como preencher'], ['1. Uma linha por atendimento, na aba "Agendas".'], ['2. Data: dd/mm/aaaa (ex.: 09/11/2026).'], ['3. Médico: nome como na aba "Médicos" (só o nome ou nome e sobrenome).'], ['4. Período: Manhã, Tarde ou Manhã e Tarde.'], ['5. Sala e Obs são opcionais. Sala vazia = definir depois no Verificar.'], ['6. Apague a linha de EXEMPLO.']]);
+      w3['!cols'] = [{ wch: 70 }];
+      XLSX.utils.book_append_sheet(wb, w3, 'Instruções');
+      XLSX.writeFile(wb, 'modelo-agendas-mes.xlsx');
+    };
+    function lerData(v) {
+      if (v == null || v === '') return null;
+      if (typeof v === 'number') { var d0 = new Date(Math.round((v - 25569) * 86400000)); return isoDe(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate()); }
+      var s = String(v).trim(), m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (m) return isoDe(+m[1], +m[2] - 1, +m[3]);
+      m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
+      if (!m) return undefined;
+      var d = +m[1], mo = +m[2], y = m[3] ? +m[3] : null;
+      if (y !== null && y < 100) y += 2000;
+      if (y === null) { y = new Date().getFullYear(); if (new Date(y, mo - 1, d, 12) < new Date(Date.now() - 180 * 86400000)) y++; }
+      var t = new Date(y, mo - 1, d, 12); if (t.getMonth() !== mo - 1 || t.getDate() !== d) return undefined;
+      return isoDe(y, mo - 1, d);
+    }
+    function lerPeriodo(v) {
+      var s = norm(v).replace(/\s+/g, ' ');
+      if (s === 'manha' || s === 'm') return ['Manhã'];
+      if (s === 'tarde' || s === 't') return ['Tarde'];
+      if (['manha e tarde', 'manha/tarde', 'm e t', 'm/t', 'mt', 'integral', 'dia todo', 'manha + tarde', 'manha e tarde.'].indexOf(s) >= 0) return ['Manhã', 'Tarde'];
+      return null;
+    }
+    function lerSala(v) {
+      var s = String(v == null ? '' : v).trim().toUpperCase(); if (!s) return '';
+      if (/^\d+$/.test(s)) s = pad(parseInt(s, 10));
+      return SALAS.indexOf(s) >= 0 ? s : undefined;
+    }
+    function achaMedico(txt) {
+      var k = limpaNome(txt); if (!k) return null;
+      var id = S.idx[k];
+      if (id === '?') return { amb: true };
+      if (id) return { id: id, m: S.medicos[id] };
+      var cand = Object.keys(S.medicos).filter(function (i) { var n = limpaNome(nomeMed(S.medicos[i] || {})); return n.indexOf(k + ' ') === 0 || k.indexOf(limpaNome((S.medicos[i] || {}).nome) + ' ') === 0 && limpaNome((S.medicos[i] || {}).nome).length > 2; });
+      return cand.length === 1 ? { id: cand[0], m: S.medicos[cand[0]] } : (cand.length > 1 ? { amb: true } : null);
+    }
+    function lerPlanilha(file) {
+      if (typeof XLSX === 'undefined') { toast('Biblioteca de planilhas não carregou. Recarregue a página.', 'error'); return; }
+      var fr = new FileReader();
+      fr.onload = function (e) {
+        var wb; try { wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }); } catch (er) { toast('Não foi possível ler o arquivo', 'error'); return; }
+        var nome = wb.SheetNames.filter(function (n) { return norm(n) === 'agendas'; })[0] || wb.SheetNames[0];
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, raw: true, defval: '' });
+        analisar(rows, file.name);
+      };
+      fr.readAsArrayBuffer(file);
+    }
+    function analisar(rows, arquivo) {
+      var col = { data: 0, med: 1, per: 2, sala: 3, obs: 4 }, ini = 0;
+      for (var i = 0; i < Math.min(6, rows.length); i++) {
+        var h = (rows[i] || []).map(norm);
+        var dI = h.findIndex(function (c) { return c === 'data'; }), mI = h.findIndex(function (c) { return c === 'medico' || c === 'profissional'; });
+        if (dI >= 0 && mI >= 0) {
+          col = { data: dI, med: mI, per: h.findIndex(function (c) { return c === 'periodo' || c === 'turno' || c === 'horario'; }), sala: h.findIndex(function (c) { return c === 'sala'; }), obs: h.findIndex(function (c) { return c === 'obs' || c === 'observacao'; }) };
+          ini = i + 1; break;
+        }
+      }
+      var linhas = [], vistos = {};
+      for (var r = ini; r < rows.length; r++) {
+        var row = rows[r] || [];
+        if (!row.some(function (c) { return String(c).trim() !== ''; })) continue;
+        var obs = col.obs >= 0 ? String(row[col.obs] || '').trim() : '';
+        if (norm(obs).indexOf('exemplo') === 0) continue;
+        var base = { linha: r + 1, medTxt: String(row[col.med] || '').trim(), obs: obs, erro: '' };
+        var dia = lerData(row[col.data]), pers = col.per >= 0 ? lerPeriodo(row[col.per]) : null, sala = col.sala >= 0 ? lerSala(row[col.sala]) : '', med = achaMedico(base.medTxt);
+        if (dia === null || dia === undefined) base.erro = 'Data inválida ou vazia';
+        else if (!base.medTxt) base.erro = 'Médico vazio';
+        else if (!med) base.erro = 'Médico não cadastrado';
+        else if (med.amb) base.erro = 'Nome ambíguo: use nome e sobrenome';
+        else if (med.m.ativo === false) base.erro = 'Médico inativo';
+        else if (!pers) base.erro = 'Período inválido (use Manhã, Tarde ou Manhã e Tarde)';
+        else if (sala === undefined) base.erro = 'Sala desconhecida';
+        base.dia = dia || ''; base.sala = sala || '';
+        if (base.erro) { linhas.push(Object.assign({ periodo: '' }, base)); continue; }
+        pers.forEach(function (p) {
+          var k = dia + '|' + med.id + '|' + p, l = Object.assign({}, base, { periodo: p, medId: med.id, med: med.m });
+          if (vistos[k]) l.erro = 'Repetido na planilha'; vistos[k] = 1;
+          linhas.push(l);
+        });
+      }
+      var diasU = {}; linhas.forEach(function (l) { if (!l.erro) diasU[l.dia] = 1; });
+      var fu = window.__fb, ds = Object.keys(diasU);
+      $('cronImpRes').innerHTML = '<div class="cal-msg info">Conferindo atendimentos já existentes...</div>';
+      Promise.all(ds.map(function (d) { return (fu && fu.get ? fu.get(fu.ref(fu.db, 'crono/dias/' + d)).then(function (s) { return s.exists() ? s.val() : null; }).catch(function () { return null; }) : Promise.resolve(null)); })).then(function (res) {
+        var ex = {}; ds.forEach(function (d, i) { ex[d] = (res[i] && res[i].itens) || {}; });
+        linhas.forEach(function (l) {
+          if (l.erro) return;
+          var existe = Object.keys(ex[l.dia]).some(function (id) {
+            var x = ex[l.dia][id] || {}; if (x.status === 'cancelado' || x.status === 'remarcado') return false;
+            var per = x.periodo === 'Tarde' ? 'Tarde' : (x.periodo === 'A definir' ? 'A definir' : 'Manhã');
+            return per === l.periodo && ((x.medicoId && x.medicoId === l.medId) || limpaNome(x.doc) === limpaNome(l.med.nome) || limpaNome(x.doc) === limpaNome(nomeMed(l.med)));
+          });
+          if (existe) l.jx = true;
+        });
+        S.imp = { linhas: linhas, ex: ex, arquivo: arquivo };
+        renderImp();
+      });
+    }
+    function renderImp() {
+      var I = S.imp; if (!I) { $('cronImpRes').innerHTML = ''; return; }
+      var ok = I.linhas.filter(function (l) { return !l.erro && !l.jx; }), jx = I.linhas.filter(function (l) { return !l.erro && l.jx; }), er = I.linhas.filter(function (l) { return l.erro; });
+      var h = '<div class="cal-msg ' + (er.length ? '' : 'info') + '"><b>' + ok.length + '</b> para gravar · <b>' + jx.length + '</b> já existem · <b>' + er.length + '</b> com erro' +
+        (ok.length ? ' <button class="btn-p" onclick="cronImpGravar()" style="font-size:12px;padding:6px 12px;"><i class="fas fa-check"></i> Gravar ' + ok.length + ' atendimento(s)</button>' : '') +
+        ' <button class="btn-s" onclick="cronImpLimpar()" style="font-size:12px;padding:6px 12px;">Descartar</button></div>';
+      h += '<div class="cron-tw"><table class="cron-tbl"><thead><tr><th>Linha</th><th>Data</th><th>Médico</th><th>Período</th><th>Sala</th><th>Situação</th></tr></thead><tbody>' + I.linhas.map(function (l) {
+        var cl = l.erro ? 'er' : (l.jx ? 'jx' : 'ok');
+        return '<tr class="' + cl + '"><td>' + l.linha + '</td><td>' + (l.dia ? esc(DOWC[dataDe(l.dia).getDay()] + ' ' + brData(l.dia)) : '—') + '</td><td>' + esc(l.med ? nomeMed(l.med) : l.medTxt) + '</td><td>' + esc(l.periodo || '—') + '</td><td>' + esc(l.sala ? salaRotulo(l.sala) : '—') + '</td><td>' + esc(l.erro || (l.jx ? 'Já existe (não será alterado)' : 'OK')) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+      $('cronImpRes').innerHTML = h;
+    }
+    window.cronImpLimpar = function () { S.imp = null; $('cronFile').value = ''; renderImp(); };
+    window.cronImpGravar = function () {
+      var I = S.imp; if (!I) return;
+      var ok = I.linhas.filter(function (l) { return !l.erro && !l.jx; }); if (!ok.length) return;
+      if (!confirm('Gravar ' + ok.length + ' atendimento(s) como "previsto"? Nada existente será alterado.')) return;
+      (async function () {
+        var feitos = 0, falhas = 0;
+        for (var i = 0; i < ok.length; i++) {
+          var l = ok[i], id = 'imp_' + l.medId + '_' + (l.periodo === 'Tarde' ? 'T' : 'M');
+          if (I.ex[l.dia] && I.ex[l.dia][id]) id += '_' + Date.now().toString(36).slice(-4) + i;
+          var it = { sala: l.sala || '', doc: String(l.med.nome || '').trim(), role: l.med.especialidade || '', periodo: l.periodo, aberta: false, status: 'previsto', medicoId: l.medId, origem: 'planilha' };
+          if (l.obs) it.obs = l.obs;
+          if (await gravar('crono/dias/' + l.dia + '/itens/' + id, it)) { feitos++; (I.ex[l.dia] = I.ex[l.dia] || {})[id] = it; } else falhas++;
+        }
+        await hist({ acao: 'importacao', para: String(feitos), obs: 'Planilha: ' + I.arquivo + (falhas ? ' (' + falhas + ' falha(s))' : '') });
+        toast('Importação: ' + feitos + ' gravado(s)' + (falhas ? ', ' + falhas + ' falha(s)' : ''), falhas ? 'error' : 'success');
+        window.cronImpLimpar();
+      })().catch(function (e) { toast('Falha na importação: ' + e.message, 'error'); });
+    };
+
+    // ── COLETA DO MÊS ("agenda recebida?") ──
+    function mesColeta() {
+      var v = $('cronColetaMes').value;
+      if (!v) { var n = new Date(); var p = new Date(n.getFullYear(), n.getMonth() + 1, 1); v = p.getFullYear() + '-' + pad(p.getMonth() + 1); $('cronColetaMes').value = v; }
+      return v;
+    }
+    function renderColeta() {
+      var ym = mesColeta(); garantirMes(ym);
+      if (!S.coletaOuv[ym] && typeof window.cronFbOn === 'function') {
+        S.coletaOuv[ym] = true;
+        window.cronFbOn('crono/coleta/' + ym, function (v) { S.coleta[ym] = v || {}; if (S.sub === 'coleta' && mesColeta() === ym) renderColeta(); });
+      }
+      var col = S.coleta[ym] || {}, l = medsOrdenados(true), cont = {};
+      Object.keys(S.dias).forEach(function (d) { if (d.indexOf(ym) === 0) itens(d, false).forEach(function (x) { var k = chaveMed(x); cont[k] = (cont[k] || 0) + 1; }); });
+      var rec = 0, sem = 0, pen = 0;
+      l.forEach(function (r) { var s = (col[r.id] || {}).status; if (s === 'recebida') rec++; else if (s === 'sem') sem++; else pen++; });
+      $('cronColetaResumo').innerHTML = '<b>' + rec + '</b> recebida(s) · <b>' + sem + '</b> sem atendimento · <b>' + pen + '</b> pendente(s)';
+      if (!l.length) { $('cronColetaLista').innerHTML = '<div class="cal-msg info">Cadastre os médicos na aba Médicos para controlar a coleta.</div>'; return; }
+      $('cronColetaLista').innerHTML = '<table class="cron-tbl"><thead><tr><th>Médico</th><th>Especialidade</th><th>Situação da agenda</th><th>Atendimentos previstos</th><th>Atualizado</th></tr></thead><tbody>' + l.map(function (r) {
+        var c = col[r.id] || {}, s = c.status || 'pendente';
+        return '<tr><td><b>' + esc(nomeMed(r.m)) + '</b></td><td>' + esc(r.m.especialidade || '') + '</td><td><select class="f-select cron-col-st" data-med="' + esc(r.id) + '" style="max-width:190px;">' +
+          [['pendente', 'Pendente'], ['recebida', 'Recebida'], ['sem', 'Sem atendimento']].map(function (o) { return '<option value="' + o[0] + '"' + (s === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+          '</select></td><td>' + (cont[r.id] || 0) + '</td><td style="font-size:11px;color:var(--gray-500);">' + (c.em ? esc(brData(c.em.slice(0, 10)) + (c.por ? ' · ' + c.por : '')) : '—') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    }
+
+    // ── ATENDIMENTOS (edição por dia) ──
+    function diaAtend() { var v = $('cronAtDia').value; if (!v) { v = hojeIso(); $('cronAtDia').value = v; } return v; }
+    function preencherAdd() {
+      var l = medsOrdenados(true), sel = $('cronAddMed'), h = l.length ? l.map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(nomeMed(r.m) + (r.m.especialidade ? ' — ' + r.m.especialidade : '')) + '</option>'; }).join('') : '<option value="">Cadastre médicos primeiro</option>';
+      if (sel.getAttribute('data-h') !== h) { sel.innerHTML = h; sel.setAttribute('data-h', h); }
+      if (!$('cronAddSala').options.length) $('cronAddSala').innerHTML = optSalas('', 'Definir depois');
+    }
+    function renderAtend() {
+      var dia = diaAtend(); garantirMes(dia.slice(0, 7)); preencherAdd();
+      var l = itens(dia, true), box = $('cronAtLista');
+      if (!l.length) { box.innerHTML = '<div class="cal-msg info">' + (S.carregado[dia.slice(0, 7)] ? 'Nenhum atendimento neste dia.' : 'Carregando...') + '</div>'; return; }
+      box.innerHTML = '<table class="cron-tbl"><thead><tr><th>Médico</th><th>Período</th><th>Sala</th><th>Status</th><th>Aberta</th><th>Obs</th><th></th></tr></thead><tbody>' + l.map(function (x) {
+        var rem = x.status === 'remarcado', e = esc(x.id);
+        return '<tr><td><b>' + esc(rotuloNome(x)) + '</b><br><small style="color:var(--gray-500);">' + esc(espDe(x)) + '</small>' + (x.est ? ' <span class="cal-est">estimado</span>' : '') + '</td>' +
+          '<td><select class="f-select cron-at-per" data-id="' + e + '"' + (rem ? ' disabled' : '') + '>' + PERS.map(function (p) { return '<option' + (x.periodo === p ? ' selected' : '') + '>' + p + '</option>'; }).join('') + '</select></td>' +
+          '<td><select class="f-select cron-at-sala" data-id="' + e + '"' + (rem ? ' disabled' : '') + '>' + optSalas(x.sala, 'Sem sala') + (x.sala && SALAS.indexOf(x.sala) < 0 ? '<option selected value="' + esc(x.sala) + '">' + esc(x.sala) + '</option>' : '') + '</select></td>' +
+          '<td>' + (rem ? 'Remarcado → ' + esc(x.remarcadoPara ? brCurta(x.remarcadoPara) : '') : '<select class="f-select cron-at-st" data-id="' + e + '">' + [['previsto', 'Previsto'], ['confirmado', 'Confirmado'], ['estendido', 'Estendido'], ['cancelado', 'Cancelado']].map(function (o) { return '<option value="' + o[0] + '"' + ((x.status || 'previsto') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') + '</td>' +
+          '<td><button class="cal-pill ' + (x.aberta ? 'ab' : 'na') + ' sm" data-ac="aberta" data-id="' + e + '"' + (rem ? ' disabled' : '') + '>' + (x.aberta ? '<i class="fas fa-lock-open"></i> Aberta' : '<i class="fas fa-lock"></i> Não aberta') + '</button></td>' +
+          '<td><input class="f-input cron-at-obs" data-id="' + e + '" value="' + esc(x.obs) + '" placeholder="Obs" style="min-width:110px;"></td>' +
+          '<td style="white-space:nowrap;">' + (rem ? '' : '<button class="cron-ico" data-ac="rem" data-id="' + e + '" title="Remarcar"><i class="fas fa-right-left"></i></button> <button class="cron-ico" data-ac="est" data-id="' + e + '" title="Estender"><i class="fas fa-up-right-and-down-left-from-center"></i></button> ') +
+          '<button class="cron-ico del" data-ac="del" data-id="' + e + '" title="Remover"><i class="fas fa-trash"></i></button></td></tr>';
+      }).join('') + '</tbody></table>';
+    }
+    function baseItem(dia, id) { return 'crono/dias/' + dia + '/itens/' + id; }
+    function mudouAtend(ev) {
+      var t = ev.target, id = t.getAttribute && t.getAttribute('data-id'); if (!id) return;
+      var dia = diaAtend(), it = itemBruto(dia, id); if (!it) return; var x = itens(dia, true).filter(function (a) { return a.id === id; })[0], b = baseItem(dia, id);
+      if (t.classList.contains('cron-at-sala')) {
+        Promise.all([gravar(b + '/sala', t.value), gravar(b + '/est', null)]).then(function (r) { if (r[0]) hist({ dia: dia, itemId: id, doc: rotuloNome(x), acao: 'sala', de: x.sala, para: t.value }); });
+      } else if (t.classList.contains('cron-at-per')) {
+        Promise.all([gravar(b + '/periodo', t.value), gravar(b + '/est', null)]).then(function (r) { if (r[0]) hist({ dia: dia, itemId: id, doc: rotuloNome(x), acao: 'periodo', de: x.periodo, para: t.value }); });
+      } else if (t.classList.contains('cron-at-st')) {
+        if (t.value === 'cancelado' && !confirm('Cancelar o atendimento de ' + rotuloNome(x) + ' neste dia?')) { renderAtend(); return; }
+        gravar(b + '/status', t.value).then(function (ok) { if (ok) hist({ dia: dia, itemId: id, doc: rotuloNome(x), acao: 'status', de: x.status || 'previsto', para: t.value }); });
+      } else if (t.classList.contains('cron-at-obs')) {
+        gravar(b + '/obs', t.value.trim()).then(function (ok) { if (ok) hist({ dia: dia, itemId: id, doc: rotuloNome(x), acao: 'obs', de: x.obs, para: t.value.trim() }); });
+      }
+    }
+    function cliqueAtend(ev) {
+      var b = ev.target.closest('[data-ac]'); if (!b) return;
+      var ac = b.getAttribute('data-ac'), id = b.getAttribute('data-id'), dia = diaAtend(), it = itemBruto(dia, id); if (!it) return;
+      var x = itens(dia, true).filter(function (a) { return a.id === id; })[0];
+      if (ac === 'aberta') gravar(baseItem(dia, id) + '/aberta', !x.aberta).then(function (ok) { if (ok) hist({ dia: dia, itemId: id, doc: rotuloNome(x), acao: 'aberta', de: x.aberta ? 'sim' : 'não', para: x.aberta ? 'não' : 'sim' }); });
+      else if (ac === 'del') { if (confirm('Remover ' + rotuloNome(x) + ' (' + x.periodo + ') deste dia?')) gravar(baseItem(dia, id), null).then(function (ok) { if (ok) hist({ dia: dia, itemId: id, doc: rotuloNome(x), acao: 'removido', de: x.periodo + ' ' + x.sala, para: '' }); }); }
+      else if (ac === 'rem') abrirAcao('rem', dia, x);
+      else if (ac === 'est') abrirAcao('est', dia, x);
+    }
+    window.cronAddAtend = function () {
+      var dia = diaAtend(), mid = $('cronAddMed').value, per = $('cronAddPer').value, sala = $('cronAddSala').value, m = S.medicos[mid];
+      if (!m) { toast('Escolha um médico cadastrado', 'error'); return; }
+      var dup = itens(dia, false).some(function (x) { return x.periodo === per && chaveMed(x) === mid; });
+      if (dup && !confirm('Este médico já tem atendimento neste período. Adicionar mesmo assim?')) return;
+      var id = 'man_' + mid + '_' + (per === 'Tarde' ? 'T' : 'M') + '_' + Math.random().toString(36).slice(2, 5);
+      var it = { sala: sala, doc: String(m.nome || '').trim(), role: m.especialidade || '', periodo: per, aberta: false, status: 'previsto', medicoId: mid, origem: 'manual' };
+      gravar(baseItem(dia, id), it).then(function (ok) { if (ok) { toast('Atendimento adicionado', 'success'); hist({ dia: dia, itemId: id, doc: nomeMed(m), acao: 'criado', de: '', para: per }); } });
+    };
+
+    // ── remarcar / estender ──
+    function abrirAcao(tipo, dia, x) {
+      S.acao = { tipo: tipo, dia: dia, x: x };
+      $('cronAcTitulo').textContent = (tipo === 'rem' ? 'Remarcar — ' : 'Estender — ') + rotuloNome(x) + ' (' + brCurta(dia) + ' ' + x.periodo + ')';
+      var perOpts = function (sel) { return ['Manhã', 'Tarde'].map(function (p) { return '<option' + (p === sel ? ' selected' : '') + '>' + p + '</option>'; }).join(''); };
+      if (tipo === 'rem') {
+        $('cronAcCorpo').innerHTML = '<div class="cron-grid2"><div><label class="f-label" for="cronAcData">Nova data</label><input type="date" class="f-input" id="cronAcData"></div><div><label class="f-label" for="cronAcPer">Período</label><select class="f-select" id="cronAcPer">' + perOpts(x.periodo === 'Tarde' ? 'Tarde' : 'Manhã') + '</select></div></div><p class="cron-help" style="margin-top:12px;">O atendimento atual fica marcado como "remarcado" e um novo "previsto" é criado na nova data (sem sala e sem agenda aberta).</p>';
+      } else {
+        var outro = x.periodo === 'Manhã' ? 'Tarde' : 'Manhã';
+        $('cronAcCorpo').innerHTML = '<label class="f-label">Tipo de extensão</label>' +
+          '<label style="display:block;margin-bottom:6px;font-size:13px;"><input type="radio" name="cronAcTipo" value="horario" checked> Estender o horário no dia (também ' + outro + ')</label>' +
+          '<label style="display:block;margin-bottom:6px;font-size:13px;"><input type="radio" name="cronAcTipo" value="extra"> Adicionar um dia extra</label>' +
+          '<label style="display:block;margin-bottom:10px;font-size:13px;"><input type="radio" name="cronAcTipo" value="tempo"> Atende mais tempo no dia (descreva)</label>' +
+          '<div class="cron-grid2"><div><label class="f-label" for="cronAcData">Data (dia extra)</label><input type="date" class="f-input" id="cronAcData"></div><div><label class="f-label" for="cronAcPer">Período (dia extra)</label><select class="f-select" id="cronAcPer">' + perOpts('Manhã') + '</select></div><div class="full"><label class="f-label" for="cronAcObs">Observação (ex.: até 19h)</label><input class="f-input" id="cronAcObs"></div></div>';
+      }
+      abrirModal('cronModalAcao');
+    }
+    window.cronAcFechar = function () { fecharModal('cronModalAcao'); S.acao = null; };
+    window.cronAcConfirmar = function () {
+      var A = S.acao; if (!A) return; var x = A.x, dia = A.dia, nome = rotuloNome(x), mid = (medDe(x) || {}).id || x.medicoId || '';
+      var copia = function (per, status, origem, extra) { var o = { sala: '', doc: x.doc, role: x.role, periodo: per, aberta: false, status: status, origem: origem }; if (mid) o.medicoId = mid; return Object.assign(o, extra || {}); };
+      (async function () {
+        if (A.tipo === 'rem') {
+          var nd = $('cronAcData').value, per = $('cronAcPer').value;
+          if (!nd) { toast('Informe a nova data', 'error'); return; }
+          if (nd === dia && per === x.periodo) { toast('Escolha uma data ou período diferente', 'error'); return; }
+          var nid = 'rem_' + Date.now().toString(36);
+          if (!(await gravar(baseItem(nd, nid), copia(per, 'previsto', 'remarcacao', { remarcadoDe: dia })))) return;
+          if (!(await gravar(baseItem(dia, x.id) + '/status', 'remarcado')) || !(await gravar(baseItem(dia, x.id) + '/remarcadoPara', nd))) return;
+          await hist({ dia: dia, itemId: x.id, doc: nome, acao: 'remarcado', de: brData(dia) + ' ' + x.periodo, para: brData(nd) + ' ' + per });
+          toast('Remarcado para ' + brData(nd), 'success');
+        } else {
+          var tp = (document.querySelector('input[name="cronAcTipo"]:checked') || {}).value;
+          if (tp === 'horario') {
+            var outro = x.periodo === 'Manhã' ? 'Tarde' : 'Manhã';
+            if (x.periodo === 'A definir') { toast('Defina o período antes de estender', 'error'); return; }
+            if (itens(dia, false).some(function (a) { return a.periodo === outro && chaveMed(a) === chaveMed(x); })) { toast('Já existe atendimento no período ' + outro, 'error'); return; }
+            var ni = 'ext_' + Date.now().toString(36);
+            if (!(await gravar(baseItem(dia, ni), copia(outro, 'estendido', 'extensao', { sala: x.sala })))) return;
+            await hist({ dia: dia, itemId: ni, doc: nome, acao: 'estendido', de: x.periodo, para: x.periodo + ' + ' + outro, obs: 'horário estendido' });
+            toast('Horário estendido (' + outro + ')', 'success');
+          } else if (tp === 'extra') {
+            var d2 = $('cronAcData').value, p2 = $('cronAcPer').value;
+            if (!d2) { toast('Informe a data do dia extra', 'error'); return; }
+            var n2 = 'ext_' + Date.now().toString(36);
+            if (!(await gravar(baseItem(d2, n2), copia(p2, 'estendido', 'dia_extra')))) return;
+            await hist({ dia: d2, itemId: n2, doc: nome, acao: 'estendido', de: '', para: brData(d2) + ' ' + p2, obs: 'dia extra' });
+            toast('Dia extra adicionado em ' + brData(d2), 'success');
+          } else {
+            var ob = $('cronAcObs').value.trim(); if (!ob) { toast('Descreva o tempo a mais em Observação', 'error'); return; }
+            if (!(await gravar(baseItem(dia, x.id) + '/status', 'estendido')) || !(await gravar(baseItem(dia, x.id) + '/obs', ob))) return;
+            await hist({ dia: dia, itemId: x.id, doc: nome, acao: 'estendido', de: x.status || 'previsto', para: 'estendido', obs: ob });
+            toast('Atendimento marcado como estendido', 'success');
+          }
+        }
+        window.cronAcFechar();
+      })().catch(function (e) { toast('Falha: ' + e.message, 'error'); });
+    };
+
+    // ── HISTÓRICO ──
+    var ACAO_LBL = { sala: 'Sala', periodo: 'Período', status: 'Status', obs: 'Observação', aberta: 'Abertura', removido: 'Removido', criado: 'Criado', remarcado: 'Remarcado', estendido: 'Estendido', importacao: 'Importação' };
+    function renderHist() {
+      var l = S.historico, box = $('cronHistLista');
+      if (!l.length) { box.innerHTML = '<div class="cal-msg info">Nenhuma alteração registrada ainda.</div>'; return; }
+      box.innerHTML = '<table class="cron-tbl"><thead><tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Dia</th><th>Médico</th><th>De → Para</th><th>Obs</th></tr></thead><tbody>' + l.map(function (h) {
+        var q = h.em ? new Date(h.em) : null;
+        return '<tr><td style="white-space:nowrap;">' + (q ? esc(pad(q.getDate()) + '/' + pad(q.getMonth() + 1) + ' ' + pad(q.getHours()) + ':' + pad(q.getMinutes())) : '—') + '</td><td>' + esc(h.por || '') + '</td><td>' + esc(ACAO_LBL[h.acao] || h.acao || '') + '</td><td>' + (h.dia ? esc(brCurta(h.dia)) : '—') + '</td><td>' + esc(h.doc || '') + '</td><td>' + esc((h.de || '—') + ' → ' + (h.para || '—')) + '</td><td>' + esc(h.obs || '') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    }
+
+    // ── VERIFICAR ANTES DE IMPRIMIR (semana) ──
+    var V = { itens: [], dias: [], sel: null, open: {}, drag: null };
+    window.cronAbrirVerificar = function () {
+      var seg = segundaDe(S.ref); V.dias = []; for (var i = 0; i < 6; i++) V.dias.push(iso(addDias(seg, i)));
+      V.itens = []; V.sel = null; V.open = {};
+      V.dias.forEach(function (d) { itens(d, false).forEach(function (x) { x.salaNova = x.sala; V.itens.push(x); }); });
+      $('cronVerTitulo').textContent = 'Verificar cronograma — ' + brCurta(V.dias[0]) + ' a ' + brData(V.dias[5]);
+      renderVer(); abrirModal('cronModalVer');
+    };
+    window.cronVerFechar = function () {
+      var pend = V.itens.some(function (x) { return x.salaNova !== x.sala; });
+      if (pend && !confirm('Há trocas de sala não salvas. Fechar mesmo assim?')) return;
+      fecharModal('cronModalVer');
+    };
+    function validar() {
+      var bl = [], av = [];
+      if (!V.itens.length) bl.push({ msg: 'Nenhum atendimento nesta semana.' });
+      var grupos = {};
+      V.itens.forEach(function (x) {
+        var nome = rotuloNome(x) + ' (' + DOWC[dataDe(x.dia).getDay()] + ' ' + brCurta(x.dia) + ' ' + x.periodo + ')';
+        if (!x.aberta) bl.push({ msg: nome + ': agenda não aberta', abrir: x.dia + '|' + x.id });
+        if (x.periodo === 'A definir') bl.push({ msg: nome + ': período a definir (ajuste em Configuração → Atendimentos)' });
+        if (!x.salaNova) bl.push({ msg: nome + ': sem sala' });
+        else { var k = x.dia + '|' + x.periodo + '|' + x.salaNova; (grupos[k] = grupos[k] || []).push(x); }
+        if (x.est) av.push(nome + ': período/sala estimados — confira');
+        if (!medDe(x)) av.push(nome + ': médico sem cadastro (abreviação automática)');
+      });
+      Object.keys(grupos).forEach(function (k) {
+        if (grupos[k].length > 1) { var p = k.split('|'); bl.push({ msg: salaRotulo(p[2]) + ' duplicada em ' + DOWC[dataDe(p[0]).getDay()] + ' ' + brCurta(p[0]) + ' (' + p[1] + '): ' + grupos[k].map(rotuloNome).join(' e ') }); }
+      });
+      return { bl: bl, av: av, dup: grupos };
+    }
+    function renderVer() {
+      var R = validar(), pend = V.itens.filter(function (x) { return x.salaNova !== x.sala; }).length, h = '';
+      if (!R.bl.length) h += '<div class="cron-v-sum ok"><b><i class="fas fa-circle-check"></i> Tudo certo.</b> Todas as agendas estão abertas e todas as salas definidas' + (pend ? ' (há ' + pend + ' troca(s) de sala que serão salvas ao gerar o PDF)' : '') + '.</div>';
+      else h += '<div class="cron-v-sum bad"><b><i class="fas fa-triangle-exclamation"></i> ' + R.bl.length + ' pendência(s) impedem a impressão:</b><ul>' + R.bl.map(function (b) {
+        return '<li>' + esc(b.msg) + (b.abrir ? '<button class="btn-s" data-ver="abrir" data-k="' + esc(b.abrir) + '" style="font-size:11px;padding:3px 9px;">Marcar como aberta</button>' : '') + '</li>';
+      }).join('') + '</ul></div>';
+      if (R.av.length) h += '<div class="cron-v-aviso"><b>Avisos (não bloqueiam):</b> ' + esc(R.av.join(' · ')) + '</div>';
+      $('cronVerResumo').innerHTML = h;
+      $('cronVerBtnPdf').disabled = R.bl.length > 0; $('cronVerBtnPdf').style.opacity = R.bl.length ? '.5' : '1';
+      $('cronVerBtnSalvar').disabled = !pend; $('cronVerBtnSalvar').style.opacity = pend ? '1' : '.5';
+      var corpo = '';
+      V.dias.forEach(function (d) {
+        var lista = V.itens.filter(function (x) { return x.dia === d; });
+        var lanes = ['Manhã', 'Tarde']; if (lista.some(function (x) { return x.periodo === 'A definir'; })) lanes.push('A definir');
+        var nPend = lista.filter(function (x) { return !x.aberta || !x.salaNova || x.periodo === 'A definir' || (R.dup[d + '|' + x.periodo + '|' + x.salaNova] || []).length > 1; }).length;
+        var salas = ['']; SALAS.forEach(function (s) { salas.push(s); });
+        lista.forEach(function (x) { if (x.salaNova && salas.indexOf(x.salaNova) < 0) salas.push(x.salaNova); });
+        var aberto = V.open[d] !== undefined ? V.open[d] : (nPend > 0);
+        corpo += '<details class="cron-v-dia" data-d="' + d + '"' + (aberto ? ' open' : '') + '><summary>' + DOWL[dataDe(d).getDay()] + ' ' + brCurta(d) + ' · ' + lista.length + ' atendimento(s)' + (nPend ? '<span class="pend">⚠ ' + nPend + ' pendência(s)</span>' : '') + '</summary>';
+        if (!lista.length) corpo += '<div class="cron-help" style="padding:0 14px 12px;">Sem atendimentos.</div>';
+        else {
+          corpo += '<div class="cron-v-grid" style="--cols:' + lanes.length + '"><div></div>' + lanes.map(function (l) { return '<div class="cron-v-h">' + esc(l) + '</div>'; }).join('');
+          salas.forEach(function (s) {
+            var temAlgum = lista.some(function (x) { return x.salaNova === s; });
+            if (s === '' && !temAlgum) return;
+            corpo += '<div class="cron-v-sala">' + esc(salaRotulo(s)) + '</div>' + lanes.map(function (l) {
+              var xs = lista.filter(function (x) { return x.salaNova === s && x.periodo === l; });
+              var dup = xs.length > 1;
+              return '<div class="cron-v-cell' + (dup ? ' dup' : '') + '" data-d="' + d + '" data-s="' + esc(s) + '" data-p="' + esc(l) + '">' + xs.map(function (x) {
+                var c = stEf(x), bad = !x.aberta || dup || !x.salaNova;
+                return '<div class="cron-chip cron-vchip s-' + c + (bad ? ' bad' : '') + (V.sel === x.dia + '|' + x.id ? ' sel' : '') + '" draggable="true" data-k="' + esc(x.dia + '|' + x.id) + '" title="' + esc(rotuloCompleto(x) + (x.aberta ? ' · agenda aberta' : ' · agenda NÃO aberta')) + '"><span class="cron-t">' + esc(rotuloCompleto(x)) + '</span><i class="fas fa-' + (x.aberta ? 'lock-open' : 'lock') + '"></i></div>';
+              }).join('') + '</div>';
+            }).join('');
+          });
+          corpo += '</div>';
+        }
+        corpo += '</details>';
+      });
+      $('cronVerCorpo').innerHTML = corpo;
+    }
+    function acharItem(k) { return V.itens.filter(function (x) { return x.dia + '|' + x.id === k; })[0]; }
+    function moverPara(k, d, s, p) {
+      var x = acharItem(k); if (!x) return;
+      if (x.dia !== d || x.periodo !== p) { toast('Só dá para trocar a sala dentro do mesmo dia e período', 'info'); return; }
+      x.salaNova = s; V.sel = null; renderVer();
+    }
+    function ocupado() { var o = {}; V.itens.forEach(function (x) { if (x.salaNova) o[x.dia + '|' + x.periodo + '|' + x.salaNova] = 1; }); return o; }
+    function candidatas(x) {
+      var esp = norm(espDe(x)), r = medDe(x), l = [], esp1 = /fisio/.test(esp) ? 'FISIO' : (/ultra|ecograf/.test(esp) ? 'US' : '');
+      if (esp1) l.push(esp1);
+      if (r && r.m.salaHabitual) l.push(r.m.salaHabitual);
+      if (!esp1) SALAS_CONS.forEach(function (s) { l.push(s); });
+      return l;
+    }
+    window.cronVerSugerir = function () {
+      var oc = ocupado(), n = 0;
+      var pend = V.itens.filter(function (x) { return !x.salaNova && x.periodo !== 'A definir'; });
+      pend.sort(function (a, b) { var ra = medDe(a), rb = medDe(b); return (rb && rb.m.salaHabitual ? 1 : 0) - (ra && ra.m.salaHabitual ? 1 : 0); });
+      pend.forEach(function (x) {
+        var c = candidatas(x);
+        for (var i = 0; i < c.length; i++) { var k = x.dia + '|' + x.periodo + '|' + c[i]; if (!oc[k]) { x.salaNova = c[i]; oc[k] = 1; n++; break; } }
+      });
+      renderVer();
+      toast(n ? n + ' sala(s) sugerida(s). Ajuste arrastando e clique em "Salvar salas".' : 'Nenhuma sala livre para sugerir', n ? 'success' : 'info');
+    };
+    async function salvarSalas() {
+      var mud = V.itens.filter(function (x) { return x.salaNova !== x.sala; });
+      for (var i = 0; i < mud.length; i++) {
+        var x = mud[i], b = baseItem(x.dia, x.id);
+        if (!(await gravar(b + '/sala', x.salaNova))) return false;
+        await gravar(b + '/est', null);
+        await hist({ dia: x.dia, itemId: x.id, doc: rotuloNome(x), acao: 'sala', de: x.sala, para: x.salaNova });
+        x.sala = x.salaNova;
+      }
+      return true;
+    }
+    window.cronVerSalvar = function () {
+      salvarSalas().then(function (ok) { if (ok) toast('Salas salvas', 'success'); renderVer(); });
+    };
+    window.cronVerPdf = function () {
+      var R = validar(); if (R.bl.length) { toast('Resolva as pendências antes de gerar o PDF', 'error'); return; }
+      salvarSalas().then(function (ok) { if (!ok) return; renderVer(); gerarPdf(); });
+    };
+    function ligarVerificar() {
+      var corpo = $('cronVerCorpo');
+      corpo.addEventListener('dragstart', function (ev) {
+        var c = ev.target.closest && ev.target.closest('.cron-vchip'); if (!c) return;
+        V.drag = c.getAttribute('data-k'); try { ev.dataTransfer.setData('text/plain', V.drag); ev.dataTransfer.effectAllowed = 'move'; } catch (e) {}
+      });
+      corpo.addEventListener('dragover', function (ev) { var c = ev.target.closest && ev.target.closest('.cron-v-cell'); if (!c) return; ev.preventDefault(); c.classList.add('over'); });
+      corpo.addEventListener('dragleave', function (ev) { var c = ev.target.closest && ev.target.closest('.cron-v-cell'); if (c) c.classList.remove('over'); });
+      corpo.addEventListener('drop', function (ev) {
+        var c = ev.target.closest && ev.target.closest('.cron-v-cell'); if (!c) return; ev.preventDefault();
+        var k = V.drag || ''; try { k = ev.dataTransfer.getData('text/plain') || k; } catch (e) {}
+        V.drag = null; moverPara(k, c.getAttribute('data-d'), c.getAttribute('data-s'), c.getAttribute('data-p'));
+      });
+      corpo.addEventListener('click', function (ev) {
+        var chipEl = ev.target.closest('.cron-vchip');
+        if (chipEl) { var k = chipEl.getAttribute('data-k'); V.sel = V.sel === k ? null : k; renderVer(); return; }
+        var cell = ev.target.closest('.cron-v-cell');
+        if (cell && V.sel) moverPara(V.sel, cell.getAttribute('data-d'), cell.getAttribute('data-s'), cell.getAttribute('data-p'));
+      });
+      corpo.addEventListener('toggle', function (ev) { var d = ev.target && ev.target.getAttribute && ev.target.getAttribute('data-d'); if (d && ev.target.tagName === 'DETAILS') V.open[d] = ev.target.open; }, true);
+      $('cronVerResumo').addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-ver="abrir"]'); if (!b) return;
+        var x = acharItem(b.getAttribute('data-k')); if (!x) return;
+        gravar(baseItem(x.dia, x.id) + '/aberta', true).then(function (ok) {
+          if (ok) { x.aberta = true; hist({ dia: x.dia, itemId: x.id, doc: rotuloNome(x), acao: 'aberta', de: 'não', para: 'sim' }); renderVer(); }
+        });
+      });
+    }
+
+    // ── PDF SEMANAL (jsPDF, A4 paisagem): salas em linhas × dias em colunas, Manhã/Tarde separados ──
+    function gerarPdf() {
+      var J = window.jspdf && window.jspdf.jsPDF;
+      if (!J) { toast('Biblioteca de PDF não carregou. Recarregue a página.', 'error'); return; }
+      var doc = new J({ orientation: 'landscape', unit: 'mm', format: 'a4' }), W = 297, H = 210, M = 10, CS = 32, CW = (W - 2 * M - CS) / 6, LH = 3.7, dias = V.dias;
+      var por = {}, ks = {};
+      V.itens.forEach(function (x) {
+        var k = x.salaNova + '|' + x.periodo; ks[k] = { sala: x.salaNova, per: x.periodo };
+        (por[k] = por[k] || {}); (por[k][x.dia] = por[k][x.dia] || []).push(rotuloCompleto(x));
+      });
+      var ch = Object.keys(ks).sort(function (a, b) { return salaChave(ks[a].sala) - salaChave(ks[b].sala) || (PERS.indexOf(ks[a].per) - PERS.indexOf(ks[b].per)); });
+      function cabecalho() {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(10, 31, 68); doc.text('SIM CLÍNICA MÉDICA E ODONTOLÓGICA · Pirituba', M, 12);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(71, 85, 105); doc.text('Cronograma semanal: ' + brData(dias[0]) + ' a ' + brData(dias[5]), M, 18);
+        var y = 22; doc.setFillColor(10, 31, 68); doc.setDrawColor(10, 31, 68); doc.rect(M, y, CS, 8, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text('Sala', M + 2, y + 5.3);
+        dias.forEach(function (d, i) { var x = M + CS + i * CW; doc.rect(x, y, CW, 8, 'F'); doc.text(DOWC[dataDe(d).getDay()] + ' ' + brCurta(d), x + CW / 2, y + 5.3, { align: 'center' }); });
+        return y + 8;
+      }
+      var y = cabecalho();
+      ch.forEach(function (k) {
+        var info = ks[k], cel = dias.map(function (d) {
+          var labels = (por[k][d] || []).slice().sort(function (a, b) { return a.localeCompare(b, 'pt'); });
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+          return labels.map(function (t) { return doc.splitTextToSize(t, CW - 3); });
+        });
+        var altura = 9;
+        cel.forEach(function (c) { var s = 3; c.forEach(function (ls) { s += ls.length * LH + 1.2; }); if (s > altura) altura = s; });
+        if (y + altura > H - 12) { doc.addPage(); y = cabecalho(); }
+        var tarde = info.per === 'Tarde';
+        doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.2);
+        doc.setFillColor(226, 232, 240); doc.rect(M, y, CS, altura, 'FD');
+        doc.setTextColor(10, 31, 68); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(salaRotulo(info.sala), M + 2, y + 4.5);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(71, 85, 105); doc.text(info.per, M + 2, y + 8.5);
+        cel.forEach(function (c, i) {
+          var x = M + CS + i * CW; if (tarde) doc.setFillColor(241, 245, 249); else doc.setFillColor(255, 255, 255);
+          doc.rect(x, y, CW, altura, 'FD');
+          doc.setTextColor(30, 41, 59); doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+          var yy = y + 4; c.forEach(function (ls) { doc.text(ls, x + 1.5, yy); yy += ls.length * LH + 1.2; });
+        });
+        y += altura;
+      });
+      var n = doc.getNumberOfPages(), gerado = new Date();
+      for (var p = 1; p <= n; p++) {
+        doc.setPage(p); doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(100, 116, 139);
+        doc.text('Gerado em ' + pad(gerado.getDate()) + '/' + pad(gerado.getMonth() + 1) + '/' + gerado.getFullYear() + ' ' + pad(gerado.getHours()) + ':' + pad(gerado.getMinutes()), M, H - 6);
+        doc.text('Página ' + p + ' de ' + n, W - M, H - 6, { align: 'right' });
+      }
+      doc.save('cronograma-semana-' + dias[0] + '.pdf');
+      toast('PDF gerado', 'success');
+    }
+
+    // ── eventos, início e perfil ──
+    function ligarEventos() {
+      $('cronSeg').addEventListener('click', function (ev) { var b = ev.target.closest('button[data-v]'); if (!b) return; S.view = b.getAttribute('data-v'); window.cronRender(); });
+      $('cronBody').addEventListener('click', function (ev) { var c = ev.target.closest('.cron-dia[data-dia]'); if (!c) return; S.ref = dataDe(c.getAttribute('data-dia')); S.view = 'dia'; window.cronRender(); });
+      $('cronBody').addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' && ev.key !== ' ') return; var c = ev.target.closest && ev.target.closest('.cron-dia[data-dia]'); if (!c) return; ev.preventDefault(); S.ref = dataDe(c.getAttribute('data-dia')); S.view = 'dia'; window.cronRender(); });
+      $('cronFiltro').addEventListener('change', function () { S.filtro = this.value; window.cronRender(); });
+      $('cronSubnav').addEventListener('click', function (ev) { var b = ev.target.closest('button[data-sub]'); if (b) window.cronSub(b.getAttribute('data-sub')); });
+      $('cronMedLista').addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-med]'); if (!b) return;
+        if (b.getAttribute('data-ac') === 'edit') window.cronMedAbrir(b.getAttribute('data-med')); else excluirMedico(b.getAttribute('data-med'));
+      });
+      $('cronMedProf').addEventListener('change', function () {
+        var p = (S.profs || {})[this.value]; if (!p) return;
+        if (!$('cronMedNome').value.trim()) { var t = String(p.nome || '').trim().split(/\s+/); $('cronMedNome').value = t[0] || ''; if (!$('cronMedSobrenome').value.trim()) $('cronMedSobrenome').value = t.slice(1).join(' '); }
+        if (!$('cronMedEsp').value.trim()) $('cronMedEsp').value = p.especialidade || '';
+      });
+      $('cronFile').addEventListener('change', function () { if (this.files && this.files[0]) lerPlanilha(this.files[0]); });
+      $('cronColetaMes').addEventListener('change', renderColeta);
+      $('cronColetaLista').addEventListener('change', function (ev) {
+        var t = ev.target; if (!t.classList.contains('cron-col-st')) return;
+        var ym = mesColeta(), id = t.getAttribute('data-med'), v = t.value;
+        gravar('crono/coleta/' + ym + '/' + id, v === 'pendente' ? null : { status: v, em: new Date().toISOString(), por: quem() }).then(function (ok) { if (ok) toast('Coleta atualizada', 'success'); });
+      });
+      $('cronAtDia').addEventListener('change', renderAtend);
+      $('cronAtLista').addEventListener('change', mudouAtend);
+      $('cronAtLista').addEventListener('click', cliqueAtend);
+      ligarVerificar();
+      var abas = document.querySelector('.tabs'); if (abas) abas.addEventListener('click', function () { S.tocou = true; }, true);
+    }
+    function iniciar() {
+      if (S.iniciado || typeof window.cronFbOn !== 'function') return;
+      S.iniciado = true; ligarEventos();
+      window.cronFbOn('crono/medicos', function (v) { S.medicos = v || {}; indexar(); redesenhar(); });
+      if (typeof window.cronFbUltimos === 'function') window.cronFbUltimos('crono/historico', 150, function (v) {
+        S.historico = Object.keys(v || {}).sort().reverse().map(function (k) { return v[k]; }); if (aba('paneConfig') && S.sub === 'hist') renderHist();
+      });
+      window.cronRender();
+    }
+    // chamada pelo módulo Firebase quando o perfil (admin ou não) é conhecido
+    window.cronAplicarPerfil = function () {
+      var adm = isAdmin();
+      ['tabCronograma', 'tabConfig'].forEach(function (id) { var b = $(id); if (b) b.style.display = adm ? '' : 'none'; });
+      if (!adm) return;
+      iniciar();
+      if (!S.autoAba && S.iniciado) {
+        S.autoAba = true;
+        var ativa = document.querySelector('.tabs .tab-btn.active');
+        if (!S.tocou && (!ativa || ativa.id === 'tabAgenda')) window.tab('cronograma');
+      }
+    };
+  })();
+  </script>
+
   <script type="module">
     import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged }  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getDatabase, ref, get, set, onValue, query, orderByKey, startAt, endAt } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getDatabase, ref, get, set, onValue, query, orderByKey, startAt, endAt, limitToLast } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
     const _app  = initializeApp(window.FIREBASE_CONFIG);
     const _auth = getAuth(_app);
@@ -1559,6 +2666,16 @@
     window.calFbEscutarMes = (ym, cb, errCb) => {
       const q = query(ref(_db, 'crono/dias'), orderByKey(), startAt(ym + '-01'), endAt(ym + '-31'));
       const u = onValue(q, s => cb(s.val() || {}), e => { if (errCb) errCb(e); });
+      _unsubs.push(u); return u;
+    };
+
+    // [v1.3] leitores genéricos do cronograma (medicos, coleta, histórico)
+    window.cronFbOn = (path, cb, errCb) => {
+      const u = onValue(ref(_db, path), s => cb(s.val()), e => { if (errCb) errCb(e); });
+      _unsubs.push(u); return u;
+    };
+    window.cronFbUltimos = (path, n, cb, errCb) => {
+      const u = onValue(query(ref(_db, path), orderByKey(), limitToLast(n)), s => cb(s.val() || {}), e => { if (errCb) errCb(e); });
       _unsubs.push(u); return u;
     };
 
@@ -1631,6 +2748,7 @@
           window.calIsAdmin = !!(pv && pv.admin === true);
           if (typeof window.calRender === 'function') window.calRender();
         } catch (e) { console.warn('[cronograma] perms (calendário):', e.message); }
+        if (typeof window.cronAplicarPerfil === 'function') window.cronAplicarPerfil(); // [v1.3] mostra Cronograma/Configuração só para admin
       }
     });
   </script>
