@@ -393,8 +393,13 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-user-doctor"></i> Profissionais de saúde</div>
-          <button class="btn-p" onclick="abrirModalProf()"><i class="fas fa-plus"></i> Novo profissional</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-s" onclick="profFechVerificar()" title="Traz os profissionais cadastrados em Fechamentos que ainda não estão aqui"><i class="fas fa-file-import"></i> Trazer do Fechamento</button>
+            <button class="btn-p" onclick="abrirModalProf()"><i class="fas fa-plus"></i> Novo profissional</button>
+          </div>
         </div>
+        <!-- [v1.4] prévia da importação dos cadastros do Fechamento -->
+        <div id="profFechBox" style="display:none;margin-bottom:16px;border:1px solid var(--gray-200,#e5e7eb);border-radius:10px;padding:14px;background:var(--gray-50,#f9fafb);"></div>
         <div style="margin-bottom:14px;">
           <input class="f-input" id="buscaProf" placeholder="Buscar por nome ou especialidade..." oninput="filtrarProfissionais()" style="max-width:380px;">
         </div>
@@ -1641,6 +1646,52 @@
     if (!confirm('Remover este profissional?')) return;
     try { await window._fbRemove('admin/profissionais/' + key); toast('Removido!', 'success'); carregarProfissionais(); }
     catch(e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  // [v1.4] Trazer para admin/profissionais os cadastros feitos em Fechamentos (fechamento/profissionais_extras)
+  let _fechCand = [];
+  function _fechDig(s) { return String(s || '').replace(/\D/g, ''); }
+  function _fechNome(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/^(dr|dra|prof|profa)\.?\s+/, '').replace(/\s+/g, ' ').trim(); }
+  async function profFechVerificar() {
+    const box = document.getElementById('profFechBox');
+    box.style.display = 'block'; box.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando cadastros do Fechamento...';
+    try {
+      const [sAdm, sExt] = await Promise.all([window._fbGet('admin/profissionais'), window._fbGet('fechamento/profissionais_extras')]);
+      const adm = sAdm.exists() ? Object.values(sAdm.val()).filter(p => p) : [];
+      const ext = sExt.exists() ? Object.values(sExt.val()).filter(p => p && p.nome) : [];
+      const cpfs = new Set(adm.map(p => _fechDig(p.documento)).filter(Boolean));
+      const nomes = new Set(adm.map(p => _fechNome(p.nome)).filter(Boolean));
+      _fechCand = ext.filter(p => !(_fechDig(p.documento) && cpfs.has(_fechDig(p.documento))) && !nomes.has(_fechNome(p.nome)));
+      const jaTem = ext.length - _fechCand.length;
+      if (!_fechCand.length) {
+        box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;"><span><i class="fas fa-circle-check" style="color:#15803d;"></i> Nada novo: os ' + ext.length + ' cadastro(s) do Fechamento já estão em Profissionais.</span><button class="btn-s" onclick="profFechFechar()">Fechar</button></div>';
+        return;
+      }
+      box.innerHTML = '<div style="font-weight:700;margin-bottom:6px;">' + _fechCand.length + ' profissional(is) do Fechamento ainda não estão aqui' + (jaTem ? ' <span style="font-weight:400;color:#6b7280;">(' + jaTem + ' já existia(m) e foi(ram) ignorado(s))</span>' : '') + '</div>' +
+        '<div style="max-height:260px;overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;">' +
+        _fechCand.map((p, i) => '<label style="display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13px;cursor:pointer;"><input type="checkbox" class="profFechChk" value="' + i + '" checked> <b>' + esc(p.nome) + '</b> <span style="color:#6b7280;">' + esc(p.documento || 'sem CPF') + ' · ' + (p.regime === 'funcionario' ? 'Sem descontos' : 'PJ') + '</span></label>').join('') +
+        '</div><div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button class="btn-s" onclick="profFechFechar()">Cancelar</button><button class="btn-p" onclick="profFechImportar()"><i class="fas fa-check"></i> Importar selecionados</button></div>' +
+        '<div style="font-size:11px;color:#6b7280;margin-top:6px;">Especialidade, CRM e e-mail ficam em branco para você completar depois. O cadastro no Fechamento continua como está.</div>';
+    } catch (e) { box.innerHTML = '<span style="color:#b91c1c;">Não foi possível ler os cadastros: ' + esc(e.message || e.code || 'erro') + '</span> <button class="btn-s" onclick="profFechFechar()">Fechar</button>'; }
+  }
+  function profFechFechar() { const b = document.getElementById('profFechBox'); b.style.display = 'none'; b.innerHTML = ''; _fechCand = []; }
+  async function profFechImportar() {
+    const sel = Array.from(document.querySelectorAll('.profFechChk')).filter(c => c.checked).map(c => _fechCand[+c.value]).filter(Boolean);
+    if (!sel.length) { toast('Nenhum profissional selecionado', 'error'); return; }
+    try {
+      let n = 0;
+      for (const p of sel) {
+        let key = 'prof_' + (_fechDig(p.documento) || (Date.now() + '_' + n));
+        if (profissionais[key]) key += '_' + Date.now().toString(36);
+        await window._fbSet('admin/profissionais/' + key, {
+          nome: p.nome, especialidade: '', crm: '', documento: p.documento || '', email: '',
+          regime: p.regime || 'pj-presumido', origem: 'fechamento', atualizadoEm: new Date().toISOString()
+        });
+        n++;
+      }
+      toast(n + ' profissional(is) importado(s)', 'success');
+      profFechFechar(); carregarProfissionais();
+    } catch (e) { toast('Erro ao importar: ' + (e.message || e.code), 'error'); carregarProfissionais(); }
   }
 
   async function carregarProfissionais() {
