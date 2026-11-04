@@ -409,7 +409,9 @@
     window.atualizarListaGeralFechamento = function() {
       const extras   = window.fechamentoExtras  || [];
       const apagados = window.fechamentoDeleted || [];
-      const overridden = extras.filter(e=>e.overrideCpf).map(e=>e.overrideCpf);
+      // [v1.4] Cadastro extra tem prioridade sobre o da base com o mesmo CPF (evita duplicar quando o profissional também foi trazido para admin/profissionais)
+      const overridden = extras.filter(e=>e.overrideCpf).map(e=>e.overrideCpf)
+        .concat(extras.map(e=>String(e.documento||'').replace(/\D/g,'')).filter(Boolean));
       // Usa Firebase como fonte primária; cai no hardcoded se Firebase ainda não carregou ou estiver vazio
       const srcBase = (window._baseProfFirebase && window._baseProfFirebase.length)
         ? window._baseProfFirebase
@@ -616,8 +618,10 @@
       if(await confirmar('Excluir este cadastro?')){
         const srcBase=(window._baseProfFirebase&&window._baseProfFirebase.length)?window._baseProfFirebase:baseProfissionais;
         const isBase=srcBase.find(b=>b.documento.replace(/\D/g,'')=== id);
+        // [v1.4] se existir nos dois lugares (base + extra), remove dos dois
+        const isExtra=(window.fechamentoExtras||[]).some(p=>p.id===id);
         if(isBase){window.saveFechamentoDeleted([...(window.fechamentoDeleted||[]),id]);}
-        else{window.saveFechamentoExtras((window.fechamentoExtras||[]).filter(p=>p.id!==id));}
+        if(isExtra||!isBase){window.saveFechamentoExtras((window.fechamentoExtras||[]).filter(p=>p.id!==id));}
         toast('Excluído','success');
       }
     }

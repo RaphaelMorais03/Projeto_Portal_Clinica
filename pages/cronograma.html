@@ -616,8 +616,14 @@
       <div class="cron-sub active" id="cronSubMedicos"><div class="panel">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-user-doctor"></i> Médicos do cronograma</div>
-          <button class="btn-p" onclick="cronMedAbrir()"><i class="fas fa-plus"></i> Novo médico</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-s" onclick="cronMedTabela()" title="Preenche idade de atendimento e nº por agenda a partir da tabela da parede"><i class="fas fa-table-list"></i> Aplicar tabela de atendimento</button>
+            <button class="btn-s" onclick="cronMedTrazer()" title="Traz os profissionais de Admin › Profissionais e dos cadastros do Fechamento"><i class="fas fa-file-import"></i> Trazer dos Profissionais</button>
+            <button class="btn-p" onclick="cronMedAbrir()"><i class="fas fa-plus"></i> Novo médico</button>
+          </div>
         </div>
+        <!-- [v1.4] prévia da importação de profissionais (Admin + Fechamento) -->
+        <div id="cronMedImpBox" style="display:none;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#f9fafb;"></div>
         <div class="cron-tw" id="cronMedLista"></div>
       </div></div>
 
@@ -643,8 +649,11 @@
       <div class="cron-sub" id="cronSubAtend"><div class="panel">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-pen-to-square"></i> Atendimentos do dia</div>
-          <div style="display:flex;align-items:center;gap:8px;"><label class="f-label" for="cronAtDia" style="margin:0;">Dia</label><input type="date" class="f-input" id="cronAtDia" style="width:auto;padding:7px 10px;font-size:13px;"></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><label class="f-label" for="cronAtDia" style="margin:0;">Dia</label><input type="date" class="f-input" id="cronAtDia" style="width:auto;padding:7px 10px;font-size:13px;">
+            <button class="btn-s" onclick="cronAtPuxar()" title="Traz os médicos cadastrados para este dia; você só ajusta o horário"><i class="fas fa-users-gear"></i> Puxar cadastrados</button></div>
         </div>
+        <!-- [v1.4] prévia: médicos cadastrados → atendimentos do dia -->
+        <div id="cronAtPuxarBox" style="display:none;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#f9fafb;"></div>
         <div class="cron-add">
           <div><label class="f-label" for="cronAddMed">Adicionar médico neste dia</label><select class="f-select" id="cronAddMed"></select></div>
           <div><label class="f-label" for="cronAddPer">Período</label><select class="f-select" id="cronAddPer"><option value="Manhã">Manhã</option><option value="Tarde">Tarde</option></select></div>
@@ -701,6 +710,8 @@
         <div><label class="f-label" for="cronMedEsp">Especialidade</label><input class="f-input" id="cronMedEsp" placeholder="Cardiologia"></div>
         <div><label class="f-label" for="cronMedSala">Sala habitual</label><select class="f-select" id="cronMedSala"></select></div>
         <div><label class="f-label" for="cronMedEnc">Limite de encaixes</label><input class="f-input" id="cronMedEnc" type="number" min="0" step="1" placeholder="Ex.: 3"></div>
+        <div><label class="f-label" for="cronMedIdade">Idade de atendimento</label><input class="f-input" id="cronMedIdade" placeholder="Ex.: A partir de 14 anos"></div>
+        <div><label class="f-label" for="cronMedPorAg">Nº por agenda</label><input class="f-input" id="cronMedPorAg" placeholder="Ex.: 40 agendamentos / Horários disponíveis"></div>
         <div><label class="f-label" for="cronMedProf">Vínculo com Profissionais (opcional)</label><select class="f-select" id="cronMedProf"></select></div>
         <div class="full"><label class="f-label">Dias fixos na semana (referência)</label>
           <div class="cron-dias-chk" id="cronMedDias">
@@ -2106,10 +2117,10 @@
     function renderMedicos() {
       var l = medsOrdenados(false), box = $('cronMedLista');
       if (!l.length) { box.innerHTML = '<div class="cal-msg info">Nenhum médico cadastrado. Clique em "Novo médico".</div>'; return; }
-      box.innerHTML = '<table class="cron-tbl"><thead><tr><th>Médico</th><th>Especialidade</th><th>Sala habitual</th><th>Encaixes</th><th>Dias fixos</th><th>Situação</th><th></th></tr></thead><tbody>' + l.map(function (r) {
+      box.innerHTML = '<table class="cron-tbl"><thead><tr><th>Médico</th><th>Especialidade</th><th>Sala habitual</th><th>Encaixes</th><th>Idade</th><th>Nº por agenda</th><th>Dias fixos</th><th>Situação</th><th></th></tr></thead><tbody>' + l.map(function (r) {
         var m = r.m, dias = String(m.diasFixos || '').split(',').filter(Boolean).map(function (d) { return DIAS_LBL[d] || ''; }).join(', ');
         return '<tr><td><b>' + esc(nomeMed(m)) + '</b></td><td>' + esc(m.especialidade || '') + '</td><td>' + esc(m.salaHabitual ? salaRotulo(m.salaHabitual) : '—') + '</td><td>' +
-          (typeof m.limiteEncaixes === 'number' ? m.limiteEncaixes : '—') + '</td><td>' + esc(dias || '—') + '</td><td>' + (m.ativo === false ? 'Inativo' : 'Ativo') +
+          (typeof m.limiteEncaixes === 'number' ? m.limiteEncaixes : '—') + '</td><td>' + esc(m.idadeAtend || '—') + '</td><td>' + esc(m.porAgenda || '—') + '</td><td>' + esc(dias || '—') + '</td><td>' + (m.ativo === false ? 'Inativo' : 'Ativo') +
           '</td><td style="white-space:nowrap;"><button class="cron-ico" data-med="' + esc(r.id) + '" data-ac="edit" title="Editar"><i class="fas fa-pen"></i></button> <button class="cron-ico del" data-med="' + esc(r.id) + '" data-ac="del" title="Excluir"><i class="fas fa-trash"></i></button></td></tr>';
       }).join('') + '</tbody></table>';
     }
@@ -2126,6 +2137,7 @@
       $('cronMedNome').value = m.nome || ''; $('cronMedSobrenome').value = m.sobrenome || ''; $('cronMedEsp').value = m.especialidade || '';
       $('cronMedSala').innerHTML = optSalas(m.salaHabitual || '', 'Sem sala fixa');
       $('cronMedEnc').value = typeof m.limiteEncaixes === 'number' ? m.limiteEncaixes : '';
+      $('cronMedIdade').value = m.idadeAtend || ''; $('cronMedPorAg').value = m.porAgenda || '';
       var ps = S.profs || {}, pk = Object.keys(ps).sort(function (a, b) { return String((ps[a] || {}).nome || '').localeCompare(String((ps[b] || {}).nome || ''), 'pt'); });
       $('cronMedProf').innerHTML = '<option value="">Sem vínculo</option>' + pk.map(function (k) { return '<option value="' + esc(k) + '"' + (m.profKey === k ? ' selected' : '') + '>' + esc((ps[k] || {}).nome || k) + '</option>'; }).join('');
       var dias = String(m.diasFixos || '').split(',');
@@ -2144,10 +2156,166 @@
       var dias = Array.prototype.filter.call($('cronMedDias').querySelectorAll('input'), function (c) { return c.checked; }).map(function (c) { return c.value; }).join(',');
       var ant = (id && S.medicos[id]) || {}, agora = new Date().toISOString();
       var obj = { nome: nome, sobrenome: sobre, especialidade: $('cronMedEsp').value.trim(), salaHabitual: $('cronMedSala').value, limiteEncaixes: enc,
-        diasFixos: dias, ativo: $('cronMedAtivo').checked, profKey: $('cronMedProf').value, obs: $('cronMedObs').value.trim(), criadoEm: ant.criadoEm || agora, atualizadoEm: agora };
+        diasFixos: dias, ativo: $('cronMedAtivo').checked, profKey: $('cronMedProf').value, obs: $('cronMedObs').value.trim(), criadoEm: ant.criadoEm || agora, atualizadoEm: agora,
+        idadeAtend: $('cronMedIdade').value.trim(), porAgenda: $('cronMedPorAg').value.trim() };
+      // [v1.4] preserva a origem de quem foi importado
+      if (ant.origem) obj.origem = ant.origem;
       var nid = id || ('med_' + Date.now().toString(36));
       gravar('crono/medicos/' + nid, obj).then(function (ok) { if (ok) { toast('Médico salvo', 'success'); window.cronMedFechar(); } });
     };
+    // [v1.4] Trazer profissionais: mesma lista que o Fechamento usa (admin/profissionais + fechamento/profissionais_extras − apagados)
+    var MED_CAND = [];
+    function digs(s) { return String(s || '').replace(/\D/g, ''); }
+    function partirNome(completo) {
+      var t = String(completo || '').trim().replace(TITULO, '').split(/\s+/).filter(Boolean);
+      return { nome: t[0] || '', sobrenome: t.slice(1).join(' ') };
+    }
+    function listaProfsFechamento(adm, ext, apag) {
+      var lista = [], cpfsExtra = {}, over = {}, ap = {};
+      (apag || []).forEach(function (c) { ap[digs(c)] = 1; });
+      ext.forEach(function (e) { if (e.overrideCpf) over[digs(e.overrideCpf)] = 1; if (digs(e.documento)) cpfsExtra[digs(e.documento)] = 1; });
+      Object.keys(adm).forEach(function (k) {
+        var p = adm[k]; if (!p || !p.nome || !p.documento) return;
+        var d = digs(p.documento); if (ap[d] || over[d] || cpfsExtra[d]) return;
+        lista.push({ nome: p.nome, especialidade: p.especialidade || '', profKey: k });
+      });
+      ext.forEach(function (e) {
+        // extra que sobrescreve/duplica um cadastro do admin herda o vínculo dele
+        var d = digs(e.documento), link = '';
+        Object.keys(adm).forEach(function (k) { var a = adm[k]; if (a && !link && ((d && digs(a.documento) === d) || (e.overrideCpf && digs(a.documento) === digs(e.overrideCpf)))) link = k; });
+        lista.push({ nome: e.nome, especialidade: (link && adm[link].especialidade) || '', profKey: link });
+      });
+      return lista;
+    }
+    // procura médico já cadastrado: exato (vínculo ou nome completo) ou parecido (mesmo primeiro nome e sobrenome compatível)
+    function medExistente(p) {
+      var ids = Object.keys(S.medicos), full = limpaNome(p.nome), pn = partirNome(p.nome), prim = limpaNome(pn.nome), sobP = limpaNome(pn.sobrenome).split(' ').filter(Boolean), parecido = null;
+      for (var i = 0; i < ids.length; i++) {
+        var m = S.medicos[ids[i]] || {};
+        if ((p.profKey && m.profKey === p.profKey) || limpaNome(nomeMed(m)) === full) return { exato: true, m: m };
+        if (limpaNome(m.nome) === prim) {
+          var sm = limpaNome(m.sobrenome).split(' ')[0];
+          if (!sm || sobP.indexOf(sm) >= 0 || sobP.some(function (w) { return sm.length === 1 && w.charAt(0) === sm; })) parecido = parecido || { exato: false, m: m };
+        }
+      }
+      return parecido;
+    }
+    window.cronMedTrazer = function () {
+      var box = $('cronMedImpBox'), fu = window.__fb;
+      box.style.display = 'block';
+      if (!fu || !fu.get) { box.innerHTML = '<span class="cron-help">Firebase ainda não carregou. Tente de novo.</span>'; return; }
+      box.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando profissionais...';
+      var ler = function (p) { return fu.get(fu.ref(fu.db, p)).then(function (s) { return s.exists() ? s.val() : null; }); };
+      Promise.all([ler('admin/profissionais'), ler('fechamento/profissionais_extras'), ler('fechamento/profissionais_apagados')]).then(function (r) {
+        var adm = r[0] || {}, ext = r[1] ? Object.keys(r[1]).map(function (k) { return r[1][k]; }).filter(function (e) { return e && e.nome; }) : [], apag = r[2] ? Object.keys(r[2]).map(function (k) { return r[2][k]; }) : [];
+        S.profs = adm;
+        var todos = listaProfsFechamento(adm, ext, apag), ja = 0, vistos = {};
+        MED_CAND = [];
+        todos.sort(function (a, b) { return String(a.nome).localeCompare(String(b.nome), 'pt'); }).forEach(function (p) {
+          var k = limpaNome(p.nome); if (vistos[k]) return; vistos[k] = 1;
+          var ex = medExistente(p);
+          if (ex && ex.exato) { ja++; return; }
+          p.parecido = ex ? nomeMed(ex.m) : '';
+          MED_CAND.push(p);
+        });
+        if (!MED_CAND.length) {
+          box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;"><span><i class="fas fa-circle-check" style="color:#15803d;"></i> Nada novo: os ' + todos.length + ' profissional(is) já estão no cronograma.</span><button class="btn-s" onclick="cronMedTrazerFechar()">Fechar</button></div>';
+          return;
+        }
+        box.innerHTML = '<div style="font-weight:700;margin-bottom:6px;">' + MED_CAND.length + ' profissional(is) ainda não estão no cronograma' + (ja ? ' <span style="font-weight:400;color:#6b7280;">(' + ja + ' já cadastrado(s) ignorado(s))</span>' : '') + '</div>' +
+          '<div class="cron-help" style="margin:0 0 6px;">Desmarque quem não tem agenda (ex.: exames, holter). Os que parecem já cadastrados com outro nome vêm desmarcados.</div>' +
+          '<div style="margin-bottom:6px;font-size:12px;"><a href="#" onclick="cronMedTrazerTodos(true);return false;">Marcar todos</a> · <a href="#" onclick="cronMedTrazerTodos(false);return false;">Desmarcar todos</a></div>' +
+          '<div style="max-height:280px;overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;">' +
+          MED_CAND.map(function (p, i) {
+            var pn = partirNome(p.nome);
+            return '<label style="display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13px;cursor:pointer;"><input type="checkbox" class="cronMedChk" value="' + i + '"' + (p.parecido ? '' : ' checked') + '> <b>' + esc(pn.nome + (pn.sobrenome ? ' ' + pn.sobrenome : '')) + '</b>' +
+              (p.especialidade ? ' <span style="color:#6b7280;">· ' + esc(p.especialidade) + '</span>' : '') +
+              (p.parecido ? ' <span style="color:#b45309;">· parecido com já cadastrado: ' + esc(p.parecido) + '</span>' : '') + '</label>';
+          }).join('') + '</div>' +
+          '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button class="btn-s" onclick="cronMedTrazerFechar()">Cancelar</button><button class="btn-p" onclick="cronMedTrazerGravar()"><i class="fas fa-check"></i> Importar selecionados</button></div>';
+      }).catch(function (e) {
+        box.innerHTML = '<span style="color:#b91c1c;">Não foi possível ler os profissionais: ' + esc((e && (e.code || e.message)) || 'erro') + '</span> <button class="btn-s" onclick="cronMedTrazerFechar()">Fechar</button>';
+      });
+    };
+    window.cronMedTrazerTodos = function (v) { Array.prototype.forEach.call(document.querySelectorAll('.cronMedChk'), function (c) { c.checked = v; }); };
+    window.cronMedTrazerFechar = function () { var b = $('cronMedImpBox'); b.style.display = 'none'; b.innerHTML = ''; MED_CAND = []; };
+    window.cronMedTrazerGravar = function () {
+      var sel = Array.prototype.filter.call(document.querySelectorAll('.cronMedChk'), function (c) { return c.checked; }).map(function (c) { return MED_CAND[+c.value]; }).filter(Boolean);
+      if (!sel.length) { toast('Nenhum profissional selecionado', 'error'); return; }
+      var agora = new Date().toISOString(), base = Date.now().toString(36);
+      Promise.all(sel.map(function (p, i) {
+        var pn = partirNome(p.nome);
+        return gravar('crono/medicos/med_' + base + '_' + i, { nome: pn.nome, sobrenome: pn.sobrenome, especialidade: p.especialidade || '', salaHabitual: '', limiteEncaixes: null,
+          diasFixos: '', ativo: true, profKey: p.profKey || '', obs: '', origem: 'profissionais', criadoEm: agora, atualizadoEm: agora });
+      })).then(function (r) {
+        var ok = r.filter(Boolean).length;
+        if (ok) { toast(ok + ' médico(s) importado(s)', 'success'); hist({ acao: 'importacao', para: String(ok), obs: 'Médicos trazidos de Profissionais/Fechamento' }); }
+        if (ok < r.length) toast((r.length - ok) + ' não foram gravados', 'error');
+        window.cronMedTrazerFechar();
+      });
+    };
+
+    // [v1.4] Aplicar a tabela "Atendimento médico" (data/medicos-agenda-seed.json): idade de atendimento e nº por agenda
+    var TAB = [];
+    function distAte1(a, b) {
+      if (a === b) return true; if (a.length < 4 || b.length < 4 || Math.abs(a.length - b.length) > 1) return false;
+      var i = 0; while (i < a.length && i < b.length && a.charAt(i) === b.charAt(i)) i++;
+      return a.slice(i + 1) === b.slice(i + 1) || a.slice(i) === b.slice(i + 1) || a.slice(i + 1) === b.slice(i);
+    }
+    function tokensNome(s) { return limpaNome(s).split(/\s+/).filter(function (t) { return t && !PREP[t]; }); }
+    function casarTabela(nome) {
+      var t = tokensNome(nome); if (!t.length) return [];
+      return medsOrdenados(false).filter(function (r) {
+        var mt = tokensNome(nomeMed(r.m)); if (!mt.length || !distAte1(t[0], mt[0])) return false;
+        return t.slice(1).every(function (x) { return mt.some(function (y) { return distAte1(x, y); }); });
+      }).map(function (r) { return r.id; });
+    }
+    window.cronMedTabela = function () {
+      var box = $('cronMedImpBox'); box.style.display = 'block'; box.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lendo a tabela...';
+      fetch('../data/medicos-agenda-seed.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (d) {
+        TAB = (d && d.linhas) || [];
+        var usados = {}, meds = medsOrdenados(false);
+        var opts = '<option value="">Ignorar</option><option value="__novo">+ Criar médico novo</option>' + meds.map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(nomeMed(r.m)) + '</option>'; }).join('');
+        var n = 0, linhas = TAB.map(function (L, i) {
+          var c = casarTabela(L.nome), sel = '', nota = '';
+          if (c.length === 1) { if (usados[c[0]]) nota = 'mesmo médico de outra linha'; else { sel = c[0]; usados[c[0]] = 1; n++; } }
+          else if (c.length > 1) nota = 'mais de um médico parecido';
+          else nota = 'não encontrado nos cadastrados';
+          return '<tr><td><b>' + esc(L.nome) + '</b><br><small style="color:#6b7280;">' + esc(L.especialidade) + '</small></td><td>' + esc(L.idade) + '</td><td>' + esc(L.porAgenda) + '</td>' +
+            '<td><select class="f-select cronTabSel" data-i="' + i + '" style="padding:5px 8px;font-size:12px;min-width:170px;">' + opts.replace('value="' + sel + '"', 'value="' + sel + '" selected') + '</select>' + (nota ? '<br><small style="color:#b45309;">' + nota + '</small>' : '') + '</td></tr>';
+        }).join('');
+        if (!TAB.length) { box.innerHTML = '<span class="cron-help">Tabela vazia.</span> <button class="btn-s" onclick="cronMedTrazerFechar()">Fechar</button>'; return; }
+        box.innerHTML = '<div style="font-weight:700;margin-bottom:4px;">Tabela de atendimento: ' + TAB.length + ' linhas, ' + n + ' casadas com médicos cadastrados</div>' +
+          '<div class="cron-help" style="margin:0 0 8px;">Confira o médico de cada linha (troque ou deixe em "Ignorar"). Serão gravados <b>Idade de atendimento</b> e <b>Nº por agenda</b>; a especialidade só entra se estiver vazia, e "Não fazer encaixe" vira limite de encaixes 0 se ainda não houver limite.</div>' +
+          '<div style="max-height:340px;overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;"><table class="cron-tbl"><thead><tr><th>Na tabela</th><th>Idade</th><th>Nº por agenda</th><th>Médico cadastrado</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+          '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button class="btn-s" onclick="cronMedTrazerFechar()">Cancelar</button><button class="btn-p" onclick="cronMedTabelaGravar()"><i class="fas fa-check"></i> Aplicar</button></div>';
+      }).catch(function (e) { box.innerHTML = '<span style="color:#b91c1c;">Não foi possível ler a tabela: ' + esc(e.message || 'erro') + '</span> <button class="btn-s" onclick="cronMedTrazerFechar()">Fechar</button>'; });
+    };
+    window.cronMedTabelaGravar = function () {
+      var ps = [], agora = new Date().toISOString(), base = Date.now().toString(36), nAp = 0, nNovo = 0;
+      Array.prototype.forEach.call(document.querySelectorAll('.cronTabSel'), function (s, k) {
+        var L = TAB[+s.getAttribute('data-i')], v = s.value; if (!L || !v) return;
+        var semEnc = /n[aã]o fazer encaixe/i.test(L.porAgenda);
+        if (v === '__novo') {
+          var pn = partirNome(L.nome); nNovo++;
+          ps.push(gravar('crono/medicos/med_' + base + '_t' + k, { nome: pn.nome, sobrenome: pn.sobrenome, especialidade: L.especialidade || '', salaHabitual: '', limiteEncaixes: semEnc ? 0 : null,
+            diasFixos: '', ativo: true, profKey: '', obs: '', origem: 'tabela', idadeAtend: L.idade || '', porAgenda: L.porAgenda || '', criadoEm: agora, atualizadoEm: agora }));
+          return;
+        }
+        var m = S.medicos[v]; if (!m) return; nAp++; var b = 'crono/medicos/' + v;
+        ps.push(gravar(b + '/idadeAtend', L.idade || ''), gravar(b + '/porAgenda', L.porAgenda || ''), gravar(b + '/atualizadoEm', agora));
+        if (!String(m.especialidade || '').trim() && L.especialidade) ps.push(gravar(b + '/especialidade', L.especialidade));
+        if (semEnc && typeof m.limiteEncaixes !== 'number') ps.push(gravar(b + '/limiteEncaixes', 0));
+      });
+      if (!ps.length) { toast('Nada selecionado', 'error'); return; }
+      Promise.all(ps).then(function (r) {
+        var falhas = r.filter(function (x) { return !x; }).length;
+        if (!falhas) { toast(nAp + ' atualizado(s)' + (nNovo ? ', ' + nNovo + ' criado(s)' : ''), 'success'); hist({ acao: 'importacao', para: String(nAp + nNovo), obs: 'Tabela de atendimento (idade e nº por agenda)' }); }
+        else toast(falhas + ' gravação(ões) falharam', 'error');
+        window.cronMedTrazerFechar();
+      });
+    };
+
     function excluirMedico(id) {
       var m = S.medicos[id]; if (!m) return;
       if (!confirm('Excluir ' + nomeMed(m) + ' do cadastro do cronograma?\nOs atendimentos já lançados continuam; só o cadastro (sala habitual, encaixes) é removido.')) return;
@@ -2377,6 +2545,57 @@
       var id = 'man_' + mid + '_' + (per === 'Tarde' ? 'T' : 'M') + '_' + Math.random().toString(36).slice(2, 5);
       var it = { sala: sala, doc: String(m.nome || '').trim(), role: m.especialidade || '', periodo: per, aberta: false, status: 'previsto', medicoId: mid, origem: 'manual' };
       gravar(baseItem(dia, id), it).then(function (ok) { if (ok) { toast('Atendimento adicionado', 'success'); hist({ dia: dia, itemId: id, doc: nomeMed(m), acao: 'criado', de: '', para: per }); } });
+    };
+
+    // [v1.4] Puxar médicos cadastrados para o dia: prévia com período editável por linha; grava só o que for marcado
+    var PUX = [];
+    window.cronAtPuxar = function () {
+      var dia = diaAtend(), box = $('cronAtPuxarBox'), wd = dataDe(dia).getDay(), l = medsOrdenados(true);
+      garantirMes(dia.slice(0, 7));
+      if (!l.length) { box.style.display = 'block'; box.innerHTML = '<span class="cron-help">Nenhum médico ativo cadastrado. Use "Trazer dos Profissionais" ou "Novo médico" em Médicos.</span> <button class="btn-s" onclick="cronAtPuxarFechar()">Fechar</button>'; return; }
+      var noDia = itens(dia, false), ja = {};
+      noDia.forEach(function (x) { var id = chaveMed(x); if (id) ja[id] = (ja[id] || 0) + 1; });
+      PUX = l.filter(function (r) { return !ja[r.id]; });
+      var qtdJa = l.length - PUX.length, temFixos = PUX.some(function (r) { return String(r.m.diasFixos || '').split(',').indexOf(String(wd)) >= 0; });
+      box.style.display = 'block';
+      if (!PUX.length) { box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;"><span><i class="fas fa-circle-check" style="color:#15803d;"></i> Todos os médicos ativos já estão neste dia.</span><button class="btn-s" onclick="cronAtPuxarFechar()">Fechar</button></div>'; return; }
+      box.innerHTML = '<div style="font-weight:700;margin-bottom:4px;">Puxar para ' + esc(brData(dia)) + ' (' + esc(NOMES_DIA[wd]) + ')' + (qtdJa ? ' <span style="font-weight:400;color:#6b7280;">· ' + qtdJa + ' já está(ão) no dia</span>' : '') + '</div>' +
+        '<div class="cron-help" style="margin:0 0 8px;">' + (temFixos ? 'Vêm marcados os médicos cujo <b>dia fixo</b> é este dia da semana.' : 'Nenhum médico tem este dia como fixo; marque quem vai atender.') + ' Escolha o período de cada um (ou deixe <b>A definir</b> e ajuste depois na lista). Quem tiver sala habitual livre já vem com ela.</div>' +
+        '<div style="margin-bottom:6px;font-size:12px;"><a href="#" onclick="cronAtPuxarTodos(true);return false;">Marcar todos</a> · <a href="#" onclick="cronAtPuxarTodos(false);return false;">Desmarcar todos</a></div>' +
+        '<div style="max-height:300px;overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:4px 10px;">' +
+        PUX.map(function (r, i) {
+          var fixo = String(r.m.diasFixos || '').split(',').indexOf(String(wd)) >= 0;
+          return '<div style="display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px solid #f3f4f6;"><input type="checkbox" class="cronPuxChk" data-i="' + i + '"' + (fixo ? ' checked' : '') + '> <span style="flex:1;"><b>' + esc(nomeMed(r.m)) + '</b>' + (r.m.especialidade ? ' <span style="color:#6b7280;">· ' + esc(r.m.especialidade) + '</span>' : '') + (fixo ? ' <span class="cal-est">dia fixo</span>' : '') + '</span>' +
+            '<select class="f-select cronPuxPer" data-i="' + i + '" style="width:auto;padding:5px 8px;font-size:12px;"><option>A definir</option><option>Manhã</option><option>Tarde</option><option value="Ambos">Manhã e Tarde</option></select></div>';
+        }).join('') + '</div>' +
+        '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button class="btn-s" onclick="cronAtPuxarFechar()">Cancelar</button><button class="btn-p" onclick="cronAtPuxarGravar()"><i class="fas fa-check"></i> Adicionar ao dia</button></div>';
+    };
+    window.cronAtPuxarTodos = function (v) { Array.prototype.forEach.call(document.querySelectorAll('.cronPuxChk'), function (c) { c.checked = v; }); };
+    window.cronAtPuxarFechar = function () { var b = $('cronAtPuxarBox'); b.style.display = 'none'; b.innerHTML = ''; PUX = []; };
+    window.cronAtPuxarGravar = function () {
+      var dia = diaAtend(), sel = [];
+      Array.prototype.forEach.call(document.querySelectorAll('.cronPuxChk'), function (c) {
+        if (!c.checked) return; var i = +c.getAttribute('data-i'), s = document.querySelector('.cronPuxPer[data-i="' + i + '"]');
+        if (PUX[i]) sel.push({ r: PUX[i], per: s ? s.value : 'A definir' });
+      });
+      if (!sel.length) { toast('Nenhum médico selecionado', 'error'); return; }
+      var ocupada = {}; itens(dia, false).forEach(function (x) { if (x.sala) ocupada[x.periodo + '|' + x.sala] = 1; });
+      var tarefas = [], base = Date.now().toString(36);
+      sel.forEach(function (s, n) {
+        var m = s.r.m, pers = s.per === 'Ambos' ? ['Manhã', 'Tarde'] : [s.per];
+        pers.forEach(function (per) {
+          var sala = m.salaHabitual && per !== 'A definir' && !ocupada[per + '|' + m.salaHabitual] ? m.salaHabitual : '';
+          if (sala) ocupada[per + '|' + sala] = 1;
+          var id = 'cad_' + s.r.id + '_' + (per === 'Tarde' ? 'T' : per === 'Manhã' ? 'M' : 'D') + '_' + base + n;
+          tarefas.push({ id: id, per: per, nome: nomeMed(m), it: { sala: sala, doc: String(m.nome || '').trim(), role: m.especialidade || '', periodo: per, aberta: false, status: 'previsto', medicoId: s.r.id, origem: 'cadastro' } });
+        });
+      });
+      Promise.all(tarefas.map(function (t) { return gravar(baseItem(dia, t.id), t.it); })).then(function (r) {
+        var ok = 0; r.forEach(function (v, i) { if (v) { ok++; hist({ dia: dia, itemId: tarefas[i].id, doc: tarefas[i].nome, acao: 'criado', de: '', para: tarefas[i].per, obs: 'puxado do cadastro' }); } });
+        if (ok) toast(ok + ' atendimento(s) adicionado(s). Ajuste os horários na lista.', 'success');
+        if (ok < r.length) toast((r.length - ok) + ' não foram gravados', 'error');
+        window.cronAtPuxarFechar();
+      });
     };
 
     // ── remarcar / estender ──
