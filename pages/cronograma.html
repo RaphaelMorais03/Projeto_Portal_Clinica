@@ -15,39 +15,42 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--shadow:0 4px 20px rgba(10,31,68,.1);}
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#0f766e;--teal-h:#0b5f58;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--bg:#f9fafb;--card:#fff;--line:#e5e7eb;--ink:#111827;--muted:#6b7280;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-800:#111827;--shadow:0 1px 3px rgba(0,0,0,.03);--r-card:16px;--r-ctl:10px;} /* [v1.5] tokens iguais aos do Caixa/Contratos */
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
-    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
-    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+    .red-bar{display:none;}
+    .s-header{background:var(--card);border-bottom:1px solid var(--line);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
     .s-logo{display:flex;align-items:center;gap:12px;}
-    .s-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    .s-logo-icon{width:36px;height:36px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);}
     .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
-    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
-    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .s-logo-name{font-size:15px;font-weight:700;color:var(--ink);}
+    .s-logo-sub{font-size:11px;color:var(--muted);}
     .header-right{display:flex;align-items:center;gap:10px;}
-    .date-badge{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--gray-600);}
-    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
-    .back-btn:hover{background:var(--red-h);}
-    .content{max-width:1100px;margin:0 auto;padding:24px 24px 60px;}
+    .date-badge{background:var(--gray-100);border:1px solid var(--line);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--gray-600);}
+    .back-btn{background:var(--card);color:var(--ink);border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:7px 14px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+    .back-btn:hover{background:var(--gray-100);}
+    .content{max-width:1080px;margin:0 auto;padding:24px 20px 60px;}
     .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
-    .stat-card{background:white;border:1px solid var(--gray-200);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);}
+    .stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:16px 18px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);}
     .stat-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-    .stat-num{font-size:26px;font-weight:900;color:var(--navy);letter-spacing:-1px;line-height:1;}
-    .stat-lbl{font-size:11px;color:var(--gray-400);margin-top:2px;}
-    .tabs{display:flex;gap:6px;margin-bottom:22px;background:white;border:1px solid var(--gray-200);border-radius:14px;padding:6px;box-shadow:var(--shadow);}
-    .tab-btn{flex:1;padding:10px 14px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--gray-400);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s;}
-    .tab-btn:hover{color:var(--navy);background:var(--gray-50);}
-    .tab-btn.active{color:white;background:var(--navy);box-shadow:0 4px 12px rgba(10,31,68,.25);}
+    .stat-num{font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-.5px;line-height:1;}
+    .stat-lbl{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;}
+    .tabs{display:flex;align-items:center;gap:2px;margin-bottom:20px;background:var(--gray-100);border-radius:12px;padding:4px;width:fit-content;max-width:100%;overflow-x:auto;}
+    .tab-btn{padding:8px 16px;border:none;background:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .15s,background .15s;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;}
+    .tab-btn:hover{color:var(--ink);}
+    .tab-btn.active{color:var(--ink);background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.06);}
+    @media(max-width:600px){.s-header{padding:0 14px;}.s-logo-name{font-size:12px;line-height:1.2;}.date-badge{display:none;}.content{padding:14px 14px 60px;}}
+    .tab-grp{display:flex;align-items:center;gap:5px;padding:0 8px 0 10px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+    .tab-sep{width:1px;align-self:stretch;margin:5px 6px;background:var(--gray-300);flex-shrink:0;}
     .tab-pane{display:none;}.tab-pane.active{display:block;}
-    .panel{background:white;border:1px solid var(--gray-200);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);}
-    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
-    .panel-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
-    .panel-title i{color:var(--red);}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:20px 22px;margin-bottom:18px;box-shadow:var(--shadow);}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
+    .panel-title{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:10px;}
+    .panel-title i{width:30px;height:30px;border-radius:9px;background:var(--gray-100);color:var(--navy);display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
     .day-nav{display:flex;align-items:center;gap:8px;}
-    .day-nav-btn{width:32px;height:32px;border:1.5px solid var(--gray-200);background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--gray-500);font-size:13px;transition:all .15s;}
+    .day-nav-btn{width:32px;height:32px;border:1px solid var(--gray-300);background:var(--card);border-radius:var(--r-ctl);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--gray-600);font-size:13px;transition:all .15s;}
     .day-nav-btn:hover{border-color:var(--navy);color:var(--navy);}
-    .day-name{font-size:14px;font-weight:800;color:var(--navy);min-width:120px;text-align:center;}
+    .day-name{font-size:14px;font-weight:700;color:var(--ink);min-width:120px;text-align:center;}
     .schedule-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;}
     .room-card{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:14px;padding:14px;transition:all .18s;position:relative;overflow:hidden;}
     .room-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px;}
@@ -95,16 +98,16 @@
     .cli-btn{padding:6px 14px;border:none;border-radius:7px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
     .cb-prim{background:var(--navy);color:white;}
     .cb-done{background:var(--green-bg);color:var(--green);border:1.5px solid #bbf7d0;}
-    .f-input,.f-select{padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:14px;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color .2s;width:100%;}
-    .f-input:focus,.f-select:focus{border-color:var(--navy);background:white;}
-    .f-label{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:5px;}
-    .btn-p{padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s,transform .15s;}
-    .btn-p:hover{background:var(--navy-mid);transform:translateY(-1px);}
-    .btn-s{padding:9px 14px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
-    .btn-s:hover{background:var(--gray-200);}
-    .btn-teal{padding:9px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .f-input,.f-select{padding:9px 12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);font-family:inherit;font-size:14px;color:var(--ink);background:white;outline:none;transition:border-color .15s,box-shadow .15s;width:100%;}
+    .f-input:focus,.f-select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);}
+    .f-label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;}
+    .btn-p{padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:var(--r-ctl);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
+    .btn-p:hover{background:var(--navy-mid);}
+    .btn-s{padding:9px 14px;background:var(--card);color:var(--gray-700);border:1px solid var(--gray-300);border-radius:var(--r-ctl);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
+    .btn-s:hover{background:var(--gray-100);}
+    .btn-teal{padding:9px 18px;background:var(--teal);color:white;border:none;border-radius:var(--r-ctl);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
     .btn-teal:hover{background:var(--teal-h);}
-    .btn-r{padding:9px 18px;background:var(--red);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-r{padding:9px 18px;background:var(--red);color:white;border:none;border-radius:var(--r-ctl);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
     .btn-r:hover{background:var(--red-h);}
     .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
     .modal-bg.open{display:flex;}
@@ -149,7 +152,7 @@
     .toast.success{background:var(--green);}.toast.error{background:var(--red);}.toast.info{background:var(--navy);}
     @media print{body{background:white;}.red-bar,.s-header,.content,.modal-bg,.pdf-modal-wrap,.cx-modal-wrap,.toast-box{display:none!important;}.print-doc{box-shadow:none;margin:0;padding:2cm 1.5cm;width:100%;}table.print-tbl th{background:#4a4a4a!important;color:white!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}table.print-tbl tr:nth-child(even) td{background:#f5f5f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.status-ag,.status-en,.print-total,.print-date-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
     @media(max-width:768px){.stats-bar{grid-template-columns:1fr 1fr;}.week-grid{grid-template-columns:repeat(3,1fr);}.content{padding:14px 14px 60px;}.print-doc{width:100%;}}
-    .panel,.stat-card,.tabs,.week-item,.editor-sala-row{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
+    /* [v1.5] efeito de vidro removido (fundo agora é claro, como Caixa/Contratos) */
     /* [v1.1 cal] Calendário de agendas + Agenda por sala — todas as classes com prefixo .cal- (sem colisão) */
     .cal-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
     .cal-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
@@ -231,9 +234,9 @@
       .tabs{overflow-x:auto;}.tab-btn{padding:10px 6px;font-size:11px;gap:4px;}.tab-btn i{display:none;}}
       /* [v1.3] Cronograma limpo + Configuração + Verificar/PDF — prefixo cron- */
     .cron-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px;}
-    .cron-seg{display:inline-flex;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:10px;padding:3px;gap:2px;}
-    .cron-seg button{border:none;background:none;padding:7px 16px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;color:var(--gray-500);cursor:pointer;}
-    .cron-seg button.on{background:var(--navy);color:white;}
+    .cron-seg{display:inline-flex;background:var(--gray-100);border-radius:12px;padding:4px;gap:2px;}
+    .cron-seg button{border:none;background:none;padding:7px 16px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;}
+    .cron-seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06);}
     .cron-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--gray-500);margin:0 0 12px;}
     .cron-leg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:2px solid;}
     .cron-leg .l-prev::before{background:#fef3c7;border-color:#f59e0b;}
@@ -274,10 +277,10 @@
     .cron-card .esp{font-size:12px;color:var(--gray-500);}
     .cron-card.s-canc .nome,.cron-card.s-rem .nome{text-decoration:line-through;color:var(--gray-400);}
     .cron-pill{display:inline-flex;align-self:flex-start;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;}
-    .cron-subnav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;background:white;border:1px solid var(--gray-200);border-radius:14px;padding:6px;box-shadow:var(--shadow);}
-    .cron-subnav button{border:none;background:none;border-radius:10px;padding:9px 14px;font-family:inherit;font-size:12px;font-weight:700;color:var(--gray-400);cursor:pointer;display:flex;align-items:center;gap:6px;}
-    .cron-subnav button:hover{color:var(--navy);background:var(--gray-50);}
-    .cron-subnav button.on{color:white;background:var(--navy);}
+    .cron-subnav{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:18px;background:var(--gray-100);border-radius:12px;padding:4px;width:fit-content;max-width:100%;}
+    .cron-subnav button{border:none;background:none;border-radius:9px;padding:8px 14px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;}
+    .cron-subnav button:hover{color:var(--ink);}
+    .cron-subnav button.on{color:var(--ink);background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.06);}
     .cron-sub{display:none;}.cron-sub.active{display:block;}
     .cron-help{font-size:13px;color:var(--gray-600);margin-bottom:12px;line-height:1.5;}
     .cron-tbl{width:100%;border-collapse:collapse;font-size:13px;}
@@ -460,14 +463,16 @@
     </div>
 
     <div class="tabs">
-      <!-- [v1.3] Cronograma (limpo) e Configuração: só admin (exibidos por cronAplicarPerfil). A aba antiga "Calendário" foi realocada para Configuração → Abertura de agendas. -->
+      <!-- [v1.5] Abas organizadas em dois grupos: Admin (só admin vê; exibido por cronAplicarPerfil) e telas de todos os usuários. IDs/onclick inalterados. -->
+      <span class="tab-grp" id="tabGrpAdm" style="display:none"><i class="fas fa-lock"></i> Admin</span>
       <button class="tab-btn"        id="tabCronograma" onclick="tab('cronograma')" style="display:none"><i class="fas fa-table-cells"></i> Cronograma</button>
+      <button class="tab-btn"        id="tabConfig"   onclick="tab('config')" style="display:none"><i class="fas fa-gear"></i> Configuração</button>
+      <span class="tab-sep" id="tabSep" style="display:none"></span>
       <button class="tab-btn"        id="tabOcupacao" onclick="tab('ocupacao')" style="display:none"><i class="fas fa-calendar-days"></i> Calendário</button>
       <button class="tab-btn active" id="tabAgenda"   onclick="tab('agenda')"><i class="fas fa-calendar-day"></i> Agenda</button>
       <button class="tab-btn"        id="tabSemana"   onclick="tab('semana')"><i class="fas fa-calendar-week"></i> Semana</button>
       <button class="tab-btn"        id="tabAbertura" onclick="tab('abertura')"><i class="fas fa-door-open"></i> Abertura</button>
       <button class="tab-btn"        id="tabNotas"    onclick="tab('notas')"><i class="fas fa-list-check"></i> Notas</button>
-      <button class="tab-btn"        id="tabConfig"   onclick="tab('config')" style="display:none"><i class="fas fa-gear"></i> Configuração</button>
     </div>
 
     <div class="tab-pane active" id="paneAgenda">
@@ -2922,7 +2927,7 @@
     // chamada pelo módulo Firebase quando o perfil (admin ou não) é conhecido
     window.cronAplicarPerfil = function () {
       var adm = isAdmin();
-      ['tabCronograma', 'tabConfig'].forEach(function (id) { var b = $(id); if (b) b.style.display = adm ? '' : 'none'; });
+      ['tabCronograma', 'tabConfig', 'tabGrpAdm', 'tabSep'].forEach(function (id) { var b = $(id); if (b) b.style.display = adm ? '' : 'none'; });   // [v1.5] + rótulo e divisor do grupo Admin
       if (!adm) return;
       iniciar();
       if (!S.autoAba && S.iniciado) {
