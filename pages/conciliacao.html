@@ -223,9 +223,9 @@
     <div class="tab-pane" id="pane-matriz">
       <!-- [v2.1] espelho das planilhas (Caixa Geral + Fechamento) via Apps Script -->
       <div class="panel">
-        <div class="panel-header"><div class="panel-title"><i class="fas fa-clone"></i> Espelho das planilhas</div><button class="btn-p so-admin" id="btnSync" type="button"><i class="fas fa-rotate"></i> Atualizar da planilha</button></div>
+        <div class="panel-header"><div class="panel-title"><i class="fas fa-clone"></i> Espelho das planilhas</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><select id="espMes" class="f-input" style="width:auto;padding:7px 10px;" aria-label="Mês"></select><button class="btn-p so-admin" id="btnSync" type="button"><i class="fas fa-rotate"></i> Atualizar da planilha</button></div></div>
         <div id="espelhoBox"></div>
-        <div class="hint" id="syncInfo">Mostra só os dias do mês atual (Dinheiro, Banco, Webdental). Para continuar a conciliação a partir de um deles, o administrador clica em "Continuar daqui".</div>
+        <div class="hint" id="syncInfo">Mostra os dias do mês escolhido (Dinheiro, Banco, Webdental). Para continuar a conciliação a partir de um deles, o administrador clica em "Continuar daqui".</div>
       </div>
       <div class="panel">
         <div class="panel-header"><div class="panel-title"><i class="fas fa-table"></i> Dias fechados</div><button class="btn-s" id="btnExportMatriz"><i class="fas fa-file-excel"></i> Exportar Excel</button></div>
@@ -765,9 +765,14 @@
     }
     /* [v2.1] espelho: dias vindos das planilhas (somente leitura) + "Continuar daqui" */
     function renderEspelho() {
-      const mes = hojeISO().slice(0, 7);   /* [v2.2] só o mês vigente */
+      /* [v2.10] seletor de mês: padrão = mês vigente; permite ver o mês anterior (ex.: último dia de outubro para o ponto de partida) */
+      const mAtual = hojeISO().slice(0, 7), dAnt = new Date(mAtual + '-01T12:00:00Z'); dAnt.setUTCMonth(dAnt.getUTCMonth() - 1);
+      const mAnt = dAnt.toISOString().slice(0, 7), NM = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+      const sel = $('espMes');
+      if (!sel.options.length) { [mAtual, mAnt].forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = NM[+m.slice(5) - 1] + '/' + m.slice(0, 4) + (m === mAtual ? ' (atual)' : ''); sel.appendChild(o); }); sel.value = mAtual; sel.onchange = () => renderEspelho(); }
+      const mes = sel.value || mAtual;
       const ks = [...new Set(Object.keys(S.base.fechamento).concat(Object.keys(S.base.caixa)))].filter(k => k.slice(0, 7) === mes).sort().reverse();
-      if (!ks.length) { $('espelhoBox').innerHTML = '<div class="hint">Nenhum dia do mês atual da planilha ainda. ' + (S.admin ? 'Clique em "Atualizar da planilha" (ou importe em Configuração).' : 'Peça ao administrador para atualizar.') + '</div>'; return; }
+      if (!ks.length) { $('espelhoBox').innerHTML = '<div class="hint">Nenhum dia desse mês na planilha ainda. ' + (S.admin ? 'Clique em "Atualizar da planilha" (ou importe em Configuração).' : 'Peça ao administrador para atualizar.') + '</div>'; return; }
       const fe = new Set(fechados());
       $('espelhoBox').innerHTML = tbl(['Data', 'Dinheiro', 'Banco', 'Webdental', 'Diferença (planilha)', 'Situação', ''], ks.map(k => {
         const f = S.base.fechamento[k] || {}, c = S.base.caixa[k] || {};
