@@ -969,12 +969,15 @@
     }
     const cm = c => (c == null ? '' : C.fmt(c, true));
     /* [v2.1] puxa da planilha, dia a dia, do dia seguinte ao ponto de partida (ou do dia 1 do mês) até hoje */
-    $('btnSync').onclick = acao(async () => {
-      if (!S.admin) { toast('Só o administrador atualiza o espelho.', 'error'); return; }
-      if (!S.cfg.webhookUrl) { toast('Configure o Apps Script em Configuração primeiro.', 'info'); return; }
-      const hoje = hojeISO(); const ini = S.inicio ? proxDia(S.inicio.dia) : hoje.slice(0, 8) + '01';
+    /* [v2.11] auto = true: roda sozinho ao abrir a página (admin), sem janela bloqueando e sem avisos; erros ficam no texto do painel */
+    async function sincronizarPlanilha(auto) {
+      if (!S.admin) { if (!auto) toast('Só o administrador atualiza o espelho.', 'error'); return; }
+      if (!S.cfg.webhookUrl) { if (!auto) toast('Configure o Apps Script em Configuração primeiro.', 'info'); return; }
+      if (window.__concSyncing) { if (!auto) toast('Já estou atualizando da planilha; aguarde terminar.', 'info'); return; }   /* [v2.11] evita duas leituras ao mesmo tempo */
+      const hoje = hojeISO(); let ini = S.inicio ? proxDia(S.inicio.dia) : hoje.slice(0, 8) + '01';
+      { const lim44 = new Date(hoje + 'T12:00:00Z'); lim44.setUTCDate(lim44.getUTCDate() - 44); const l44 = lim44.toISOString().slice(0, 10); if (ini < l44) ini = l44; }   /* [v2.11] no máximo 45 dias para trás */
       const lista = []; for (let d = ini, i = 0; i < 45 && d <= hoje; i++, d = proxDia(d)) lista.push(d);
-      if (!lista.length) { toast('Não há dias novos para ler depois de ' + dBR(S.inicio.dia) + '.', 'info'); return; }
+      if (!lista.length) { if (!auto) toast('Não há dias novos para ler depois de ' + dBR(S.inicio.dia) + '.', 'info'); return; }
       const fech = {}, caixa = {}; let n = 0, falhas = 0, parar = false;
       $('btnSync').disabled = true;
       /* [v2.6] janela com spinner e barra de progresso: a tela fica bloqueada até terminar */
@@ -982,16 +985,18 @@
       bg.innerHTML = '<div class="mdl" role="alertdialog" aria-modal="true" aria-live="polite"><div style="display:flex;gap:12px;align-items:center;"><div class="spin"></div><h3 style="margin:0;">Lendo a planilha…</h3></div>' +
         '<p style="margin-top:10px;" id="lgTxt">Preparando…</p><div class="barra"><i id="lgBar"></i></div><div class="hint" style="margin:0;">Aguarde, não feche esta janela. Leva alguns segundos.</div>' +
         '<div class="btns"><button class="btn-s" id="lgCancel" type="button">Cancelar</button></div></div>';
-      document.body.appendChild(bg);
+      if (!auto) document.body.appendChild(bg);
+      window.__concSyncing = true;
       bg.querySelector('#lgCancel').onclick = () => { parar = true; bg.querySelector('#lgTxt').textContent = 'Cancelando…'; };
       try {
         for (let i = 0; i < lista.length && !parar; i++) {
           const d = lista[i];
           bg.querySelector('#lgTxt').textContent = 'Lendo o dia ' + dBR(d) + ' (' + (i + 1) + ' de ' + lista.length + ')';
           bg.querySelector('#lgBar').style.width = Math.round(i / lista.length * 100) + '%';
+          if (auto) $('syncInfo').textContent = 'Atualizando da planilha… ' + dBR(d) + ' (' + (i + 1) + ' de ' + lista.length + ')';
           const u = S.cfg.webhookUrl + (S.cfg.webhookUrl.includes('?') ? '&' : '?') + 'acao=dia&dia=' + encodeURIComponent(d) + '&token=' + encodeURIComponent(S.cfg.token || '');
           let j; try { j = await (await fetch(u)).json(); } catch (e) { falhas++; continue; }
-          if (!j.ok) { toast('Planilhas: ' + (j.erro || 'erro desconhecido'), 'error'); return; }
+          if (!j.ok) { if (auto) $('syncInfo').textContent = 'Não consegui ler a planilha: ' + (j.erro || 'erro desconhecido') + '. Use "Atualizar da planilha" para tentar de novo.'; else toast('Planilhas: ' + (j.erro || 'erro desconhecido'), 'error'); return; }
           const f = j.fechamento;
           if (f && (f.dinheiro != null || f.wdSaldo != null)) { fech[d] = limpo({ dinheiro: f.dinheiro, banco: f.banco, saldoTotal: f.saldoTotal, wdSaldo: f.wdSaldo, diferenca: f.diferenca }); n++; }
           if (j.caixaGeral && j.caixaGeral.achou && j.caixaGeral.saldo != null) caixa[d] = limpo({ saldo: j.caixaGeral.saldo, entradas: j.caixaGeral.entradas, saidas: j.caixaGeral.saidas });
@@ -1002,9 +1007,11 @@
         logAdmin('atualizou espelho das planilhas (' + n + ' dias de fechamento)');
         await carregarDias(); renderTudoAbas(); preencher($('cDia').value, false);
         $('syncInfo').textContent = (parar ? 'Cancelado: ' : 'Atualizado: ') + n + ' dia(s) de fechamento e ' + Object.keys(caixa).length + ' da Caixa Geral' + (falhas ? ' · ' + falhas + ' dia(s) sem resposta' : '') + '.';
-        toast(parar ? 'Leitura cancelada; o que já foi lido foi salvo.' : 'Espelho atualizado.', parar ? 'info' : 'success');
-      } finally { bg.remove(); $('btnSync').disabled = false; }
-    });
+        try { localStorage.setItem('conc_sync_ts', String(Date.now())); } catch (e) {}
+        if (!auto) toast(parar ? 'Leitura cancelada; o que já foi lido foi salvo.' : 'Espelho atualizado.', parar ? 'info' : 'success');
+      } finally { window.__concSyncing = false; bg.remove(); $('btnSync').disabled = false; }
+    }
+    $('btnSync').onclick = acao(() => sincronizarPlanilha(false));
     $('btnBuscarSeed').onclick = acao(async () => {
       const dia = $('sDia').value; if (!dia) { toast('Escolha a data do fechamento anterior.', 'error'); return; }
       if (!S.cfg.webhookUrl) { toast('Sem Apps Script configurado. Use a importação da base em Configuração.', 'info'); return; }
@@ -1047,6 +1054,8 @@
       const ult = fechados().pop(), prev0 = ult || (S.inicio && S.inicio.dia);
       $('cDia').value = prev0 ? proxDia(prev0) : hojeISO();
       atualizaDia(); renderTudoAbas(); preencher($('cDia').value, false); atualizaResumo();
+      /* [v2.11] atualização automática do espelho ao abrir (admin; no máximo a cada 10 min por navegador) */
+      try { let ult = 0; try { ult = +localStorage.getItem('conc_sync_ts') || 0; } catch (e) {} if (S.admin && S.cfg.webhookUrl && Date.now() - ult > 600000) sincronizarPlanilha(true).catch(e => { console.error(e); $('syncInfo').textContent = 'Não consegui atualizar da planilha: ' + e.message; }); } catch (e) { console.error(e); }
       try { if (localStorage.getItem('conc_guia_v2')) $('guia').style.display = 'none'; } catch (e) {}   /* [v2.0] */
       $('guiaX').onclick = () => { $('guia').style.display = 'none'; try { localStorage.setItem('conc_guia_v2', '1'); } catch (e) {} };
       logAdmin('acessou Conciliação');
