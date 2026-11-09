@@ -229,6 +229,12 @@ import { getAuth, onAuthStateChanged }     from "https://www.gstatic.com/firebas
   }
 
   // Exposto globalmente (útil p/ testar: psAbrirPesquisaTeste() no console)
+  // [v1.2] Botão "Avaliar o portal" do cabeçalho (login.html): abre o modal a qualquer momento, ignorando a agenda.
+  window.psAbrirPesquisa = function () {
+    if (!psUsuarioAtual) { psNotificar('Faça login para avaliar o portal.', 'info'); return; }
+    psAbrirModal(psUsuarioAtual);
+  };
+
   window.psAbrirPesquisaTeste = function () {
     var u = psUsuarioAtual || { uid: 'teste', nome: 'Teste' };
     psAbrirModal(u);
