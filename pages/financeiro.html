@@ -78,6 +78,20 @@
     .modal-close:hover{background:var(--gray-100);}
     .modal-body{padding:22px;}
     @media(max-width:768px){.stats-bar,.form-grid{grid-template-columns:1fr;}.content{padding:14px 14px 60px;}.s-header{padding:0 14px;}}
+    /* [v1.9] Lote com múltiplos itens */
+    .lote-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-ctl);padding:10px 12px;margin-bottom:8px;}
+    .lote-card-top{display:flex;align-items:center;gap:10px;}
+    .lote-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0 26px;}
+    .lote-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;background:var(--bg);user-select:none;}
+    .lote-chip:has(input:checked){background:#eef2ff;border-color:#c7d2fe;color:var(--ink);}
+    .lote-chip input{margin:0;cursor:pointer;}
+    .lote-dets{margin:6px 0 0 26px;display:flex;flex-direction:column;gap:5px;}
+    .lote-det{display:none;align-items:center;gap:8px;flex-wrap:wrap;}
+    .lote-det-nome{font-size:12px;font-weight:700;min-width:120px;color:var(--ink);}
+    .lote-tot{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap;}
+    .form-grid.g4{grid-template-columns:repeat(4,1fr);}
+    #loteResumo{font-size:12px;color:var(--muted);margin-top:12px;padding:8px 12px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-ctl);}
+    @media(max-width:768px){.form-grid.g4{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
@@ -117,17 +131,19 @@
 
   <!-- MODAL IMPRESSÃO EM LOTE -->
   <div class="modal-bg" id="modalLote">
-    <div class="modal-box" style="max-width:700px;">
+    <div class="modal-box" style="max-width:1100px;width:96vw;"> <!-- [v1.9] modal maior -->
       <div class="modal-head">
         <div class="modal-title"><i class="fas fa-layer-group"></i> Impressão em Lote</div>
         <button class="modal-close" onclick="fecharModalLote()"><i class="fas fa-xmark"></i></button>
       </div>
       <div class="modal-body">
 
-        <div class="form-grid" style="margin-bottom:16px;">
+        <!-- [v1.9] loteCat agora serve de atalho: marca o item escolhido em todos os colaboradores -->
+        <div class="form-grid g4" style="margin-bottom:12px;">
           <div>
-            <label class="f-label">Categoria</label>
-            <select class="f-select" id="loteCat" onchange="loteAplicarCat()"> <!-- [v1.8] onchange aplica a categoria a todas as linhas -->
+            <label class="f-label">Marcar item p/ todos</label>
+            <select class="f-select" id="loteCat" onchange="loteAplicarCat()">
+              <option value="">— escolher —</option>
               <option value="Salário">Salário</option>
               <option value="Vale-Transporte">Vale-Transporte</option>
               <option value="Bonificação">Bonificação</option>
@@ -144,18 +160,14 @@
               <option value="Combos">Combos</option>
             </select>
           </div>
-          <div style="display:flex;gap:8px;align-items:flex-end;">
-            <div style="flex:1;">
-              <label class="f-label">Período início</label>
-              <input class="f-input" id="loteInicio" type="date">
-            </div>
-            <div style="flex:1;">
-              <label class="f-label">Período fim</label>
-              <input class="f-input" id="loteFim" type="date">
-            </div>
+          <div>
+            <label class="f-label">Período início</label>
+            <input class="f-input" id="loteInicio" type="date">
           </div>
-        </div>
-        <div class="form-grid" style="margin-bottom:14px;">
+          <div>
+            <label class="f-label">Período fim</label>
+            <input class="f-input" id="loteFim" type="date">
+          </div>
           <div>
             <label class="f-label">Forma de pagamento</label>
             <select class="f-select" id="loteForma">
@@ -165,6 +177,27 @@
             </select>
           </div>
         </div>
+        <div class="form-grid g4" style="margin-bottom:14px;">
+          <div>
+            <label class="f-label">Origem padrão dos itens</label>
+            <select class="f-select" id="loteOrigem" onchange="loteAplicarOrigem()">
+              <option value="Medicina">Medicina</option>
+              <option value="Odonto">Odonto</option>
+            </select>
+          </div>
+          <div>
+            <label class="f-label">Montagem dos recibos</label>
+            <select class="f-select" id="loteModo" onchange="loteRecalc()">
+              <option value="junto">1 recibo por colaborador (todos os itens juntos)</option>
+              <option value="origem">1 recibo por colaborador e origem (Medicina / Odonto)</option>
+              <option value="separado">1 recibo por item</option>
+            </select>
+          </div>
+          <div style="grid-column:span 2;">
+            <label class="f-label">Buscar colaborador</label>
+            <input class="f-input" id="loteBusca" type="text" placeholder="Digite parte do nome…" oninput="loteFiltrar()">
+          </div>
+        </div>
         <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
           <span style="font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;">Colaboradores</span>
           <div style="display:flex;gap:6px;">
@@ -172,7 +205,8 @@
             <button class="btn-s" style="font-size:11px;padding:5px 10px;" onclick="selecionarTodosLote(false)">Nenhum</button>
           </div>
         </div>
-        <div id="loteLista" style="max-height:320px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:10px;padding:8px;background:var(--gray-50);"></div>
+        <div id="loteLista" style="max-height:52vh;overflow-y:auto;border:1px solid var(--gray-200);border-radius:10px;padding:8px;background:var(--gray-50);"></div>
+        <div id="loteResumo">—</div>
         <div style="display:flex;gap:10px;margin-top:16px;">
           <button class="btn-s" onclick="fecharModalLote()" style="flex:1;justify-content:center;"><i class="fas fa-xmark"></i> Cancelar</button>
           <button class="btn-p" onclick="imprimirLote()" style="flex:2;justify-content:center;"><i class="fas fa-print"></i> Gerar e Imprimir Lote</button>
@@ -557,7 +591,14 @@
     const cat     = dados.categoria || 'Pagamento';
 
     // Período / referência
-    let referente = `Referente a: <strong>${esc(cat)}</strong>`;
+    // [v1.9] com dados.itens (lote): lista cada item com seu valor; sem itens mantém o comportamento anterior
+    let referente;
+    const _itens = Array.isArray(dados.itens) ? dados.itens : [];
+    if (_itens.length > 1) {
+      referente = 'Referente a: ' + _itens.map(it => `<strong>${esc(it.categoria)}</strong> (R$ ${fmtMoeda(it.valor)})`).join(' + ');
+    } else {
+      referente = `Referente a: <strong>${esc(_itens.length ? _itens[0].categoria : cat)}</strong>`;
+    }
     if (dados.inicio && dados.fim) {
       const di = dados.inicio.split('-').reverse().join('/');
       const df = dados.fim.split('-').reverse().join('/');
@@ -566,6 +607,16 @@
       referente += ` — <strong>${dados.inicio.split('-').reverse().join('/')}</strong>`;
     }
     if (dados.descricao) referente += ` — ${esc(dados.descricao)}`;
+
+    // [v1.9] sinalização discreta de origem (Medicina/Odonto) no rodapé
+    let origemNota = '';
+    if (_itens.length) {
+      const grp = {};
+      _itens.forEach(it => { if (it.origem) (grp[it.origem] = grp[it.origem] || []).push(it.categoria); });
+      const ks = Object.keys(grp);
+      if (ks.length === 1) origemNota = 'Origem: ' + esc(ks[0]);
+      else if (ks.length > 1) origemNota = 'Origem: ' + ks.map(k => esc(k) + ' (' + grp[k].map(esc).join(', ') + ')').join(' · ');
+    }
 
     // Forma de pagamento — só mostra a selecionada
     const formaMap = {pix:'PIX', dinheiro:'Dinheiro', transferencia:'Transferência'};
@@ -613,6 +664,7 @@
         </div>
         <div class="data-bloco">${dataAuto}</div>
       </div>
+      ${origemNota ? `<div class="origem-nota">${origemNota}</div>` : ''}
     </div>`;
   }
 
@@ -640,6 +692,7 @@
     .recibo-print .assin-linha{height:30px;border-bottom:1px solid #000;margin-bottom:3px;}
     .recibo-print .assin-nome{font-size:10px;white-space:nowrap;text-align:center;}
     .recibo-print .data-bloco{font-size:11px;text-align:right;white-space:nowrap;}
+    .recibo-print .origem-nota{font-size:8px;color:#888;margin-top:4px;text-align:left;} /* [v1.9] */
     .corte{border:none;border-top:1.5px dashed #999;margin:0.1cm 0 0.25cm;}
   `;
 
@@ -661,6 +714,13 @@
   }
   function fecharModalLote() { document.getElementById('modalLote').classList.remove('open'); }
 
+  // [v1.9] helpers do lote com múltiplos itens
+  function loteNum(v) { return parseFloat(String(v || '').replace(/\./g,'').replace(',','.')) || 0; }
+  function loteCats() {
+    return Array.from(document.getElementById('loteCat').options).map(o => o.value).filter(Boolean);
+  }
+  function loteNorm(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
   function renderLoteLista() {
     const el = document.getElementById('loteLista');
 
@@ -680,89 +740,186 @@
       allItems.push({ key: 'base_' + i, nome: c.nome, cargo: '', cpf: formatCPF(c.cpf) });
     });
 
-    if (!allItems.length) { el.innerHTML = '<p style="padding:12px;text-align:center;color:#888;">Nenhum colaborador.</p>'; return; }
+    if (!allItems.length) { el.innerHTML = '<p style="padding:12px;text-align:center;color:#888;">Nenhum colaborador.</p>'; loteRecalc(); return; }
 
     allItems.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
-    // [v1.8] cada linha ganha "O que está pagando" (categoria) + descrição opcional
-    const catPadrao = (document.getElementById('loteCat') || {}).value || '';
-    const catOpts = Array.from(document.getElementById('loteCat').options).map(o =>
-      `<option value="${esc(o.value)}"${o.value === catPadrao ? ' selected' : ''}>${esc(o.text)}</option>`
-    ).join('');
+    // [v1.9] cada colaborador: chips (checkbox) de itens; ao marcar abre valor + origem
+    const cats  = loteCats();
+    const orig  = (document.getElementById('loteOrigem') || {}).value || 'Medicina';
+    const origOpts = ['Medicina', 'Odonto'].map(o => `<option value="${o}"${o === orig ? ' selected' : ''}>${o}</option>`).join('');
 
-    el.innerHTML = allItems.map(item =>
-      `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:8px 10px;border-bottom:1px solid var(--gray-200);background:white;border-radius:6px;margin-bottom:4px;">
-        <input type="checkbox" class="lote-check" data-key="${item.key}" style="width:16px;height:16px;cursor:pointer;" checked>
-        <div style="flex:1;min-width:160px;">
-          <div style="font-size:13px;font-weight:700;color:var(--navy);">${esc(item.nome)}</div>
-          <div style="font-size:10px;color:var(--gray-400);">${item.cargo ? esc(item.cargo) + ' · ' : ''}${esc(item.cpf)}</div>
+    el.innerHTML = allItems.map(item => {
+      const chips = cats.map((ct, i) =>
+        `<label class="lote-chip"><input type="checkbox" class="lote-itchk" data-key="${item.key}" data-i="${i}" onchange="loteToggleItem(this)"> ${esc(ct)}</label>`
+      ).join('');
+      const dets = cats.map((ct, i) =>
+        `<div class="lote-det" data-key="${item.key}" data-i="${i}">
+          <span class="lote-det-nome">${esc(ct)}</span>
+          <span style="font-size:12px;font-weight:700;color:var(--muted);">R$</span>
+          <input type="text" class="lote-itval f-input" data-key="${item.key}" data-i="${i}" placeholder="0,00" oninput="mascaraMoeda(this);loteRecalc()" style="width:110px;padding:6px 10px;font-size:13px;">
+          <select class="lote-itorig f-select" data-key="${item.key}" data-i="${i}" onchange="loteRecalc()" style="width:120px;padding:6px 8px;font-size:12px;">${origOpts}</select>
+        </div>`
+      ).join('');
+      return `<div class="lote-card" data-key="${item.key}" data-nome="${esc(loteNorm(item.nome))}">
+        <div class="lote-card-top">
+          <input type="checkbox" class="lote-check" data-key="${item.key}" style="width:16px;height:16px;cursor:pointer;" checked onchange="loteRecalc()">
+          <div style="flex:1;min-width:160px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);">${esc(item.nome)}</div>
+            <div style="font-size:10px;color:var(--gray-400);">${item.cargo ? esc(item.cargo) + ' · ' : ''}${esc(item.cpf)}</div>
+          </div>
+          <div class="lote-tot" data-key="${item.key}">R$ 0,00</div>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <span style="font-size:12px;font-weight:700;color:var(--gray-600);">R$</span>
-          <input type="text" class="lote-valor f-input" data-key="${item.key}" placeholder="0,00" oninput="mascaraMoeda(this)" style="width:110px;padding:6px 10px;font-size:13px;">
-        </div>
-        <div style="flex-basis:100%;display:flex;gap:8px;padding-left:26px;">
-          <select class="lote-cat f-select" data-key="${item.key}" style="width:160px;padding:6px 8px;font-size:12px;">${catOpts}</select>
-          <input type="text" class="lote-desc f-input" data-key="${item.key}" placeholder="Detalhe (opcional): ex. Comissão R$ 468,31 + Boleto R$ 20,00" maxlength="120" style="flex:1;padding:6px 10px;font-size:12px;">
-        </div>
-      </div>`
-    ).join('');
+        <div class="lote-chips">${chips}</div>
+        <div class="lote-dets">${dets}</div>
+        <div style="margin:6px 0 0 26px;"><input type="text" class="lote-desc f-input" data-key="${item.key}" placeholder="Detalhe (opcional) — aparece no recibo" maxlength="120" style="width:100%;padding:5px 10px;font-size:12px;"></div>
+      </div>`;
+    }).join('');
+    loteRecalc();
   }
 
-  // [v1.8] muda a categoria de todas as linhas quando a categoria padrão do topo muda
+  // [v1.9] marca/desmarca um item: mostra a linha de valor+origem
+  function loteToggleItem(cb) {
+    const k = cb.dataset.key, i = cb.dataset.i;
+    const det = document.querySelector(`.lote-det[data-key="${k}"][data-i="${i}"]`);
+    if (det) det.style.display = cb.checked ? 'flex' : 'none';
+    if (cb.checked) {
+      const colabCb = document.querySelector(`.lote-check[data-key="${k}"]`);
+      if (colabCb) colabCb.checked = true;
+      const inp = det && det.querySelector('.lote-itval');
+      if (inp) inp.focus();
+    }
+    loteRecalc();
+  }
+
+  // [v1.9] loteCat vira atalho: marca o item escolhido em todos os colaboradores
   function loteAplicarCat() {
-    const v = document.getElementById('loteCat').value;
-    document.querySelectorAll('.lote-cat').forEach(s => { s.value = v; });
+    const sel = document.getElementById('loteCat');
+    const v = sel.value;
+    if (!v) return;
+    const i = loteCats().indexOf(v);
+    document.querySelectorAll(`.lote-itchk[data-i="${i}"]`).forEach(cb => {
+      const card = cb.closest('.lote-card');
+      if (card && card.style.display === 'none') return; // respeita a busca
+      cb.checked = true;
+      loteToggleItem(cb);
+    });
+    sel.value = '';
+  }
+
+  // [v1.9] origem padrão: aplica a todos os itens
+  function loteAplicarOrigem() {
+    const v = document.getElementById('loteOrigem').value;
+    document.querySelectorAll('.lote-itorig').forEach(s => { s.value = v; });
+    loteRecalc();
+  }
+
+  function loteFiltrar() {
+    const q = loteNorm(document.getElementById('loteBusca').value.trim());
+    document.querySelectorAll('.lote-card').forEach(c => {
+      c.style.display = (!q || (c.dataset.nome || '').includes(q)) ? '' : 'none';
+    });
+  }
+
+  // [v1.9] lê a tela e devolve [{key, colab, descricao, itens:[{categoria, valor, origem}]}]
+  function loteColetar() {
+    const cats = loteCats();
+    const out = [];
+    document.querySelectorAll('.lote-card').forEach(card => {
+      const k = card.dataset.key;
+      const colabCb = card.querySelector('.lote-check');
+      if (!colabCb || !colabCb.checked) return;
+      const itens = [];
+      card.querySelectorAll('.lote-itchk:checked').forEach(cb => {
+        const i = cb.dataset.i;
+        const valor = loteNum((card.querySelector(`.lote-itval[data-i="${i}"]`) || {}).value);
+        if (valor <= 0) return;
+        const origem = (card.querySelector(`.lote-itorig[data-i="${i}"]`) || {}).value || '';
+        itens.push({ categoria: cats[i], valor, origem });
+      });
+      if (!itens.length) return;
+      let colab;
+      if (k.startsWith('base_')) {
+        const raw = colabBaseRaw[parseInt(k.replace('base_', ''), 10)];
+        colab = raw ? { nome: raw.nome, cpf: formatCPF(raw.cpf), cargo: '' } : null;
+      } else {
+        colab = colaboradores[k];
+      }
+      if (!colab) return;
+      const descEl = card.querySelector('.lote-desc');
+      out.push({ key: k, colab, itens, descricao: descEl ? descEl.value.trim() : '' });
+    });
+    return out;
+  }
+
+  // [v1.9] quebra os itens de um colaborador em recibos conforme o modo escolhido
+  function loteAgrupar(itens, modo) {
+    if (modo === 'separado') return itens.map(it => [it]);
+    if (modo === 'origem') {
+      const g = {};
+      itens.forEach(it => { (g[it.origem || '—'] = g[it.origem || '—'] || []).push(it); });
+      return Object.keys(g).map(k => g[k]);
+    }
+    return [itens];
+  }
+
+  function loteRecalc() {
+    const modo = (document.getElementById('loteModo') || {}).value || 'junto';
+    // total por colaborador (todos os itens marcados com valor)
+    document.querySelectorAll('.lote-card').forEach(card => {
+      let t = 0;
+      card.querySelectorAll('.lote-itchk:checked').forEach(cb => {
+        t += loteNum((card.querySelector(`.lote-itval[data-i="${cb.dataset.i}"]`) || {}).value);
+      });
+      const el = card.querySelector('.lote-tot');
+      if (el) el.textContent = 'R$ ' + fmtMoeda(t);
+    });
+    const dados = loteColetar();
+    let nRec = 0, total = 0; const porOrigem = {};
+    dados.forEach(d => {
+      nRec += loteAgrupar(d.itens, modo).length;
+      d.itens.forEach(it => { total += it.valor; porOrigem[it.origem] = (porOrigem[it.origem] || 0) + it.valor; });
+    });
+    const r = document.getElementById('loteResumo');
+    if (!r) return;
+    r.textContent = dados.length
+      ? `${dados.length} colaborador(es) · ${nRec} recibo(s) · Total R$ ${fmtMoeda(total)}` +
+        Object.keys(porOrigem).map(o => ` · ${o}: R$ ${fmtMoeda(porOrigem[o])}`).join('')
+      : 'Nenhum item com valor selecionado.';
   }
 
   function selecionarTodosLote(sel) {
     document.querySelectorAll('.lote-check').forEach(cb => cb.checked = sel);
+    loteRecalc();
   }
 
   function imprimirLote() {
-    const cat     = document.getElementById('loteCat').value;
     const inicio  = document.getElementById('loteInicio').value;
     const fim     = document.getElementById('loteFim').value;
-    const desc    = ''; // categoria + período auto-preenche no recibo
+    const modo    = document.getElementById('loteModo').value;
+    const loteFrm = document.getElementById('loteForma') ? document.getElementById('loteForma').value : 'pix';
     const usuario = sessionStorage.getItem('usuario') || 'Financeiro';
 
-    const itens = [];
-    document.querySelectorAll('.lote-check:checked').forEach(cb => {
-      const k = cb.dataset.key;
-      const valInput = document.querySelector(`.lote-valor[data-key="${k}"]`);
-      const valorStr = ((valInput ? valInput.value : '') || '').replace(/\./g,'').replace(',','.');
-      const valor = parseFloat(valorStr) || 0;
-      if (valor <= 0) return;
-
-      let colab;
-      if (k.startsWith('base_')) {
-        const idx = parseInt(k.replace('base_', ''), 10);
-        const raw = colabBaseRaw[idx];
-        colab = { nome: raw.nome, cpf: formatCPF(raw.cpf), cargo: '' };
-      } else {
-        colab = colaboradores[k];
-      }
-      // [v1.8] categoria e detalhe por colaborador (cai na categoria do topo se vazio)
-      const catEl  = document.querySelector(`.lote-cat[data-key="${k}"]`);
-      const descEl = document.querySelector(`.lote-desc[data-key="${k}"]`);
-      const catItem  = (catEl && catEl.value) || cat;
-      const descItem = descEl ? descEl.value.trim() : '';
-      if (colab) itens.push({ colab, valor, categoria: catItem, descricao: descItem });
-    });
-
-    if (!itens.length) { toast('Selecione ao menos um colaborador com valor', 'error'); return; }
+    const dados = loteColetar(); // [v1.9] múltiplos itens por colaborador
+    if (!dados.length) { toast('Marque ao menos um item com valor', 'error'); return; }
 
     const clinicaNome = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MÉDICA E ODONTOLOGICA LTDA';
     const clinicaCnpj = sessionStorage.getItem('clinicaCnpj') || '';
     const logo = LOGO_FIN || sessionStorage.getItem('logoDataUrl') || '';
 
-    const blocos = itens.map((it, i) => {
-      const loteFrm = document.getElementById('loteForma') ? document.getElementById('loteForma').value : 'pix';
-      const bloco = buildReciboBlock(it.colab,
-        { descricao: it.descricao || desc, valor: it.valor, categoria: it.categoria || cat, inicio, fim, usuario, forma: loteFrm }, // [v1.8] por colaborador
-        logo, clinicaNome, clinicaCnpj);
-      // quebra de página a cada 4 recibos
-      const quebra = ((i + 1) % 3 === 0 && i + 1 < itens.length)
+    const recibos = [];
+    dados.forEach(d => {
+      loteAgrupar(d.itens, modo).forEach(grupo => {
+        const soma = grupo.reduce((a, it) => a + it.valor, 0);
+        recibos.push(buildReciboBlock(d.colab,
+          { descricao: d.descricao, valor: soma, categoria: grupo[0].categoria, itens: grupo, inicio, fim, usuario, forma: loteFrm }, // [v1.9]
+          logo, clinicaNome, clinicaCnpj));
+      });
+    });
+
+    const blocos = recibos.map((bloco, i) => {
+      // quebra de página a cada 3 recibos
+      const quebra = ((i + 1) % 3 === 0 && i + 1 < recibos.length)
         ? '<div style="page-break-after:always;"></div>' : '';
       return bloco + quebra;
     }).join('<hr class="corte">');
@@ -1193,5 +1350,6 @@ window.exportarPontoCSV=function(){
   };
 })();
 </script>
+<!-- VERSION: v1.9 | financeiro.html | 09/11/2026 | Lote de recibos: modal maior; vários itens por colaborador (checkbox) com valor e origem Medicina/Odonto por item; montagem 1 recibo junto / por origem / por item; origem em letra pequena no rodapé do recibo; busca e resumo. -->
 <!-- VERSION: v1.8 | financeiro.html | 09/11/2026 | Lote de recibos: por colaborador escolhe "o que está pagando" (categoria) + detalhe, impresso no recibo; novas categorias (Comissão, Boleto, Cirurgia, Carnê, Planos, Avaliação, Combos); visual alinhado a Caixa/Conciliação (só CSS de tela). -->
 <!-- VERSION: v1.7 | financeiro.html | 01/09/2026 | fix: exibição Xh Ymin, sem carga/saldo, tabela limpa E1→S2 -->
