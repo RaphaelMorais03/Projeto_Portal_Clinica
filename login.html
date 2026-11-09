@@ -75,6 +75,10 @@
     .p-user{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:6px;}
     .btn-sair{background:var(--red);color:white;border:none;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
     .btn-sair:hover{background:var(--red-h);}
+    /* [v1.2] botão Avaliar o portal */
+    .btn-aval{background:#fff;color:#92400e;border:1px solid #f5b301;border-radius:8px;padding:7px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+    .btn-aval i{color:#f5b301;}
+    .btn-aval:hover{background:#fffbeb;}
     .p-content{max-width:1000px;margin:0 auto;padding:48px 24px 60px;}
     .p-greeting{margin-bottom:36px;}
     .p-greeting-sub{font-size:13px;color:var(--gray-400);margin-bottom:6px;}
@@ -191,6 +195,8 @@
       </div>
       <div class="p-header-right">
         <div class="p-user"><i class="fas fa-user"></i> <span id="pUserNome">—</span></div>
+        <!-- [v1.2] Pesquisa de satisfação: botão fixo no cabeçalho -->
+        <button class="btn-aval" id="btnAvaliarPortal" onclick="if(window.psAbrirPesquisa)psAbrirPesquisa()"><i class="fas fa-star"></i> Avaliar o portal</button>
         <button class="btn-sair" onclick="sair()"><i class="fas fa-right-from-bracket"></i> Sair</button>
       </div>
     </div>
@@ -521,6 +527,9 @@
     <div class="nov-lista" id="novidadesLista"></div>
     <div class="nov-rodape">Atualizado em 14/07/2026</div>
   </div>
+
+  <!-- [v1.2] Pesquisa de satisfação: abre automático após o login (config em js/pesquisa-satisfacao.js) -->
+  <script type="module" src="js/pesquisa-satisfacao.js"></script>
 
 </body>
 </html>
