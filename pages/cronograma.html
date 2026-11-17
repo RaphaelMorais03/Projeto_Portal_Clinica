@@ -3167,24 +3167,6 @@
       }
     });
   </script>
-
-  <!-- [v1.6] Modos de abertura por URL (só adições):
-       ?embed=1  → usado pelo Dashboard (aba Cronograma do admin): esconde o cabeçalho próprio do módulo.
-       ?gerar=1  → usado pela tela inicial (botão "Gerar agenda"): abre o mesmo Gerador de Agenda do módulo. -->
-  <style>body.embed .s-header{display:none !important;}body.embed .content{padding-top:14px;}</style>
-  <script>
-  (function () {
-    try {
-      var q = new URLSearchParams(location.search);
-      if (q.get('embed') === '1') document.body.classList.add('embed');
-      if (q.get('gerar') === '1') {
-        window.addEventListener('load', function () {
-          setTimeout(function () { if (typeof window.abrirGen === 'function') window.abrirGen(); }, 400);
-        });
-      }
-    } catch (e) { console.warn('[cronograma v1.6] modo por URL:', e && e.message); }
-  })();
-  </script>
 </body>
 </html>
 
