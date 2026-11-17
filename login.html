@@ -1,4 +1,4 @@
-<!-- VERSION: v1.4 | login.html | 30/10/2026 | fix: card Contratos visível também para usuários com perms.contratos (antes só admin). v1.3 | login.html | 16/10/2026 | feat: card "Emissão de notas" (somente admin) → pages/emissao-notas.html. v1.2 | 03/10/2026 | visual: novo login (card branco sobre fundo navy, tom índigo, splash escura) — sem alteração de lógica. v1.1 | 14/07/2026 | feat: card Contratos + botão de novidades com changelog -->
+<!-- VERSION: v1.5 | login.html | 17/11/2026 | feat: tela inicial com saudação + vitrine do cronograma (Dia/Semana/Mês, somente leitura) acima dos cards; card Cronograma deixa de aparecer (módulo segue acessível pelo Dashboard/Gerar agenda). Só adições + 1 linha removida (exibição do cardCronograma). v1.4 | login.html | 30/10/2026 | fix: card Contratos visível também para usuários com perms.contratos (antes só admin). v1.3 | login.html | 16/10/2026 | feat: card "Emissão de notas" (somente admin) → pages/emissao-notas.html. v1.2 | 03/10/2026 | visual: novo login (card branco sobre fundo navy, tom índigo, splash escura) — sem alteração de lógica. v1.1 | 14/07/2026 | feat: card Contratos + botão de novidades com changelog -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -129,6 +129,48 @@
     .nov-desc{font-size:12px;color:#475569;line-height:1.5;}
     .nov-rodape{padding:10px 18px;border-top:1.5px solid #f1f5f9;font-size:11px;color:#94a3b8;text-align:center;flex-shrink:0;}
 
+    /* ── [v1.5] Vitrine do cronograma na tela inicial (prefixo hc*) ── */
+    .p-greeting.hc-top{margin-bottom:22px;}
+    .hc{background:white;border:1.5px solid var(--gray-200);border-radius:20px;padding:18px 20px 20px;margin-bottom:34px;box-shadow:0 2px 12px rgba(10,31,68,.06);}
+    .hc-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px;}
+    .hc-seg{display:inline-flex;background:var(--gray-100);border-radius:10px;padding:3px;}
+    .hc-seg button{border:0;background:transparent;font:700 12.5px 'Inter',sans-serif;color:var(--gray-500);padding:8px 16px;border-radius:8px;cursor:pointer;min-height:36px;}
+    .hc-seg button.on{background:var(--navy);color:white;}
+    .hc-nav{display:flex;align-items:center;gap:6px;}
+    .hc-nav button{border:1.5px solid var(--gray-200);background:white;color:var(--navy);border-radius:9px;min-width:36px;min-height:36px;cursor:pointer;font:700 12px 'Inter',sans-serif;padding:0 10px;}
+    .hc-nav button:hover{border-color:var(--navy);}
+    .hc-tit{font-size:14px;font-weight:800;color:var(--navy);min-width:170px;text-align:center;}
+    .hc-acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+    .hc-btn{border:1.5px solid var(--gray-200);background:white;color:var(--navy);border-radius:10px;padding:0 14px;min-height:36px;font:700 12.5px 'Inter',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+    .hc-btn:hover{border-color:var(--navy);}
+    .hc-btn.pri{background:var(--navy);border-color:var(--navy);color:white;}
+    .hc-btn.adm{background:#fffbeb;border-color:#fde68a;color:#92400e;}
+    .hc-aviso{font-size:12.5px;color:var(--gray-500);padding:10px 2px;}
+    .hc-aviso.erro{color:#b91c1c;}
+    .hc-dia{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;}
+    .hc-room{border:1.5px solid var(--gray-200);border-radius:14px;padding:12px 14px;background:var(--gray-50);}
+    .hc-room-n{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--gray-500);}
+    .hc-room-d{font-size:14px;font-weight:800;color:var(--navy);margin-top:3px;}
+    .hc-room-r{font-size:12px;color:var(--gray-500);margin-top:1px;}
+    .hc-per{display:inline-block;margin-top:7px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;background:#eff6ff;color:#1d4ed8;}
+    .hc-per.t{background:#fef3c7;color:#92400e;}
+    .hc-sem{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;}
+    .hc-col{border:1.5px solid var(--gray-200);border-radius:12px;padding:8px;background:var(--gray-50);min-width:0;}
+    .hc-col.hoje{border-color:var(--navy);background:#f0f4ff;}
+    .hc-col-h{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+    .hc-it{background:white;border:1px solid var(--gray-200);border-radius:8px;padding:6px 7px;margin-bottom:5px;font-size:11px;line-height:1.3;}
+    .hc-it b{display:block;color:var(--navy);font-size:11.5px;}
+    .hc-it span{color:var(--gray-500);}
+    .hc-mes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;}
+    .hc-mh{font-size:10.5px;font-weight:800;color:var(--gray-500);text-transform:uppercase;text-align:center;padding:2px 0;}
+    .hc-cel{border:1.5px solid var(--gray-200);border-radius:10px;min-height:84px;padding:6px;background:white;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;}
+    .hc-cel:hover{border-color:var(--navy);}
+    .hc-cel.fora{background:transparent;border-style:dashed;cursor:default;opacity:.45;}
+    .hc-cel.hoje{border-color:var(--navy);background:#f0f4ff;}
+    .hc-cel-n{font-size:12px;font-weight:800;color:var(--navy);}
+    .hc-cel-c{font-size:10px;color:var(--gray-500);margin-top:2px;}
+    .hc-chip{display:block;font-size:10px;font-weight:700;color:#1d4ed8;background:#eff6ff;border-radius:6px;padding:1px 5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    @media(max-width:860px){.hc-sem,.hc-mes{grid-template-columns:repeat(2,minmax(0,1fr));}.hc-acts{margin-left:0;}.hc-tit{min-width:0;}}
   </style>
 </head>
 <body>
@@ -201,10 +243,34 @@
       </div>
     </div>
     <div class="p-content">
-      <div class="p-greeting">
+      <!-- [v1.5] Saudação personalizada + vitrine do cronograma (somente leitura) -->
+      <div class="p-greeting hc-top">
         <div class="p-greeting-sub">Bem-vindo(a) ao portal</div>
-        <div class="p-greeting-title">O que deseja acessar?</div>
+        <div class="p-greeting-title">Olá, <span id="pGreetNome">—</span></div>
       </div>
+      <section class="hc" id="homeCronograma" aria-label="Cronograma" style="display:none;">
+        <div class="hc-bar">
+          <div class="hc-seg" id="hcSeg">
+            <button type="button" data-v="dia" class="on" onclick="hcView('dia')">Dia</button>
+            <button type="button" data-v="semana" onclick="hcView('semana')">Semana</button>
+            <button type="button" data-v="mes" onclick="hcView('mes')">Mês</button>
+          </div>
+          <div class="hc-nav">
+            <button type="button" onclick="hcNav(-1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+            <div class="hc-tit" id="hcTitulo">—</div>
+            <button type="button" onclick="hcNav(1)" aria-label="Próximo"><i class="fas fa-chevron-right"></i></button>
+            <button type="button" onclick="hcHoje()">Hoje</button>
+          </div>
+          <div class="hc-acts">
+            <button type="button" class="hc-btn" id="hcBtnPrint" onclick="hcImprimir()" style="display:none;"><i class="fas fa-print"></i> Imprimir semana</button>
+            <button type="button" class="hc-btn pri" id="hcBtnGerar" onclick="abrirSistema('pages/cronograma.html?gerar=1','Gerador de agenda')"><i class="fas fa-file-lines"></i> Gerar agenda</button>
+            <button type="button" class="hc-btn adm" id="hcBtnAdm" onclick="abrirSistema('pages/dashboard.html?tab=cronograma','Dashboard')" style="display:none;"><i class="fas fa-gear"></i> Editar no Dashboard</button>
+          </div>
+        </div>
+        <div id="hcAviso" class="hc-aviso"></div>
+        <div id="hcBody"></div>
+      </section>
+      <div class="p-greeting" style="margin-bottom:18px;"><div class="p-greeting-sub" style="margin:0;font-weight:700;">O que deseja acessar?</div></div>
       <div class="portal-grid">
         <div class="portal-card" id="cardOrcamentos" style="display:none;" onclick="abrirSistema('pages/orcamentos.html','Sistema de Orçamentos')">
           <div class="pc-icon" style="background:#f0f4f8;"><i class="fas fa-file-invoice-dollar" style="color:white;font-size:22px;"></i></div>
@@ -279,7 +345,7 @@
     import { initializeApp }           from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
       from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getDatabase, ref, get }   from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getDatabase, ref, get, query, orderByKey, startAt, endAt }   from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js"; // [v1.5] + query/orderByKey/startAt/endAt (vitrine do cronograma)
 
     const app  = initializeApp(window.FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -326,6 +392,115 @@
       }
     });
 
+    /* ═══ [v1.5] VITRINE DO CRONOGRAMA (somente leitura) — prefixo hc* ═══
+       Lê crono/dias/{AAAA-MM-DD}/itens (mesmo path do módulo Cronograma). Não grava nada. */
+    const HC = { view:'dia', ref:new Date(), dias:{}, carregado:{}, erro:{}, iniciado:false };
+    HC.ref.setHours(12,0,0,0);
+    const HC_DOW = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+    const HC_MES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    function hcPad(n){ return ('0'+n).slice(-2); }
+    function hcIso(d){ return d.getFullYear()+'-'+hcPad(d.getMonth()+1)+'-'+hcPad(d.getDate()); }
+    function hcAdd(d,n){ const r=new Date(d.getTime()); r.setDate(r.getDate()+n); return r; }
+    function hcSegunda(d){ const r=new Date(d.getTime()); r.setHours(12,0,0,0); r.setDate(r.getDate()-((r.getDay()+6)%7)); return r; }
+    function hcBr(s){ const p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+    function hcSalaChave(s){ s=String(s||'').toUpperCase(); if(/^\d+$/.test(s)) return parseInt(s,10); const m={FISIO:100,US:101,ACOL1:102,ACOL2:103}; return m[s]||200; }
+    function hcSalaRot(s){ s=String(s||''); const m={FISIO:'Fisioterapia',US:'Ultrassom',ACOL1:'Acolhimento 1',ACOL2:'Acolhimento 2'}; if(m[s.toUpperCase()]) return m[s.toUpperCase()]; return /^\d+$/.test(s)?'Sala '+hcPad(parseInt(s,10)):(s?'Sala '+s:'Sem sala'); }
+    function hcItens(dia){
+      const d = HC.dias[dia]; if (!d || !d.itens) return [];
+      const PER = ['Manhã','Tarde','A definir'];
+      return Object.keys(d.itens).map(id => {
+        const x = d.itens[id] || {};
+        return { sala:String(x.sala||''), doc:String(x.doc||''), role:String(x.role||''),
+                 periodo: x.periodo==='Tarde'?'Tarde':(x.periodo==='A definir'?'A definir':'Manhã'), status:String(x.status||'') };
+      }).filter(x => x.status!=='cancelado' && x.status!=='remarcado')
+        .sort((a,b) => hcSalaChave(a.sala)-hcSalaChave(b.sala) || PER.indexOf(a.periodo)-PER.indexOf(b.periodo) || a.doc.localeCompare(b.doc,'pt'));
+    }
+    async function hcCarregarMes(ym){
+      if (HC.carregado[ym]) return;
+      try {
+        const snap = await get(query(ref(db,'crono/dias'), orderByKey(), startAt(ym+'-01'), endAt(ym+'-31')));
+        const v = snap.val() || {};
+        Object.keys(v).forEach(k => { HC.dias[k] = v[k]; });
+        HC.carregado[ym] = true; delete HC.erro[ym];
+      } catch(e) { HC.erro[ym] = (e && (e.code||e.message)) || 'erro'; console.warn('[hc] leitura crono/dias:', HC.erro[ym]); }
+    }
+    function hcMesesVisiveis(){
+      if (HC.view==='semana'){ const seg=hcSegunda(HC.ref); return [...new Set([hcIso(seg).slice(0,7), hcIso(hcAdd(seg,5)).slice(0,7)])]; }
+      return [hcIso(HC.ref).slice(0,7)];
+    }
+    function hcPerBadge(p){ return '<span class="hc-per'+(p==='Tarde'?' t':'')+'">'+esc(p)+'</span>'; }
+    async function hcRender(){
+      const meses = hcMesesVisiveis();
+      await Promise.all(meses.map(hcCarregarMes));
+      const body = document.getElementById('hcBody'), tit = document.getElementById('hcTitulo'), av = document.getElementById('hcAviso');
+      const erros = meses.filter(m => HC.erro[m]);
+      av.className = 'hc-aviso' + (erros.length ? ' erro' : '');
+      av.textContent = erros.length ? 'Não foi possível carregar o cronograma agora (' + HC.erro[erros[0]] + ').' : '';
+      document.querySelectorAll('#hcSeg button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v')===HC.view));
+      document.getElementById('hcBtnPrint').style.display = HC.view==='semana' ? '' : 'none';
+      const hoje = hcIso(new Date());
+      if (HC.view==='dia'){
+        const di = hcIso(HC.ref), l = hcItens(di);
+        tit.textContent = HC_DOW[HC.ref.getDay()] + ', ' + hcBr(di);
+        body.innerHTML = HC.ref.getDay()===0 ? '<div class="hc-aviso">Domingo: sem agenda.</div>'
+          : !l.length ? '<div class="hc-aviso">' + (erros.length ? '' : 'Nenhuma agenda cadastrada para este dia.') + '</div>'
+          : '<div class="hc-dia">' + l.map(x => '<div class="hc-room"><div class="hc-room-n">'+esc(hcSalaRot(x.sala))+'</div><div class="hc-room-d">'+esc(x.doc)+'</div><div class="hc-room-r">'+esc(x.role)+'</div>'+hcPerBadge(x.periodo)+'</div>').join('') + '</div>';
+      } else if (HC.view==='semana'){
+        const seg = hcSegunda(HC.ref);
+        tit.textContent = hcBr(hcIso(seg)).slice(0,5) + ' a ' + hcBr(hcIso(hcAdd(seg,5)));
+        let h = '<div class="hc-sem">';
+        for (let i=0;i<6;i++){
+          const d = hcAdd(seg,i), di = hcIso(d), l = hcItens(di);
+          h += '<div class="hc-col'+(di===hoje?' hoje':'')+'"><div class="hc-col-h">'+HC_DOW[d.getDay()].slice(0,3)+' '+hcPad(d.getDate())+'/'+hcPad(d.getMonth()+1)+'</div>' +
+            (l.length ? l.map(x => '<div class="hc-it"><b>'+esc(hcSalaRot(x.sala))+' · '+esc(x.periodo.charAt(0))+'</b>'+esc(x.doc)+'<br><span>'+esc(x.role)+'</span></div>').join('') : '<div class="hc-aviso" style="padding:4px 0;">—</div>') + '</div>';
+        }
+        body.innerHTML = h + '</div>';
+      } else {
+        const a = HC.ref.getFullYear(), m0 = HC.ref.getMonth();
+        tit.textContent = HC_MES[m0].charAt(0).toUpperCase() + HC_MES[m0].slice(1) + ' de ' + a;
+        const ult = new Date(a, m0+1, 0).getDate();
+        let h = '<div class="hc-mes">' + ['Seg','Ter','Qua','Qui','Sex','Sáb'].map(n => '<div class="hc-mh">'+n+'</div>').join('');
+        const off = (new Date(a,m0,1).getDay()+6)%7;           // 0=Seg
+        const ini = off>5 ? 0 : off;                            // dia 1 em domingo cai na coluna Seg
+        for (let i=0;i<ini;i++) h += '<div class="hc-cel fora"></div>';
+        for (let dia=1; dia<=ult; dia++){
+          const dt = new Date(a,m0,dia,12); if (dt.getDay()===0) continue;
+          const di = hcIso(dt), l = hcItens(di);
+          const esps = [...new Set(l.map(x => x.role).filter(Boolean))];
+          h += '<button type="button" class="hc-cel'+(di===hoje?' hoje':'')+'" onclick="hcAbrirDia(\''+di+'\')"><div class="hc-cel-n">'+dia+'</div>' +
+            (l.length ? '<div class="hc-cel-c">'+l.length+' agenda'+(l.length>1?'s':'')+'</div>' + esps.slice(0,2).map(e => '<span class="hc-chip">'+esc(e)+'</span>').join('') + (esps.length>2 ? '<span class="hc-chip">+'+(esps.length-2)+'</span>' : '') : '') + '</button>';
+        }
+        body.innerHTML = h + '</div>';
+      }
+    }
+    window.hcView = function(v){ HC.view = v; hcRender(); };
+    window.hcNav = function(n){
+      if (HC.view==='dia'){ let d=hcAdd(HC.ref,n); if (d.getDay()===0) d=hcAdd(d,n); HC.ref=d; }
+      else if (HC.view==='semana') HC.ref = hcAdd(HC.ref, 7*n);
+      else { const d=new Date(HC.ref.getFullYear(), HC.ref.getMonth()+n, 1, 12); HC.ref=d; }
+      hcRender();
+    };
+    window.hcHoje = function(){ HC.ref = new Date(); HC.ref.setHours(12,0,0,0); if (HC.ref.getDay()===0) HC.ref = hcAdd(HC.ref,1); hcRender(); };
+    window.hcAbrirDia = function(di){ const p=di.split('-'); HC.ref=new Date(+p[0],+p[1]-1,+p[2],12); HC.view='dia'; hcRender(); };
+    window.hcImprimir = function(){
+      const seg = hcSegunda(HC.ref);
+      let h = '';
+      for (let i=0;i<6;i++){
+        const d = hcAdd(seg,i), di = hcIso(d), l = hcItens(di);
+        h += '<h3>'+esc(HC_DOW[d.getDay()])+' · '+esc(hcBr(di))+'</h3>' + (l.length ? '<table><tr><th>Sala</th><th>Profissional</th><th>Especialidade</th><th>Período</th></tr>' + l.map(x => '<tr><td>'+esc(hcSalaRot(x.sala))+'</td><td>'+esc(x.doc)+'</td><td>'+esc(x.role)+'</td><td>'+esc(x.periodo)+'</td></tr>').join('') + '</table>' : '<p class="v">Sem agenda.</p>');
+      }
+      const w = window.open('', '_blank');
+      if (!w) { alert('Permita pop-ups para imprimir.'); return; }
+      w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cronograma semanal '+esc(hcBr(hcIso(seg)))+'</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#0A1F44}h2{margin:0 0 4px}h3{margin:18px 0 6px;font-size:14px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #cbd5e1;padding:5px 8px;text-align:left}th{background:#f1f5f9}.v{font-size:12px;color:#64748b;margin:0}</style></head><body><h2>Cronograma semanal</h2><div style="font-size:12px;color:#64748b">'+esc(hcBr(hcIso(seg)))+' a '+esc(hcBr(hcIso(hcAdd(seg,5))))+'</div>'+h+'</body></html>');
+      w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+    };
+    function hcIniciar(isAdmin){
+      document.getElementById('homeCronograma').style.display = 'block';
+      document.getElementById('hcBtnAdm').style.display = isAdmin ? '' : 'none';
+      if (!HC.iniciado){ HC.iniciado = true; if (HC.ref.getDay()===0) HC.ref = hcAdd(HC.ref,1); }
+      hcRender();
+    }
+
     async function abrirPortal(user) {
       let nomeCompleto = user.email.split('@')[0];
       let perms = {};
@@ -353,7 +528,7 @@
       if (isAdmin || perms.fechamento) document.getElementById('cardFechamento').style.display = 'flex';
       if (isAdmin || perms.financeiro) document.getElementById('cardFinanceiro').style.display = 'flex';
       if (isAdmin || perms.exames)     document.getElementById('cardExames').style.display     = 'flex';
-      if (isAdmin || perms.cronograma) document.getElementById('cardCronograma').style.display = 'flex';
+      // [v1.5] cardCronograma não é mais exibido: o cronograma agora aparece direto na tela inicial (vitrine) e a configuração fica no Dashboard (admin)
       // Caixa: visível para todos os usuários autenticados
       document.getElementById('cardCaixa').style.display = 'flex';
       iniciarNovidades();
@@ -363,6 +538,10 @@
       if (isAdmin || perms.nps)        document.getElementById('cardNps').style.display         = 'flex';
       if (isAdmin || perms.contratos)  document.getElementById('cardContratos').style.display = 'flex'; // [v1.4] Contratos: admin e quem tem perms.contratos
       if (isAdmin || perms.financeiro) document.getElementById('cardConciliacao').style.display = 'flex'; // [v1.2] conciliação: admin e financeiro
+
+      // [v1.5] saudação + vitrine do cronograma
+      document.getElementById('pGreetNome').textContent = primeiroNome;
+      hcIniciar(isAdmin);
 
       // Revela o portal já montado
       document.getElementById('telaLogin').style.display  = 'none';
@@ -410,6 +589,8 @@
         document.getElementById('fEmail').value = '';
         document.getElementById('fSenha').value = '';
         limparErro();
+        document.getElementById('homeCronograma').style.display = 'none'; // [v1.5]
+        HC.dias = {}; HC.carregado = {}; HC.erro = {}; // [v1.5] não vaza dados entre usuários
       });
     };
 
