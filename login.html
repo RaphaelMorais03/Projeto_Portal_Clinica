@@ -76,9 +76,6 @@
     .btn-sair{background:var(--red);color:white;border:none;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
     .btn-sair:hover{background:var(--red-h);}
     /* [v1.2] botão Avaliar o portal */
-    .btn-aval{background:#fff;color:#92400e;border:1px solid #f5b301;border-radius:8px;padding:7px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
-    .btn-aval i{color:#f5b301;}
-    .btn-aval:hover{background:#fffbeb;}
     .p-content{max-width:1000px;margin:0 auto;padding:48px 24px 60px;}
     .p-greeting{margin-bottom:36px;}
     .p-greeting-sub{font-size:13px;color:var(--gray-400);margin-bottom:6px;}
@@ -129,38 +126,66 @@
     .nov-desc{font-size:12px;color:#475569;line-height:1.5;}
     .nov-rodape{padding:10px 18px;border-top:1.5px solid #f1f5f9;font-size:11px;color:#94a3b8;text-align:center;flex-shrink:0;}
 
-    /* ── [v1.5] Vitrine do cronograma na tela inicial (prefixo hc*) ── */
-    .p-greeting.hc-top{margin-bottom:22px;}
-    .hc{background:white;border:1.5px solid var(--gray-200);border-radius:20px;padding:18px 20px 20px;margin-bottom:34px;box-shadow:0 2px 12px rgba(10,31,68,.06);}
+    /* ── [v1.6] Home: saudação + resumo + vitrine do cronograma (prefixo hc*) ── */
+    .hc-top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;}
+    .hc-top .p-greeting-sub{margin-bottom:6px;}
+    .hc-gerar{display:inline-flex;align-items:center;gap:10px;background:var(--navy);color:white;border:none;border-radius:12px;padding:0 22px;min-height:48px;font:800 14px 'Inter',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(10,31,68,.25);}
+    .hc-gerar:hover{background:var(--navy-mid);}
+    .hc-kpis{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:22px;}
+    .hc-kpi{background:white;border:1px solid var(--gray-200);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(10,31,68,.06);min-width:0;}
+    .hc-kpi-i{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+    .hc-kpi-n{font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1;color:var(--navy);}
+    .hc-kpi-l{font-size:12.5px;color:var(--gray-500);margin-top:4px;}
+    .hc{background:white;border:1.5px solid var(--gray-200);border-radius:20px;padding:20px 22px 22px;margin-bottom:34px;box-shadow:0 2px 12px rgba(10,31,68,.06);}
     .hc-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px;}
-    .hc-seg{display:inline-flex;background:var(--gray-100);border-radius:10px;padding:3px;}
-    .hc-seg button{border:0;background:transparent;font:700 12.5px 'Inter',sans-serif;color:var(--gray-500);padding:8px 16px;border-radius:8px;cursor:pointer;min-height:36px;}
-    .hc-seg button.on{background:var(--navy);color:white;}
-    .hc-nav{display:flex;align-items:center;gap:6px;}
-    .hc-nav button{border:1.5px solid var(--gray-200);background:white;color:var(--navy);border-radius:9px;min-width:36px;min-height:36px;cursor:pointer;font:700 12px 'Inter',sans-serif;padding:0 10px;}
+    .hc-seg{display:inline-flex;background:var(--gray-100);border-radius:10px;padding:4px;gap:4px;}
+    .hc-seg button{border:0;background:transparent;font:600 13px 'Inter',sans-serif;color:var(--gray-600);padding:0 18px;border-radius:8px;cursor:pointer;min-height:44px;}
+    .hc-seg button.on{background:white;color:var(--navy);font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+    .hc-nav{display:flex;align-items:center;gap:8px;}
+    .hc-nav button{border:1.5px solid var(--gray-200);background:white;color:var(--navy);border-radius:10px;min-width:44px;min-height:44px;cursor:pointer;font:700 13px 'Inter',sans-serif;padding:0 14px;}
     .hc-nav button:hover{border-color:var(--navy);}
     .hc-tit{font-size:14px;font-weight:800;color:var(--navy);min-width:170px;text-align:center;}
-    .hc-acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
-    .hc-btn{border:1.5px solid var(--gray-200);background:white;color:var(--navy);border-radius:10px;padding:0 14px;min-height:36px;font:700 12.5px 'Inter',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+    .hc-acts{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .hc-sel{min-height:44px;min-width:210px;border:1.5px solid var(--gray-300);background:white;border-radius:10px;padding:0 12px;font:600 13px 'Inter',sans-serif;color:var(--navy);cursor:pointer;}
+    .hc-btn{border:1.5px solid var(--gray-200);background:white;color:var(--navy);border-radius:10px;padding:0 16px;min-height:44px;font:700 13px 'Inter',sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
     .hc-btn:hover{border-color:var(--navy);}
-    .hc-btn.pri{background:var(--navy);border-color:var(--navy);color:white;}
+    .hc-btn.red{background:var(--red);border-color:var(--red);color:white;}
+    .hc-btn.red:hover{background:var(--red-h);}
     .hc-btn.adm{background:#fffbeb;border-color:#fde68a;color:#92400e;}
     .hc-aviso{font-size:12.5px;color:var(--gray-500);padding:10px 2px;}
     .hc-aviso.erro{color:#b91c1c;}
-    .hc-dia{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;}
-    .hc-room{border:1.5px solid var(--gray-200);border-radius:14px;padding:12px 14px;background:var(--gray-50);}
+    .hc-leg{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:12px;font-size:12px;color:var(--gray-600);}
+    .hc-leg span{display:inline-flex;align-items:center;gap:6px;}
+    .hc-leg i{width:12px;height:12px;border-radius:3px;border:2px solid;display:inline-block;}
+    /* cores de status = mesmas do módulo Cronograma */
+    .hs-prev{background:#fef3c7;border-color:#f59e0b;color:#92400e;}
+    .hs-conf{background:#dbeafe;border-color:#3b82f6;color:#1e40af;}
+    .hs-aberta{background:#dcfce7;border-color:#22c55e;color:#166534;}
+    .hs-est{background:#ede9fe;border-color:#8b5cf6;color:#5b21b6;}
+    .hs-vz{color:#6b7280;}
+    /* Dia */
+    .hc-dia{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+    .hc-room{border:1.5px solid var(--gray-200);border-left-width:4px;border-radius:14px;padding:12px 14px;background:var(--gray-50);}
     .hc-room-n{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--gray-500);}
     .hc-room-d{font-size:14px;font-weight:800;color:var(--navy);margin-top:3px;}
     .hc-room-r{font-size:12px;color:var(--gray-500);margin-top:1px;}
     .hc-per{display:inline-block;margin-top:7px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;background:#eff6ff;color:#1d4ed8;}
     .hc-per.t{background:#fef3c7;color:#92400e;}
-    .hc-sem{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;}
-    .hc-col{border:1.5px solid var(--gray-200);border-radius:12px;padding:8px;background:var(--gray-50);min-width:0;}
-    .hc-col.hoje{border-color:var(--navy);background:#f0f4ff;}
-    .hc-col-h{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-    .hc-it{background:white;border:1px solid var(--gray-200);border-radius:8px;padding:6px 7px;margin-bottom:5px;font-size:11px;line-height:1.3;}
-    .hc-it b{display:block;color:var(--navy);font-size:11.5px;}
-    .hc-it span{color:var(--gray-500);}
+    /* Semana = folha impressa (mesmo desenho do módulo) */
+    .hc-tw{overflow-x:auto;}
+    .hc-wk{width:100%;border-collapse:collapse;table-layout:fixed;min-width:900px;background:white;}
+    .hc-wk th{background:white;border:1.5px solid #111;padding:4px;font-size:11px;font-weight:800;text-align:center;color:#111;}
+    .hc-wk th small{font-size:11px;font-weight:700;}
+    .hc-wk th.hoje{background:#fde68a;}
+    .hc-wk td{border:1.5px solid #111;padding:0;vertical-align:top;}
+    .hc-wk tr.band td{background:#d9d9d9;text-align:center;font-style:italic;font-weight:800;font-size:10px;padding:2px;}
+    .hc-wk tr.ag td{text-align:center;font-weight:800;font-size:12px;padding:6px;}
+    .hc-ln{padding:2px 6px;border-bottom:1px solid #111;font-weight:800;font-size:11px;line-height:1.35;color:#111;overflow-wrap:anywhere;}
+    .hc-ln:last-child{border-bottom:none;}
+    .hc-ln.hs-prev,.hc-ln.hs-conf,.hc-ln.hs-aberta,.hc-ln.hs-est{border-left-width:4px;border-left-style:solid;border-bottom-color:#111;}
+    .hc-ln i{font-size:9px;opacity:.7;}
+    .hc-sm{display:none;}
+    /* Mês */
     .hc-mes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;}
     .hc-mh{font-size:10.5px;font-weight:800;color:var(--gray-500);text-transform:uppercase;text-align:center;padding:2px 0;}
     .hc-cel{border:1.5px solid var(--gray-200);border-radius:10px;min-height:84px;padding:6px;background:white;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;}
@@ -170,7 +195,26 @@
     .hc-cel-n{font-size:12px;font-weight:800;color:var(--navy);}
     .hc-cel-c{font-size:10px;color:var(--gray-500);margin-top:2px;}
     .hc-chip{display:block;font-size:10px;font-weight:700;color:#1d4ed8;background:#eff6ff;border-radius:6px;padding:1px 5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    @media(max-width:860px){.hc-sem,.hc-mes{grid-template-columns:repeat(2,minmax(0,1fr));}.hc-acts{margin-left:0;}.hc-tit{min-width:0;}}
+    @media(max-width:860px){.hc-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}.hc-acts{margin-left:0;width:100%;}.hc-tit{min-width:0;flex:1;}.hc-mes{gap:4px;}}
+    @media(max-width:700px){
+      .p-header{padding:0 14px;}.p-user,.p-logo-sub{display:none;}.bs-t{display:none;}
+      .hc-top{align-items:stretch;}.hc-gerar{width:100%;justify-content:center;min-height:52px;}
+      .hc-kpi{flex-direction:column;text-align:center;padding:12px 8px;gap:6px;}.hc-kpi-i{width:36px;height:36px;font-size:16px;border-radius:50%;}.hc-kpi-n{font-size:20px;}.hc-kpi-l{font-size:11px;margin-top:2px;}
+      .hc{padding:14px;}.hc-seg{display:flex;width:100%;}.hc-seg button{flex:1;}.hc-nav{width:100%;}.hc-sel{width:100%;min-width:0;}.hc-acts .hc-btn{width:100%;min-height:48px;}
+      .hc-tw{display:none;}.hc-sm{display:block;}
+      .hc-fol .hc-tw{display:block;}.hc-fol .hc-smlist{display:none;}
+      .hc-cel{min-height:56px;}.hc-cel-c,.hc-chip{display:none;}
+    }
+    .hc-sdias{display:flex;gap:6px;margin-bottom:12px;}
+    .hc-sdias button{flex:1 0 0;min-height:52px;border-radius:10px;border:2px solid transparent;background:#e2e8f0;color:var(--navy);font:900 11px 'Inter',sans-serif;cursor:pointer;padding:6px 0;}
+    .hc-sdias button b{display:block;font-size:15px;}
+    .hc-sdias button.hj{background:#fde68a;}
+    .hc-sdias button.on{border-color:var(--navy);}
+    .hc-sband{background:var(--navy);color:white;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:900;letter-spacing:1.5px;margin-top:8px;}
+    .hc-sit{border-left:4px solid;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:13px;font-weight:800;}
+    .hc-sit span{display:block;font-size:12px;font-weight:600;margin-top:1px;}
+    .hc-sag{background:var(--gray-100);border-radius:8px;padding:9px 12px;text-align:center;font-size:12px;font-weight:700;color:var(--gray-600);margin-top:8px;}
+    .hc-vfol{width:100%;margin-top:14px;}
   </style>
 </head>
 <body>
@@ -237,22 +281,28 @@
       </div>
       <div class="p-header-right">
         <div class="p-user"><i class="fas fa-user"></i> <span id="pUserNome">—</span></div>
-        <!-- [v1.2] Pesquisa de satisfação: botão fixo no cabeçalho -->
-        <button class="btn-aval" id="btnAvaliarPortal" onclick="if(window.psAbrirPesquisa)psAbrirPesquisa()"><i class="fas fa-star"></i> Avaliar o portal</button>
-        <button class="btn-sair" onclick="sair()"><i class="fas fa-right-from-bracket"></i> Sair</button>
+        <button class="btn-sair" onclick="sair()"><i class="fas fa-right-from-bracket"></i> <span class="bs-t">Sair</span></button>
       </div>
     </div>
     <div class="p-content">
-      <!-- [v1.5] Saudação personalizada + vitrine do cronograma (somente leitura) -->
+      <!-- [v1.6] Saudação + Gerar agenda + resumo de hoje + vitrine do cronograma (somente leitura) -->
       <div class="p-greeting hc-top">
-        <div class="p-greeting-sub">Bem-vindo(a) ao portal</div>
-        <div class="p-greeting-title">Olá, <span id="pGreetNome">—</span></div>
+        <div>
+          <div class="p-greeting-sub" id="pGreetData">Bem-vindo(a) ao portal</div>
+          <div class="p-greeting-title">Olá, <span id="pGreetNome">—</span></div>
+        </div>
+        <button type="button" class="hc-gerar" id="hcBtnGerar" onclick="abrirSistema('pages/cronograma.html?gerar=1','Gerador de agenda')"><i class="fas fa-file-lines"></i> Gerar agenda</button>
+      </div>
+      <div class="hc-kpis" id="hcKpis">
+        <div class="hc-kpi"><div class="hc-kpi-i" style="background:#e0f2fe;color:#075985;"><i class="fas fa-calendar-day"></i></div><div><div class="hc-kpi-n" id="hcK1">—</div><div class="hc-kpi-l">Agendas hoje</div></div></div>
+        <div class="hc-kpi"><div class="hc-kpi-i" style="background:#dcfce7;color:#166534;"><i class="fas fa-user-doctor"></i></div><div><div class="hc-kpi-n" id="hcK2">—</div><div class="hc-kpi-l">Médicos hoje</div></div></div>
+        <div class="hc-kpi"><div class="hc-kpi-i" style="background:#f3e8ff;color:#6b21a8;"><i class="fas fa-lock-open"></i></div><div><div class="hc-kpi-n" id="hcK3">—</div><div class="hc-kpi-l">Agendas abertas</div></div></div>
       </div>
       <section class="hc" id="homeCronograma" aria-label="Cronograma" style="display:none;">
         <div class="hc-bar">
           <div class="hc-seg" id="hcSeg">
-            <button type="button" data-v="dia" class="on" onclick="hcView('dia')">Dia</button>
-            <button type="button" data-v="semana" onclick="hcView('semana')">Semana</button>
+            <button type="button" data-v="dia" onclick="hcView('dia')">Dia</button>
+            <button type="button" data-v="semana" class="on" onclick="hcView('semana')">Semana</button>
             <button type="button" data-v="mes" onclick="hcView('mes')">Mês</button>
           </div>
           <div class="hc-nav">
@@ -262,15 +312,15 @@
             <button type="button" onclick="hcHoje()">Hoje</button>
           </div>
           <div class="hc-acts">
-            <button type="button" class="hc-btn" id="hcBtnPrint" onclick="hcImprimir()" style="display:none;"><i class="fas fa-print"></i> Imprimir semana</button>
-            <button type="button" class="hc-btn pri" id="hcBtnGerar" onclick="abrirSistema('pages/cronograma.html?gerar=1','Gerador de agenda')"><i class="fas fa-file-lines"></i> Gerar agenda</button>
+            <select class="hc-sel" id="hcFiltro" aria-label="Filtrar por profissional" onchange="hcFiltrar(this.value)"><option value="">Todos os profissionais</option></select>
+            <button type="button" class="hc-btn red" id="hcBtnPrint" onclick="hcImprimir()" style="display:none;"><i class="fas fa-print"></i> Imprimir semana</button>
             <button type="button" class="hc-btn adm" id="hcBtnAdm" onclick="abrirSistema('pages/dashboard.html?tab=cronograma','Dashboard')" style="display:none;"><i class="fas fa-gear"></i> Editar no Dashboard</button>
           </div>
         </div>
         <div id="hcAviso" class="hc-aviso"></div>
         <div id="hcBody"></div>
       </section>
-      <div class="p-greeting" style="margin-bottom:18px;"><div class="p-greeting-sub" style="margin:0;font-weight:700;">O que deseja acessar?</div></div>
+      <div class="p-greeting" style="margin-bottom:18px;"><div class="p-greeting-sub" style="margin:0;font-weight:700;">Acessar módulos</div></div>
       <div class="portal-grid">
         <div class="portal-card" id="cardOrcamentos" style="display:none;" onclick="abrirSistema('pages/orcamentos.html','Sistema de Orçamentos')">
           <div class="pc-icon" style="background:#f0f4f8;"><i class="fas fa-file-invoice-dollar" style="color:white;font-size:22px;"></i></div>
@@ -392,27 +442,40 @@
       }
     });
 
-    /* ═══ [v1.5] VITRINE DO CRONOGRAMA (somente leitura) — prefixo hc* ═══
-       Lê crono/dias/{AAAA-MM-DD}/itens (mesmo path do módulo Cronograma). Não grava nada. */
-    const HC = { view:'dia', ref:new Date(), dias:{}, carregado:{}, erro:{}, iniciado:false };
+    /* ═══ [v1.6] VITRINE DO CRONOGRAMA (somente leitura) — prefixo hc* ═══
+       Lê crono/dias/{AAAA-MM-DD}/itens (mesmo path do módulo Cronograma). Não grava nada.
+       Semana = mesma folha do módulo (htmlSemana). Cores de status = as do módulo. */
+    const HC = { view:'semana', ref:new Date(), dias:{}, carregado:{}, erro:{}, iniciado:false, filtro:'', sdia:null, folha:false };
     HC.ref.setHours(12,0,0,0);
     const HC_DOW = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-    const HC_MES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const HC_NOMES_DIA = ['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'];
+    const HC_MES_ABR = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    const HC_MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const HC_ORDEM = ['01','02','03','04','05','US','06','07','08','ACOL1','ACOL2','09','10','FISIO'];
+    const HC_ESPECIAIS = { US:'ULTRASSOM:', ACOL1:'ACOLHIMENTO 1:', ACOL2:'ACOLHIMENTO 2:', FISIO:'Fisioterapia:' };
+    const HC_ST_LBL = { aberta:'Aberta', conf:'Confirmado', est:'Estendido', prev:'Previsto' };
     function hcPad(n){ return ('0'+n).slice(-2); }
     function hcIso(d){ return d.getFullYear()+'-'+hcPad(d.getMonth()+1)+'-'+hcPad(d.getDate()); }
     function hcAdd(d,n){ const r=new Date(d.getTime()); r.setDate(r.getDate()+n); return r; }
     function hcSegunda(d){ const r=new Date(d.getTime()); r.setHours(12,0,0,0); r.setDate(r.getDate()-((r.getDay()+6)%7)); return r; }
+    function hcData(s){ const p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2],12); }
     function hcBr(s){ const p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+    function hcCurta(s){ const p=s.split('-'); return p[2]+'/'+HC_MES_ABR[+p[1]-1]; }
     function hcSalaChave(s){ s=String(s||'').toUpperCase(); if(/^\d+$/.test(s)) return parseInt(s,10); const m={FISIO:100,US:101,ACOL1:102,ACOL2:103}; return m[s]||200; }
     function hcSalaRot(s){ s=String(s||''); const m={FISIO:'Fisioterapia',US:'Ultrassom',ACOL1:'Acolhimento 1',ACOL2:'Acolhimento 2'}; if(m[s.toUpperCase()]) return m[s.toUpperCase()]; return /^\d+$/.test(s)?'Sala '+hcPad(parseInt(s,10)):(s?'Sala '+s:'Sem sala'); }
-    function hcItens(dia){
+    const HC_TIT = /^\s*(dr\(a\)\.?|dra\.?|dr\.?|prof\.?|profa\.?)\s+/i;
+    function hcNome(doc){ const p=String(doc||'').replace(HC_TIT,'').trim().split(/\s+/).filter(Boolean); if(p.length>=2 && !/\.$/.test(p[p.length-1])) return p[0]+' '+p[p.length-1].charAt(0).toUpperCase()+'.'; return p.join(' '); }
+    function hcChave(doc){ return String(doc||'').replace(HC_TIT,'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' '); }
+    function hcSt(x){ if (x.status==='estendido') return 'est'; if (x.aberta) return 'aberta'; if (x.status==='confirmado') return 'conf'; return 'prev'; }
+    // raw=true ignora o filtro de profissional (usado no resumo de hoje)
+    function hcItens(dia, raw){
       const d = HC.dias[dia]; if (!d || !d.itens) return [];
       const PER = ['Manhã','Tarde','A definir'];
       return Object.keys(d.itens).map(id => {
         const x = d.itens[id] || {};
-        return { sala:String(x.sala||''), doc:String(x.doc||''), role:String(x.role||''),
+        return { sala:String(x.sala||''), doc:String(x.doc||''), role:String(x.role||''), aberta:!!x.aberta,
                  periodo: x.periodo==='Tarde'?'Tarde':(x.periodo==='A definir'?'A definir':'Manhã'), status:String(x.status||'') };
-      }).filter(x => x.status!=='cancelado' && x.status!=='remarcado')
+      }).filter(x => x.status!=='cancelado' && x.status!=='remarcado' && (raw || !HC.filtro || hcChave(x.doc)===HC.filtro))
         .sort((a,b) => hcSalaChave(a.sala)-hcSalaChave(b.sala) || PER.indexOf(a.periodo)-PER.indexOf(b.periodo) || a.doc.localeCompare(b.doc,'pt'));
     }
     async function hcCarregarMes(ym){
@@ -429,6 +492,66 @@
       return [hcIso(HC.ref).slice(0,7)];
     }
     function hcPerBadge(p){ return '<span class="hc-per'+(p==='Tarde'?' t':'')+'">'+esc(p)+'</span>'; }
+    // ── folha da semana (espelha htmlSemana do módulo) ──
+    function hcRotLinha(s){ return /^\d+$/.test(s) ? parseInt(s,10)+'.' : (HC_ESPECIAIS[s] || (s+'.')); }
+    function hcTexto(x, esp){ const n = hcNome(x.doc).toUpperCase(); return esp || !x.role ? n : n+' ('+x.role.toUpperCase()+')'; }
+    function hcLinhas(lista, per, salas){
+      const xs = lista.filter(x => x.periodo===per);
+      const out = salas.map(sl => {
+        const is = xs.filter(x => x.sala===sl), esp = !!HC_ESPECIAIS[sl], rot = hcRotLinha(sl);
+        return { itens:is, txt: rot + (is.length ? ' '+is.map(x => hcTexto(x,esp)).join(' / ') : '') };
+      });
+      const sem = xs.filter(x => !x.sala);
+      if (sem.length) out.push({ itens:sem, txt:'SEM SALA: '+sem.map(x => hcTexto(x,false)).join(' / ') });
+      return out;
+    }
+    function hcSheet(dias, listas, hoje){
+      const salas = HC_ORDEM.slice();
+      listas.forEach(l => l.forEach(x => { if (x.sala && salas.indexOf(x.sala)<0) salas.push(x.sala); }));
+      const cel = (l, per, d) => {
+        if (per==='Tarde' && hcData(d).getDay()===6 && !l.some(x => x.periodo==='Tarde')) return '';
+        return hcLinhas(l, per, salas).map(ln => {
+          const c = ln.itens.length ? ' hs-'+hcSt(ln.itens[0]) : ' hs-vz';
+          return '<div class="hc-ln'+c+'">'+esc(ln.txt)+(ln.itens.some(x => x.aberta) ? ' <i class="fas fa-lock-open"></i>' : '')+'</div>';
+        }).join('');
+      };
+      const semA = listas.some(l => l.some(x => x.periodo==='A definir'));
+      let h = '<div class="hc-tw"><table class="hc-wk"><thead><tr>' + dias.map(d => '<th class="'+(d===hoje?'hoje':'')+'">'+HC_NOMES_DIA[hcData(d).getDay()]+'<br><small>'+hcCurta(d)+'</small></th>').join('') + '</tr></thead><tbody>';
+      h += '<tr class="band">' + dias.map(() => '<td>MANHÃ</td>').join('') + '</tr>';
+      h += '<tr>' + dias.map((d,i) => '<td>'+cel(listas[i],'Manhã',d)+'</td>').join('') + '</tr>';
+      h += '<tr class="band">' + dias.map(() => '<td>TARDE</td>').join('') + '</tr>';
+      h += '<tr>' + dias.map((d,i) => '<td>'+cel(listas[i],'Tarde',d)+'</td>').join('') + '</tr>';
+      if (semA) h += '<tr class="band"><td colspan="6">PERÍODO A DEFINIR</td></tr><tr>' + dias.map((d,i) => '<td>'+hcLinhas(listas[i],'A definir',['']).filter(ln => ln.itens.length).map(ln => '<div class="hc-ln hs-prev">'+esc(ln.txt)+'</div>').join('')+'</td>').join('') + '</tr>';
+      h += '<tr class="ag">' + dias.map(d => { const n=(HC.dias[d]||{}).agendados; return '<td>Agendados: '+(typeof n==='number'?n:'—')+'</td>'; }).join('') + '</tr>';
+      return h + '</tbody></table></div>';
+    }
+    // celular: a semana aparece dia a dia (a folha completa abre na horizontal)
+    function hcSemanaCelular(dias, listas, hoje){
+      let i = HC.sdia; if (i===null || i<0 || i>5) { i = dias.indexOf(hoje); if (i<0) i = 0; }
+      const chips = dias.map((d,k) => '<button type="button" class="'+(d===hoje?'hj ':'')+(k===i?'on':'')+'" onclick="hcSDia('+k+')">'+HC_DOW[hcData(d).getDay()].slice(0,3).toUpperCase()+'<b>'+d.slice(8)+'</b></button>').join('');
+      const l = listas[i];
+      const bloco = per => { const xs = l.filter(x => x.periodo===per); return xs.length ? '<div class="hc-sband">'+per.toUpperCase()+'</div>'+xs.map(x => '<div class="hc-sit hs-'+hcSt(x)+'">'+esc(hcSalaRot(x.sala))+(x.role && x.role!==hcSalaRot(x.sala) ? ' · '+esc(x.role) : '')+'<span>'+esc(x.doc)+'</span></div>').join('') : ''; };
+      const n = (HC.dias[dias[i]]||{}).agendados;
+      const conteudo = l.length ? bloco('Manhã')+bloco('Tarde')+bloco('A definir') : '<div class="hc-aviso">Sem agenda neste dia.</div>';
+      return '<div class="hc-sm"><div class="hc-smlist"><div class="hc-sdias">'+chips+'</div>'+conteudo+'<div class="hc-sag">Agendados: '+(typeof n==='number'?n:'—')+'</div></div>' +
+        '<button type="button" class="hc-btn hc-vfol" onclick="hcFolha()"><i class="fas fa-table-cells"></i> '+(HC.folha?'Voltar ao dia a dia':'Ver folha completa da semana')+'</button></div>';
+    }
+    function hcPreencherFiltro(){
+      const mapa = {};
+      Object.keys(HC.dias).forEach(d => hcItens(d,true).forEach(x => { const k=hcChave(x.doc); if (k && !mapa[k]) mapa[k]=hcNome(x.doc); }));
+      const ch = Object.keys(mapa).sort((a,b) => mapa[a].localeCompare(mapa[b],'pt'));
+      if (HC.filtro && !mapa[HC.filtro]) HC.filtro = '';
+      const sel = document.getElementById('hcFiltro');
+      const h = '<option value="">Todos os profissionais</option>' + ch.map(k => '<option value="'+esc(k)+'">'+esc(mapa[k])+'</option>').join('');
+      if (sel.getAttribute('data-h')!==h){ sel.innerHTML = h; sel.setAttribute('data-h',h); }
+      sel.value = HC.filtro;
+    }
+    function hcResumo(){
+      const l = hcItens(hcIso(new Date()), true);
+      document.getElementById('hcK1').textContent = l.length;
+      document.getElementById('hcK2').textContent = new Set(l.map(x => hcChave(x.doc))).size;
+      document.getElementById('hcK3').textContent = l.filter(x => x.aberta).length;
+    }
     async function hcRender(){
       const meses = hcMesesVisiveis();
       await Promise.all(meses.map(hcCarregarMes));
@@ -438,27 +561,27 @@
       av.textContent = erros.length ? 'Não foi possível carregar o cronograma agora (' + HC.erro[erros[0]] + ').' : '';
       document.querySelectorAll('#hcSeg button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v')===HC.view));
       document.getElementById('hcBtnPrint').style.display = HC.view==='semana' ? '' : 'none';
+      hcPreencherFiltro(); hcResumo();
+      body.className = HC.folha ? 'hc-fol' : '';
       const hoje = hcIso(new Date());
       if (HC.view==='dia'){
         const di = hcIso(HC.ref), l = hcItens(di);
         tit.textContent = HC_DOW[HC.ref.getDay()] + ', ' + hcBr(di);
         body.innerHTML = HC.ref.getDay()===0 ? '<div class="hc-aviso">Domingo: sem agenda.</div>'
           : !l.length ? '<div class="hc-aviso">' + (erros.length ? '' : 'Nenhuma agenda cadastrada para este dia.') + '</div>'
-          : '<div class="hc-dia">' + l.map(x => '<div class="hc-room"><div class="hc-room-n">'+esc(hcSalaRot(x.sala))+'</div><div class="hc-room-d">'+esc(x.doc)+'</div><div class="hc-room-r">'+esc(x.role)+'</div>'+hcPerBadge(x.periodo)+'</div>').join('') + '</div>';
+          : '<div class="hc-dia">' + l.map(x => { const c=hcSt(x), cor={prev:'#f59e0b',conf:'#3b82f6',aberta:'#22c55e',est:'#8b5cf6'}[c];
+              return '<div class="hc-room" style="border-left-color:'+cor+'"><div class="hc-room-n">'+esc(hcSalaRot(x.sala))+'</div><div class="hc-room-d">'+esc(x.doc)+'</div><div class="hc-room-r">'+esc(x.role)+'</div>'+hcPerBadge(x.periodo)+(x.aberta?' <span class="hc-per" style="background:#dcfce7;color:#166534;">Agenda aberta</span>':'')+'</div>'; }).join('') + '</div>';
       } else if (HC.view==='semana'){
-        const seg = hcSegunda(HC.ref);
-        tit.textContent = hcBr(hcIso(seg)).slice(0,5) + ' a ' + hcBr(hcIso(hcAdd(seg,5)));
-        let h = '<div class="hc-sem">';
-        for (let i=0;i<6;i++){
-          const d = hcAdd(seg,i), di = hcIso(d), l = hcItens(di);
-          h += '<div class="hc-col'+(di===hoje?' hoje':'')+'"><div class="hc-col-h">'+HC_DOW[d.getDay()].slice(0,3)+' '+hcPad(d.getDate())+'/'+hcPad(d.getMonth()+1)+'</div>' +
-            (l.length ? l.map(x => '<div class="hc-it"><b>'+esc(hcSalaRot(x.sala))+' · '+esc(x.periodo.charAt(0))+'</b>'+esc(x.doc)+'<br><span>'+esc(x.role)+'</span></div>').join('') : '<div class="hc-aviso" style="padding:4px 0;">—</div>') + '</div>';
-        }
-        body.innerHTML = h + '</div>';
+        const seg = hcSegunda(HC.ref), dias = [];
+        for (let i=0;i<6;i++) dias.push(hcIso(hcAdd(seg,i)));
+        tit.textContent = hcBr(dias[0]).slice(0,5) + ' a ' + hcBr(dias[5]);
+        const listas = dias.map(d => hcItens(d));
+        if (!listas.some(l => l.length)) { body.innerHTML = '<div class="hc-aviso">' + (erros.length ? '' : 'Sem atendimentos nesta semana.') + '</div>'; return; }
+        const leg = '<div class="hc-leg"><span><i class="hs-prev"></i>Previsto</span><span><i class="hs-conf"></i>Confirmado</span><span><i class="hs-aberta"></i>Aberta</span><span><i class="hs-est"></i>Estendido</span></div>';
+        body.innerHTML = leg + hcSheet(dias, listas, hoje) + hcSemanaCelular(dias, listas, hoje);
       } else {
-        const a = HC.ref.getFullYear(), m0 = HC.ref.getMonth();
-        tit.textContent = HC_MES[m0].charAt(0).toUpperCase() + HC_MES[m0].slice(1) + ' de ' + a;
-        const ult = new Date(a, m0+1, 0).getDate();
+        const a = HC.ref.getFullYear(), m0 = HC.ref.getMonth(), ult = new Date(a, m0+1, 0).getDate();
+        tit.textContent = HC_MESES[m0].charAt(0).toUpperCase() + HC_MESES[m0].slice(1) + ' de ' + a;
         let h = '<div class="hc-mes">' + ['Seg','Ter','Qua','Qui','Sex','Sáb'].map(n => '<div class="hc-mh">'+n+'</div>').join('');
         const off = (new Date(a,m0,1).getDay()+6)%7;           // 0=Seg
         const ini = off>5 ? 0 : off;                            // dia 1 em domingo cai na coluna Seg
@@ -475,27 +598,40 @@
     }
     window.hcView = function(v){ HC.view = v; hcRender(); };
     window.hcNav = function(n){
+      HC.sdia = null;
       if (HC.view==='dia'){ let d=hcAdd(HC.ref,n); if (d.getDay()===0) d=hcAdd(d,n); HC.ref=d; }
       else if (HC.view==='semana') HC.ref = hcAdd(HC.ref, 7*n);
       else { const d=new Date(HC.ref.getFullYear(), HC.ref.getMonth()+n, 1, 12); HC.ref=d; }
       hcRender();
     };
-    window.hcHoje = function(){ HC.ref = new Date(); HC.ref.setHours(12,0,0,0); if (HC.ref.getDay()===0) HC.ref = hcAdd(HC.ref,1); hcRender(); };
-    window.hcAbrirDia = function(di){ const p=di.split('-'); HC.ref=new Date(+p[0],+p[1]-1,+p[2],12); HC.view='dia'; hcRender(); };
+    window.hcHoje = function(){ HC.sdia = null; HC.ref = new Date(); HC.ref.setHours(12,0,0,0); if (HC.ref.getDay()===0) HC.ref = hcAdd(HC.ref,1); hcRender(); };
+    window.hcAbrirDia = function(di){ HC.ref = hcData(di); HC.view='dia'; hcRender(); };
+    window.hcFiltrar = function(v){ HC.filtro = v; hcRender(); };
+    window.hcSDia = function(i){ HC.sdia = i; hcRender(); };
+    window.hcFolha = function(){ HC.folha = !HC.folha; hcRender(); };
+    // Imprimir semana: abre a folha (A4 paisagem, mesmo desenho do módulo) e chama a impressão
     window.hcImprimir = function(){
-      const seg = hcSegunda(HC.ref);
-      let h = '';
-      for (let i=0;i<6;i++){
-        const d = hcAdd(seg,i), di = hcIso(d), l = hcItens(di);
-        h += '<h3>'+esc(HC_DOW[d.getDay()])+' · '+esc(hcBr(di))+'</h3>' + (l.length ? '<table><tr><th>Sala</th><th>Profissional</th><th>Especialidade</th><th>Período</th></tr>' + l.map(x => '<tr><td>'+esc(hcSalaRot(x.sala))+'</td><td>'+esc(x.doc)+'</td><td>'+esc(x.role)+'</td><td>'+esc(x.periodo)+'</td></tr>').join('') + '</table>' : '<p class="v">Sem agenda.</p>');
-      }
+      const seg = hcSegunda(HC.ref), dias = [];
+      for (let i=0;i<6;i++) dias.push(hcIso(hcAdd(seg,i)));
+      const listas = dias.map(d => hcItens(d));
+      const salas = HC_ORDEM.slice();
+      listas.forEach(l => l.forEach(x => { if (x.sala && salas.indexOf(x.sala)<0) salas.push(x.sala); }));
+      const cel = (l, per, d) => {
+        if (per==='Tarde' && hcData(d).getDay()===6 && !l.some(x => x.periodo==='Tarde')) return '';
+        return hcLinhas(l, per, salas).map(ln => '<div class="ln'+(ln.itens.length?' s-'+hcSt(ln.itens[0]):' vz')+'">'+esc(ln.txt)+'</div>').join('');
+      };
+      let h = '<table><thead><tr>' + dias.map(d => '<th>'+HC_NOMES_DIA[hcData(d).getDay()]+'<br><small>'+hcCurta(d)+'</small></th>').join('') + '</tr></thead><tbody>' +
+        '<tr class="band">'+dias.map(() => '<td>MANHÃ</td>').join('')+'</tr><tr>'+dias.map((d,i) => '<td>'+cel(listas[i],'Manhã',d)+'</td>').join('')+'</tr>' +
+        '<tr class="band">'+dias.map(() => '<td>TARDE</td>').join('')+'</tr><tr>'+dias.map((d,i) => '<td>'+cel(listas[i],'Tarde',d)+'</td>').join('')+'</tr>' +
+        '<tr class="ag">'+dias.map(d => { const n=(HC.dias[d]||{}).agendados; return '<td>Agendados: '+(typeof n==='number'?n:'—')+'</td>'; }).join('')+'</tr></tbody></table>';
       const w = window.open('', '_blank');
       if (!w) { alert('Permita pop-ups para imprimir.'); return; }
-      w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cronograma semanal '+esc(hcBr(hcIso(seg)))+'</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#0A1F44}h2{margin:0 0 4px}h3{margin:18px 0 6px;font-size:14px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #cbd5e1;padding:5px 8px;text-align:left}th{background:#f1f5f9}.v{font-size:12px;color:#64748b;margin:0}</style></head><body><h2>Cronograma semanal</h2><div style="font-size:12px;color:#64748b">'+esc(hcBr(hcIso(seg)))+' a '+esc(hcBr(hcIso(hcAdd(seg,5))))+'</div>'+h+'</body></html>');
+      w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cronograma semanal '+esc(hcBr(dias[0]))+'</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif;color:#111;margin:0}h2{margin:0 0 6px;font-size:14px}table{width:100%;border-collapse:collapse;table-layout:fixed}th{border:1.5px solid #111;font-size:10px;padding:3px}th small{font-size:10px}td{border:1.5px solid #111;padding:0;vertical-align:top}tr.band td{background:#d9d9d9;text-align:center;font-style:italic;font-weight:800;font-size:9px;padding:1px}tr.ag td{text-align:center;font-weight:800;font-size:10px;padding:4px}.ln{padding:1px 5px;border-bottom:1px solid #111;font-weight:800;font-size:9.5px;line-height:1.3;overflow-wrap:anywhere}.ln.vz{color:#6b7280;font-weight:600}.ln.s-prev,.ln.s-conf,.ln.s-aberta,.ln.s-est{border-left:4px solid}.ln.s-prev{border-left-color:#f59e0b}.ln.s-conf{border-left-color:#3b82f6}.ln.s-aberta{border-left-color:#22c55e}.ln.s-est{border-left-color:#8b5cf6}</style></head><body><h2>Cronograma semanal · '+esc(hcBr(dias[0]))+' a '+esc(hcBr(dias[5]))+'</h2>'+h+'</body></html>');
       w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
     };
     function hcIniciar(isAdmin){
       document.getElementById('homeCronograma').style.display = 'block';
+      document.getElementById('hcKpis').style.display = 'grid';
       document.getElementById('hcBtnAdm').style.display = isAdmin ? '' : 'none';
       if (!HC.iniciado){ HC.iniciado = true; if (HC.ref.getDay()===0) HC.ref = hcAdd(HC.ref,1); }
       hcRender();
@@ -541,6 +677,7 @@
 
       // [v1.5] saudação + vitrine do cronograma
       document.getElementById('pGreetNome').textContent = primeiroNome;
+      { const h=new Date(), D=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'], M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; document.getElementById('pGreetData').textContent = D[h.getDay()]+', '+h.getDate()+' de '+M[h.getMonth()]; } // [v1.6]
       hcIniciar(isAdmin);
 
       // Revela o portal já montado
@@ -590,7 +727,8 @@
         document.getElementById('fSenha').value = '';
         limparErro();
         document.getElementById('homeCronograma').style.display = 'none'; // [v1.5]
-        HC.dias = {}; HC.carregado = {}; HC.erro = {}; // [v1.5] não vaza dados entre usuários
+        document.getElementById('hcKpis').style.display = 'none'; // [v1.6]
+        HC.dias = {}; HC.carregado = {}; HC.erro = {}; HC.filtro = ''; HC.sdia = null; HC.folha = false; // [v1.5] não vaza dados entre usuários
       });
     };
 
