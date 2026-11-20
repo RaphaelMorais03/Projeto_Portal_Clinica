@@ -1,3 +1,4 @@
+<!-- VERSION: v1.9 | login.html | 19/11/2026 | Vitrine do cronograma, KPIs e botão Gerar agenda só para admin ou perms.cronograma (sem leitura de crono/dias para os demais). Só adições. -->
 <!-- VERSION: v1.5 | login.html | 17/11/2026 | feat: tela inicial com saudação + vitrine do cronograma (Dia/Semana/Mês, somente leitura) acima dos cards; card Cronograma deixa de aparecer (módulo segue acessível pelo Dashboard/Gerar agenda). Só adições + 1 linha removida (exibição do cardCronograma). v1.4 | login.html | 30/10/2026 | fix: card Contratos visível também para usuários com perms.contratos (antes só admin). v1.3 | login.html | 16/10/2026 | feat: card "Emissão de notas" (somente admin) → pages/emissao-notas.html. v1.2 | 03/10/2026 | visual: novo login (card branco sobre fundo navy, tom índigo, splash escura) — sem alteração de lógica. v1.1 | 14/07/2026 | feat: card Contratos + botão de novidades com changelog -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -733,7 +734,17 @@
       w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cronograma semanal '+esc(hcBr(dias[0]))+'</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif;color:#111;margin:0}h2{margin:0 0 6px;font-size:14px}table{width:100%;border-collapse:collapse;table-layout:fixed}th{border:1.5px solid #111;font-size:10px;padding:3px}th small{font-size:10px}td{border:1.5px solid #111;padding:0;vertical-align:top}tr.band td{background:#d9d9d9;text-align:center;font-style:italic;font-weight:800;font-size:9px;padding:1px}tr.ag td{text-align:center;font-weight:800;font-size:10px;padding:4px}.ln{padding:1px 5px;border-bottom:1px solid #111;font-weight:800;font-size:9.5px;line-height:1.3;overflow-wrap:anywhere}.ln.vz{color:#6b7280;font-weight:600}.ln.s-prev,.ln.s-conf,.ln.s-aberta,.ln.s-est{border-left:4px solid}.ln.s-prev{border-left-color:#f59e0b}.ln.s-conf{border-left-color:#3b82f6}.ln.s-aberta{border-left-color:#22c55e}.ln.s-est{border-left-color:#8b5cf6}</style></head><body><h2>Cronograma semanal · '+esc(hcBr(dias[0]))+' a '+esc(hcBr(dias[5]))+'</h2>'+h+'</body></html>');
       w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
     }
-    function hcIniciar(isAdmin){
+    function hcIniciar(isAdmin, podeVer){
+      /* [v1.9] Vitrine, KPIs e "Gerar agenda" só para admin ou perms.cronograma. Quem não tem a permissão não vê o bloco
+         e nenhuma leitura de crono/dias é feita (as Rules já negariam; aqui evitamos erro/vazio na tela). */
+      var gerar = document.getElementById('hcBtnGerar');
+      if (podeVer === false) {
+        document.getElementById('homeCronograma').style.display = 'none';
+        document.getElementById('hcKpis').style.display = 'none';
+        if (gerar) gerar.style.display = 'none';
+        return;
+      }
+      if (gerar) gerar.style.display = '';
       document.getElementById('homeCronograma').style.display = 'block';
       document.getElementById('hcKpis').style.display = 'flex';
       document.getElementById('hcBtnAdm').style.display = isAdmin ? '' : 'none';
@@ -782,7 +793,7 @@
       // [v1.5] saudação + vitrine do cronograma
       document.getElementById('pGreetNome').textContent = primeiroNome;
       { const h=new Date(), D=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'], M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; document.getElementById('pGreetData').textContent = D[h.getDay()]+', '+h.getDate()+' de '+M[h.getMonth()]; } // [v1.6]
-      hcIniciar(isAdmin);
+      hcIniciar(isAdmin, isAdmin || !!perms.cronograma); // [v1.9] vitrine só com permissão de cronograma
 
       // Revela o portal já montado
       document.getElementById('telaLogin').style.display  = 'none';
