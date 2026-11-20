@@ -1,3 +1,4 @@
+<!-- VERSION: v7.0 | dashboard.html | 19/11/2026 | Sidebar reorganizada em grupos (Início / Operação / Análises / Pessoas / Administração) e módulos abrindo em painel embutido (?embed=1) com "Abrir em tela cheia". Só adições: nenhuma função, id ou caminho do Firebase alterado. ?mod=<id> abre um módulo direto. -->
 <!-- VERSION: v6.9 | dashboard.html | 17/11/2026 | Sidebar: novo grupo "Configuração" com item Cronograma (só admin) que abre o módulo em modo embed dentro do dashboard; ?tab=cronograma abre direto. Só adições. -->
 <!-- VERSION: v6.8 | dashboard.html | 22/10/2026 | base v6.0 + aba 1:1s (atendentes com caixa, NPS por atendente) · NF em Lote removido do menu/Hoje (código interno dormente) -->
 <!-- VERSION: v6.0 | dashboard.html | 13/10/2026 | NF em Lote v6.0 — fluxo unificado: 2 abas (Emitir lote / Retorno Sinaxys), seletor de data único no topo (nflx_dia_ativo), layout da planilha por data (NFL_LAYOUTS, fallback na cascata), operador→Consulta/Exame no Mapear (admin/nfl_operadores), escrever Nº NF direto na planilha via Apps Script (fallback .xlsx) + _status processado, fila de incompletos (nfl_incompletos), downloads nomeados DD_MM_AAAA. -->
@@ -8762,6 +8763,155 @@
 </script>
 <!-- [v2.2] fim da aba 1:1s -->
 
+
+  <!-- ═══════════ [v7.0] Central do admin: sidebar em grupos + módulos embutidos ═══════════
+       Só adições, executado depois de todos os blocos que montam a sidebar (v4.x/v5.1/v6.9/v2.2).
+       - Reordena os botões JÁ existentes (os nós são movidos, não recriados: listeners e ids intactos).
+       - Cria botões novos que abrem os módulos em painel com iframe "?embed=1" (modo definido em js/shared-utils.js v1.1).
+       - Os 3 links que saíam da página (NPS, Cadastros, Administração) viram itens embutidos; o botão do painel
+         "Abrir em tela cheia" mantém o acesso à página inteira, no mesmo endereço de antes.
+       - Se algum botão esperado não existir, a sidebar fica como estava (nada é removido).
+       - Dashboard continua só para admin (gate existente); cada módulo embutido refaz o próprio gate. -->
+  <style>
+    .dsh-emb-panel{position:fixed;left:232px;top:63px;right:0;bottom:0;z-index:80;background:#fff;display:none;flex-direction:column;}
+    .dsh-emb-panel.show{display:flex;}
+    .dsh-emb-bar{display:flex;align-items:center;gap:10px;height:36px;padding:0 14px;border-bottom:1px solid #e5e7eb;background:#fafbfd;font:600 12px 'Inter',sans-serif;color:#475569;flex-shrink:0;}
+    .dsh-emb-bar b{color:#0b1020;font-weight:800;}
+    .dsh-emb-bar .sp{flex:1;}
+    .dsh-emb-bar a,.dsh-emb-bar button{font:600 12px 'Inter',sans-serif;color:#4338ca;background:none;border:0;cursor:pointer;text-decoration:none;padding:4px 8px;border-radius:6px;}
+    .dsh-emb-bar a:hover,.dsh-emb-bar button:hover{background:#eef2ff;}
+    .dsh-emb-body{position:relative;flex:1;min-height:0;}
+    .dsh-emb-body iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#fff;}
+    .dsh-emb-body iframe.show{display:block;}
+    .dsh-emb-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font:600 13px 'Inter',sans-serif;pointer-events:none;}
+    .saas-nav .dsh-ext{margin-left:auto;width:auto;font-size:9px;opacity:.45;}
+    @media(max-width:1024px){.dsh-emb-panel{left:0;}}
+  </style>
+  <script>
+  (function(){
+    try {
+      var sb = document.getElementById('saasSidebar'); if (!sb) return;
+      var Q = function(sel){ return sb.querySelector(sel); };
+
+      /* módulos embutidos: id → rótulo, ícone, página (relativa a /pages/) */
+      var MODS = {
+        caixa_dia:   {l:'Caixa do dia',            i:'fa-cash-register',        u:'caixa.html'},
+        repasse:     {l:'Repasse de profissionais',i:'fa-hand-holding-dollar',  u:'fechamento.html'},
+        financeiro:  {l:'Financeiro',              i:'fa-coins',                u:'financeiro.html'},
+        conciliacao: {l:'Conciliação',             i:'fa-scale-balanced',       u:'conciliacao.html'},
+        notas:       {l:'Emissão de notas',        i:'fa-file-invoice',         u:'emissao-notas.html'},
+        exames:      {l:'Retirada de exames',      i:'fa-box-archive',          u:'exames.html'},
+        orcamentos:  {l:'Orçamentos',              i:'fa-calculator',           u:'orcamentos.html'},
+        contratos_em:{l:'Emitir contratos',        i:'fa-file-signature',       u:'contratos.html'},
+        gerar_agenda:{l:'Gerar agenda',            i:'fa-file-lines',           u:'cronograma.html?gerar=1'},
+        nps:         {l:'NPS',                     i:'fa-star',                 u:'nps.html'},
+        admin:       {l:'Painel administrativo',   i:'fa-gear',                 u:'admin.html'},
+        cadastros:   {l:'Cadastros',               i:'fa-database',             u:'cadastros.html'}
+      };
+
+      /* botões que já existem */
+      var antigos = {
+        hoje: Q('.saas-nav[data-tab="hoje"]'),   visao: Q('.saas-nav[data-tab="visao"]'),
+        prod: Q('.saas-nav[data-tab="prod"]'),   ranking: Q('.saas-nav[data-tab="ranking"]'),
+        caixa: Q('.saas-nav[data-tab="caixa"]'), fech: Q('.saas-nav[data-tab="fech"]'),
+        contratos: Q('.saas-nav[data-tab="contratos"]'), odonto: Q('.saas-nav[data-tab="odonto"]'),
+        oo: Q('#ooNavItem'), crono: Q('#dshNavCrono')
+      };
+      var obrig = ['hoje','visao','prod','ranking','caixa','fech','contratos','odonto'];
+      for (var i = 0; i < obrig.length; i++) if (!antigos[obrig[i]]) { console.warn('[dashboard v7.0] botão ausente (' + obrig[i] + '): sidebar mantida como está'); return; }
+      var linksAntigos = ['nps.html','cadastros.html','admin.html'].map(function(h){ return Q('.saas-nav[data-href="' + h + '"]'); });
+
+      /* ---------- painel embutido ---------- */
+      var panel = null, bar = null, body = null, tit = null, ext = null, frames = {}, atual = null, btns = {};
+      function montarPanel(){
+        panel = document.createElement('div'); panel.className = 'dsh-emb-panel'; panel.id = 'dshEmbPanel';
+        panel.innerHTML = '<div class="dsh-emb-bar"><b id="dshEmbTit"></b><span class="sp"></span>' +
+          '<button type="button" id="dshEmbReload"><i class="fas fa-rotate-right"></i> Recarregar</button>' +
+          '<a id="dshEmbExt" target="_blank" rel="noopener"><i class="fas fa-up-right-from-square"></i> Abrir em tela cheia</a></div>' +
+          '<div class="dsh-emb-body" id="dshEmbBody"></div>';
+        document.body.appendChild(panel);
+        tit = panel.querySelector('#dshEmbTit'); ext = panel.querySelector('#dshEmbExt'); body = panel.querySelector('#dshEmbBody');
+        panel.querySelector('#dshEmbReload').addEventListener('click', function(){
+          var f = atual && frames[atual]; if (f) { f.classList.remove('loaded'); f.src = f.src; }
+        });
+      }
+      function urlEmbed(u){ return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'embed=1'; }
+      window.dshEmbAbrir = function(id){
+        var m = MODS[id]; if (!m) return;
+        if (!panel) montarPanel();
+        if (!frames[id]) {
+          var f = document.createElement('iframe'); f.title = m.l; f.setAttribute('data-mod', id);
+          var ld = document.createElement('div'); ld.className = 'dsh-emb-load'; ld.textContent = 'Carregando ' + m.l + '…';
+          f.addEventListener('load', function(){ if (ld.parentNode) ld.parentNode.removeChild(ld); });
+          body.appendChild(ld); f.src = urlEmbed(m.u); body.appendChild(f); frames[id] = f;
+        }
+        Object.keys(frames).forEach(function(k){ frames[k].classList.toggle('show', k === id); });
+        atual = id; tit.textContent = m.l; ext.href = m.u;
+        panel.classList.add('show');
+        sb.querySelectorAll('.saas-nav').forEach(function(b){ b.classList.toggle('active', b === btns[id]); });
+      };
+      window.dshEmbFechar = function(){
+        if (panel) panel.classList.remove('show');
+        if (atual && btns[atual]) btns[atual].classList.remove('active');
+        atual = null;
+      };
+
+      /* ---------- botões novos ---------- */
+      function novoBtn(id){
+        var m = MODS[id], b = document.createElement('button');
+        b.type = 'button'; b.className = 'saas-nav'; b.setAttribute('data-emb', id);
+        b.innerHTML = '<i class="fas ' + m.i + '"></i> ' + m.l;
+        b.addEventListener('click', function(){
+          window.dshEmbAbrir(id);
+          if (window.innerWidth <= 1024) { var o = document.getElementById('saasOverlayBg'); sb.classList.remove('open'); if (o) o.classList.remove('show'); }
+        });
+        btns[id] = b; return b;
+      }
+      function sec(t){ var d = document.createElement('div'); d.className = 'saas-nav-section'; d.textContent = t; return d; }
+
+      /* ordem final: [título, [botões]] — o grupo sem botão é ignorado */
+      var plano = [
+        ['Início',        [antigos.hoje, antigos.visao]],
+        ['Operação',      ['caixa_dia','repasse','financeiro','conciliacao','notas','exames','orcamentos','contratos_em','gerar_agenda'].map(novoBtn)],
+        ['Análises',      [antigos.prod, antigos.ranking, antigos.caixa, antigos.fech, antigos.contratos, antigos.odonto, novoBtn('nps')]],
+        ['Pessoas',       [antigos.oo]],
+        ['Administração', [novoBtn('admin'), novoBtn('cadastros'), antigos.crono]]
+      ];
+
+      /* reconstrói a sidebar reaproveitando os nós existentes */
+      var logo = sb.querySelector('.saas-logo');
+      Array.prototype.slice.call(sb.children).forEach(function(n){ if (n !== logo) sb.removeChild(n); });
+      plano.forEach(function(g, idx){
+        var lista = g[1].filter(Boolean); if (!lista.length) return;
+        var s = sec(g[0]); if (idx > 0) s.style.marginTop = '10px';
+        sb.appendChild(s); lista.forEach(function(b){ sb.appendChild(b); });
+      });
+      linksAntigos.forEach(function(b){ if (b && b.parentNode) b.parentNode.removeChild(b); }); /* já cobertos pelos itens embutidos */
+      if (antigos.crono) antigos.crono.innerHTML = '<i class="fas fa-calendar-week"></i> Cronograma (configuração)';
+
+      /* qualquer outro item da sidebar (abas, 1:1s, Cronograma) fecha o painel embutido */
+      sb.addEventListener('click', function(e){
+        var b = e.target.closest && e.target.closest('.saas-nav');
+        if (b && !b.hasAttribute('data-emb')) window.dshEmbFechar();
+      }, true);
+      /* troca de aba feita por código (ex.: atalhos do "Hoje") também fecha */
+      if (typeof window.switchMainTab === 'function') {
+        var orig = window.switchMainTab;
+        window.switchMainTab = function(){ window.dshEmbFechar(); return orig.apply(this, arguments); };
+      }
+      /* "voltar ao portal" vindo de dentro de um módulo embutido (shared-utils v1.1) → volta para "Hoje" */
+      window.addEventListener('message', function(e){
+        if (e.origin !== location.origin || !e.data || e.data.tipo !== 'portal:voltar') return;
+        window.dshEmbFechar();
+        try { if (typeof window.switchMainTab === 'function') window.switchMainTab('hoje'); } catch(x) {}
+        sb.querySelectorAll('.saas-nav').forEach(function(b){ b.classList.toggle('active', b === antigos.hoje); });
+      });
+      /* link direto: dashboard.html?mod=repasse */
+      var mm = /(?:^|[?&])mod=([a-z_]+)(?:&|$)/.exec(location.search);
+      if (mm && MODS[mm[1]]) setTimeout(function(){ window.dshEmbAbrir(mm[1]); }, 600);
+    } catch(e) { console.warn('[dashboard v7.0] sidebar:', e); }
+  })();
+  </script>
 
   <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v6.0 · 13/10/2026</span>
   <!-- [v1.1] Pesquisa de satisfação (modal de estrelas) — config em js/pesquisa-satisfacao.js -->
