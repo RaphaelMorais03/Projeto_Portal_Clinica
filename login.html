@@ -76,7 +76,7 @@
     .btn-sair{background:var(--red);color:white;border:none;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
     .btn-sair:hover{background:var(--red-h);}
     /* [v1.2] botão Avaliar o portal */
-    .p-content{max-width:1000px;margin:0 auto;padding:48px 24px 60px;}
+    .p-content{max-width:1680px;margin:0 auto;padding:44px 40px 60px;} /* [v1.7] mais largo: preenche monitores grandes */
     .p-greeting{margin-bottom:36px;}
     .p-greeting-sub{font-size:13px;color:var(--gray-400);margin-bottom:6px;}
     .p-greeting-title{font-size:30px;font-weight:900;color:var(--navy);letter-spacing:-.8px;}
@@ -98,6 +98,8 @@
     @keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
     @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
     @media(max-width:860px){.portal-grid{grid-template-columns:1fr;}.p-header{padding:0 20px;}}
+    @media(min-width:1200px){.portal-grid{grid-template-columns:repeat(3,1fr);}} /* [v1.7] 3 colunas em tela larga */
+    @media(max-width:700px){.p-content{padding:20px 16px 40px;}}
     /* ícones brancos sobre fundo claro (Orçamentos / Contratos) */
     #cardOrcamentos .pc-icon{background:#b45309 !important;}
     #cardContratos .pc-icon{background:#0A1F44 !important;}
