@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<!-- VERSION: v1.0 | pessoas.html | 19/11/2026 | Etapa 4b — Cadastro central de pessoas: relatório de associação (SOMENTE LEITURA) + consulta de pessoas/{pid}. Não grava nada no Firebase. -->
+<html lang="pt-BR">
+<head>
+  <link rel="icon" href="../assets/favicon.png" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro central de pessoas</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/shared-utils.js"></script>
+  <style>
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--amber:#92400e;--amber-bg:#fef3c7;--green:#059669;--green-bg:#d1fae5;--blue:#1d4ed8;--blue-bg:#dbeafe;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-600:#475569;--gray-800:#1e293b;--shadow:0 4px 16px rgba(15,23,42,.08);}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:var(--gray-100);color:var(--gray-800);min-height:100vh;}
+    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;}
+    .s-logo{display:flex;align-items:center;gap:12px;}
+    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
+    .s-logo-sub{font-size:10px;color:var(--gray-400);}
+    .header-right{display:flex;align-items:center;gap:10px;}
+    .admin-badge{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:5px;}
+    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;}
+    .content{max-width:1280px;margin:0 auto;padding:22px 22px 60px;}
+    .tabs{display:flex;gap:6px;margin-bottom:18px;background:white;border:1px solid var(--gray-200);border-radius:14px;padding:6px;box-shadow:var(--shadow);}
+    .tab-btn{flex:1;padding:9px 12px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--gray-400);display:flex;align-items:center;justify-content:center;gap:7px;}
+    .tab-btn.active{background:var(--navy);color:white;}
+    .panel{display:none;} .panel.active{display:block;}
+    .card{background:white;border:1px solid var(--gray-200);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px;}
+    .card h3{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+    .help{font-size:12px;color:var(--gray-600);line-height:1.55;}
+    .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;}
+    .btn-p{padding:9px 16px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+    .btn-p:disabled{opacity:.55;cursor:wait;}
+    .btn-s{padding:9px 14px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+    .chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-600);font-weight:600;}
+    input[type=search],select{padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;background:white;color:var(--gray-800);}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 4px;}
+    .kpi{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:12px 14px;}
+    .kpi b{display:block;font-size:22px;font-weight:900;color:var(--navy);}
+    .kpi span{font-size:11px;color:var(--gray-600);font-weight:600;}
+    table{width:100%;border-collapse:collapse;font-size:12.5px;}
+    th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);padding:8px 10px;border-bottom:2px solid var(--gray-200);position:sticky;top:0;background:white;}
+    td{padding:9px 10px;border-bottom:1px solid var(--gray-100);vertical-align:top;}
+    .scroll{max-height:62vh;overflow:auto;border:1px solid var(--gray-200);border-radius:12px;}
+    .tag{display:inline-block;border-radius:20px;padding:2px 9px;font-size:10.5px;font-weight:800;margin:1px 3px 1px 0;white-space:nowrap;}
+    .t-ok{background:var(--green-bg);color:#065f46;} .t-info{background:var(--blue-bg);color:var(--blue);}
+    .t-warn{background:var(--amber-bg);color:var(--amber);} .t-bad{background:#fee2e2;color:#991b1b;} .t-mut{background:var(--gray-100);color:var(--gray-600);}
+    .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;}
+    .empty{text-align:center;padding:34px 16px;color:var(--gray-400);font-size:13px;}
+    .loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;z-index:999;}
+    .toast-box{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
+    .toast{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;color:white;box-shadow:0 8px 24px rgba(0,0,0,.2);}
+    .toast.success{background:var(--green);} .toast.error{background:var(--red);} .toast.info{background:var(--navy);}
+    .note{background:var(--amber-bg);border:1px solid #fde68a;color:var(--amber);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;margin-top:12px;}
+  </style>
+</head>
+<body>
+  <div class="red-bar"></div>
+  <div id="loadingScreen" class="loading-screen"><i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Verificando acesso...</div>
+
+  <header class="s-header">
+    <div class="s-logo"><div><div class="s-logo-name">Cadastro central de pessoas</div><div class="s-logo-sub">Médicos e colaboradores · um ID por pessoa</div></div></div>
+    <div class="header-right">
+      <span class="admin-badge"><i class="fas fa-shield-halved"></i> Admin</span>
+      <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="tabs">
+      <button class="tab-btn active" id="tabRel" onclick="pesTab('rel')"><i class="fas fa-diagram-project"></i> Relatório de associação</button>
+      <button class="tab-btn" id="tabCad" onclick="pesTab('cad')"><i class="fas fa-address-book"></i> Cadastro central</button>
+    </div>
+
+    <!-- ═════════ RELATÓRIO (somente leitura) ═════════ -->
+    <div class="panel active" id="panRel">
+      <div class="card">
+        <h3><i class="fas fa-magnifying-glass-chart"></i> Quem é quem nas fontes atuais</h3>
+        <p class="help">Lê as listas de profissionais que o sistema usa hoje (Admin, Fechamento, lista fixa do Fechamento e Cronograma) e agrupa o que parece ser a mesma pessoa. <b>Nada é gravado, associado ou alterado.</b> O agrupamento por CPF é a evidência mais forte; nome parecido é só sugestão para você decidir depois. CPFs aparecem mascarados.</p>
+        <div class="bar">
+          <button class="btn-p" id="btnGerar" onclick="pesGerar()"><i class="fas fa-play"></i> Gerar relatório</button>
+          <label class="chk"><input type="checkbox" id="chkHist"> Contar repasses do histórico (baixa todos os registros; mais lento)</label>
+          <button class="btn-s" id="btnCsv" onclick="pesCsv()" disabled><i class="fas fa-file-csv"></i> Baixar CSV</button>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <div id="avisos"></div>
+      </div>
+      <div class="card" id="cardTab" style="display:none;">
+        <div class="bar" style="margin-top:0;margin-bottom:12px;">
+          <input type="search" id="fBusca" placeholder="Buscar nome…" oninput="pesRender()" style="min-width:220px;">
+          <select id="fFiltro" onchange="pesRender()">
+            <option value="">Todos</option>
+            <option value="lote">Prontos para confirmar (agenda com nome idêntico)</option>
+            <option value="revisar">Revisar (parecido, ambíguo, duplicado ou CPF inválido)</option>
+            <option value="fora">Fora da lista atual do Fechamento</option>
+            <option value="apagado">Apagados no Fechamento</option>
+            <option value="semagenda">Sem agenda no Cronograma</option>
+          </select>
+          <span class="help" id="contador"></span>
+        </div>
+        <div class="scroll"><table><thead><tr><th>Pessoa</th><th>CPF</th><th>Fontes</th><th>Cronograma</th><th>Repasses</th><th>Situação</th></tr></thead><tbody id="tbody"></tbody></table></div>
+      </div>
+      <div class="card" id="cardCronoSemPar" style="display:none;"><h3><i class="fas fa-calendar-xmark"></i> Médicos do cronograma sem par nas outras fontes</h3><div id="semPar" class="help"></div></div>
+    </div>
+
+    <!-- ═════════ CADASTRO CENTRAL (consulta) ═════════ -->
+    <div class="panel" id="panCad">
+      <div class="card">
+        <h3><i class="fas fa-address-book"></i> pessoas/{pid}</h3>
+        <p class="help">Consulta do cadastro central. Esta versão só lê; o cadastro e a associação com confirmação entram na próxima etapa, depois que as Rules de <span class="mono">pessoas</span> forem publicadas.</p>
+        <div class="bar"><button class="btn-p" onclick="pesCarregarCentral()"><i class="fas fa-rotate"></i> Atualizar</button></div>
+        <div id="centralMsg"></div>
+        <div class="scroll" style="margin-top:12px;"><table><thead><tr><th>Nome</th><th>Categoria</th><th>Especialidade</th><th>Situação</th><th>ID</th></tr></thead><tbody id="tbCentral"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="toast-box" id="toastBox"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const app = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    /* ───────── utilidades ───────── */
+    const dg = s => String(s == null ? '' : s).replace(/\D/g, '');
+    const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      .replace(/\b(dr|dra|prof|profa)\b\.?/g, ' ').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const mask = c => { c = dg(c); return c.length === 11 ? c.slice(0, 3) + '.***.***-' + c.slice(9) : (c ? 'CPF inválido' : '—'); };
+    const cpfValido = c => { c = dg(c); return c.length === 11 && (typeof window.validarCPF !== 'function' || window.validarCPF(c)); };
+    const lerRef = async p => { const s = await get(ref(db, p)); return s.exists() ? s.val() : null; };
+    const lista = v => !v ? [] : (Array.isArray(v) ? v : Object.keys(v).map(k => v[k])).filter(Boolean);
+
+    /* ───────── leitura das fontes (todas SOMENTE LEITURA) ───────── */
+    /* [v1.0] lista fixa de profissionais embutida no fechamento.html (fallback do Fechamento). Lida do próprio arquivo para não duplicar CPFs em outro código. */
+    async function lerListaFixa() {
+      try {
+        const r = await fetch('fechamento.html', { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+        const t = await r.text(); const i = t.indexOf('const baseProfissionais'); if (i < 0) return { itens: [], erro: 'bloco não encontrado' };
+        const j = t.indexOf('];', i); const bloco = t.slice(i, j);
+        const out = []; const re = /\{\s*nome:\s*'((?:[^'\\]|\\.)*)'\s*,\s*documento:\s*'([^']*)'/g; let m;
+        while ((m = re.exec(bloco))) out.push({ nome: m[1].replace(/\\'/g, "'"), cpf: dg(m[2]) });
+        return { itens: out, erro: '' };
+      } catch (e) { return { itens: [], erro: e.message }; }
+    }
+
+    /* ───────── agrupamento ───────── */
+    let REL = null;
+    function agrupar(fontes) {
+      const pai = {};
+      const f = x => { while (pai[x] !== x) { pai[x] = pai[pai[x]]; x = pai[x]; } return x; };
+      const nodo = x => { if (!(x in pai)) pai[x] = x; return x; };
+      const une = (a, b) => { a = f(nodo(a)); b = f(nodo(b)); if (a !== b) pai[b] = a; };
+      const regs = []; let seq = 0;
+      const add = (fonte, nome, cpf, extra) => {
+        const r = Object.assign({ fonte, nome: String(nome || '').trim(), cpf: dg(cpf) }, extra || {});
+        r.no = r.cpf.length ? 'c:' + r.cpf : 'n:' + (seq++) + ':' + norm(r.nome);
+        nodo(r.no); regs.push(r); return r;
+      };
+      fontes.admin.forEach(p => add('admin', p.nome, p.documento, { chave: p._k, crm: p.crm, esp: p.especialidade, regime: p.regime }));
+      fontes.extras.forEach(e => { const r = add('extra', e.nome, e.documento, { regime: e.regime, temPix: !!e.chavePix }); if (dg(e.overrideCpf) && dg(e.overrideCpf) !== r.cpf) { nodo('c:' + dg(e.overrideCpf)); une(r.no, 'c:' + dg(e.overrideCpf)); r.override = dg(e.overrideCpf); } });
+      fontes.fixa.forEach(p => add('fixa', p.nome, p.cpf));
+      Object.keys(fontes.hist || {}).forEach(c => add('hist', fontes.hist[c].nome, c, { n: fontes.hist[c].n }));
+      const apag = new Set(fontes.apagados.map(dg));
+      const gr = {};
+      regs.forEach(r => { const k = f(r.no); (gr[k] = gr[k] || { regs: [], cpfs: new Set(), fontes: new Set(), repasses: 0, nomes: [] }); const g = gr[k]; g.regs.push(r); if (r.cpf) g.cpfs.add(r.cpf); if (r.override) g.cpfs.add(r.override); g.fontes.add(r.fonte); if (r.n) g.repasses += r.n; });
+      const ordem = ['extra', 'admin', 'fixa', 'hist'];
+      const out = Object.keys(gr).map((k, i) => {
+        const g = gr[k];
+        g.nomeExib = (ordem.map(o => g.regs.find(r => r.fonte === o && r.nome)).find(Boolean) || { nome: '(sem nome)' }).nome;
+        g.nomes = Array.from(new Set(g.regs.map(r => r.nome).filter(Boolean)));
+        g.apagado = Array.from(g.cpfs).some(c => apag.has(c));
+        g.naLista = !g.apagado && (g.fontes.has('admin') || g.fontes.has('extra'));
+        g.cpfPrincipal = (g.regs.find(r => r.fonte === 'extra' && r.cpf) || g.regs.find(r => r.cpf) || {}).cpf || '';
+        g.cpfInvalido = g.cpfs.size ? Array.from(g.cpfs).some(c => !cpfValido(c)) && !Array.from(g.cpfs).some(cpfValido) : true;
+        g.crono = []; g.cronoTipo = ''; g.cronoCand = [];
+        g.id = 'g' + i; g.flags = [];
+        return g;
+      });
+      return out;
+    }
+
+    function compativel(m, nomeGrupo) {
+      const pn = norm(m.nome).split(' ')[0]; const sob = norm(m.sobrenome).split(' ').filter(Boolean);
+      const t = norm(nomeGrupo).split(' ').filter(Boolean); if (!pn || t[0] !== pn) return false;
+      if (!sob.length) return true;
+      const resto = t.slice(1);
+      return resto.indexOf(sob[0]) >= 0 || resto.some(w => sob[0].length === 1 && w.charAt(0) === sob[0]);
+    }
+
+    function ligarCrono(grupos, crono) {
+      const semPar = [];
+      const porNome = {}; grupos.forEach(g => g.nomes.forEach(n => { const k = norm(n); (porNome[k] = porNome[k] || new Set()).add(g); }));
+      Object.keys(crono || {}).forEach(id => {
+        const m = Object.assign({ _id: id }, crono[id]); const full = norm((m.nome || '') + ' ' + (m.sobrenome || ''));
+        const exatos = porNome[full] ? Array.from(porNome[full]) : [];
+        if (exatos.length === 1) { exatos[0].crono.push(m); exatos[0].cronoTipo = exatos[0].cronoTipo || 'identico'; return; }
+        if (exatos.length > 1) { exatos.forEach(g => { g.crono.push(m); g.cronoTipo = 'ambiguo'; }); return; }
+        const cands = grupos.filter(g => g.nomes.some(n => compativel(m, n)));
+        if (cands.length) { cands.forEach(g => { g.cronoCand.push(m); if (!g.cronoTipo) g.cronoTipo = 'parecido'; }); return; }
+        semPar.push(m);
+      });
+      return semPar;
+    }
+
+    function sinalizar(grupos) {
+      const nomes = {}; grupos.forEach(g => { const k = norm(g.nomeExib); (nomes[k] = nomes[k] || []).push(g); });
+      grupos.forEach(g => {
+        if (g.cpfInvalido) g.flags.push('invalido');
+        if ((nomes[norm(g.nomeExib)] || []).length > 1) g.flags.push('duplicado');
+        if (g.cronoTipo === 'ambiguo' || g.cronoTipo === 'parecido') g.flags.push('revisar');
+        g.lote = g.cronoTipo === 'identico' && g.crono.length === 1 && g.naLista && !g.flags.length;
+        g.fora = !g.naLista && !g.apagado;
+        g.semAgenda = !g.crono.length && !g.cronoCand.length;
+      });
+    }
+
+    /* ───────── geração ───────── */
+    window.pesGerar = async function () {
+      const btn = document.getElementById('btnGerar'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lendo fontes…';
+      const avisos = []; REL = null;
+      try {
+        const falhas = []; const tenta = async (p) => { try { return await lerRef(p); } catch (e) { falhas.push(p + ' (' + (e.code || e.message) + ')'); return null; } };
+        const [adm, ext, apag, crono] = await Promise.all([tenta('admin/profissionais'), tenta('fechamento/profissionais_extras'), tenta('fechamento/profissionais_apagados'), tenta('crono/medicos')]);
+        const fixa = await lerListaFixa(); if (fixa.erro) avisos.push('Lista fixa do Fechamento não foi lida (' + esc(fixa.erro) + '). O relatório segue sem ela.');
+        let hist = {};
+        if (document.getElementById('chkHist').checked) {
+          const reg = await tenta('fechamento/registros');
+          lista(reg).forEach(r => { const p = r.profissional || {}; const c = dg(p.documento); if (!c) return; (hist[c] = hist[c] || { nome: p.nome, n: 0 }).n++; });
+        }
+        if (falhas.length) avisos.push('Sem permissão ou erro ao ler: ' + esc(falhas.join('; ')));
+        const fontes = {
+          admin: adm ? Object.keys(adm).map(k => Object.assign({ _k: k }, adm[k])).filter(p => p && p.nome) : [],
+          extras: lista(ext).filter(e => e && e.nome), apagados: lista(apag), fixa: fixa.itens, hist
+        };
+        const grupos = agrupar(fontes); const semPar = ligarCrono(grupos, crono || {}); sinalizar(grupos);
+        REL = { grupos, semPar, fontes, cronoTotal: Object.keys(crono || {}).length, comHist: !!document.getElementById('chkHist').checked };
+        document.getElementById('btnCsv').disabled = false;
+      } catch (e) { avisos.push('Erro: ' + esc(e.message || e)); toast('Erro ao gerar o relatório', 'error'); }
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-play"></i> Gerar relatório';
+      document.getElementById('avisos').innerHTML = avisos.map(a => '<div class="note">' + a + '</div>').join('');
+      pesRender();
+    };
+
+    function tagsFontes(g) {
+      const nm = { admin: ['Admin', 't-info'], extra: ['Fechamento', 't-info'], fixa: ['Lista fixa', 't-mut'], hist: ['Histórico', 't-mut'] };
+      return Array.from(g.fontes).map(f => '<span class="tag ' + nm[f][1] + '">' + nm[f][0] + '</span>').join('');
+    }
+    function tagCrono(g) {
+      if (g.cronoTipo === 'identico') return '<span class="tag t-ok">Nome idêntico</span> ' + esc(g.crono.map(m => (m.nome + ' ' + m.sobrenome).trim()).join(', '));
+      if (g.cronoTipo === 'ambiguo') return '<span class="tag t-bad">Ambíguo</span> ' + esc(g.crono.map(m => (m.nome + ' ' + m.sobrenome).trim()).join(', '));
+      if (g.cronoTipo === 'parecido') return '<span class="tag t-warn">Parecido</span> ' + esc(g.cronoCand.map(m => (m.nome + ' ' + m.sobrenome).trim()).join(', '));
+      return '<span class="tag t-mut">Sem agenda</span>';
+    }
+    function tagsSit(g) {
+      let h = g.naLista ? '<span class="tag t-ok">Na lista do Fechamento</span>' : '';
+      if (g.apagado) h += '<span class="tag t-bad">Apagado no Fechamento</span>';
+      if (g.fora) h += '<span class="tag t-warn">Fora da lista atual</span>';
+      if (g.flags.indexOf('invalido') >= 0) h += '<span class="tag t-bad">CPF inválido</span>';
+      if (g.flags.indexOf('duplicado') >= 0) h += '<span class="tag t-warn">Mesmo nome, CPF diferente</span>';
+      if (g.lote) h += '<span class="tag t-info">Pronto p/ confirmar</span>';
+      return h;
+    }
+
+    window.pesRender = function () {
+      const card = document.getElementById('cardTab');
+      if (!REL) { card.style.display = 'none'; document.getElementById('kpis').innerHTML = ''; return; }
+      const G = REL.grupos;
+      const n = fn => G.filter(fn).length;
+      document.getElementById('kpis').innerHTML = [
+        [G.length, 'Pessoas distintas (por CPF)'],
+        [REL.fontes.admin.length + ' / ' + REL.fontes.extras.length + ' / ' + REL.fontes.fixa.length, 'Admin / Fechamento / Lista fixa'],
+        [REL.cronoTotal, 'Médicos no Cronograma'],
+        [n(g => g.lote), 'Prontos p/ confirmar'],
+        [n(g => g.flags.length), 'Para revisar'],
+        [n(g => g.fora), 'Fora da lista atual'],
+        [n(g => g.apagado), 'Apagados'],
+        [REL.semPar.length, 'Agenda sem par']
+      ].map(k => '<div class="kpi"><b>' + esc(k[0]) + '</b><span>' + esc(k[1]) + '</span></div>').join('');
+      const q = norm(document.getElementById('fBusca').value), fl = document.getElementById('fFiltro').value;
+      const filtro = {
+        '': () => true, lote: g => g.lote, revisar: g => g.flags.length > 0, fora: g => g.fora, apagado: g => g.apagado, semagenda: g => g.semAgenda
+      }[fl];
+      const vis = G.filter(g => filtro(g) && (!q || g.nomes.some(nm => norm(nm).indexOf(q) >= 0))).sort((a, b) => a.nomeExib.localeCompare(b.nomeExib, 'pt'));
+      document.getElementById('contador').textContent = vis.length + ' de ' + G.length;
+      document.getElementById('tbody').innerHTML = vis.length ? vis.map(g =>
+        '<tr><td><b>' + esc(g.nomeExib) + '</b>' + (g.nomes.length > 1 ? '<div class="help">também: ' + esc(g.nomes.filter(x => x !== g.nomeExib).join(' · ')) + '</div>' : '') + '</td>' +
+        '<td class="mono">' + esc(mask(g.cpfPrincipal)) + (g.cpfs.size > 1 ? '<div class="help">' + g.cpfs.size + ' CPFs ligados</div>' : '') + '</td>' +
+        '<td>' + tagsFontes(g) + '</td><td>' + tagCrono(g) + '</td>' +
+        '<td>' + (REL.comHist ? (g.repasses || 0) : '—') + '</td><td>' + tagsSit(g) + '</td></tr>').join('')
+        : '<tr><td colspan="6" class="empty">Nada neste filtro.</td></tr>';
+      card.style.display = 'block';
+      const sp = document.getElementById('cardCronoSemPar');
+      sp.style.display = REL.semPar.length ? 'block' : 'none';
+      document.getElementById('semPar').innerHTML = REL.semPar.map(m => '<div>' + esc(((m.nome || '') + ' ' + (m.sobrenome || '')).trim()) + (m.especialidade ? ' · ' + esc(m.especialidade) : '') + '</div>').join('');
+    };
+
+    /* CSV (CPF mascarado; células que começam com = + - @ são neutralizadas) */
+    const csvCel = v => { let s = String(v == null ? '' : v); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
+    window.pesCsv = function () {
+      if (!REL) return;
+      const cab = ['Pessoa', 'CPF (mascarado)', 'Fontes', 'Cronograma', 'Repasses', 'Na lista do Fechamento', 'Apagado', 'Sinais'];
+      const linhas = REL.grupos.slice().sort((a, b) => a.nomeExib.localeCompare(b.nomeExib, 'pt')).map(g => [
+        g.nomeExib, mask(g.cpfPrincipal), Array.from(g.fontes).join('+'),
+        (g.cronoTipo || 'sem agenda') + (g.crono.length ? ': ' + g.crono.map(m => (m.nome + ' ' + m.sobrenome).trim()).join(', ') : (g.cronoCand.length ? ': ' + g.cronoCand.map(m => (m.nome + ' ' + m.sobrenome).trim()).join(', ') : '')),
+        REL.comHist ? g.repasses : '', g.naLista ? 'sim' : 'não', g.apagado ? 'sim' : 'não', g.flags.join(',') + (g.lote ? ' pronto' : '') + (g.fora ? ' fora-da-lista' : '')
+      ]);
+      const csv = '﻿' + [cab].concat(linhas).map(l => l.map(csvCel).join(';')).join('\r\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = 'relatorio-associacao-pessoas.csv'; document.body.appendChild(a); a.click(); a.remove();
+    };
+
+    /* ───────── consulta pessoas/{pid} ───────── */
+    window.pesCarregarCentral = async function () {
+      const msg = document.getElementById('centralMsg'), tb = document.getElementById('tbCentral'); msg.innerHTML = ''; tb.innerHTML = '';
+      try {
+        const v = await lerRef('pessoas');
+        const itens = v ? Object.keys(v).map(k => Object.assign({ _k: k }, v[k])) : [];
+        if (!itens.length) { msg.innerHTML = '<div class="empty">Nenhuma pessoa cadastrada ainda.</div>'; return; }
+        tb.innerHTML = itens.sort((a, b) => String(a.nomeCompleto).localeCompare(String(b.nomeCompleto), 'pt')).map(p =>
+          '<tr><td><b>' + esc(p.nomeExibicao || p.nomeCompleto) + '</b></td><td>' + esc(p.categoria) + '</td><td>' + esc((p.medico && p.medico.especialidade) || p.especialidade || '') + '</td><td>' +
+          (p.ativo === false ? '<span class="tag t-mut">Inativo</span>' : '<span class="tag t-ok">Ativo</span>') + '</td><td class="mono">' + esc(p._k) + '</td></tr>').join('');
+      } catch (e) {
+        msg.innerHTML = '<div class="note">' + (/permission/i.test(e.code || e.message) ? 'Ainda sem permissão para ler <span class="mono">pessoas</span>: as Rules desse nó ainda não foram publicadas.' : 'Erro: ' + esc(e.message)) + '</div>';
+      }
+    };
+
+    window.pesTab = function (t) {
+      document.getElementById('panRel').classList.toggle('active', t === 'rel'); document.getElementById('panCad').classList.toggle('active', t === 'cad');
+      document.getElementById('tabRel').classList.toggle('active', t === 'rel'); document.getElementById('tabCad').classList.toggle('active', t === 'cad');
+      if (t === 'cad') window.pesCarregarCentral();
+    };
+
+    /* ───────── gate de acesso (mesmo padrão do admin.html / cadastros.html: só admin) ───────── */
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { irPara('../login.html'); return; }
+      try {
+        const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
+        const perms = snap.exists() ? (snap.val().perms || {}) : {};
+        if (!perms.admin) { irPara('../login.html'); return; }
+      } catch (e) { irPara('../login.html'); return; }
+      document.getElementById('loadingScreen').style.display = 'none';
+    });
+  </script>
+</body>
+</html>
