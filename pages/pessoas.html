@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- VERSION: v1.0 | pessoas.html | 19/11/2026 | Etapa 4b — Cadastro central de pessoas: relatório de associação (SOMENTE LEITURA) + consulta de pessoas/{pid}. Não grava nada no Firebase. -->
+<!-- VERSION: v1.1 | pessoas.html | 23/11/2026 | Etapa 4c — cadastro em lote/individual: grava pessoas/{pid} + pessoas_financeiro/{pid} (update multi-path) e pessoaId em crono/medicos. Modo 'só simular' ligado por padrão. Não altera nem apaga nada existente. -->
+<!-- VERSION: v1.0 | pessoas.html | 19/11/2026 | Etapa 4b — relatório de associação (somente leitura) + consulta de pessoas/{pid}. -->
 <html lang="pt-BR">
 <head>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
@@ -85,6 +86,12 @@
           <button class="btn-s" id="btnCsv" onclick="pesCsv()" disabled><i class="fas fa-file-csv"></i> Baixar CSV</button>
         </div>
         <div class="kpis" id="kpis"></div>
+        <div class="bar" id="barCad" style="display:none;">
+          <label class="chk"><input type="checkbox" id="chkSimular" checked> Só simular (não grava nada)</label>
+          <button class="btn-p" id="btnLote" onclick="pesCadastrarLote()"><i class="fas fa-users-gear"></i> Cadastrar prontos (lote)</button>
+          <span class="help">Lote = nome idêntico no cronograma, CPF válido e sem sinais de revisão. Os demais, um a um na tabela. Desmarque "Só simular" para gravar.</span>
+        </div>
+        <div class="note" id="resultado" style="display:none;background:var(--blue-bg);border-color:#bfdbfe;color:#1e3a8a;"></div>
         <div id="avisos"></div>
       </div>
       <div class="card" id="cardTab" style="display:none;">
@@ -100,7 +107,7 @@
           </select>
           <span class="help" id="contador"></span>
         </div>
-        <div class="scroll"><table><thead><tr><th>Pessoa</th><th>CPF</th><th>Fontes</th><th>Cronograma</th><th>Repasses</th><th>Situação</th></tr></thead><tbody id="tbody"></tbody></table></div>
+        <div class="scroll"><table><thead><tr><th>Pessoa</th><th>CPF</th><th>Fontes</th><th>Cronograma</th><th>Repasses</th><th>Situação</th><th>Cadastro central</th></tr></thead><tbody id="tbody"></tbody></table></div>
       </div>
       <div class="card" id="cardCronoSemPar" style="display:none;"><h3><i class="fas fa-calendar-xmark"></i> Médicos do cronograma sem par nas outras fontes</h3><div id="semPar" class="help"></div></div>
     </div>
@@ -121,7 +128,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getDatabase, ref, get, push, update } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
     const app = initializeApp(window.FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -162,8 +169,8 @@
         r.no = r.cpf.length ? 'c:' + r.cpf : 'n:' + (seq++) + ':' + norm(r.nome);
         nodo(r.no); regs.push(r); return r;
       };
-      fontes.admin.forEach(p => add('admin', p.nome, p.documento, { chave: p._k, crm: p.crm, esp: p.especialidade, regime: p.regime }));
-      fontes.extras.forEach(e => { const r = add('extra', e.nome, e.documento, { regime: e.regime, temPix: !!e.chavePix }); if (dg(e.overrideCpf) && dg(e.overrideCpf) !== r.cpf) { nodo('c:' + dg(e.overrideCpf)); une(r.no, 'c:' + dg(e.overrideCpf)); r.override = dg(e.overrideCpf); } });
+      fontes.admin.forEach(p => add('admin', p.nome, p.documento, { chave: p._k, crm: p.crm, esp: p.especialidade, regime: p.regime, email: p.email })); // [v1.1] email para pessoas_financeiro
+      fontes.extras.forEach(e => { const r = add('extra', e.nome, e.documento, { regime: e.regime, temPix: !!e.chavePix, chavePix: e.chavePix }); if (dg(e.overrideCpf) && dg(e.overrideCpf) !== r.cpf) { nodo('c:' + dg(e.overrideCpf)); une(r.no, 'c:' + dg(e.overrideCpf)); r.override = dg(e.overrideCpf); } });
       fontes.fixa.forEach(p => add('fixa', p.nome, p.cpf));
       Object.keys(fontes.hist || {}).forEach(c => add('hist', fontes.hist[c].nome, c, { n: fontes.hist[c].n }));
       const apag = new Set(fontes.apagados.map(dg));
@@ -220,13 +227,98 @@
       });
     }
 
+    /* ───────── [v1.1] cadastro central: marca quem já está em pessoas/{pid} ───────── */
+    function marcarCadastrados(grupos, pes, pfin) {
+      const porCpf = {}, porCrono = {};
+      Object.keys(pfin || {}).forEach(pid => { const f = pfin[pid] || {}; if (f.documento) porCpf[dg(f.documento)] = pid; Object.keys(f.cpfsLegados || {}).forEach(k => { porCpf[dg(f.cpfsLegados[k])] = pid; }); });
+      Object.keys(pes || {}).forEach(pid => { const l = (pes[pid] || {}).legado || {}; if (l.cronoMedicoId) porCrono[l.cronoMedicoId] = pid; });
+      grupos.forEach(g => {
+        g.pessoaId = '';
+        const c = Array.from(g.cpfs).find(x => porCpf[x]); if (c) g.pessoaId = porCpf[c];
+        if (!g.pessoaId) { const m = g.crono.concat(g.cronoCand).find(x => x.pessoaId || porCrono[x._id]); if (m) g.pessoaId = m.pessoaId || porCrono[m._id]; }
+      });
+    }
+
+    /* cronograma que seria vinculado: só quando há UM único médico de agenda e ele ainda não tem pessoaId */
+    function medicoParaVincular(g) {
+      const c = g.cronoTipo === 'identico' ? g.crono : (g.cronoTipo === 'parecido' ? g.cronoCand : []);
+      return (c.length === 1 && !c[0].pessoaId) ? c[0] : null;
+    }
+
+    /* monta o que seria gravado (nada é enviado aqui) */
+    function montarCadastro(g, m, pid) {
+      const u = auth.currentUser, agora = Date.now(), quem = String(u.email || '').slice(0, 120);
+      const nome = String(g.nomeExib || '').trim();
+      const reg = fonte => g.regs.find(r => r.fonte === fonte);
+      const adm = reg('admin') || {}, ext = reg('extra') || {};
+      const p = { nomeCompleto: nome, nomeExibicao: nome, categoria: 'medico', ativo: !g.apagado && !(m && m.ativo === false),
+        criadoEm: agora, criadoPor: quem, criadoPorUid: u.uid, atualizadoEm: agora, atualizadoPor: quem, atualizadoPorUid: u.uid };
+      const esp = String(adm.esp || (m && m.especialidade) || '').slice(0, 80); if (esp) p.especialidade = esp;
+      const crm = String(adm.crm || '').slice(0, 20); if (crm && !/[0-9]{9}/.test(crm)) p.crm = crm;
+      const leg = {}; if (adm.chave) leg.adminProfKey = String(adm.chave).slice(0, 80); if (m) leg.cronoMedicoId = String(m._id).slice(0, 80);
+      if (Object.keys(leg).length) p.legado = leg;
+      const f = { atualizadoEm: agora, atualizadoPor: quem, atualizadoPorUid: u.uid }; let temFin = false;
+      const doc = /^[0-9]{11}$/.test(g.cpfPrincipal) ? g.cpfPrincipal : '';
+      if (doc) { f.documento = doc; temFin = true; }
+      const outros = Array.from(g.cpfs).filter(c => c !== doc && /^[0-9]{11}$/.test(c)); if (outros.length) { f.cpfsLegados = outros; temFin = true; }
+      const pix = String(ext.chavePix || '').slice(0, 140); if (pix) { f.chavePix = pix; temFin = true; }
+      const rg = String(ext.regime || adm.regime || '').slice(0, 40); if (rg) { f.regime = rg; temFin = true; }
+      const em = String(adm.email || '').slice(0, 120); if (/^[^@ ]+@[^@ ]+$/.test(em)) { f.email = em; temFin = true; }
+      const up = {}; up['pessoas/' + pid] = p; if (temFin) up['pessoas_financeiro/' + pid] = f;
+      if (m) up['crono/medicos/' + m._id + '/pessoaId'] = pid; /* único campo acrescentado no cronograma; nada é sobrescrito */
+      return up;
+    }
+    const nomeOk = n => String(n || '').trim().length >= 3 && String(n).trim().length <= 120 && !/[0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}/.test(n);
+
+    async function cadastrarGrupos(gs, simular) {
+      const out = { ok: 0, vinc: 0, pulados: [], erros: [] };
+      for (const g of gs) {
+        if (g.pessoaId) { out.pulados.push(g.nomeExib + ' (já cadastrado)'); continue; }
+        if (!nomeOk(g.nomeExib)) { out.pulados.push(g.nomeExib + ' (nome inválido para o cadastro)'); continue; }
+        const m = medicoParaVincular(g);
+        const pid = push(ref(db, 'pessoas')).key; /* só gera o ID; não grava */
+        const up = montarCadastro(g, m, pid);
+        if (simular) { out.ok++; if (m) out.vinc++; continue; }
+        try {
+          await update(ref(db), up);
+          g.pessoaId = pid; out.ok++; if (m) { out.vinc++; m.pessoaId = pid; }
+        } catch (e) { out.erros.push(g.nomeExib + ': ' + (e.code || e.message)); }
+      }
+      return out;
+    }
+    function mostrarResultado(o, simular, titulo) {
+      const box = document.getElementById('resultado'); box.style.display = 'block';
+      box.innerHTML = '<b>' + esc(titulo) + (simular ? ' — SIMULAÇÃO, nada foi gravado' : '') + '</b><div class="help" style="margin-top:6px;">' +
+        (simular ? 'Seriam criados: ' : 'Criados: ') + o.ok + ' · Vínculos no cronograma: ' + o.vinc + ' · Pulados: ' + o.pulados.length + ' · Erros: ' + o.erros.length + '</div>' +
+        (o.pulados.length ? '<div class="help">Pulados: ' + esc(o.pulados.join('; ')) + '</div>' : '') +
+        (o.erros.length ? '<div class="help" style="color:#991b1b;">Erros: ' + esc(o.erros.join('; ')) + '</div>' : '');
+    }
+    window.pesCadastrarLote = async function () {
+      if (!REL) return; const simular = document.getElementById('chkSimular').checked;
+      const gs = REL.grupos.filter(g => g.lote && !g.pessoaId);
+      if (!gs.length) { toast('Nenhum cadastro pronto para o lote.', 'info'); return; }
+      if (!simular && !confirm('Cadastrar ' + gs.length + ' pessoas na central?\n\nGrava pessoas/ e pessoas_financeiro/ e acrescenta pessoaId nos médicos do cronograma. Nada existente é alterado ou apagado.\n\nConfirma?')) return;
+      const b = document.getElementById('btnLote'); b.disabled = true;
+      const o = await cadastrarGrupos(gs, simular); b.disabled = false;
+      mostrarResultado(o, simular, 'Lote: nome idêntico no cronograma'); toast(simular ? 'Simulação concluída' : 'Lote concluído', o.erros.length ? 'error' : 'success'); pesRender();
+    };
+    window.pesCadastrarUm = async function (id) {
+      if (!REL) return; const g = REL.grupos.find(x => x.id === id); if (!g || g.pessoaId) return;
+      const simular = document.getElementById('chkSimular').checked, m = medicoParaVincular(g);
+      const avisos = (g.flags.length ? '\nSinais: ' + g.flags.join(', ') : '') + (g.cronoCand.length && !m ? '\nSem vínculo automático com o cronograma (mais de um candidato ou nenhum).' : '');
+      const txt = (simular ? '[SIMULAÇÃO] ' : '') + 'Cadastrar "' + g.nomeExib + '" na central?' + (m ? '\nVincular ao médico do cronograma: ' + (m.nome + ' ' + (m.sobrenome || '')).trim() : '') + avisos;
+      if (!confirm(txt)) return;
+      const o = await cadastrarGrupos([g], simular); mostrarResultado(o, simular, g.nomeExib);
+      toast(simular ? 'Simulação concluída' : (o.erros.length ? 'Erro ao gravar' : 'Cadastrado'), o.erros.length ? 'error' : 'success'); pesRender();
+    };
+
     /* ───────── geração ───────── */
     window.pesGerar = async function () {
       const btn = document.getElementById('btnGerar'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lendo fontes…';
       const avisos = []; REL = null;
       try {
         const falhas = []; const tenta = async (p) => { try { return await lerRef(p); } catch (e) { falhas.push(p + ' (' + (e.code || e.message) + ')'); return null; } };
-        const [adm, ext, apag, crono] = await Promise.all([tenta('admin/profissionais'), tenta('fechamento/profissionais_extras'), tenta('fechamento/profissionais_apagados'), tenta('crono/medicos')]);
+        const [adm, ext, apag, crono, pes, pfin] = await Promise.all([tenta('admin/profissionais'), tenta('fechamento/profissionais_extras'), tenta('fechamento/profissionais_apagados'), tenta('crono/medicos'), tenta('pessoas'), tenta('pessoas_financeiro')]);
         const fixa = await lerListaFixa(); if (fixa.erro) avisos.push('Lista fixa do Fechamento não foi lida (' + esc(fixa.erro) + '). O relatório segue sem ela.');
         let hist = {};
         if (document.getElementById('chkHist').checked) {
@@ -238,9 +330,9 @@
           admin: adm ? Object.keys(adm).map(k => Object.assign({ _k: k }, adm[k])).filter(p => p && p.nome) : [],
           extras: lista(ext).filter(e => e && e.nome), apagados: lista(apag), fixa: fixa.itens, hist
         };
-        const grupos = agrupar(fontes); const semPar = ligarCrono(grupos, crono || {}); sinalizar(grupos);
-        REL = { grupos, semPar, fontes, cronoTotal: Object.keys(crono || {}).length, comHist: !!document.getElementById('chkHist').checked };
-        document.getElementById('btnCsv').disabled = false;
+        const grupos = agrupar(fontes); const semPar = ligarCrono(grupos, crono || {}); sinalizar(grupos); marcarCadastrados(grupos, pes, pfin); // [v1.1]
+        REL = { grupos, semPar, fontes, pes: pes || {}, cronoTotal: Object.keys(crono || {}).length, comHist: !!document.getElementById('chkHist').checked };
+        document.getElementById('btnCsv').disabled = false; document.getElementById('barCad').style.display = 'flex';
       } catch (e) { avisos.push('Erro: ' + esc(e.message || e)); toast('Erro ao gerar o relatório', 'error'); }
       btn.disabled = false; btn.innerHTML = '<i class="fas fa-play"></i> Gerar relatório';
       document.getElementById('avisos').innerHTML = avisos.map(a => '<div class="note">' + a + '</div>').join('');
@@ -276,7 +368,8 @@
         [G.length, 'Pessoas distintas (por CPF)'],
         [REL.fontes.admin.length + ' / ' + REL.fontes.extras.length + ' / ' + REL.fontes.fixa.length, 'Admin / Fechamento / Lista fixa'],
         [REL.cronoTotal, 'Médicos no Cronograma'],
-        [n(g => g.lote), 'Prontos p/ confirmar'],
+        [n(g => g.lote && !g.pessoaId), 'Prontos p/ confirmar'],
+        [n(g => !!g.pessoaId), 'Já cadastrados'],
         [n(g => g.flags.length), 'Para revisar'],
         [n(g => g.fora), 'Fora da lista atual'],
         [n(g => g.apagado), 'Apagados'],
@@ -292,8 +385,8 @@
         '<tr><td><b>' + esc(g.nomeExib) + '</b>' + (g.nomes.length > 1 ? '<div class="help">também: ' + esc(g.nomes.filter(x => x !== g.nomeExib).join(' · ')) + '</div>' : '') + '</td>' +
         '<td class="mono">' + esc(mask(g.cpfPrincipal)) + (g.cpfs.size > 1 ? '<div class="help">' + g.cpfs.size + ' CPFs ligados</div>' : '') + '</td>' +
         '<td>' + tagsFontes(g) + '</td><td>' + tagCrono(g) + '</td>' +
-        '<td>' + (REL.comHist ? (g.repasses || 0) : '—') + '</td><td>' + tagsSit(g) + '</td></tr>').join('')
-        : '<tr><td colspan="6" class="empty">Nada neste filtro.</td></tr>';
+        '<td>' + (REL.comHist ? (g.repasses || 0) : '—') + '</td><td>' + tagsSit(g) + '</td><td>' + (g.pessoaId ? '<span class="tag t-ok">Cadastrado</span>' : '<button class="btn-s" style="padding:5px 10px;font-size:11px;" onclick="pesCadastrarUm(\'' + esc(g.id) + '\')">Cadastrar</button>') + '</td></tr>').join('')
+        : '<tr><td colspan="7" class="empty">Nada neste filtro.</td></tr>';
       card.style.display = 'block';
       const sp = document.getElementById('cardCronoSemPar');
       sp.style.display = REL.semPar.length ? 'block' : 'none';
