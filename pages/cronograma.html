@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
+<!-- VERSION: v1.7 | cronograma.html | 23/11/2026 | Etapa 5b — Gerar agenda inclui médicos ativos do cadastro central (pessoas); salvar médico preserva pessoaId e reflete nome/especialidade na central (novo médico cria a pessoa no mesmo update); listeners só com usuário logado e sem duplicar; removido fallback REST sem token. Perfis: admin = CRUD; cronograma = vê a semana + gera agenda. -->
 <head>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
@@ -823,6 +824,22 @@
     'Vascular':['Dr. Teófilo Martín Rondon Aguirre','Dr. Ruben Horacio Igarzabal'],
   };
 
+  // [v1.7] Gerar agenda: lista fixa acima + médicos ATIVOS do cadastro central (pessoas) da mesma especialidade que ainda não estão nela
+  window._pessoasCentral = null;
+  window.genMedicosDe = function (esp) {
+    const base = (MEDICOS[esp] || []).slice(), P = window._pessoasCentral;
+    if (!P) return base;
+    const n = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\b(dr|dra)\b\.?/g, ' ').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const nesp = n(esp), tem = {};
+    base.forEach(m => { tem[n(m)] = true; });
+    Object.keys(P).forEach(k => {
+      const p = P[k] || {};
+      if (p.categoria !== 'medico' || p.ativo === false || !p.nomeCompleto || n(p.especialidade) !== nesp) return;
+      const nn = n(p.nomeCompleto); if (tem[nn]) return; tem[nn] = true; base.push(p.nomeCompleto);
+    });
+    return base;
+  };
+
   const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const nowD = new Date();
   window.TK_FB = nowD.getFullYear() + '-' + String(nowD.getMonth()+1).padStart(2,'0') + '-' + String(nowD.getDate()).padStart(2,'0');
@@ -936,7 +953,7 @@
       const payload = {};
       ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].forEach(d => { payload[d] = window.AGENDA[d] || []; });
       if (window.salvarAgendaFirebaseSDK) await window.salvarAgendaFirebaseSDK(payload);
-      else await fetch('https://clinica-pirituba-default-rtdb.firebaseio.com/crono/agenda.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+      else throw new Error('Conexão com o banco ainda não carregou. Aguarde alguns segundos e tente de novo.'); // [v1.7] removido o PUT REST sem autenticação
       const tag = document.getElementById('agendaSalvaTag');
       if (tag) { tag.style.display = 'inline-flex'; setTimeout(() => tag.style.display = 'none', 3000); }
       toast('Cronograma salvo!', 'success');
@@ -1256,7 +1273,7 @@
   window.filtrarMedicos = function() {
     const esp = document.getElementById('genEsp').value;
     if (!esp) { document.getElementById('genMedicoWrap').style.display='none'; return; }
-    const lista = MEDICOS[esp] || [];
+    const lista = (typeof window.genMedicosDe === 'function') ? window.genMedicosDe(esp) : (MEDICOS[esp] || []); // [v1.7]
     const sel = document.getElementById('genMed');
     sel.innerHTML = '<option value="">Escolha o médico...</option>' + lista.map(m=>'<option value="'+m+'">'+m+'</option>').join('') + '<option value="__manual__">+ Digitar manualmente</option>';
     document.getElementById('genMedicoWrap').style.display = 'block';
@@ -2196,8 +2213,14 @@
         idadeAtend: $('cronMedIdade').value.trim(), porAgenda: $('cronMedPorAg').value.trim() };
       // [v1.4] preserva a origem de quem foi importado
       if (ant.origem) obj.origem = ant.origem;
+      if (ant.pessoaId) obj.pessoaId = ant.pessoaId;   // [v1.7] a gravação é completa: sem isto o vínculo com o cadastro central se perderia
       var nid = id || ('med_' + Date.now().toString(36));
-      gravar('crono/medicos/' + nid, obj).then(function (ok) { if (ok) { toast('Médico salvo', 'success'); window.cronMedFechar(); } });
+      // [v1.7] médico NOVO: grava crono/medicos + pessoas no mesmo update (null = não foi possível, segue o fluxo antigo)
+      var criaCentral = (!id && typeof window.cronCentralNovoMedico === 'function') ? window.cronCentralNovoMedico(nid, obj) : null;
+      if (criaCentral) { criaCentral.then(function (ok) { if (ok) { toast('Médico salvo', 'success'); window.cronMedFechar(); } }); return; }
+      gravar('crono/medicos/' + nid, obj).then(function (ok) {
+        if (ok) { toast('Médico salvo', 'success'); window.cronMedFechar(); if (ant.pessoaId && typeof window.cronCentralAtualizar === 'function') window.cronCentralAtualizar(ant, obj); }
+      });
     };
     // [v1.4] Trazer profissionais: mesma lista que o Fechamento usa (admin/profissionais + fechamento/profissionais_extras − apagados)
     var MED_CAND = [];
@@ -3063,7 +3086,7 @@
   <script type="module">
     import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged }  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getDatabase, ref, get, set, onValue, query, orderByKey, startAt, endAt, limitToLast } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getDatabase, ref, get, set, onValue, push, update, query, orderByKey, startAt, endAt, limitToLast } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
     const _app  = initializeApp(window.FIREBASE_CONFIG);
     const _auth = getAuth(_app);
@@ -3075,13 +3098,43 @@
 
     // Cleanup de listeners ao sair
     const _unsubs = [];
-    window.addEventListener('beforeunload', () => _unsubs.forEach(fn => { try { fn(); } catch(e){} }));
+    // [v1.7] listeners ligados ao login: só existem com usuário autenticado e são refeitos (sem duplicar) a cada mudança de sessão
+    const _authUnsubs = [];
+    const _onA = (r, cb, errCb) => { const u = onValue(r, cb, e => { if (errCb) errCb(e); else console.warn('[cronograma] leitura negada/erro:', e && e.code); }); _authUnsubs.push(u); return u; };
+    window.addEventListener('beforeunload', () => _unsubs.concat(_authUnsubs).forEach(fn => { try { fn(); } catch(e){} }));
     const _on = (r, cb) => { const u = onValue(r, cb); _unsubs.push(u); return u; };
     // [v1.1 cal] leitura do calendário por mês (faixa de chaves AAAA-MM-DD de crono/dias), com callback de erro
     window.calFbEscutarMes = (ym, cb, errCb) => {
       const q = query(ref(_db, 'crono/dias'), orderByKey(), startAt(ym + '-01'), endAt(ym + '-31'));
       const u = onValue(q, s => cb(s.val() || {}), e => { if (errCb) errCb(e); });
       _unsubs.push(u); return u;
+    };
+
+    // [v1.7] cadastro central — escrita só do admin (crono/medicos também é só admin)
+    const _ccBase = () => { const u = _auth.currentUser; return u ? { u, quem: String(sessionStorage.getItem('usuario') || u.email || '').slice(0, 120), agora: Date.now() } : null; };
+    const _ccNomeOk = n => n.length >= 3 && n.length <= 120 && !/[0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}/.test(n);
+    const _ccEsp = e => { e = String(e || '').trim(); return (e && e.length <= 80 && !/[0-9]{9}/.test(e)) ? e : ''; };
+    window.cronCentralNovoMedico = (nid, obj) => {
+      const c = _ccBase(); if (!c) return null;
+      const nome = (String(obj.nome || '') + (obj.sobrenome ? ' ' + obj.sobrenome : '')).trim();
+      if (!_ccNomeOk(nome)) return null;
+      const pid = push(ref(_db, 'pessoas')).key;
+      obj.pessoaId = pid;
+      const p = { nomeCompleto: nome, nomeExibicao: nome, categoria: 'medico', ativo: obj.ativo !== false, legado: { cronoMedicoId: String(nid).slice(0, 80) },
+        criadoEm: c.agora, criadoPor: c.quem, criadoPorUid: c.u.uid, atualizadoEm: c.agora, atualizadoPor: c.quem, atualizadoPorUid: c.u.uid };
+      const esp = _ccEsp(obj.especialidade); if (esp) p.especialidade = esp;
+      const up = {}; up['crono/medicos/' + nid] = obj; up['pessoas/' + pid] = p;
+      return update(ref(_db), up).then(() => true).catch(e => { delete obj.pessoaId; toast('Não foi possível salvar: ' + ((e && (e.code || e.message)) || 'erro'), 'error'); return false; });
+    };
+    window.cronCentralAtualizar = (ant, obj) => {
+      const c = _ccBase(); if (!c || !ant || !ant.pessoaId) return;
+      const nm = o => (String(o.nome || '') + (o.sobrenome ? ' ' + o.sobrenome : '')).trim();
+      const up = {}, pid = ant.pessoaId; let mudou = false;
+      if (nm(obj) !== nm(ant) && _ccNomeOk(nm(obj))) { up['pessoas/' + pid + '/nomeCompleto'] = nm(obj); up['pessoas/' + pid + '/nomeExibicao'] = nm(obj); mudou = true; }
+      const esp = _ccEsp(obj.especialidade); if (esp && esp !== String(ant.especialidade || '').trim()) { up['pessoas/' + pid + '/especialidade'] = esp; mudou = true; }
+      if (!mudou) return;
+      up['pessoas/' + pid + '/atualizadoEm'] = c.agora; up['pessoas/' + pid + '/atualizadoPor'] = c.quem; up['pessoas/' + pid + '/atualizadoPorUid'] = c.u.uid;
+      update(ref(_db), up).catch(e => toast('Médico salvo no cronograma, mas o cadastro central não foi atualizado (' + ((e && (e.code || e.message)) || 'erro') + ').', 'info'));
     };
 
     // [v1.3] leitores genéricos do cronograma (medicos, coleta, histórico)
@@ -3095,6 +3148,8 @@
     };
 
     onAuthStateChanged(_auth, async user => {
+      _authUnsubs.splice(0).forEach(fn => { try { fn(); } catch(e){} });   // [v1.7]
+      if (!user) { window._pessoasCentral = null; irPara('../login.html'); return; }   // [v1.7] sem sessão: não abre listeners; volta ao login
       if (user) {
         set(ref(_db, 'admin_logs/' + Date.now()), { tipo:'info', msg:(user.email||user.uid)+' acessou o Cronograma', ts:new Date().toISOString() }).catch(()=>{});
         carregarLogoGlobal(['#headerLogo']);
@@ -3113,7 +3168,7 @@
       }
 
       // 1. Agenda semanal
-      _on(ref(_db, 'crono/agenda'), snap => {
+      _onA(ref(_db, 'crono/agenda'), snap => {
         const d = snap.val();
         if (d && typeof d === 'object') {
           if (!window.AGENDA) window.AGENDA = {};
@@ -3126,28 +3181,31 @@
         }
       });
 
+      // [v1.7] cadastro central de pessoas (só leitura; sem permissão = segue só com a lista fixa)
+      _onA(ref(_db, 'pessoas'), snap => { window._pessoasCentral = snap.val() || {}; }, () => { window._pessoasCentral = null; });
+
       // 2. Setup salas
-      _on(ref(_db, `operacao/setup/${window.TK_FB}`), snap => {
+      _onA(ref(_db, `operacao/setup/${window.TK_FB}`), snap => {
         window.setupDone = snap.val() || {};
         if (typeof window.renderAgenda === 'function') window.renderAgenda();
         if (typeof window.updStats     === 'function') window.updStats();
       });
 
       // 3. Notas
-      _on(ref(_db, `operacao/notas/${window.TK_FB}`), snap => {
+      _onA(ref(_db, `operacao/notas/${window.TK_FB}`), snap => {
         window.notas = snap.val() || [];
         if (typeof window.renderNotas === 'function') window.renderNotas();
         if (typeof window.updStats    === 'function') window.updStats();
       });
 
       // 4. Checklist status
-      _on(ref(_db, `operacao/checklist_status/${window.TK_FB}`), snap => {
+      _onA(ref(_db, `operacao/checklist_status/${window.TK_FB}`), snap => {
         window.cliStatus = snap.val() || {};
         if (typeof window.renderCli === 'function') window.renderCli();
       });
 
       // 5. Checklist itens customizados
-      _on(ref(_db, `operacao/checklist_items`), snap => {
+      _onA(ref(_db, `operacao/checklist_items`), snap => {
         const custom = snap.val() || [];
         window.CLI = window.CLI.filter(c => !c.id.startsWith('custom_'));
         custom.forEach(item => window.CLI.push(item));
