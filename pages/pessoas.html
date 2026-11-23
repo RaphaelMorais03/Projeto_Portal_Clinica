@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- VERSION: v1.3 | pessoas.html | 23/11/2026 | Cadastro central: Editar (nome, exibição, categoria, especialidade, ativo) e Mesclar duas pessoas (a que sai fica ativo:false; vínculos e CPFs vão para a que fica; nada é apagado). Só admin. Sem mudança de Rules. -->
 <!-- VERSION: v1.2 | pessoas.html | 23/11/2026 | Correção: pessoa com cadastro extra no Fechamento não é mais tratada como 'apagada' (evitava gravar ativo:false para quem continua visível). -->
 <!-- VERSION: v1.1 | pessoas.html | 23/11/2026 | Etapa 4c — cadastro em lote/individual: grava pessoas/{pid} + pessoas_financeiro/{pid} (update multi-path) e pessoaId em crono/medicos. Modo 'só simular' ligado por padrão. Não altera nem apaga nada existente. -->
 <!-- VERSION: v1.0 | pessoas.html | 19/11/2026 | Etapa 4b — relatório de associação (somente leitura) + consulta de pessoas/{pid}. -->
@@ -55,6 +56,11 @@
     .toast-box{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
     .toast{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;color:white;box-shadow:0 8px 24px rgba(0,0,0,.2);}
     .toast.success{background:var(--green);} .toast.error{background:var(--red);} .toast.info{background:var(--navy);}
+    .modal-bg{position:fixed;inset:0;background:rgba(10,31,68,.55);display:none;align-items:center;justify-content:center;z-index:500;padding:16px;}
+    .modal-bg.open{display:flex;} .modal{background:white;border-radius:14px;padding:20px;max-width:560px;width:100%;max-height:90vh;overflow:auto;}
+    .modal h3{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:10px;} .fld{display:block;margin-top:10px;font-size:11px;font-weight:700;color:var(--gray-600);}
+    .fld input,.fld select{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;}
+    .prev{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.6;margin-top:10px;} .prev li{margin-left:16px;}
     .note{background:var(--amber-bg);border:1px solid #fde68a;color:var(--amber);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;margin-top:12px;}
   </style>
 </head>
@@ -117,13 +123,14 @@
     <div class="panel" id="panCad">
       <div class="card">
         <h3><i class="fas fa-address-book"></i> pessoas/{pid}</h3>
-        <p class="help">Consulta do cadastro central. Esta versão só lê; o cadastro e a associação com confirmação entram na próxima etapa, depois que as Rules de <span class="mono">pessoas</span> forem publicadas.</p>
+        <p class="help">Cadastro central. <b>Editar</b> corrige nome, categoria, especialidade e situação. <b>Mesclar</b> junta duas fichas da mesma pessoa: a que sai fica inativa (nada é apagado) e os vínculos e CPFs vão para a que fica. Há uma prévia antes de gravar.</p>
         <div class="bar"><button class="btn-p" onclick="pesCarregarCentral()"><i class="fas fa-rotate"></i> Atualizar</button></div>
         <div id="centralMsg"></div>
-        <div class="scroll" style="margin-top:12px;"><table><thead><tr><th>Nome</th><th>Categoria</th><th>Especialidade</th><th>Situação</th><th>ID</th></tr></thead><tbody id="tbCentral"></tbody></table></div>
+        <div class="scroll" style="margin-top:12px;"><table><thead><tr><th>Nome</th><th>Categoria</th><th>Especialidade</th><th>Situação</th><th>ID</th><th>Ações</th></tr></thead><tbody id="tbCentral"></tbody></table></div>
       </div>
     </div>
   </div>
+  <div class="modal-bg" id="modalPes"><div class="modal" id="modalPesBox"></div></div>
   <div class="toast-box" id="toastBox"></div>
 
   <script type="module">
@@ -418,10 +425,129 @@
         if (!itens.length) { msg.innerHTML = '<div class="empty">Nenhuma pessoa cadastrada ainda.</div>'; return; }
         tb.innerHTML = itens.sort((a, b) => String(a.nomeCompleto).localeCompare(String(b.nomeCompleto), 'pt')).map(p =>
           '<tr><td><b>' + esc(p.nomeExibicao || p.nomeCompleto) + '</b></td><td>' + esc(p.categoria) + '</td><td>' + esc((p.medico && p.medico.especialidade) || p.especialidade || '') + '</td><td>' +
-          (p.ativo === false ? '<span class="tag t-mut">Inativo</span>' : '<span class="tag t-ok">Ativo</span>') + '</td><td class="mono">' + esc(p._k) + '</td></tr>').join('');
+          (p.ativo === false ? '<span class="tag t-mut">Inativo</span>' : '<span class="tag t-ok">Ativo</span>') + '</td><td class="mono">' + esc(p._k) + '</td><td style="white-space:nowrap;"><button class="btn-s" style="padding:5px 10px;font-size:12px;" onclick="pesEditar(\'' + esc(p._k) + '\')"><i class="fas fa-pen"></i> Editar</button> <button class="btn-s" style="padding:5px 10px;font-size:12px;" onclick="pesMesclar(\'' + esc(p._k) + '\')"><i class="fas fa-code-merge"></i> Mesclar</button></td></tr>').join('');
+        CENTRAL = v || {};   // [v1.3]
       } catch (e) {
         msg.innerHTML = '<div class="note">' + (/permission/i.test(e.code || e.message) ? 'Ainda sem permissão para ler <span class="mono">pessoas</span>: as Rules desse nó ainda não foram publicadas.' : 'Erro: ' + esc(e.message)) + '</div>';
       }
+    };
+
+
+    /* ───────── [v1.3] editar e mesclar (só admin; sem apagar nada) ───────── */
+    let CENTRAL = {};
+    const eu = () => { const u = auth.currentUser; return { uid: u.uid, quem: String(u.email || '').slice(0, 120), agora: Date.now() }; };
+    const abrirModal = h => { document.getElementById('modalPesBox').innerHTML = h; document.getElementById('modalPes').classList.add('open'); };
+    window.pesFecharModal = () => document.getElementById('modalPes').classList.remove('open');
+    const cpfLike = t => /[0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}/.test(t);   // mesma checagem das Rules
+    const nomeDe = p => (p && (p.nomeExibicao || p.nomeCompleto)) || '?';
+
+    /* valida e monta só os campos alterados (espelha as Rules v2) */
+    window.pesMontarEdicao = function (atual, novo) {
+      const erro = [], ch = {};
+      const nc = String(novo.nomeCompleto || '').trim(), ne = String(novo.nomeExibicao || '').trim(), es = String(novo.especialidade || '').trim();
+      if (nc.length < 3 || nc.length > 120 || cpfLike(nc)) erro.push('Nome completo: 3 a 120 caracteres e sem CPF.');
+      if (ne.length < 1 || ne.length > 120 || cpfLike(ne)) erro.push('Nome de exibição: até 120 caracteres e sem CPF.');
+      if (es.length > 80 || /[0-9]{9}/.test(es)) erro.push('Especialidade: até 80 caracteres e sem números longos.');
+      if (['medico', 'colaborador', 'outro'].indexOf(novo.categoria) < 0) erro.push('Categoria inválida.');
+      if (erro.length) return { erro };
+      if (nc !== atual.nomeCompleto) ch.nomeCompleto = nc;
+      if (ne !== (atual.nomeExibicao || atual.nomeCompleto)) ch.nomeExibicao = ne;
+      if (novo.categoria !== atual.categoria) ch.categoria = novo.categoria;
+      if (es !== (atual.especialidade || '')) ch.especialidade = es || null;
+      if ((novo.ativo === true) !== (atual.ativo !== false)) ch.ativo = novo.ativo === true;
+      return { erro: [], ch };
+    };
+
+    window.pesEditar = function (pid) {
+      const p = CENTRAL[pid]; if (!p) return;
+      abrirModal('<h3><i class="fas fa-pen"></i> Editar pessoa</h3>' +
+        '<label class="fld">Nome completo<input id="edNome" value="' + esc(p.nomeCompleto) + '"></label>' +
+        '<label class="fld">Nome de exibição<input id="edExib" value="' + esc(p.nomeExibicao || p.nomeCompleto) + '"></label>' +
+        '<label class="fld">Categoria<select id="edCat"><option value="medico">médico</option><option value="colaborador">colaborador</option><option value="outro">outro</option></select></label>' +
+        '<label class="fld">Especialidade<input id="edEsp" value="' + esc(p.especialidade || '') + '"></label>' +
+        '<label class="fld">Situação<select id="edAtivo"><option value="1">Ativo</option><option value="0">Inativo (some das listas; histórico preservado)</option></select></label>' +
+        '<p class="help" style="margin-top:10px;">Altera só o cadastro central. CPF, PIX e regime continuam sendo mantidos no Fechamento.</p>' +
+        '<div class="bar"><button class="btn-p" onclick="pesSalvarEdicao(\'' + esc(pid) + '\')"><i class="fas fa-check"></i> Salvar</button><button class="btn-s" onclick="pesFecharModal()">Cancelar</button></div>');
+      document.getElementById('edCat').value = p.categoria; document.getElementById('edAtivo').value = p.ativo === false ? '0' : '1';
+    };
+    window.pesSalvarEdicao = async function (pid) {
+      const p = CENTRAL[pid]; if (!p) return;
+      const r = window.pesMontarEdicao(p, { nomeCompleto: document.getElementById('edNome').value, nomeExibicao: document.getElementById('edExib').value,
+        categoria: document.getElementById('edCat').value, especialidade: document.getElementById('edEsp').value, ativo: document.getElementById('edAtivo').value === '1' });
+      if (r.erro.length) { toast(r.erro[0], 'error'); return; }
+      if (!Object.keys(r.ch).length) { toast('Nada mudou.', 'info'); return; }
+      const m = eu(), up = {}; Object.keys(r.ch).forEach(k => { up['pessoas/' + pid + '/' + k] = r.ch[k]; });
+      up['pessoas/' + pid + '/atualizadoEm'] = m.agora; up['pessoas/' + pid + '/atualizadoPor'] = m.quem; up['pessoas/' + pid + '/atualizadoPorUid'] = m.uid;
+      try { await update(ref(db), up); toast('Pessoa atualizada.', 'success'); window.pesFecharModal(); window.pesCarregarCentral(); }
+      catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), 'error'); }
+    };
+
+    /* monta a mesclagem: A fica, B sai. Retorna { up, linhas } sem gravar */
+    window.pesMontarMescla = function (pidA, A, pidB, B, finA, finB, medB) {
+      const m = eu(), up = {}, linhas = [];
+      if (pidA === pidB) return { erro: 'Escolha duas pessoas diferentes.' };
+      if (!A || !B) return { erro: 'Pessoa não encontrada.' };
+      const marca = (pid) => { up['pessoas/' + pid + '/atualizadoEm'] = m.agora; up['pessoas/' + pid + '/atualizadoPor'] = m.quem; up['pessoas/' + pid + '/atualizadoPorUid'] = m.uid; };
+      // B sai (ativo:false); o motivo vai no campo de auditoria, que já existe nas Rules
+      up['pessoas/' + pidB + '/ativo'] = false;
+      up['pessoas/' + pidB + '/atualizadoEm'] = m.agora; up['pessoas/' + pidB + '/atualizadoPorUid'] = m.uid;
+      up['pessoas/' + pidB + '/atualizadoPor'] = ('Mesclada em ' + nomeDe(A) + ' (' + pidA + ') por ' + m.quem).slice(0, 120);
+      linhas.push('<b>' + esc(nomeDe(B)) + '</b> fica <b>inativa</b> (nada é apagado; o motivo fica no campo "atualizado por").');
+      // vínculos legados: preenche só o que A não tem
+      const la = A.legado || {}, lb = B.legado || {}; let temLeg = false;
+      ['adminProfKey', 'cronoMedicoId', 'firestoreProfId'].forEach(k => { if (!la[k] && lb[k]) { up['pessoas/' + pidA + '/legado/' + k] = lb[k]; temLeg = true; linhas.push('Vínculo <span class="mono">' + k + '</span> passa para ' + esc(nomeDe(A)) + '.'); } });
+      // cronograma: o médico de B passa a apontar para A (só se hoje aponta para B)
+      if (lb.cronoMedicoId && medB && medB.pessoaId === pidB) { up['crono/medicos/' + lb.cronoMedicoId + '/pessoaId'] = pidA; linhas.push('Médico do cronograma <span class="mono">' + esc(lb.cronoMedicoId) + '</span> passa a apontar para ' + esc(nomeDe(A)) + '.'); }
+      // CPFs: tudo que era de B vira "legado" de A; B mantém o próprio registro financeiro (sem apagar)
+      let temFin = false;
+      if (finB) {
+        const dig = x => String(x == null ? '' : x).replace(/\D/g, '');
+        const aCpfs = new Set([dig(finA && finA.documento)].concat(Object.keys((finA && finA.cpfsLegados) || {}).map(k => dig(finA.cpfsLegados[k]))).filter(Boolean));
+        const deB = [dig(finB.documento)].concat(Object.keys(finB.cpfsLegados || {}).map(k => dig(finB.cpfsLegados[k]))).filter(c => c.length === 11);
+        const novos = Array.from(new Set(deB.filter(c => !aCpfs.has(c))));
+        if (novos.length) {
+          temFin = true;
+          if (!finA || !dig(finA.documento)) { up['pessoas_financeiro/' + pidA + '/documento'] = novos[0]; novos.shift(); linhas.push('CPF de ' + esc(nomeDe(B)) + ' vira o CPF principal de ' + esc(nomeDe(A)) + ' (que não tinha).'); }
+          if (novos.length) {
+            const atual = Object.keys((finA && finA.cpfsLegados) || {}).map(k => dig(finA.cpfsLegados[k])).filter(c => c.length === 11);
+            up['pessoas_financeiro/' + pidA + '/cpfsLegados'] = atual.concat(novos);
+            linhas.push(novos.length + ' CPF(s) de ' + esc(nomeDe(B)) + ' entram como <b>CPF anterior</b> de ' + esc(nomeDe(A)) + ' (mascarados: ' + novos.map(mask).join(', ') + ').');
+          }
+        }
+      }
+      marca(pidA); if (temFin) { up['pessoas_financeiro/' + pidA + '/atualizadoEm'] = m.agora; up['pessoas_financeiro/' + pidA + '/atualizadoPor'] = m.quem; up['pessoas_financeiro/' + pidA + '/atualizadoPorUid'] = m.uid; }
+      linhas.push('Repasses e recibos antigos continuam com o ID de ' + esc(nomeDe(B)) + ' (histórico preservado).');
+      if (A.categoria !== B.categoria) linhas.unshift('<span class="tag t-warn">Atenção</span> categorias diferentes (' + esc(A.categoria) + ' / ' + esc(B.categoria) + ').');
+      return { up, linhas };
+    };
+
+    window.pesMesclar = function (pidA) {
+      const A = CENTRAL[pidA]; if (!A) return;
+      const ops = Object.keys(CENTRAL).filter(k => k !== pidA).sort((x, y) => nomeDe(CENTRAL[x]).localeCompare(nomeDe(CENTRAL[y]), 'pt'))
+        .map(k => '<option value="' + esc(k) + '">' + esc(nomeDe(CENTRAL[k])) + (CENTRAL[k].ativo === false ? ' (inativa)' : '') + (CENTRAL[k].especialidade ? ' · ' + esc(CENTRAL[k].especialidade) : '') + '</option>').join('');
+      abrirModal('<h3><i class="fas fa-code-merge"></i> Mesclar pessoas</h3>' +
+        '<p class="help"><b>Fica:</b> ' + esc(nomeDe(A)) + '</p>' +
+        '<label class="fld">Mesclar nela (esta ficha vai ficar inativa)<select id="mgB"><option value="">Escolha…</option>' + ops + '</select></label>' +
+        '<div class="bar"><button class="btn-s" onclick="pesPreviaMescla(\'' + esc(pidA) + '\')"><i class="fas fa-eye"></i> Ver prévia</button><button class="btn-s" onclick="pesFecharModal()">Cancelar</button></div><div id="mgPrev"></div>');
+    };
+    window.pesPreviaMescla = async function (pidA) {
+      const pidB = document.getElementById('mgB').value, box = document.getElementById('mgPrev'); if (!pidB) { toast('Escolha a pessoa que será mesclada.', 'error'); return; }
+      box.innerHTML = '<p class="help">Lendo dados…</p>';
+      try {
+        const A = CENTRAL[pidA], B = CENTRAL[pidB], [finA, finB] = await Promise.all([lerRef('pessoas_financeiro/' + pidA), lerRef('pessoas_financeiro/' + pidB)]);
+        const cid = B.legado && B.legado.cronoMedicoId, medB = cid ? await lerRef('crono/medicos/' + cid) : null;
+        const r = window.pesMontarMescla(pidA, A, pidB, B, finA, finB, medB);
+        if (r.erro) { box.innerHTML = '<div class="note">' + esc(r.erro) + '</div>'; return; }
+        window._mescla = { pidA, pidB, up: r.up };
+        box.innerHTML = '<div class="prev"><b>Prévia (nada foi gravado):</b><ul>' + r.linhas.map(l => '<li>' + l + '</li>').join('') + '</ul></div>' +
+          '<div class="bar"><button class="btn-p" onclick="pesConfirmarMescla()"><i class="fas fa-check"></i> Confirmar mesclagem</button></div>';
+      } catch (e) { box.innerHTML = '<div class="note">Erro: ' + esc(e.code || e.message) + '</div>'; }
+    };
+    window.pesConfirmarMescla = async function () {
+      const M = window._mescla; if (!M) return;
+      if (!confirm('Mesclar "' + nomeDe(CENTRAL[M.pidB]) + '" em "' + nomeDe(CENTRAL[M.pidA]) + '"?\nA primeira fica inativa. Nada é apagado.')) return;
+      try { await update(ref(db), M.up); window._mescla = null; toast('Mesclagem concluída.', 'success'); window.pesFecharModal(); window.pesCarregarCentral(); }
+      catch (e) { toast('Não foi possível mesclar (nada foi gravado): ' + (e.code || e.message), 'error'); }
     };
 
     window.pesTab = function (t) {
