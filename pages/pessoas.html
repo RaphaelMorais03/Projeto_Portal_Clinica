@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- VERSION: v1.2 | pessoas.html | 23/11/2026 | Correção: pessoa com cadastro extra no Fechamento não é mais tratada como 'apagada' (evitava gravar ativo:false para quem continua visível). -->
 <!-- VERSION: v1.1 | pessoas.html | 23/11/2026 | Etapa 4c — cadastro em lote/individual: grava pessoas/{pid} + pessoas_financeiro/{pid} (update multi-path) e pessoaId em crono/medicos. Modo 'só simular' ligado por padrão. Não altera nem apaga nada existente. -->
 <!-- VERSION: v1.0 | pessoas.html | 19/11/2026 | Etapa 4b — relatório de associação (somente leitura) + consulta de pessoas/{pid}. -->
 <html lang="pt-BR">
@@ -181,7 +182,7 @@
         const g = gr[k];
         g.nomeExib = (ordem.map(o => g.regs.find(r => r.fonte === o && r.nome)).find(Boolean) || { nome: '(sem nome)' }).nome;
         g.nomes = Array.from(new Set(g.regs.map(r => r.nome).filter(Boolean)));
-        g.apagado = Array.from(g.cpfs).some(c => apag.has(c));
+        g.apagado = Array.from(g.cpfs).some(c => apag.has(c)) && !g.fontes.has('extra'); // [v1.2] cadastro extra nunca é filtrado pela lista de apagados no Fechamento: quem tem extra continua visível, então não é 'apagado'
         g.naLista = !g.apagado && (g.fontes.has('admin') || g.fontes.has('extra'));
         g.cpfPrincipal = (g.regs.find(r => r.fonte === 'extra' && r.cpf) || g.regs.find(r => r.cpf) || {}).cpf || '';
         g.cpfInvalido = g.cpfs.size ? Array.from(g.cpfs).some(c => !cpfValido(c)) && !Array.from(g.cpfs).some(cpfValido) : true;
