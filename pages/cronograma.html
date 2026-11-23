@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
-<!-- VERSION: v1.7 | cronograma.html | 23/11/2026 | Etapa 5b — Gerar agenda inclui médicos ativos do cadastro central (pessoas); salvar médico preserva pessoaId e reflete nome/especialidade na central (novo médico cria a pessoa no mesmo update); listeners só com usuário logado e sem duplicar; removido fallback REST sem token. Perfis: admin = CRUD; cronograma = vê a semana + gera agenda. -->
+<!-- VERSION: v1.8 | cronograma.html | 23/11/2026 | Gerar agenda: não repete o mesmo médico quando o nome do cadastro central vem abreviado ou com sobrenome a mais (só na lista, sem vincular). v1.7: Etapa 5b — Gerar agenda inclui médicos ativos do cadastro central (pessoas); salvar médico preserva pessoaId e reflete nome/especialidade na central (novo médico cria a pessoa no mesmo update); listeners só com usuário logado e sem duplicar; removido fallback REST sem token. Perfis: admin = CRUD; cronograma = vê a semana + gera agenda. -->
 <head>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
@@ -826,18 +826,29 @@
 
   // [v1.7] Gerar agenda: lista fixa acima + médicos ATIVOS do cadastro central (pessoas) da mesma especialidade que ainda não estão nela
   window._pessoasCentral = null;
+  // [v1.8] "mesma pessoa" só para esconder repetição na lista do gerador (não vincula nada): ignora dr/dra e partículas;
+  // iguais, ou um é prefixo do outro (mín. 3 palavras no menor), ou mesmo tamanho com inicial no lugar da palavra (N. = Nascimento).
+  window.genMesmoNome = function (a, b) {
+    const tk = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w && !/^(dr|dra|de|da|do|das|dos|e)$/.test(w));
+    const x = tk(a), y = tk(b); if (!x.length || !y.length) return false;
+    if (x.join(' ') === y.join(' ')) return true;
+    const c = x.length <= y.length ? x : y, l = x.length <= y.length ? y : x;
+    if (c.length >= 3 && c.every((w, i) => w === l[i])) return true;
+    if (x.length === y.length && x.length >= 3 && x.every((w, i) => w === y[i] || (w.length === 1 && y[i][0] === w) || (y[i].length === 1 && w[0] === y[i]))) return true;
+    return false;
+  };
   window.genMedicosDe = function (esp) {
     const base = (MEDICOS[esp] || []).slice(), P = window._pessoasCentral;
     if (!P) return base;
     const n = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\b(dr|dra)\b\.?/g, ' ').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
-    const nesp = n(esp), tem = {};
-    base.forEach(m => { tem[n(m)] = true; });
+    const nesp = n(esp), lista = base.slice();
     Object.keys(P).forEach(k => {
       const p = P[k] || {};
       if (p.categoria !== 'medico' || p.ativo === false || !p.nomeCompleto || n(p.especialidade) !== nesp) return;
-      const nn = n(p.nomeCompleto); if (tem[nn]) return; tem[nn] = true; base.push(p.nomeCompleto);
+      if (lista.some(m => window.genMesmoNome(m, p.nomeCompleto))) return;   // [v1.8] também pega abreviação/sobrenome a mais
+      lista.push(p.nomeCompleto);
     });
-    return base;
+    return lista;
   };
 
   const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
