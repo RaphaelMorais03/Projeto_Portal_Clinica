@@ -104,7 +104,12 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title"><i class="fas fa-handshake"></i> Parceiros (<span id="countParceiros">0</span>)</div>
-          <button class="btn-p" onclick="abrirModalParceiro()"><i class="fas fa-plus"></i> Novo parceiro</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <!-- [v1.1] carga da base de preços (substitui parceiros e exames; baixa backup antes) -->
+            <button class="btn-s" id="btnCarregarBase" onclick="carregarBasePrecos()"><i class="fas fa-file-import"></i> Carregar base de preços</button>
+            <button class="btn-p" onclick="abrirModalParceiro()"><i class="fas fa-plus"></i> Novo parceiro</button>
+          </div>
+          <input type="file" id="fileBasePrecos" accept=".json,application/json" style="display:none;">
         </div>
         <input class="f-input" id="buscaParceiro" placeholder="Buscar parceiro..." oninput="filtrarParceiros()" style="margin-bottom:14px;">
         <div id="listaParceiros"></div>
@@ -137,12 +142,23 @@
       <label class="f-label">Nome</label>
       <input class="f-input" id="pcNome" style="margin-bottom:12px;">
       <label class="f-label">Tipo</label>
-      <select class="f-select" id="pcTipo" style="margin-bottom:12px;">
+      <select class="f-select" id="pcTipo" style="margin-bottom:12px;" onchange="toggleExternoParceiro()">
         <option value="interno">Interno (equipe/clínica)</option>
         <option value="externo">Externo (parceiro terceirizado)</option>
       </select>
       <label class="f-label">Observações</label>
       <textarea class="f-input" id="pcObs" rows="2" style="margin-bottom:12px;"></textarea>
+      <!-- [v1.1] dados usados na mensagem de orçamento ao paciente (só parceiro externo) -->
+      <div id="pcExternoBox" style="display:none;">
+        <label class="f-label">Nome de exibição (aparece na mensagem ao paciente)</label>
+        <input class="f-input" id="pcNomeExib" style="margin-bottom:12px;">
+        <label class="f-label">Nome formal (onde o restante é pago)</label>
+        <input class="f-input" id="pcNomeFormal" style="margin-bottom:12px;">
+        <label class="f-label">Endereço</label>
+        <input class="f-input" id="pcEndereco" style="margin-bottom:12px;">
+        <label class="f-label">Telefone de agendamento</label>
+        <input class="f-input" id="pcTel" style="margin-bottom:12px;">
+      </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--gray-600);">
         <input type="checkbox" id="pcAtivo" checked> Ativo
       </label>
@@ -164,6 +180,19 @@
       <div class="form-grid">
         <div><label class="f-label">Valor cartão (R$)</label><input class="f-input" id="exPrecoCt" type="number" step="0.01"></div>
         <div><label class="f-label">Valor particular (R$)</label><input class="f-input" id="exPrecoPt" type="number" step="0.01"></div>
+      </div>
+      <!-- [v1.1] parceiro externo: o valor acima é o TOTAL; total = guia (paga aqui) + restante (paga no parceiro) -->
+      <div id="exExternoBox" style="display:none;">
+        <div class="form-grid">
+          <div><label class="f-label">Guia — cartão (R$)</label><input class="f-input" id="exGuiaCt" type="number" step="0.01"></div>
+          <div><label class="f-label">Restante no parceiro — cartão (R$)</label><input class="f-input" id="exRestaCt" type="number" step="0.01"></div>
+        </div>
+        <div class="form-grid">
+          <div><label class="f-label">Guia — particular (R$)</label><input class="f-input" id="exGuiaPt" type="number" step="0.01"></div>
+          <div><label class="f-label">Restante no parceiro — particular (R$)</label><input class="f-input" id="exRestaPt" type="number" step="0.01"></div>
+        </div>
+        <label class="f-label">Unidade / local de realização (opcional)</label>
+        <input class="f-input" id="exUnidadeObs" style="margin-bottom:12px;">
       </div>
       <label class="f-label">Profissional (opcional)</label>
       <select class="f-select" id="exProfissional" style="margin-bottom:12px;">
@@ -190,7 +219,7 @@
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
     import {
-      getFirestore, collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy
+      getFirestore, collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy, writeBatch
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const app  = initializeApp(window.FIREBASE_CONFIG);
@@ -263,6 +292,7 @@
       document.getElementById('pcTipo').value = 'interno';
       document.getElementById('pcObs').value = '';
       document.getElementById('pcAtivo').checked = true;
+      ['pcNomeExib','pcNomeFormal','pcEndereco','pcTel'].forEach(k => document.getElementById(k).value = '');
       if (id){
         const p = parceiros.find(x=>x.id===id);
         if (p){
@@ -270,9 +300,17 @@
           document.getElementById('pcTipo').value = p.tipo||'interno';
           document.getElementById('pcObs').value = p.observacoes||'';
           document.getElementById('pcAtivo').checked = p.ativo!==false;
+          document.getElementById('pcNomeExib').value = p.nomeExib||'';
+          document.getElementById('pcNomeFormal').value = p.nomeFormal||'';
+          document.getElementById('pcEndereco').value = p.endereco||'';
+          document.getElementById('pcTel').value = p.tel||'';
         }
       }
+      toggleExternoParceiro();
       document.getElementById('modalParceiro').classList.add('open');
+    };
+    window.toggleExternoParceiro = function(){
+      document.getElementById('pcExternoBox').style.display = document.getElementById('pcTipo').value==='externo' ? 'block' : 'none';
     };
     window.fecharModalParceiro = function(){ document.getElementById('modalParceiro').classList.remove('open'); };
 
@@ -284,6 +322,10 @@
         nome,
         tipo: document.getElementById('pcTipo').value,
         observacoes: document.getElementById('pcObs').value.trim(),
+        nomeExib: document.getElementById('pcNomeExib').value.trim(),
+        nomeFormal: document.getElementById('pcNomeFormal').value.trim(),
+        endereco: document.getElementById('pcEndereco').value.trim(),
+        tel: document.getElementById('pcTel').value.trim(),
         ativo: document.getElementById('pcAtivo').checked,
         updatedAt: now, updatedBy: currentUser.email
       };
@@ -292,7 +334,7 @@
           await updateDoc(doc(db,'parceiros',editandoParceiroId), data);
         } else {
           const id = 'p_' + slugify(nome) + '_' + Date.now().toString(36).slice(-4);
-          await setDoc(doc(db,'parceiros',id), {...data, createdAt: now, createdBy: currentUser.email});
+          await setDoc(doc(db,'parceiros',id), {...data, catalogoV2: true, createdAt: now, createdBy: currentUser.email});
         }
         toast('Parceiro salvo!','success');
         fecharModalParceiro();
@@ -385,6 +427,9 @@
       document.getElementById('exPreparo').value = '';
       document.getElementById('exObservacao').value = '';
       document.getElementById('exAtivo').checked = true;
+      ['exGuiaCt','exRestaCt','exGuiaPt','exRestaPt','exUnidadeObs'].forEach(k => document.getElementById(k).value = '');
+      const parcSel = parceiros.find(x=>x.id===parceiroId);
+      document.getElementById('exExternoBox').style.display = (parcSel && parcSel.tipo==='externo') ? 'block' : 'none';
       if (id){
         const e = examesCache.find(x=>x.id===id);
         if (e){
@@ -396,6 +441,11 @@
           document.getElementById('exPreparo').value = e.preparo||'';
           document.getElementById('exObservacao').value = e.observacao||'';
           document.getElementById('exAtivo').checked = e.ativo!==false;
+          document.getElementById('exGuiaCt').value = e.guia_ct ?? '';
+          document.getElementById('exRestaCt').value = e.resta_ct ?? '';
+          document.getElementById('exGuiaPt').value = e.guia_pt ?? '';
+          document.getElementById('exRestaPt').value = e.resta_pt ?? '';
+          document.getElementById('exUnidadeObs').value = e.unidadeObs||'';
         }
       }
       document.getElementById('modalExame').classList.add('open');
@@ -420,6 +470,24 @@
         ativo: document.getElementById('exAtivo').checked,
         updatedAt: now, updatedBy: currentUser.email
       };
+      // [v1.1] parceiro externo: total = guia + restante (o Orçamentos monta a mensagem ao paciente com esses 3 valores)
+      const parcAtual = parceiros.find(x=>x.id===parceiroId);
+      if (parcAtual && parcAtual.tipo==='externo'){
+        const num = k => { const v = document.getElementById(k).value; return v==='' ? null : Number(v); };
+        const r2 = n => Math.round(n*100)/100;
+        const calc = (total, g, r, rotulo) => {
+          if (total==null) return {g:null, r:null};
+          if (g==null && r!=null) g = r2(total-r);
+          if (r==null && g!=null) r = r2(total-g);
+          if (g==null && r==null){ g = 0; r = total; }
+          if (Math.abs(total-(g+r))>0.01){ toast(rotulo+': o valor total precisa ser igual a guia + restante','error'); return null; }
+          return {g, r};
+        };
+        const ct = calc(data.preco_ct, num('exGuiaCt'), num('exRestaCt'), 'Cartão'); if (!ct) return;
+        const pt = calc(data.preco_pt, num('exGuiaPt'), num('exRestaPt'), 'Particular'); if (!pt) return;
+        Object.assign(data, { guia_ct: ct.g, resta_ct: ct.r, guia_pt: pt.g, resta_pt: pt.r,
+                              unidadeObs: document.getElementById('exUnidadeObs').value.trim() });
+      }
       try {
         if (editandoExameId){
           // preserva flags de origem/divergencia ja existentes, so atualiza campos editaveis
@@ -443,6 +511,79 @@
       try { await deleteDoc(doc(db,'parceiros',parceiroId,'exames',id)); toast('Exame removido','success'); await carregarExamesDoParceiro(); }
       catch(e){ toast('Erro: '+e.message,'error'); }
     };
+
+    // ───────── CARGA DA BASE DE PREÇOS [v1.1] ─────────
+    // Lê data/parceiros-seed.json (ou um arquivo escolhido) e SUBSTITUI parceiros + exames.
+    // Ordem segura: 1) baixa backup do que existe  2) grava a base nova  3) só então apaga o que sobrou do cadastro antigo.
+    function baixarJson(nome, obj){
+      const url = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 1)], {type:'application/json'}));
+      const a = document.createElement('a'); a.href = url; a.download = nome; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1000);
+    }
+    async function commitEmLotes(ops){   // ops: funções (batch)=>void ; máx. 400 por lote
+      for (let i=0; i<ops.length; i+=400){
+        const b = writeBatch(db); ops.slice(i, i+400).forEach(fn=>fn(b)); await b.commit();
+      }
+    }
+    async function aplicarBasePrecos(seed){
+      const lista = (seed && Array.isArray(seed.parceiros)) ? seed.parceiros : [];
+      if (!lista.length){ toast('Arquivo inválido: não há parceiros','error'); return; }
+      const totalEx = lista.reduce((s,p)=>s+(p.exames||[]).length,0);
+      if (!confirm(`Carregar ${lista.length} parceiros e ${totalEx} exames?\n\nIsso SUBSTITUI todos os parceiros e exames atuais.\nUm backup (.json) do que existe hoje será baixado antes.`)) return;
+      const btn = document.getElementById('btnCarregarBase'); btn.disabled = true;
+      try {
+        // 1) backup
+        const antigos = await getDocs(collection(db,'parceiros'));
+        const backup = [], examesAntigos = [];
+        for (const pd of antigos.docs){
+          const es = await getDocs(collection(db,'parceiros',pd.id,'exames'));
+          es.forEach(d=>examesAntigos.push(d.ref));
+          backup.push({id:pd.id, ...pd.data(), exames: es.docs.map(d=>({id:d.id, ...d.data()}))});
+        }
+        const carimbo = new Date().toISOString().slice(0,16).replace(/[-:T]/g,'');
+        baixarJson(`backup-parceiros-${carimbo}.json`, {geradoEm:new Date().toISOString(), parceiros:backup});
+        // 2) grava a base nova (ids iguais são sobrescritos)
+        const now = new Date().toISOString(), por = currentUser.email;
+        const caminhosNovos = new Set(), ops = [];
+        for (const p of lista){
+          const {exames, id, ...pdata} = p;
+          const pref = doc(db,'parceiros',id); caminhosNovos.add(pref.path);
+          ops.push(b=>b.set(pref, {...pdata, catalogoV2:true, createdAt:now, createdBy:por, updatedAt:now, updatedBy:por}));
+          for (const e of (exames||[])){
+            const {id:eid, ...edata} = e;
+            const eref = doc(db,'parceiros',id,'exames',eid); caminhosNovos.add(eref.path);
+            ops.push(b=>b.set(eref, {...edata, createdAt:now, createdBy:por, updatedAt:now, updatedBy:por}));
+          }
+        }
+        await commitEmLotes(ops);
+        // 3) remove o que era do cadastro antigo e não está na base nova
+        const apagar = [...examesAntigos, ...antigos.docs.map(d=>d.ref)].filter(r=>!caminhosNovos.has(r.path));
+        await commitEmLotes(apagar.map(r=>b=>b.delete(r)));
+        toast(`Base carregada: ${lista.length} parceiros, ${totalEx} exames. Backup baixado.`,'success');
+        await carregarParceiros();
+        document.getElementById('selParceiroExames').value = ''; await carregarExamesDoParceiro();
+      } catch(e){
+        toast('Erro na carga: '+e.message+' — o backup foi baixado; confira o cadastro antes de repetir.','error');
+      } finally { btn.disabled = false; }
+    }
+    window.carregarBasePrecos = async function(){
+      let seed = null;
+      try {
+        const res = await fetch('../data/parceiros-seed.json', {cache:'no-store'});
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        seed = await res.json();
+      } catch(e){
+        toast('Arquivo não encontrado no servidor. Escolha o parceiros-seed.json no seu computador.','error');
+        document.getElementById('fileBasePrecos').click(); return;
+      }
+      await aplicarBasePrecos(seed);
+    };
+    document.getElementById('fileBasePrecos').addEventListener('change', async ev=>{
+      const f = ev.target.files[0]; if (!f) return;
+      try { await aplicarBasePrecos(JSON.parse(await f.text())); }
+      catch(e){ toast('Arquivo inválido: '+e.message,'error'); }
+      finally { ev.target.value = ''; }
+    });
 
     // ───────── AUTH GATE (mesmo padrão do admin.html) ─────────
     onAuthStateChanged(auth, async (user) => {

@@ -891,12 +891,65 @@
       return [...byKey.values()];
     }
 
+    // [v2.7] Catálogo novo: parceiros/{id}/exames (editável em Cadastros).
+    // Só é usado quando ao menos um parceiro tem catalogoV2 === true (marca gravada pela carga em Cadastros
+    // e por "Novo parceiro"). Sem a marca, nada muda: continua a base legada (orcamentos_exames + _PARC fixo).
+    async function carregarCatalogoParceiros() {
+      try {
+        const ps = await getDocs(collection(db, 'parceiros'));
+        if (!ps.docs.some(d => d.data().catalogoV2 === true)) return null;
+        const internos = [], parc = {};
+        for (const pd of ps.docs) {
+          const p = pd.data();
+          if (p.catalogoV2 !== true || p.ativo === false) continue;
+          const es = await getDocs(collection(db, 'parceiros', pd.id, 'exames'));
+          if (p.tipo === 'externo') {
+            const lista = [];
+            es.forEach(d => {
+              const e = d.data();
+              if (e.ativo === false || e.preco_ct == null || !e.nome) return;
+              const total = Number(e.preco_ct);
+              const guia  = e.guia_ct  != null ? Number(e.guia_ct)  : (e.resta_ct != null ? total - Number(e.resta_ct) : 0);
+              const resta = e.resta_ct != null ? Number(e.resta_ct) : total - guia;
+              lista.push({ nome: e.nome, total, guia, resta, _unidadeObs: e.unidadeObs || '' });
+            });
+            if (lista.length) parc[pd.id] = {
+              nome: p.nome, nomeExib: p.nomeExib || p.nome, nomeFormal: p.nomeFormal || p.nome,
+              endereco: p.endereco || '', tel: p.tel || '', obs: p.observacoes || '', exames: lista
+            };
+          } else {
+            es.forEach(d => {
+              const e = d.data();
+              if (e.ativo === false || !e.nome) return;
+              internos.push({
+                id: pd.id + '__' + d.id, nome: e.nome, categoria: e.categoria || 'Geral', fornecedor: p.nome,
+                preco_ct: e.preco_ct ?? null, preco_pt: e.preco_pt ?? null, observacao: e.observacao || '',
+                preparo: e.preparo || '', caracteristica: e.caracteristica || '', beneficio: e.beneficio || ''
+              });
+            });
+          }
+        }
+        return { internos, parc };
+      } catch (err) {
+        console.warn('[orcamento] catálogo de parceiros indisponível, usando a base legada:', err.message);
+        return null;
+      }
+    }
+
     async function loadExamsFromFirestore() {
       document.getElementById('results').innerHTML = '<div class="loader"><div class="spinner"></div><p>Carregando exames…</p></div>';
       try {
-        const snap = await getDocs(collection(db, 'orcamentos_exames'));
         let fsExams = [];
-        snap.forEach(d => fsExams.push({ id: d.id, ...d.data() }));
+        const cat = await carregarCatalogoParceiros();   // [v2.7]
+        if (cat) {
+          fsExams = cat.internos;
+          window._PARC = cat.parc;
+          // importação legada (planilha/base inicial) grava em orcamentos_exames, que agora não é lido: esconde os botões
+          ['importBtn', 'loadSeedBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.style.display = 'none'; });
+        } else {
+          const snap = await getDocs(collection(db, 'orcamentos_exames'));
+          snap.forEach(d => fsExams.push({ id: d.id, ...d.data() }));
+        }
         fsExams = fsExams.flatMap(e => {
           const n = normalize(e.nome);
           if (n.includes('holter') && n.includes('mapa')) return [
@@ -1731,7 +1784,7 @@
       cur=writeBatch(db);cnt=0;const ins=[];for(const e of list){const ref=doc(db,'orcamentos_exames',e.id);const{id,...data}=e;cur.set(ref,{...data,createdAt:new Date().toISOString(),createdBy:currentUser.email});if(++cnt>=400){ins.push(cur);cur=writeBatch(db);cnt=0;}}if(cnt>0)ins.push(cur);for(const b of ins)await b.commit();
     }
   </script>
-<span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v2.6 · 30/07/2026</span>
+<span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v2.7 · 23/11/2026</span>
 </body>
 </html>
 
