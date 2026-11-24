@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- VERSION: v1.4 | pessoas.html | 24/11/2026 | Visual unificado: usa ../css/portal-theme.css (tokens, cabeçalho, botões, campos, abas, etiquetas, modal, toast). Só CSS; nenhum id, classe ou função alterado. -->
 <!-- VERSION: v1.3 | pessoas.html | 23/11/2026 | Cadastro central: Editar (nome, exibição, categoria, especialidade, ativo) e Mesclar duas pessoas (a que sai fica ativo:false; vínculos e CPFs vão para a que fica; nada é apagado). Só admin. Sem mudança de Rules. -->
 <!-- VERSION: v1.2 | pessoas.html | 23/11/2026 | Correção: pessoa com cadastro extra no Fechamento não é mais tratada como 'apagada' (evitava gravar ativo:false para quem continua visível). -->
 <!-- VERSION: v1.1 | pessoas.html | 23/11/2026 | Etapa 4c — cadastro em lote/individual: grava pessoas/{pid} + pessoas_financeiro/{pid} (update multi-path) e pessoaId em crono/medicos. Modo 'só simular' ligado por padrão. Não altera nem apaga nada existente. -->
@@ -13,55 +14,35 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="../js/firebase-config.js"></script>
   <script src="../js/shared-utils.js"></script>
+  <link rel="stylesheet" href="../css/portal-theme.css">
   <style>
-    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--amber:#92400e;--amber-bg:#fef3c7;--green:#059669;--green-bg:#d1fae5;--blue:#1d4ed8;--blue-bg:#dbeafe;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-600:#475569;--gray-800:#1e293b;--shadow:0 4px 16px rgba(15,23,42,.08);}
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:var(--gray-100);color:var(--gray-800);min-height:100vh;}
-    .red-bar{height:3px;background:var(--red);position:fixed;top:0;left:0;right:0;z-index:200;}
-    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;}
-    .s-logo{display:flex;align-items:center;gap:12px;}
-    .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
-    .s-logo-sub{font-size:10px;color:var(--gray-400);}
-    .header-right{display:flex;align-items:center;gap:10px;}
-    .admin-badge{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:5px;}
-    .back-btn{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;}
-    .content{max-width:1280px;margin:0 auto;padding:22px 22px 60px;}
-    .tabs{display:flex;gap:6px;margin-bottom:18px;background:white;border:1px solid var(--gray-200);border-radius:14px;padding:6px;box-shadow:var(--shadow);}
-    .tab-btn{flex:1;padding:9px 12px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--gray-400);display:flex;align-items:center;justify-content:center;gap:7px;}
-    .tab-btn.active{background:var(--navy);color:white;}
-    .panel{display:none;} .panel.active{display:block;}
-    .card{background:white;border:1px solid var(--gray-200);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px;}
-    .card h3{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+    /* [v1.4] Visual unificado: tokens, cabecalho, botoes, campos, abas, etiquetas,
+       modal e toast vivem em ../css/portal-theme.css. Aqui ficam so as regras
+       proprias desta pagina. .panel segue sendo o painel de aba (display). */
+    .content{max-width:1280px;padding:22px 22px 60px;}
+    .panel{display:none;}
+    .panel.active{display:block;}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:18px;box-shadow:var(--shadow);margin-bottom:16px;}
+    .card h3{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
     .help{font-size:12px;color:var(--gray-600);line-height:1.55;}
     .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;}
-    .btn-p{padding:9px 16px;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
-    .btn-p:disabled{opacity:.55;cursor:wait;}
-    .btn-s{padding:9px 14px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
     .chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-600);font-weight:600;}
-    input[type=search],select{padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;background:white;color:var(--gray-800);}
+    input[type=search],select{padding:9px 12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);font-family:inherit;font-size:13px;background:var(--card);color:var(--ink);outline:none;}
+    input[type=search]:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);}
     .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 4px;}
-    .kpi{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:12px 14px;}
-    .kpi b{display:block;font-size:22px;font-weight:900;color:var(--navy);}
+    .kpi{background:var(--gray-50);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+    .kpi b{display:block;font-size:22px;font-weight:700;color:var(--navy);}
     .kpi span{font-size:11px;color:var(--gray-600);font-weight:600;}
     table{width:100%;border-collapse:collapse;font-size:12.5px;}
-    th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);padding:8px 10px;border-bottom:2px solid var(--gray-200);position:sticky;top:0;background:white;}
+    th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);padding:8px 10px;border-bottom:2px solid var(--line);position:sticky;top:0;background:var(--card);}
     td{padding:9px 10px;border-bottom:1px solid var(--gray-100);vertical-align:top;}
-    .scroll{max-height:62vh;overflow:auto;border:1px solid var(--gray-200);border-radius:12px;}
-    .tag{display:inline-block;border-radius:20px;padding:2px 9px;font-size:10.5px;font-weight:800;margin:1px 3px 1px 0;white-space:nowrap;}
-    .t-ok{background:var(--green-bg);color:#065f46;} .t-info{background:var(--blue-bg);color:var(--blue);}
-    .t-warn{background:var(--amber-bg);color:var(--amber);} .t-bad{background:#fee2e2;color:#991b1b;} .t-mut{background:var(--gray-100);color:var(--gray-600);}
-    .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;}
-    .empty{text-align:center;padding:34px 16px;color:var(--gray-400);font-size:13px;}
-    .loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;z-index:999;}
-    .toast-box{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
-    .toast{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;color:white;box-shadow:0 8px 24px rgba(0,0,0,.2);}
-    .toast.success{background:var(--green);} .toast.error{background:var(--red);} .toast.info{background:var(--navy);}
-    .modal-bg{position:fixed;inset:0;background:rgba(10,31,68,.55);display:none;align-items:center;justify-content:center;z-index:500;padding:16px;}
-    .modal-bg.open{display:flex;} .modal{background:white;border-radius:14px;padding:20px;max-width:560px;width:100%;max-height:90vh;overflow:auto;}
-    .modal h3{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:10px;} .fld{display:block;margin-top:10px;font-size:11px;font-weight:700;color:var(--gray-600);}
-    .fld input,.fld select{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:9px;font-family:inherit;font-size:13px;}
-    .prev{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.6;margin-top:10px;} .prev li{margin-left:16px;}
-    .note{background:var(--amber-bg);border:1px solid #fde68a;color:var(--amber);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;margin-top:12px;}
+    .loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;z-index:999;}
+    .modal h3{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:10px;}
+    .fld{display:block;margin-top:10px;font-size:11px;font-weight:600;color:var(--gray-600);}
+    .fld input,.fld select{display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);font-family:inherit;font-size:13px;}
+    .prev{background:var(--gray-50);border:1px solid var(--line);border-radius:var(--r-ctl);padding:10px 12px;font-size:12px;line-height:1.6;margin-top:10px;}
+    .prev li{margin-left:16px;}
+    .note{background:var(--amber-bg);border:1px solid #fde68a;color:var(--amber);border-radius:var(--r-ctl);padding:10px 12px;font-size:12px;line-height:1.5;margin-top:12px;}
   </style>
 </head>
 <body>
