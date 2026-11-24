@@ -1,3 +1,4 @@
+<!-- VERSION: v1.3 | emissao-notas.html | 24/11/2026 | fix: o CEP ia pro .xlsx com o valor cru da planilha. Quando o Excel/Sheets comia o zero a esquerda (02968-090 -> 2968-090), nflNormCEPDigits consertava o numero so para a CONSULTA e a VALIDACAO - o r.v['CEP'] continuava torto e era ele que entrava no arquivo, entao o endereco vinha certo mas o Sinaxys recusava a linha com "CEP invalido (deve ter 8 digitos numericos)". Agora finalizarRegistro grava o CEP normalizado (nflFmtCEP, nova) e a validacao tambem olha os digitos brutos, pegando CEP com 9+ digitos que antes passava batido. -->
 <!-- VERSION: v1.1 | emissao-notas.html | 03/11/2026 | [v1.1] CPF repetido com nomes diferentes (tomador terceiro, ex.: nota no CPF da mãe de paciente menor) não trava mais o paciente (chave NFE_BLOQUEIA_CPF_DUPLICADO=false). Paciente sem endereço utilizável (Logradouro/Bairro em branco após consulta de CEP) entra com o endereço padrão da clínica: CEP 02939-000, nº 367, Av. Doutor Felipe Pinel (chave NFE_USA_END_PADRAO); não troca o endereço se a consulta de CEP do paciente falhou; avisado na caixa de avisos. -->
 <!-- VERSION: v1.0 | emissao-notas.html | 16/10/2026 | feat: nova página "Emissão de notas" (somente admin) — fluxo direto Emitir lote + Retorno Sinaxys, a partir do mockup NF em Lote v6.0 · Direto. Regras de validação/CEP/Sinaxys copiadas do dashboard v6.0 (commit a4afba5). -->
 <!DOCTYPE html>
@@ -532,6 +533,20 @@ function nflNormCEPDigits(v){
     if(d.length===7) d='0'+d;
     return d.slice(0,8);
   }
+/* [v1.3] CEP que vai pro .xlsx: sempre XXXXX-XXX.
+   nflNormCEPDigits já recompunha o zero à esquerda que o Excel/Sheets derruba
+   (02968090 virava 2968090), mas esse conserto só era usado na CONSULTA e na
+   VALIDAÇÃO — o r.v['CEP'] continuava com o valor cru da planilha, e era ele que
+   ia pro arquivo. Resultado: o endereço vinha certo (a consulta funcionou) mas o
+   Sinaxys recusava a linha com "CEP inválido (deve ter 8 dígitos numéricos)".
+   Só formata o que dá 8 dígitos; 6 ou 9+ dígitos volta cru pro avaliar() acusar
+   em vez de inventar um CEP plausível e errado. */
+function nflFmtCEP(v){
+    var d=nflOnlyDigits(v);
+    if(d.length===7) d='0'+d;
+    if(d.length!==8) return nflCleanCell(v);
+    return d.slice(0,5)+'-'+d.slice(5);
+  }
 
 function nflNormalizarEndereco(rec){
     var fixes=[], warns=[];
@@ -568,7 +583,10 @@ function nflNormalizarEndereco(rec){
     /* CEP: 8 dígitos e faixa real (não começa com 00). Só valida se vier preenchido */
     if(rec['CEP']){
       var cd=nflNormCEPDigits(rec['CEP']);
-      if(cd.length!==8||/^00/.test(cd)) warns.push('CEP inválido');
+      /* [v1.3] dígitos brutos também: nflNormCEPDigits corta em 8, então um CEP com
+         9+ dígitos passava batido aqui e só era recusado lá no Sinaxys. */
+      var cdBruto=nflOnlyDigits(rec['CEP']);
+      if(cdBruto.length>8||cd.length!==8||/^00/.test(cd)) warns.push('CEP inválido');
     }
     return {fixes:fixes,warns:warns};
   }
@@ -1066,6 +1084,7 @@ var NFE = (function () {
   function finalizarRegistro(r) {
     var v = r.v;
     v['Email'] = nflEmailSinaxys(v['Email']);
+    v['CEP'] = nflFmtCEP(v['CEP']);   /* [v1.3] grava o CEP já normalizado — é este valor que vai pro .xlsx */
     if (r.tipo) v['Descrição do Procedimento'] = DESC[r.tipo]; else v['Descrição do Procedimento'] = '';
     return r;
   }
