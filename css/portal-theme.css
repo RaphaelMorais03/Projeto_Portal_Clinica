@@ -124,13 +124,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 /* ── Modal ───────────────────────────────────────────────────────────────── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:500;align-items:center;justify-content:center;padding:20px;}
 .modal-bg.open{display:flex;}
-.modal{background:var(--card);border-radius:var(--r-card);padding:24px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+/* a caixa do modal e so filha de .modal-bg: em fechamento.html a propria
+   .modal e a cortina, e nao deve herdar largura/padding daqui */
+.modal-bg .modal{background:var(--card);border-radius:var(--r-card);padding:24px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
 .modal-title{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
 
 /* ── Toast ───────────────────────────────────────────────────────────────── */
-.toast-box{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
-.toast{padding:12px 16px;border-radius:var(--r-ctl);font-size:13px;font-weight:600;color:#fff;box-shadow:var(--shadow-pop);display:flex;align-items:center;gap:8px;animation:slideIn .2s;}
+.toast-box,.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:12px 16px;border-radius:var(--r-ctl);font-size:13px;font-weight:600;color:#fff;background:var(--gray-800);max-width:360px;box-shadow:var(--shadow-pop);display:flex;align-items:center;gap:8px;animation:slideIn .2s;}
 .toast.success{background:var(--green);}
 .toast.error{background:var(--red);}
 .toast.info{background:var(--navy);}
