@@ -1,4 +1,5 @@
 ﻿<!DOCTYPE html>
+<!-- VERSION: v2.1 | cronograma.html | 24/11/2026 | Visual unificado: passa a usar ../css/portal-theme.css (mesmos valores da v1.5). Só CSS de tela; folha impressa, regras de impressão, IDs e funções intactos. -->
 <html lang="pt-BR">
 <!-- VERSION: v2.0 | cronograma.html | 23/11/2026 | Aba Semana: "Imprimir semana" e "PDF" para qualquer usuário (somente leitura de crono/dias, mesmo modelo A4 paisagem/PDF do Verificar), com navegação de semana. Não grava nada. -->
 <!-- VERSION: v1.9 | cronograma.html | 23/11/2026 | Usuário comum só vê a semana e gera agenda: botões Importar PDF / Colar Texto / Editar (e o salvamento de crono/agenda) ficam só para admin. Combina com a Rule de crono/agenda só admin. -->
@@ -17,39 +18,22 @@
   <!-- [v1.3] planilha modelo/importação (XLSX.js) e PDF semanal (jsPDF) — mesmas versões já usadas em outras páginas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="../css/portal-theme.css">
   <style>
-    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#0f766e;--teal-h:#0b5f58;--green:#15803d;--green-bg:#dcfce7;--amber:#b45309;--amber-bg:#fef3c7;--bg:#f9fafb;--card:#fff;--line:#e5e7eb;--ink:#111827;--muted:#6b7280;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-800:#111827;--shadow:0 1px 3px rgba(0,0,0,.03);--r-card:16px;--r-ctl:10px;} /* [v1.5] tokens iguais aos do Caixa/Contratos */
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
-    .red-bar{display:none;}
-    .s-header{background:var(--card);border-bottom:1px solid var(--line);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-    .s-logo{display:flex;align-items:center;gap:12px;}
-    .s-logo-icon{width:36px;height:36px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);}
-    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
-    .s-logo-name{font-size:15px;font-weight:700;color:var(--ink);}
-    .s-logo-sub{font-size:11px;color:var(--muted);}
-    .header-right{display:flex;align-items:center;gap:10px;}
-    .date-badge{background:var(--gray-100);border:1px solid var(--line);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--gray-600);}
-    .back-btn{background:var(--card);color:var(--ink);border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:7px 14px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
-    .back-btn:hover{background:var(--gray-100);}
-    .content{max-width:1080px;margin:0 auto;padding:24px 20px 60px;}
+    /* [v2.1] Visual unificado: tokens, cabecalho, abas, painel, campos, botoes
+       e toast vivem em ../css/portal-theme.css (mesmos valores que esta pagina
+       ja usava desde a v1.5). A FOLHA IMPRESSA (regras de impressao e os
+       blocos de impressao no fim do arquivo) nao foi tocada. */
+    .content{max-width:1080px;}
     .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
     .stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:16px 18px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);}
     .stat-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
     .stat-num{font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-.5px;line-height:1;}
     .stat-lbl{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;}
-    .tabs{display:flex;align-items:center;gap:2px;margin-bottom:20px;background:var(--gray-100);border-radius:12px;padding:4px;width:fit-content;max-width:100%;overflow-x:auto;}
-    .tab-btn{padding:8px 16px;border:none;background:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .15s,background .15s;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;}
-    .tab-btn:hover{color:var(--ink);}
-    .tab-btn.active{color:var(--ink);background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.06);}
+    .tabs{align-items:center;width:fit-content;}
     @media(max-width:600px){.s-header{padding:0 14px;}.s-logo-name{font-size:12px;line-height:1.2;}.date-badge{display:none;}.content{padding:14px 14px 60px;}}
     .tab-grp{display:flex;align-items:center;gap:5px;padding:0 8px 0 10px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
     .tab-sep{width:1px;align-self:stretch;margin:5px 6px;background:var(--gray-300);flex-shrink:0;}
-    .tab-pane{display:none;}.tab-pane.active{display:block;}
-    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:20px 22px;margin-bottom:18px;box-shadow:var(--shadow);}
-    .panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
-    .panel-title{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:10px;}
-    .panel-title i{width:30px;height:30px;border-radius:9px;background:var(--gray-100);color:var(--navy);display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
     .day-nav{display:flex;align-items:center;gap:8px;}
     .day-nav-btn{width:32px;height:32px;border:1px solid var(--gray-300);background:var(--card);border-radius:var(--r-ctl);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--gray-600);font-size:13px;transition:all .15s;}
     .day-nav-btn:hover{border-color:var(--navy);color:var(--navy);}
