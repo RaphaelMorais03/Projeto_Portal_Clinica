@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
-<!-- VERSION: hotfix 24/11/2026 | fechamento.html volta ao estado anterior a Etapa 5a (v5a.1): lista de profissionais so pela base legada (admin/profissionais + fechamento/profissionais_extras + baseProfissionais) e cadastro novo so em fechamento/profissionais_extras. Reverte PR #58 nesta pagina para desbloquear o fechamento do profissional. -->
 <html lang="pt-BR">
+<!-- VERSION: v5a.2 | fechamento.html | 24/11/2026 | A central nunca esconde profissional da lista (ativo:false deixou de remover) e a leitura de admin/profissionais tem callback de erro. | Etapa 5a — lê pessoas/pessoas_financeiro (enriquece a lista com pessoaId; inclui pessoas só da central; respeita ativo:false); novo médico e edição gravam também na central; excluir inativa na central; registros novos recebem pessoaId. Lista legada continua intacta como fallback (sem permissão/central vazia = comportamento anterior). -->
 <head>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <meta charset="UTF-8">
@@ -420,8 +420,40 @@
       const base = srcBase
         .filter(b=>!apagados.includes(b.documento.replace(/\D/g,''))&&!overridden.includes(b.documento.replace(/\D/g,'')))
         .map(b=>({...b, id: b.id || b.documento.replace(/\D/g,''), categoria: b.categoria||'repasse', regime: b.regime||'pj-presumido'}));
-      profissionais = [...base,...extras].sort((a,b)=>a.nome.localeCompare(b.nome));
+      profissionais = window.fechEnriquecerCentral([...base,...extras]).sort((a,b)=>a.nome.localeCompare(b.nome)); // [v5a.1] central
       atualizarListas();
+    };
+
+    // [v5a.1] Cadastro central (pessoas/pessoas_financeiro). null = não carregado ou sem permissão → lista legada pura (comportamento anterior).
+    window._pessoas = null; window._pessoasFin = null; window._fechCpfIdx = {};
+    window.fechEnriquecerCentral = function(lista){
+      const P = window._pessoas, F = window._pessoasFin;
+      if (!P || !F) { window._fechCpfIdx = {}; return lista; }
+      const dig = x => String(x||'').replace(/\D/g,'');
+      const idx = {};
+      Object.keys(F).forEach(pid => {
+        const f = F[pid] || {}; const d = dig(f.documento); if (d) idx[d] = pid;
+        const l = f.cpfsLegados || {}; Object.keys(l).forEach(k => { const c = dig(l[k]); if (c && !idx[c]) idx[c] = pid; });
+      });
+      window._fechCpfIdx = idx;
+      const vistos = {}, out = [];
+      lista.forEach(p => {
+        const pid = idx[dig(p.documento)];
+        if (!pid || !P[pid]) { out.push(p); return; }
+        vistos[pid] = true;
+        const pe = P[pid], f = F[pid] || {};
+        // [v5a.2] A central só ENRIQUECE: nunca remove da lista quem veio da base
+        // legada, nem quando a pessoa está com ativo:false. Esconder aqui travava
+        // o fechamento do profissional para quem usa o módulo.
+        out.push({...p, pessoaId: pid, nome: pe.nomeCompleto || p.nome, regime: f.regime || p.regime, chavePix: (f.chavePix ? f.chavePix : p.chavePix), centralInativa: pe.ativo === false});
+      });
+      Object.keys(P).forEach(pid => { // pessoas que existem só na central
+        if (vistos[pid]) return;
+        const pe = P[pid], f = F[pid]; if (!pe || pe.ativo === false || !f) return;
+        const d = dig(f.documento); if (d.length !== 11) return;
+        out.push({id: d, nome: pe.nomeCompleto, documento: d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'), regime: f.regime || 'pj-presumido', categoria: 'repasse', chavePix: f.chavePix || '', pessoaId: pid});
+      });
+      return out;
     };
 
     const usuSessao = sessionStorage.getItem('usuario');
@@ -591,12 +623,16 @@
         else extras.push({...novo,overrideCpf:id});
         window.saveFechamentoExtras(extras);
         toast('Profissional atualizado!','success');
+        { const _pe=profissionais.find(x=>x.id===id); // [v5a.1] reflete na central quando o profissional já está nela
+          if(_pe&&_pe.pessoaId&&window.fechCentralEditar) window.fechCentralEditar(_pe.pessoaId,{nome,doc:docLimpo,regime,pix},String(_pe.documento||'').replace(/\D/g,'')); }
       } else {
         // novo
         if(profissionais.some(p=>p.documento.replace(/\D/g,'')===docLimpo)){toast('CPF já cadastrado','error');return;}
+        if(window._fechCpfIdx&&window._fechCpfIdx[docLimpo]){toast('Este CPF já existe no cadastro central (pessoa inativa?). Peça ao administrador para reativar.','error');return;} // [v5a.1]
         const extras=[...(window.fechamentoExtras||[]),{id:docLimpo,nome,documento:doc,regime,categoria:'repasse',chavePix:pix}];
         window.saveFechamentoExtras(extras);
         toast('Profissional cadastrado!','success');
+        if(window.fechCentralNovo) window.fechCentralNovo({nome,doc:docLimpo,regime,pix}); // [v5a.1] grava também em pessoas + pessoas_financeiro
       }
       fecharModalCadastro();
     };
@@ -624,6 +660,8 @@
         if(isBase){window.saveFechamentoDeleted([...(window.fechamentoDeleted||[]),id]);}
         if(isExtra||!isBase){window.saveFechamentoExtras((window.fechamentoExtras||[]).filter(p=>p.id!==id));}
         toast('Excluído','success');
+        { const _pe=profissionais.find(x=>x.id===String(id)); // [v5a.1] na central a retirada é ativo:false (nada é apagado)
+          if(_pe&&_pe.pessoaId&&window.fechCentralInativar) window.fechCentralInativar(_pe.pessoaId); }
       }
     }
 
@@ -706,6 +744,7 @@
           criadoEm: new Date().toISOString(),
           criadoPor: usuario || '—',
           criadoPorUid: window._userUid,
+          ...((dadosCalculo.profissional&&dadosCalculo.profissional.pessoaId)?{pessoaId:dadosCalculo.profissional.pessoaId}:{}), // [v5a.1]
           pagoHoje: document.getElementById('pagoHojeCheckbox') ? document.getElementById('pagoHojeCheckbox').checked : false
         };
         window._fbSet('fechamento/registros/' + id, registro).catch(()=>{});
@@ -770,7 +809,7 @@
   </div></div><!-- /content -->
   <script type="module">
     import { initializeApp }                  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getDatabase, ref, get, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
     import { getAuth, onAuthStateChanged }         from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const _app  = initializeApp(window.FIREBASE_CONFIG);
@@ -821,6 +860,9 @@
         window._baseProfFirebase = []; // Firebase vazio → usa hardcoded como fallback
       }
       window.atualizarListaGeralFechamento();
+    }, () => { // [v5a.2] sem permissão/erro: segue com a lista fixa, sem travar a tela
+      window._baseProfFirebase = [];
+      window.atualizarListaGeralFechamento();
     });
 
     onValue(ref(_db, 'fechamento/profissionais_extras'), snap => {
@@ -831,6 +873,53 @@
       window.fechamentoDeleted = snap.val() || [];
       window.atualizarListaGeralFechamento();
     });
+
+    // [v5a.1] Cadastro central — leitura (erro/sem permissão = segue com a lista legada)
+    onValue(ref(_db, 'pessoas'), snap => { window._pessoas = snap.val() || {}; window.atualizarListaGeralFechamento(); },
+      () => { window._pessoas = null; window.atualizarListaGeralFechamento(); });
+    onValue(ref(_db, 'pessoas_financeiro'), snap => { window._pessoasFin = snap.val() || {}; window.atualizarListaGeralFechamento(); },
+      () => { window._pessoasFin = null; window.atualizarListaGeralFechamento(); });
+
+    // [v5a.1] Cadastro central — escrita (multi-path; falha nunca desfaz o cadastro legado já salvo)
+    const _fcQuem = () => {
+      const u = _auth.currentUser; const n = (typeof usuario === 'string' && usuario) || sessionStorage.getItem('usuario') || (u && u.email) || '';
+      return { u, quem: String(n).slice(0, 120) };
+    };
+    const _fcNomeOk = n => n.length >= 3 && n.length <= 120 && !/[0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}/.test(n);
+    const _fcFalha = e => toast('Salvo no Fechamento, mas não foi possível gravar no cadastro central (' + (e && (e.code || e.message) || 'erro') + ').', 'info');
+    window.fechCentralNovo = function(d){
+      const { u, quem } = _fcQuem(); if (!u) return;
+      const nome = String(d.nome||'').trim(), doc = String(d.doc||'').replace(/\D/g,'');
+      if (!_fcNomeOk(nome) || doc.length !== 11) { toast('Salvo no Fechamento; o cadastro central exige nome válido e CPF com 11 dígitos.', 'info'); return; }
+      const pid = push(ref(_db, 'pessoas')).key, agora = Date.now();
+      const p = { nomeCompleto: nome, nomeExibicao: nome, categoria: 'medico', ativo: true, criadoEm: agora, criadoPor: quem, criadoPorUid: u.uid, atualizadoEm: agora, atualizadoPor: quem, atualizadoPorUid: u.uid };
+      const f = { documento: doc, regime: String(d.regime||'').slice(0,40), atualizadoEm: agora, atualizadoPor: quem, atualizadoPorUid: u.uid };
+      if (d.pix) f.chavePix = String(d.pix).slice(0,140);
+      const up = {}; up['pessoas/' + pid] = p; up['pessoas_financeiro/' + pid] = f;
+      update(ref(_db), up).catch(_fcFalha);
+    };
+    window.fechCentralEditar = function(pid, d, docAntigo){
+      const { u, quem } = _fcQuem(); if (!u || !pid) return;
+      const nome = String(d.nome||'').trim(), doc = String(d.doc||'').replace(/\D/g,'');
+      if (!_fcNomeOk(nome) || doc.length !== 11) { toast('Atualizado no Fechamento; o cadastro central não foi alterado (nome ou CPF inválido).', 'info'); return; }
+      const agora = Date.now(), F = (window._pessoasFin||{})[pid] || {};
+      const leg = Object.keys(F.cpfsLegados||{}).map(k => F.cpfsLegados[k]);
+      [docAntigo, F.documento].forEach(c => { c = String(c||'').replace(/\D/g,''); if (c.length === 11 && c !== doc && leg.indexOf(c) < 0) leg.push(c); }); // mantém o vínculo com o histórico por CPF antigo
+      const up = {};
+      up['pessoas/' + pid + '/nomeCompleto'] = nome; up['pessoas/' + pid + '/nomeExibicao'] = nome;
+      up['pessoas/' + pid + '/atualizadoEm'] = agora; up['pessoas/' + pid + '/atualizadoPor'] = quem; up['pessoas/' + pid + '/atualizadoPorUid'] = u.uid;
+      up['pessoas_financeiro/' + pid + '/documento'] = doc; up['pessoas_financeiro/' + pid + '/regime'] = String(d.regime||'').slice(0,40);
+      up['pessoas_financeiro/' + pid + '/chavePix'] = d.pix ? String(d.pix).slice(0,140) : null;
+      if (leg.length) up['pessoas_financeiro/' + pid + '/cpfsLegados'] = leg;
+      up['pessoas_financeiro/' + pid + '/atualizadoEm'] = agora; up['pessoas_financeiro/' + pid + '/atualizadoPor'] = quem; up['pessoas_financeiro/' + pid + '/atualizadoPorUid'] = u.uid;
+      update(ref(_db), up).catch(_fcFalha);
+    };
+    window.fechCentralInativar = function(pid){
+      const { u, quem } = _fcQuem(); if (!u || !pid) return;
+      const up = {}, agora = Date.now();
+      up['pessoas/' + pid + '/ativo'] = false; up['pessoas/' + pid + '/atualizadoEm'] = agora; up['pessoas/' + pid + '/atualizadoPor'] = quem; up['pessoas/' + pid + '/atualizadoPorUid'] = u.uid;
+      update(ref(_db), up).catch(_fcFalha);
+    };
 
     window.saveFechamentoExtras  = async arr => set(ref(_db, 'fechamento/profissionais_extras'), arr);
     window.saveFechamentoDeleted = async arr => set(ref(_db, 'fechamento/profissionais_apagados'), arr);
