@@ -1,3 +1,4 @@
+<!-- VERSION: v1.4 | emissao-notas.html | 24/11/2026 | feat: botao de olhinho em cada lote (Consultas/Exames/Odontologia) abre a lista de pacientes daquele lote para conferir antes de baixar - com total, nome do arquivo e remover/adicionar paciente. Remover marca r.fora e tira da contagem, do .xlsx e das pendencias, sem perder o paciente (da pra voltar). Adicionar traz de volta quem foi removido ou puxa um paciente pronto que caiu no lote errado (troca o tipo e reescreve a Descricao do Procedimento). Pendentes continuam so no "Resolver". -->
 <!-- VERSION: v1.3 | emissao-notas.html | 24/11/2026 | fix: o CEP ia pro .xlsx com o valor cru da planilha. Quando o Excel/Sheets comia o zero a esquerda (02968-090 -> 2968-090), nflNormCEPDigits consertava o numero so para a CONSULTA e a VALIDACAO - o r.v['CEP'] continuava torto e era ele que entrava no arquivo, entao o endereco vinha certo mas o Sinaxys recusava a linha com "CEP invalido (deve ter 8 digitos numericos)". Agora finalizarRegistro grava o CEP normalizado (nflFmtCEP, nova) e a validacao tambem olha os digitos brutos, pegando CEP com 9+ digitos que antes passava batido. -->
 <!-- VERSION: v1.1 | emissao-notas.html | 03/11/2026 | [v1.1] CPF repetido com nomes diferentes (tomador terceiro, ex.: nota no CPF da mãe de paciente menor) não trava mais o paciente (chave NFE_BLOQUEIA_CPF_DUPLICADO=false). Paciente sem endereço utilizável (Logradouro/Bairro em branco após consulta de CEP) entra com o endereço padrão da clínica: CEP 02939-000, nº 367, Av. Doutor Felipe Pinel (chave NFE_USA_END_PADRAO); não troca o endereço se a consulta de CEP do paciente falhou; avisado na caixa de avisos. -->
 <!-- VERSION: v1.0 | emissao-notas.html | 16/10/2026 | feat: nova página "Emissão de notas" (somente admin) — fluxo direto Emitir lote + Retorno Sinaxys, a partir do mockup NF em Lote v6.0 · Direto. Regras de validação/CEP/Sinaxys copiadas do dashboard v6.0 (commit a4afba5). -->
@@ -98,6 +99,29 @@
   .bcard .l{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;opacity:.8;}
   .bcard .btn{margin-top:12px;font-size:12px;font-weight:800;display:flex;align-items:center;gap:6px;opacity:.9;}
   .bcard:hover .btn{opacity:1;}
+  /* [v1.4] olhinho do lote */
+  .bcard{position:relative;}
+  .bcard .eye{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:9px;border:1.5px solid rgba(255,255,255,.9);
+    background:rgba(255,255,255,.75);color:inherit;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;
+    transition:all .15s;padding:0;}
+  .bcard .eye:hover{background:#fff;transform:scale(1.08);box-shadow:0 3px 10px rgba(0,0,0,.12);}
+
+  /* [v1.4] lista de pacientes do lote */
+  .lt-sec{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin:16px 0 8px;}
+  .lt-sec:first-child{margin-top:0;}
+  .lt{display:flex;align-items:center;gap:10px;border:1.5px solid var(--bd);border-radius:10px;padding:9px 12px;margin-bottom:7px;background:#fff;}
+  .lt.out{background:var(--g50);border-style:dashed;}
+  .lt .who{flex:1;min-width:0;}
+  .lt .who b{display:block;font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lt .who span{font-size:11px;color:var(--g500);}
+  .lt .vl{font-size:12.5px;font-weight:800;color:var(--navy);white-space:nowrap;}
+  .lt .tg{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-radius:20px;padding:3px 8px;background:var(--g100);color:var(--g600);white-space:nowrap;}
+  .lt .act{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--bd);background:#fff;cursor:pointer;font-size:12px;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0;transition:all .15s;}
+  .lt .act.rem{color:var(--red);} .lt .act.rem:hover{background:#fef2f2;border-color:#fecaca;}
+  .lt .act.add{color:var(--green);} .lt .act.add:hover{background:var(--green-bg);border-color:#86efac;}
+  .lt-vazio{font-size:12.5px;color:var(--g500);padding:10px 0;}
+  .lt-nota{font-size:11.5px;color:var(--g500);background:var(--g50);border-radius:9px;padding:9px 12px;margin-top:4px;line-height:1.5;}
 
   .pend{background:var(--amber-bg);border:1.5px solid #fde68a;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px;margin-bottom:14px;}
   .pend i{color:var(--amber);font-size:16px;}
@@ -307,18 +331,22 @@
         </div>
 
         <div class="grid2">
+          <!-- [v1.4] olhinho: abre o lote para conferir / remover / adicionar paciente antes de baixar -->
           <div class="bcard cons" onclick="NFE.baixar('Consulta')">
+            <button class="eye" type="button" title="Ver e editar este lote" onclick="event.stopPropagation();NFE.abrirLote('Consulta')"><i class="fas fa-eye"></i></button>
             <div class="ic"><i class="fas fa-stethoscope"></i></div>
             <div class="n" id="nCons">0</div><div class="l">Consultas</div>
             <div class="btn"><i class="fas fa-download"></i> Baixar .xlsx</div>
           </div>
           <div class="bcard exa" onclick="NFE.baixar('Exame')">
+            <button class="eye" type="button" title="Ver e editar este lote" onclick="event.stopPropagation();NFE.abrirLote('Exame')"><i class="fas fa-eye"></i></button>
             <div class="ic"><i class="fas fa-flask"></i></div>
             <div class="n" id="nExa">0</div><div class="l">Exames</div>
             <div class="btn"><i class="fas fa-download"></i> Baixar .xlsx</div>
           </div>
           <!-- [v1.2] lote da odontologia -->
           <div class="bcard odo" onclick="NFE.baixar('Odonto')">
+            <button class="eye" type="button" title="Ver e editar este lote" onclick="event.stopPropagation();NFE.abrirLote('Odonto')"><i class="fas fa-eye"></i></button>
             <div class="ic"><i class="fas fa-tooth"></i></div>
             <div class="n" id="nOdo">0</div><div class="l">Odontologia</div>
             <div class="btn"><i class="fas fa-download"></i> Baixar .xlsx</div>
@@ -424,6 +452,20 @@
     <button class="btn-go" type="button" style="margin-top:14px;background:var(--amber);" onclick="NFE.aplicarFix()">
       <div class="bi"><i class="fas fa-check"></i></div>
       <div class="txt">Salvar e adicionar ao lote<div class="sub">Recalcula Consulta / Exame automaticamente</div></div>
+      <i class="fas fa-arrow-right" style="opacity:.5;"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: VER / EDITAR O LOTE  [v1.4] ═══════ -->
+<div class="mdl-bg" id="loteMdl" onclick="if(event.target===this)NFE.fecharLote()">
+  <div class="mdl">
+    <div class="mdl-h"><h3><i class="fas fa-eye" style="color:var(--teal);margin-right:8px;"></i><span id="loteTit">Lote</span></h3><button class="mdl-x" type="button" onclick="NFE.fecharLote()"><i class="fas fa-times"></i></button></div>
+    <div class="mdl-s" id="loteSub">—</div>
+    <div id="loteList"></div>
+    <button class="btn-go" type="button" style="margin-top:14px;" onclick="NFE.baixarDoLote()">
+      <div class="bi"><i class="fas fa-download"></i></div>
+      <div class="txt">Baixar este lote<div class="sub" id="loteBaixarSub">—</div></div>
       <i class="fas fa-arrow-right" style="opacity:.5;"></i>
     </button>
   </div>
@@ -1187,14 +1229,20 @@ var NFE = (function () {
     toast('Lote preparado — ' + p + ' pronto(s)' + (q ? ', ' + q + ' pendência(s)' : ''), q ? 'info' : 'success');
   }
 
-  function prontos() { return S.rows.filter(function (r) { return !r.warns.length; }); }
-  function pendentes() { return S.rows.filter(function (r) { return r.warns.length; }); }
+  /* [v1.4] r.fora = paciente tirado do lote à mão (pelo olhinho). Fica no S.rows para
+     poder voltar, mas sai das contas, dos .xlsx e da lista de pendências. */
+  function prontos() { return S.rows.filter(function (r) { return !r.warns.length && !r.fora; }); }
+  function pendentes() { return S.rows.filter(function (r) { return r.warns.length && !r.fora; }); }
+  function removidos() { return S.rows.filter(function (r) { return !!r.fora; }); }
 
   function renderPronto() {
     var ok = prontos(), pend = pendentes();
     var nc = ok.filter(function (r) { return r.tipo === 'Consulta'; }).length, ne = ok.filter(function (r) { return r.tipo === 'Exame'; }).length, no = ok.filter(function (r) { return r.tipo === 'Odonto'; }).length; /* [v1.2] */
     $('prontoT').textContent = ok.length + ' paciente(s) pronto(s)' + (pend.length ? ' · ' + pend.length + ' pendência(s)' : '');
-    $('prontoS').textContent = nc + ' consultas · ' + ne + ' exames · ' + no + ' odonto · ' + pend.length + ' pendências' + (S.ignoradas ? ' · ' + S.ignoradas + ' linha(s) quebrada(s) ignorada(s)' : '');
+    var fora = removidos();   /* [v1.4] */
+    $('prontoS').textContent = nc + ' consultas · ' + ne + ' exames · ' + no + ' odonto · ' + pend.length + ' pendências'
+      + (fora.length ? ' · ' + fora.length + ' tirado(s) do lote' : '')
+      + (S.ignoradas ? ' · ' + S.ignoradas + ' linha(s) quebrada(s) ignorada(s)' : '');
     $('nCons').textContent = nc; $('nExa').textContent = ne; $('nOdo').textContent = no;
     var pb = $('pendBox');
     if (pend.length) {
@@ -1284,6 +1332,92 @@ var NFE = (function () {
     toast(q ? 'Salvo — ainda restam ' + q + ' pendência(s)' : 'Corrigido! Todos os pacientes estão prontos', q ? 'info' : 'success');
   }
 
+  /* ─── [v1.4] ver / editar o lote (olhinho) ───
+     Abre um lote (Consulta / Exame / Odonto) e lista paciente por paciente.
+     • Remover  → marca r.fora = true. O paciente continua no S.rows (dá pra voltar),
+                  mas sai das contagens, do .xlsx e da lista de pendências.
+     • Adicionar→ traz de volta quem foi removido, ou puxa um paciente PRONTO que está
+                  em outro tipo (corrige classificação errada do operador). Mudar o tipo
+                  passa por finalizarRegistro, que reescreve a Descrição do Procedimento.
+     Pendentes NÃO entram por aqui de propósito: dado faltando é resolvido em "Resolver",
+     senão a nota sai incompleta no Sinaxys. */
+  var LOTE_TIPOS = ['Consulta', 'Exame', 'Odonto'];
+  var loteAberto = null;
+
+  function prefDe(tipo) { return tipo === 'Consulta' ? 'consultas' : (tipo === 'Odonto' ? 'odontologia' : 'exames'); }
+
+  function abrirLote(tipo) {
+    if (LOTE_TIPOS.indexOf(tipo) < 0) return;
+    loteAberto = tipo;
+    renderLote();
+    $('loteMdl').classList.add('open');
+  }
+  function fecharLote() { $('loteMdl').classList.remove('open'); loteAberto = null; }
+
+  function loteLinha(r, modo) {
+    var i = S.rows.indexOf(r), v = r.v;
+    var sub = (v['CPF'] || 'sem CPF') + (v['Bairro'] ? ' · ' + v['Bairro'] : '');
+    /* só a exibição vira vírgula; o v['Valor'] guardado continua no formato do Sinaxys (40.00) */
+    var vn = nflPreencherToFloat(v['Valor']);
+    var vtxt = (vn === null) ? (v['Valor'] || '—') : vn.toFixed(2).replace('.', ',');
+    /* fora do lote / em outro lote: mostra de qual tipo veio, e se tem pendência */
+    var tag = modo === 'dentro' ? ''
+      : '<span class="tg">' + E(r.warns.length ? 'pendente' : (r.tipo || 'sem tipo')) + '</span>';
+    var btn = modo === 'dentro'
+      ? '<button class="act rem" type="button" title="Tirar deste lote" onclick="NFE.tirarDoLote(' + i + ')"><i class="fas fa-minus"></i></button>'
+      : '<button class="act add" type="button" title="Adicionar a este lote" onclick="NFE.porNoLote(' + i + ')"><i class="fas fa-plus"></i></button>';
+    return '<div class="lt' + (modo === 'dentro' ? '' : ' out') + '">'
+      + '<div class="who"><b>' + E(v['Paciente'] || '(sem nome)') + '</b><span>' + E(sub) + '</span></div>'
+      + tag + '<div class="vl">R$ ' + E(vtxt) + '</div>' + btn + '</div>';
+  }
+
+  function renderLote() {
+    var tipo = loteAberto; if (!tipo) return;
+    var dentro = prontos().filter(function (r) { return r.tipo === tipo; });
+    var fora = removidos();                                                      /* removidos de qualquer tipo */
+    var outros = prontos().filter(function (r) { return r.tipo !== tipo; });      /* prontos em outro lote */
+    var pend = pendentes().length;
+
+    var total = dentro.reduce(function (s, r) { return s + (nflPreencherToFloat(r.v['Valor']) || 0); }, 0);
+    $('loteTit').textContent = 'Lote de ' + (tipo === 'Odonto' ? 'Odontologia' : tipo === 'Consulta' ? 'Consultas' : 'Exames');
+    $('loteSub').textContent = dentro.length + ' paciente(s) · R$ ' + total.toFixed(2).replace('.', ',')
+      + ' · arquivo ' + nomeArquivo(prefDe(tipo), diaAtivo());
+    $('loteBaixarSub').textContent = dentro.length + ' paciente(s) em ' + nomeArquivo(prefDe(tipo), diaAtivo());
+
+    var h = '<div class="lt-sec">No lote (' + dentro.length + ')</div>';
+    h += dentro.length ? dentro.map(function (r) { return loteLinha(r, 'dentro'); }).join('')
+                       : '<div class="lt-vazio">Nenhum paciente neste lote.</div>';
+    if (fora.length) {
+      h += '<div class="lt-sec">Tirados do lote (' + fora.length + ')</div>';
+      h += fora.map(function (r) { return loteLinha(r, 'fora'); }).join('');
+    }
+    if (outros.length) {
+      h += '<div class="lt-sec">Em outro lote — trazer para cá (' + outros.length + ')</div>';
+      h += outros.map(function (r) { return loteLinha(r, 'outro'); }).join('');
+    }
+    if (pend) h += '<div class="lt-nota">' + pend + ' paciente(s) com dado faltando não aparecem aqui. Use <b>Resolver</b> na tela do lote — depois de corrigidos eles entram sozinhos.</div>';
+    $('loteList').innerHTML = h;
+  }
+
+  function tirarDoLote(i) {
+    var r = S.rows[i]; if (!r) return;
+    r.fora = true;
+    renderLote(); renderPronto();
+    toast((r.v['Paciente'] || 'Paciente') + ' saiu do lote', 'info');
+  }
+  function porNoLote(i) {
+    var r = S.rows[i]; if (!r || !loteAberto) return;
+    var antes = r.tipo, nome = r.v['Paciente'] || 'Paciente';
+    r.fora = false;
+    if (r.tipo !== loteAberto) { r.tipo = loteAberto; finalizarRegistro(r); }
+    avaliarTodos(S.rows);
+    renderLote(); renderPronto();
+    /* se ainda tem dado faltando, ele volta pra fila de pendências e NÃO entra no lote — avisa isso */
+    if (r.warns.length) toast(nome + ' voltou, mas está em pendências: ' + r.warns[0], 'info');
+    else toast(nome + ' entrou em ' + loteAberto + (antes && antes !== loteAberto ? ' (era ' + antes + ')' : ''), 'success');
+  }
+  function baixarDoLote() { var t = loteAberto; fecharLote(); if (t) baixar(t); }
+
   /* ─── download ─── */
   function wbDe(rows) {
     var aoa = [NFL_HEADERS].concat(rows.map(function (r) { return NFL_HEADERS.map(function (h) { return r.v[h] == null ? '' : r.v[h]; }); }));
@@ -1292,7 +1426,7 @@ var NFE = (function () {
   function baixar(tipo) {
     var rows = prontos().filter(function (r) { return r.tipo === tipo; });
     if (!rows.length) { toast('Nenhum paciente pronto em ' + tipo + '.', 'error'); return; }
-    var pref = tipo === 'Consulta' ? 'consultas' : (tipo === 'Odonto' ? 'odontologia' : 'exames'), iso = diaAtivo(); /* [v1.2] */
+    var pref = prefDe(tipo), iso = diaAtivo(); /* [v1.2] · [v1.4] prefixo foi pra prefDe(), usado também no olhinho */
     for (var i = 0; i < rows.length; i += NFL_MAX_LOTE) {
       var suf = rows.length > NFL_MAX_LOTE ? '_parte' + (Math.floor(i / NFL_MAX_LOTE) + 1) : '';
       XLSX.writeFile(wbDe(rows.slice(i, i + NFL_MAX_LOTE)), nomeArquivo(pref, iso, suf));
@@ -1494,6 +1628,7 @@ var NFE = (function () {
     $('app').style.display = '';
     document.addEventListener('keydown', function (ev) {
       if (ev.key !== 'Escape') return;
+      if ($('loteMdl').classList.contains('open')) { fecharLote(); return; }   /* [v1.4] */
       if ($('fixMdl').classList.contains('open')) { fecharFix(); return; }
       if ($('cfgMdl').classList.contains('open')) { fecharCfg(); return; }
     });
@@ -1502,6 +1637,8 @@ var NFE = (function () {
   return {
     iniciar: iniciar, trocarDia: trocarDia, trocarTab: trocarTab, preparar: preparar, arquivoAba: arquivoAba,
     baixar: baixar, baixarPendentes: baixarPendentes, abrirFix: abrirFix, fecharFix: fecharFix, aplicarFix: aplicarFix, novoLote: novoLote,
+    /* [v1.4] olhinho do lote */
+    abrirLote: abrirLote, fecharLote: fecharLote, tirarDoLote: tirarDoLote, porNoLote: porNoLote, baixarDoLote: baixarDoLote,
     marcarOp: marcarOp, subirRetorno: subirRetorno, escrever: escrever, baixarRetornoXlsx: baixarRetornoXlsx,
     trocarArquivo: function () { S.cmp = null; msg('rMsg', ''); showState('r-vazio'); },
     abrirCfg: abrirCfg, fecharCfg: fecharCfg, salvarCfg: salvarCfg,
