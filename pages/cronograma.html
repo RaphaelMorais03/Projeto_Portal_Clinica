@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
+<!-- VERSION: v1.9 | cronograma.html | 23/11/2026 | Usuário comum só vê a semana e gera agenda: botões Importar PDF / Colar Texto / Editar (e o salvamento de crono/agenda) ficam só para admin. Combina com a Rule de crono/agenda só admin. -->
 <!-- VERSION: v1.8 | cronograma.html | 23/11/2026 | Gerar agenda: não repete o mesmo médico quando o nome do cadastro central vem abreviado ou com sobrenome a mais (só na lista, sem vincular). v1.7: Etapa 5b — Gerar agenda inclui médicos ativos do cadastro central (pessoas); salvar médico preserva pessoaId e reflete nome/especialidade na central (novo médico cria a pessoa no mesmo update); listeners só com usuário logado e sem duplicar; removido fallback REST sem token. Perfis: admin = CRUD; cronograma = vê a semana + gera agenda. -->
 <head>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
@@ -512,8 +513,8 @@
           <div class="panel-title"><i class="fas fa-calendar-week"></i> Cronograma Semanal</div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="agendaSalvaTag" style="display:none;font-size:11px;background:var(--green-bg);color:var(--green);padding:4px 10px;border-radius:20px;font-weight:700;"><i class="fas fa-check"></i> Salvo</span>
-            <button class="btn-teal" onclick="abrirImportarPDF()" style="font-size:12px;padding:7px 14px;"><i class="fas fa-file-pdf"></i> Importar PDF</button>
-            <button class="btn-s" onclick="abrirColarTexto()" style="font-size:12px;padding:7px 14px;"><i class="fas fa-paste"></i> Colar Texto</button>
+            <button class="btn-teal" id="btnImportarPdf" onclick="abrirImportarPDF()" style="font-size:12px;padding:7px 14px;"><i class="fas fa-file-pdf"></i> Importar PDF</button>
+            <button class="btn-s" id="btnColarTexto" onclick="abrirColarTexto()" style="font-size:12px;padding:7px 14px;"><i class="fas fa-paste"></i> Colar Texto</button>
             <button class="btn-s" onclick="toggleEditarSemana()" id="btnEditarSemana" style="font-size:12px;padding:7px 14px;"><i class="fas fa-pen"></i> Editar</button>
           </div>
         </div>
@@ -957,7 +958,12 @@
 
   let editorDia = 'Segunda', editandoSemana = false;
 
+  window.cronSemanaEhAdmin = function() { // [v1.9]
+    if (typeof window.calIsAdmin === 'boolean') return window.calIsAdmin;
+    try { return JSON.parse(sessionStorage.getItem('perms') || '{}').admin === true; } catch (e) { return false; }
+  };
   window.salvarAgendaFirebase = async function() {
+    if (!window.cronSemanaEhAdmin()) { toast('Só o administrador altera o cronograma semanal.', 'error'); return; } // [v1.9]
     const btn = document.querySelector('#weekEditor .btn-p');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...'; }
     try {
@@ -3082,6 +3088,7 @@
     // chamada pelo módulo Firebase quando o perfil (admin ou não) é conhecido
     window.cronAplicarPerfil = function () {
       var adm = isAdmin();
+      ['btnImportarPdf', 'btnColarTexto', 'btnEditarSemana'].forEach(function (id) { var b = $(id); if (b) b.style.display = adm ? '' : 'none'; });   // [v1.9] edição do cronograma semanal só admin
       ['tabCronograma', 'tabConfig', 'tabGrpAdm', 'tabSep'].forEach(function (id) { var b = $(id); if (b) b.style.display = adm ? '' : 'none'; });   // [v1.5] + rótulo e divisor do grupo Admin
       if (!adm) return;
       iniciar();
