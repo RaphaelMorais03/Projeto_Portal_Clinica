@@ -2539,6 +2539,12 @@ function _rxLogo(){
   return logo ? '<img src="'+logo+'" alt="Logo">' : '<span style="font-size:11px;font-weight:bold;">'+cNome+'</span>';
 }
 
+function _rxLogoTexto(){
+  // [v3.7] Fallback do cabeçalho dos recibos quando não há logo em admin/logo: nome da clínica + unidade.
+  var cNome = sessionStorage.getItem('clinicaNome') || 'SIM CL\u00cdNICA M\u00c9DICA E ODONTOL\u00d3GICA LTDA';
+  return '<div style="font-size:14pt;font-weight:900;color:#0A1F44;text-align:center;margin-bottom:6pt;">'+esc(cNome)+'<div style="font-size:10pt;font-weight:700;color:#555;">Unidade Pirituba</div></div>';
+}
+
 function _rxHeader(titulo){
   var cNome = sessionStorage.getItem('clinicaNome') || 'SIM CLINICA MEDICA E ODONTOLOGICA LTDA';
   var cCnpj = sessionStorage.getItem('clinicaCnpj') || '25.154.224/0001-89';
@@ -2574,7 +2580,7 @@ window.imprimirRessarc = function() {
   var logo = sessionStorage.getItem('logoDataUrl') || '';
   var logoHtml = logo
     ? '<img src="'+logo+'" alt="Logo" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 6pt;">'
-    : '<div style="font-size:20pt;font-weight:900;color:#C0392B;text-align:center;margin-bottom:6pt;">amor<span style="color:#1A5276;">sa\u00fade</span></div>';
+    : _rxLogoTexto();   // [v3.7] sem logo cadastrada: mostra o nome da unidade (antes: "amorsaúde" fixo)
 
   var CSS = '@page{size:A4 portrait;margin:15mm}'
     +'*{box-sizing:border-box;margin:0;padding:0}'
@@ -2641,7 +2647,7 @@ window.imprimirErroSistema = function() {
   var logo = sessionStorage.getItem('logoDataUrl') || '';
   var logoHtml = logo
     ? '<img src="'+logo+'" alt="Logo" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 6pt;">'
-    : '<div style="font-size:20pt;font-weight:900;color:#C0392B;text-align:center;margin-bottom:6pt;">amor<span style="color:#1A5276;">sa\u00fade</span></div>';
+    : _rxLogoTexto();   // [v3.7] sem logo cadastrada: mostra o nome da unidade (antes: "amorsaúde" fixo)
 
   var CSS = '@page{size:A4 portrait;margin:15mm}'
     +'*{box-sizing:border-box;margin:0;padding:0}'
