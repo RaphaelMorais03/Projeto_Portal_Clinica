@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
+<!-- VERSION: v2.0 | cronograma.html | 23/11/2026 | Aba Semana: "Imprimir semana" e "PDF" para qualquer usuário (somente leitura de crono/dias, mesmo modelo A4 paisagem/PDF do Verificar), com navegação de semana. Não grava nada. -->
 <!-- VERSION: v1.9 | cronograma.html | 23/11/2026 | Usuário comum só vê a semana e gera agenda: botões Importar PDF / Colar Texto / Editar (e o salvamento de crono/agenda) ficam só para admin. Combina com a Rule de crono/agenda só admin. -->
 <!-- VERSION: v1.8 | cronograma.html | 23/11/2026 | Gerar agenda: não repete o mesmo médico quando o nome do cadastro central vem abreviado ou com sobrenome a mais (só na lista, sem vincular). v1.7: Etapa 5b — Gerar agenda inclui médicos ativos do cadastro central (pessoas); salvar médico preserva pessoaId e reflete nome/especialidade na central (novo médico cria a pessoa no mesmo update); listeners só com usuário logado e sem duplicar; removido fallback REST sem token. Perfis: admin = CRUD; cronograma = vê a semana + gera agenda. -->
 <head>
@@ -517,6 +518,15 @@
             <button class="btn-s" id="btnColarTexto" onclick="abrirColarTexto()" style="font-size:12px;padding:7px 14px;"><i class="fas fa-paste"></i> Colar Texto</button>
             <button class="btn-s" onclick="toggleEditarSemana()" id="btnEditarSemana" style="font-size:12px;padding:7px 14px;"><i class="fas fa-pen"></i> Editar</button>
           </div>
+        </div>
+        <div id="semLeituraBar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;">
+          <button class="btn-s" id="semLeitPrev" onclick="cronSemanaLeitura('nav',-1)" style="padding:6px 10px;" title="Semana anterior"><i class="fas fa-chevron-left"></i></button>
+          <span id="semLeitRot" style="font-size:13px;font-weight:800;color:var(--navy);min-width:150px;text-align:center;">Semana</span>
+          <button class="btn-s" id="semLeitNext" onclick="cronSemanaLeitura('nav',1)" style="padding:6px 10px;" title="Próxima semana"><i class="fas fa-chevron-right"></i></button>
+          <button class="btn-s" id="semLeitHoje" onclick="cronSemanaLeitura('nav',0)" style="font-size:12px;padding:6px 10px;">Esta semana</button>
+          <span style="flex:1;"></span>
+          <button class="btn-teal" id="semLeitImp" onclick="cronSemanaLeitura('imprimir')" style="font-size:12px;padding:7px 14px;"><i class="fas fa-print"></i> Imprimir semana</button>
+          <button class="btn-s" id="semLeitPdf" onclick="cronSemanaLeitura('pdf')" style="font-size:12px;padding:7px 14px;"><i class="fas fa-file-pdf"></i> PDF</button>
         </div>
         <div id="weekViewNormal"><div class="week-grid" id="weekGrid"></div></div>
         <div id="weekEditor" style="display:none;">
@@ -2979,6 +2989,40 @@
         });
       });
     }
+
+    // [v2.0] SEMANA SOMENTE LEITURA — qualquer usuário com acesso ao cronograma imprime ou baixa o PDF da semana (crono/dias), no mesmo modelo da folha A4 / PDF do Verificar.
+    // Não grava nada: não passa por validar() nem salvarSalas(). A especialidade vem do próprio item (role) quando crono/medicos não está disponível (só admin lê).
+    var SEMLEIT = { off: 0, ocupado: false };
+    function semLeitDias() {
+      var b = new Date(); b.setHours(12, 0, 0, 0); b.setDate(b.getDate() + SEMLEIT.off * 7);
+      var seg = segundaDe(b), d = []; for (var i = 0; i < 6; i++) d.push(iso(addDias(seg, i))); return d;
+    }
+    function semLeitRotulo() { var d = semLeitDias(), el = $('semLeitRot'); if (el) el.textContent = brCurta(d[0]) + ' a ' + brData(d[5]) + (SEMLEIT.off === 0 ? ' (esta semana)' : ''); }
+    function semLeitCarregar(dias) {   // garante os meses (1 ou 2) da semana lidos de crono/dias
+      var yms = {}; dias.forEach(function (d) { yms[d.slice(0, 7)] = 1; });
+      var lista = Object.keys(yms); lista.forEach(garantirMes);
+      return new Promise(function (ok) {
+        var n = 0, t = setInterval(function () {
+          n++; if (lista.every(function (ym) { return S.carregado[ym]; }) || n > 40) { clearInterval(t); ok(lista.every(function (ym) { return S.carregado[ym] && !S.erro[ym]; })); }
+        }, 150);
+      });
+    }
+    window.cronSemanaLeitura = function (modo, delta) {
+      if (modo === 'nav') { SEMLEIT.off = delta === 0 ? 0 : SEMLEIT.off + delta; semLeitRotulo(); return; }
+      if (SEMLEIT.ocupado) return; SEMLEIT.ocupado = true;
+      var dias = semLeitDias(), w = null;
+      if (modo === 'imprimir') { w = window.open('', '_blank'); if (!w) { SEMLEIT.ocupado = false; toast('Pop-up bloqueado. Permita pop-ups para imprimir.', 'error'); return; } }
+      semLeitCarregar(dias).then(function (ok) {
+        SEMLEIT.ocupado = false;
+        if (!ok) { if (w) w.close(); toast('Não foi possível ler a agenda desta semana.', 'error'); return; }
+        V.dias = dias; V.itens = []; V.sel = null; V.open = {};
+        dias.forEach(function (d) { itens(d, false).forEach(function (x) { x.salaNova = x.sala; V.itens.push(x); }); });
+        if (!V.itens.length) { if (w) w.close(); toast('Sem atendimentos nesta semana.', 'info'); return; }
+        if (modo === 'imprimir') { w.document.open(); w.document.write(htmlImpressao()); w.document.close(); }
+        else gerarPdf();
+      });
+    };
+    document.addEventListener('DOMContentLoaded', semLeitRotulo); semLeitRotulo();
 
     // ── PDF SEMANAL (jsPDF, A4 paisagem) — [v1.3.1] mesmo layout da folha impressa: dia em coluna, MANHÃ em cima e TARDE embaixo ──
     function gerarPdf() {
