@@ -32,6 +32,7 @@
     .res { max-width:720px; margin:0 auto 12px; padding:0 16px; font-size:13px; }
     .res.ok { color:var(--ok); } .res.err { color:var(--err); }
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <header><h1>Relatório do líder</h1><p id="quem"></p></header>
@@ -49,7 +50,7 @@
     var TOKEN = new URLSearchParams(location.search).get('t') || '';
     var $ = function (id) { return document.getElementById(id); };
     var CAMPOS = [['liderTopicos', 'Tópicos que quero abordar', 'Em poucas linhas'], ['liderMelhorias', 'Melhorias', 'O que precisa melhorar'], ['liderMomento', 'Momento atual (minha visão)', 'Como vejo a colaboradora hoje']];
-    var db, lider = null, enviadas = {};
+    var db, lider = null, enviadas = {}, enviando = false;
     var LS = 'oo_lider_' + TOKEN.slice(0, 12);
 
     function msg(t) { $('app').innerHTML = ''; var d = document.createElement('div'); d.className = 'msg'; d.textContent = t; $('app').appendChild(d); $('bar').style.display = 'none'; }
@@ -64,7 +65,7 @@
         var card = document.getElementById('c_' + c.id); if (card) card.classList.toggle('has', on);
       });
       $('cont').textContent = n ? n + (n === 1 ? ' colaboradora preenchida' : ' colaboradoras preenchidas') : 'Nada preenchido';
-      $('btnEnviar').disabled = !n || (lider.compartilhado === true && !$('nomeLider').value.trim());
+      $('btnEnviar').disabled = enviando || !n || (lider.compartilhado === true && !$('nomeLider').value.trim());
       var o = {}; (lider.colaboradoras || []).forEach(function (c) { var v = {}; CAMPOS.forEach(function (k) { v[k[0]] = document.getElementById('f_' + c.id + '_' + k[0]).value; }); o[c.id] = v; });
       try { if (lider.compartilhado === true) localStorage.setItem(LS + '_nome', $('nomeLider').value); } catch (e) {}
       gravar(o); /* rascunho local no aparelho, para não perder se fechar a página */
@@ -91,7 +92,12 @@
     }
 
     async function enviar() {
-      var btn = $('btnEnviar'); btn.disabled = true; $('res').className = 'res'; $('res').textContent = 'Enviando…';
+      if (enviando || $('btnEnviar').disabled) return;
+      // [v6.9] Impede alterações nos campos enquanto o lote está sendo enviado.
+      enviando = true;
+      var campos = Array.from(document.querySelectorAll('#app textarea, #nomeLider'));
+      campos.forEach(function (campo) { campo.disabled = true; });
+      $('btnEnviar').disabled = true; $('res').className = 'res'; $('res').textContent = 'Enviando…';
       var ok = 0, falhou = 0, salvo = ler(), quem = $('nomeLider').value.trim();
       for (var i = 0; i < lider.colaboradoras.length; i++) {
         var c = lider.colaboradoras[i]; if (!preenchida(c.id)) continue;
@@ -104,7 +110,10 @@
           enviadas[c.id] = (enviadas[c.id] || 0) + 1; document.getElementById('ok_' + c.id).textContent = '✓ enviado' + (enviadas[c.id] > 1 ? ' (' + enviadas[c.id] + 'x)' : '');
         } catch (e) { falhou++; console.error(e); }
       }
-      gravar(salvo); atualizar();
+      gravar(salvo);
+      enviando = false;
+      campos.forEach(function (campo) { campo.disabled = false; });
+      atualizar();
       $('res').className = 'res ' + (falhou ? 'err' : 'ok');
       $('res').textContent = falhou ? ok + ' enviado(s); ' + falhou + ' não foi possível enviar. Tente novamente (o texto foi mantido).' : ok + (ok === 1 ? ' relatório enviado. Obrigado!' : ' relatórios enviados. Obrigado!');
     }

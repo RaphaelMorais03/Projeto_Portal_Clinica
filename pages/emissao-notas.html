@@ -255,6 +255,7 @@
   .op .lembrar{margin-top:8px;}
 
 </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
 <div id="toastBox"></div>
@@ -899,10 +900,25 @@ var NFE = (function () {
     if (!texto) { el.style.display = 'none'; el.textContent = ''; return; }
     el.className = 'msg ' + (tipo || 'info'); el.style.display = 'block'; el.textContent = texto;   /* textContent: sem HTML */
   }
+  // [v1.5] Cada aba mantém seu próprio estado ao alternar entre emissão e retorno.
   function showState(id) {
-    ['e-vazio', 'e-processando', 'e-pronto', 'r-vazio', 'r-comparando', 'r-pronto', 'r-feito'].forEach(function (x) {
-      var el = $(x); if (el) el.classList.toggle('on', x === id);
-    });
+    var emitir = id.startsWith('e-');
+    var estados = emitir ? ['e-vazio', 'e-processando', 'e-pronto'] : ['r-vazio', 'r-comparando', 'r-pronto', 'r-feito'];
+    estados.forEach(function (x) { $(x).classList.toggle('on', x === id); });
+  }
+
+  async function executarNoDia(acao, entrada) {
+    var campo = $('dia');
+    if (campo.disabled) { toast('Já existe uma operação em andamento. Aguarde a conclusão.', 'info'); return; }
+    campo.disabled = true;
+    try {
+      await acao(entrada);
+    } catch (e) {
+      console.error('[emissão de notas]', e);
+      toast('Não foi possível concluir a operação. Tente novamente.', 'error');
+    } finally {
+      campo.disabled = false;
+    }
   }
   function trocarTab(t) {
     document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tab') === t); });
@@ -922,10 +938,14 @@ var NFE = (function () {
     else { chip.className = 'chip'; chip.innerHTML = '<span class="d"></span> Escolha uma data'; }
     var br = BR(iso);
     ['heroData', 'procDia', 'retData', 'feitoData'].forEach(function (id) { var e = $(id); if (e) e.textContent = (id === 'procDia' && key) ? br + ' · ' + LAYOUTS[key].nome : br; });
-    S.sheetRows = null; S.lote = null; S.cmp = null;      /* trocou o dia: o que estava em memória não vale mais */
+    S.sheetRows = null; S.lote = null; S.cmp = null;
+    S.rows = []; S.ops = []; S.rotulo = '';
+    fecharLote(); fecharFix();
+    $('fallbackBox').style.display = 'none';
+    $('btnBaixarNf').style.display = 'none';
+    $('tabPulse').style.display = 'none';
     msg('eMsg', ''); msg('rMsg', '');
-    if ($('e-pronto').classList.contains('on') || $('e-processando').classList.contains('on')) showState('e-vazio');
-    if (!$('r-vazio').classList.contains('on')) showState('r-vazio');
+    showState('e-vazio'); showState('r-vazio');
   }
 
   /* ─────────── leitura da planilha (CSV publicado — mesma conexão do dashboard) ─────────── */
@@ -1175,7 +1195,8 @@ var NFE = (function () {
     catch (e) { falhaEmitir('Não consegui ler a planilha: ' + (e && e.message ? e.message : e) + '. Você pode anexar a aba do dia (.csv/.xlsx) abaixo.'); return; }
     if (!lido) { falhaEmitir('Não existe aba para ' + BR(iso) + ' na planilha. Confira o nome da aba ou anexe a aba do dia abaixo.'); return; }
     S.sheetRows = lido.rows;
-    await processarRows(lido.rows, 'aba ' + lido.aba);
+    try { await processarRows(lido.rows, 'aba ' + lido.aba); }
+    catch (e) { falhaEmitir('Não foi possível preparar a aba: ' + e.message); }
   }
   async function arquivoAba(input) {
     var f = input.files && input.files[0]; input.value = ''; if (!f) return;
@@ -1449,7 +1470,7 @@ var NFE = (function () {
   /* ─────────── RETORNO ─────────── */
   async function loteDoDia(iso) {
     var rows = S.sheetRows, aba = S.rotulo;
-    if (!rows) { var lido = await lerAbaDoDia(iso); if (!lido) throw new Error('Não existe aba para ' + BR(iso) + ' na planilha.'); rows = lido.rows; aba = lido.aba; S.sheetRows = rows; }
+    if (!rows) { var lido = await lerAbaDoDia(iso); if (!lido) throw new Error('Não existe aba para ' + BR(iso) + ' na planilha.'); rows = lido.rows; aba = lido.aba; }
     var m = mapearPlanilha(rows);
     if (!m || m.idx.cpf === undefined || m.idx.valor === undefined) throw new Error('Não achei as colunas CPF e VALOR na aba do dia.');
     var itens = [], semDados = 0;
@@ -1516,6 +1537,8 @@ var NFE = (function () {
     if (input && input.value !== undefined) input.value = '';
     if (!files.length) return;
     var iso = diaAtivo(); if (!iso) { toast('Escolha o dia no topo.', 'error'); return; }
+    S.cmp = null; S.lote = null;
+    $('btnBaixarNf').style.display = 'none';
     msg('rMsg', ''); showState('r-comparando'); $('cmpArq').textContent = files.map(function (f) { return f.name; }).join(', ');
     try {
       var sin = await lerSinaxysArquivos(files);
@@ -1617,7 +1640,7 @@ var NFE = (function () {
     var box = $('upBox'); if (!box) return;
     ['dragenter', 'dragover'].forEach(function (ev) { box.addEventListener(ev, function (e) { e.preventDefault(); box.classList.add('on'); }); });
     ['dragleave', 'drop'].forEach(function (ev) { box.addEventListener(ev, function (e) { e.preventDefault(); box.classList.remove('on'); }); });
-    box.addEventListener('drop', function (e) { var fs = e.dataTransfer && e.dataTransfer.files; if (fs && fs.length) subirRetorno(Array.prototype.slice.call(fs)); });
+    box.addEventListener('drop', function (e) { var fs = e.dataTransfer && e.dataTransfer.files; if (fs && fs.length) executarNoDia(subirRetorno, Array.prototype.slice.call(fs)); });
   }
 
   /* ─────────── início (chamado pelo módulo Firebase depois do gate de admin) ─────────── */
@@ -1635,11 +1658,13 @@ var NFE = (function () {
   }
 
   return {
-    iniciar: iniciar, trocarDia: trocarDia, trocarTab: trocarTab, preparar: preparar, arquivoAba: arquivoAba,
+    iniciar: iniciar, trocarDia: trocarDia, trocarTab: trocarTab, preparar: function () { return executarNoDia(preparar); },
+    arquivoAba: function (input) { return executarNoDia(arquivoAba, input); },
     baixar: baixar, baixarPendentes: baixarPendentes, abrirFix: abrirFix, fecharFix: fecharFix, aplicarFix: aplicarFix, novoLote: novoLote,
     /* [v1.4] olhinho do lote */
     abrirLote: abrirLote, fecharLote: fecharLote, tirarDoLote: tirarDoLote, porNoLote: porNoLote, baixarDoLote: baixarDoLote,
-    marcarOp: marcarOp, subirRetorno: subirRetorno, escrever: escrever, baixarRetornoXlsx: baixarRetornoXlsx,
+    marcarOp: marcarOp, subirRetorno: function (input) { return executarNoDia(subirRetorno, input); },
+    escrever: function () { return executarNoDia(escrever); }, baixarRetornoXlsx: baixarRetornoXlsx,
     trocarArquivo: function () { S.cmp = null; msg('rMsg', ''); showState('r-vazio'); },
     abrirCfg: abrirCfg, fecharCfg: fecharCfg, salvarCfg: salvarCfg,
     _t: { mapearPlanilha: mapearPlanilha, montarRegistros: montarRegistros, avaliarTodos: avaliarTodos, finalizarRegistro: finalizarRegistro, cruzar: cruzar, layoutDe: layoutDe, colKey: colKey, tipoConhecido: tipoConhecido, S: S, valorStr: valorStr }
@@ -1662,7 +1687,7 @@ var NFE = (function () {
   window.fbSet = function (p, v) { return set(ref(db, p), v); };
 
   onAuthStateChanged(auth, async user => {
-    if (!user) { irPara('../login.html'); return; }
+    if (!user) { voltarAoLogin(); return; }
     try {
       const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
       const perms = (snap.val() || {}).perms || {};

@@ -29,6 +29,7 @@
     .loading-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;z-index:999;}
     @media(max-width:768px){.form-grid,.form-grid-3{grid-template-columns:1fr;}}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -274,8 +275,7 @@
       const sel = document.getElementById('exProfissional');
       sel.innerHTML = '<option value="">— Nenhum —</option>' +
         profissionaisRTDB.map(p => `<option value="rtdb:${p.key}">${esc(p.nome)}${p.especialidade?' — '+esc(p.especialidade):''}</option>`).join('') +
-        '<option value="" disabled>──────────</option>' +
-        '<li style="list-style:none;padding:4px 8px;font-size:11px;color:var(--gray-400);">Cadastre novos profissionais na aba "Profissionais" do Admin</li>';
+        '<option value="" disabled>Cadastre novos profissionais na aba Profissionais do Admin</option>';
     }
     function nomeProfissional(profissionalId){
       if (!profissionalId) return '';
@@ -403,7 +403,7 @@
 
     // ───────── AUTH GATE (mesmo padrão do admin.html) ─────────
     onAuthStateChanged(auth, async (user) => {
-      if (!user) { irPara('../login.html'); return; }
+      if (!user) { voltarAoLogin(); return; }
       try {
         const snap = await get(ref(rtdb, `admin/usuarios/${user.uid}`));
         const perms = snap.exists() ? (snap.val().perms || {}) : {};
@@ -412,8 +412,14 @@
 
       currentUser = user;
       document.getElementById('loadingScreen').style.display = 'none';
-      await carregarProfissionaisRTDB();
-      await carregarParceiros();
+      // [v1.2] Erros de uma fonte não bloqueiam os cadastros da outra.
+      const resultados = await Promise.allSettled([carregarProfissionaisRTDB(), carregarParceiros()]);
+      if (resultados[1].status === 'rejected') {
+        console.error('[cadastros] parceiros:', resultados[1].reason);
+        document.getElementById('listaParceiros').innerHTML =
+          '<p class="empty-state" role="status">Não foi possível carregar os parceiros. Atualize a página para tentar novamente.</p>';
+        toast('Falha ao carregar parceiros.', 'error');
+      }
     });
   </script>
 </body>

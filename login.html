@@ -241,6 +241,7 @@
     .hc-sag{background:var(--gray-100);border-radius:8px;padding:9px 12px;text-align:center;font-size:12px;font-weight:700;color:var(--gray-600);margin-top:8px;}
     .hc-vfol{width:100%;margin-top:14px;}
   </style>
+  <link rel="stylesheet" href="css/portal-interaction.css" media="screen">
 </head>
 <body>
   <!-- ── Splash de carregamento ── -->
@@ -283,7 +284,7 @@
           <div class="lf-wrap" id="wrapSenha">
             <span class="lf-ico"><i class="fas fa-lock"></i></span>
             <input class="lf-input" type="password" id="fSenha" placeholder="••••••••" autocomplete="current-password">
-            <button class="eye-btn" type="button" onclick="toggleOlho()"><i class="fas fa-eye" id="eyeIco"></i></button>
+            <button class="eye-btn" type="button" aria-label="Mostrar senha" aria-controls="fSenha" aria-pressed="false" onclick="toggleOlho()"><i class="fas fa-eye" id="eyeIco"></i></button>
           </div>
         </div>
         <button class="btn-entrar" id="btnEntrar" onclick="entrar()">
@@ -436,43 +437,54 @@
     const db   = getDatabase(app);
     window.initFirebaseUtils(db, ref, get);
 
-    /* Carrega logo e dados da clínica */
-    carregarLogoGlobal(['#logoHeader']);
-    carregarClinica();
-
-    const TODOS_CARDS = ['cardOrcamentos','cardFechamento','cardFinanceiro','cardExames','cardCronograma','cardCaixa','cardAdmin','cardDashboard','cardNps','cardEmissaoNotas']; // [v1.3] + cardEmissaoNotas
+    const TODOS_CARDS = ['cardOrcamentos','cardFechamento','cardFinanceiro','cardExames','cardCronograma','cardCaixa','cardAdmin','cardDashboard','cardNps','cardEmissaoNotas','cardContratos','cardConciliacao']; // [v1.3] + cardEmissaoNotas
 
     function esconderSplash() {
       const s = document.getElementById('splashScreen');
       s.classList.add('fade-out');
-      setTimeout(() => { s.style.display = 'none'; }, 450);
+      clearTimeout(splashTimer);
+      splashTimer = setTimeout(() => { s.style.display = 'none'; }, 450);
     }
 
     function mostrarSplash(texto) {
       const s = document.getElementById('splashScreen');
+      clearTimeout(splashTimer);
       const sub = s.querySelector('.sp-sub');
       if (sub && texto) sub.textContent = texto;
       s.style.display = 'flex';
       s.classList.remove('fade-out');
     }
 
-    let _portando = false; // evita chamadas duplas de onAuthStateChanged
+    let splashTimer;
+    let sessaoPortal = 0; // [v2.0] Só a sessão mais recente pode revelar o portal.
     onAuthStateChanged(auth, async user => {
-      if (user) {
-        if (_portando) return;
-        _portando = true;
-        clearTimeout(_loginTimeout); // cancela timeout de segurança (login ok)
-        setLoad(false);              // reseta botão imediatamente, sem esperar Firebase
-        mostrarSplash('Carregando portal');
-        await abrirPortal(user);
-        esconderSplash();
-        _portando = false;
-      } else {
-        _portando = false;
-        setLoad(false);          // garante reset se login falhou silenciosamente
-        document.getElementById('telaLogin').style.display  = 'flex';
-        document.getElementById('telaPortal').style.display = 'none';
-        esconderSplash();
+      const sessao = ++sessaoPortal;
+      if (!user || sessionStorage.getItem('uid') !== user.uid) {
+        ['uid', 'usuario', 'primeiroNome', 'email', 'perms', 'sistema'].forEach(chave => sessionStorage.removeItem(chave));
+      }
+      clearTimeout(_loginTimeout);
+      setLoad(false);
+      TODOS_CARDS.forEach(id => { document.getElementById(id).style.display = 'none'; });
+      HC.dias = {}; HC.carregado = {}; HC.erro = {};
+      HC.filtro = ''; HC.filtroEsp = ''; HC.sdia = null; HC.folha = false;
+      document.getElementById('homeCronograma').style.display = 'none';
+      document.getElementById('hcKpis').style.display = 'none';
+      document.getElementById('telaPortal').style.display = 'none';
+      try {
+        if (user) {
+          mostrarSplash('Carregando portal');
+          await abrirPortal(user, sessao);
+        } else {
+          document.getElementById('telaLogin').style.display = 'flex';
+        }
+      } catch (e) {
+        console.error('[portal]', e);
+        if (sessao === sessaoPortal) {
+          document.getElementById('telaLogin').style.display = 'flex';
+          erro('O portal não pôde ser carregado. Tente novamente.');
+        }
+      } finally {
+        if (sessao === sessaoPortal) esconderSplash();
       }
     });
 
@@ -513,13 +525,15 @@
         .sort((a,b) => hcSalaChave(a.sala)-hcSalaChave(b.sala) || PER.indexOf(a.periodo)-PER.indexOf(b.periodo) || a.doc.localeCompare(b.doc,'pt'));
     }
     async function hcCarregarMes(ym){
+      const sessao = sessaoPortal;
       if (HC.carregado[ym]) return;
       try {
         const snap = await get(query(ref(db,'crono/dias'), orderByKey(), startAt(ym+'-01'), endAt(ym+'-31')));
+        if (sessao !== sessaoPortal) return;
         const v = snap.val() || {};
         Object.keys(v).forEach(k => { HC.dias[k] = v[k]; });
         HC.carregado[ym] = true; delete HC.erro[ym];
-      } catch(e) { HC.erro[ym] = (e && (e.code||e.message)) || 'erro'; console.warn('[hc] leitura crono/dias:', HC.erro[ym]); }
+      } catch(e) { if (sessao !== sessaoPortal) return; HC.erro[ym] = (e && (e.code||e.message)) || 'erro'; console.warn('[hc] leitura crono/dias:', HC.erro[ym]); }
     }
     function hcMesesVisiveis(){
       if (HC.view==='semana'){ const seg=hcSegunda(HC.ref); return [...new Set([hcIso(seg).slice(0,7), hcIso(hcAdd(seg,5)).slice(0,7)])]; }
@@ -595,9 +609,13 @@
       document.getElementById('hcK2').textContent = new Set(l.map(x => hcChave(x.doc))).size;
       document.getElementById('hcK3').textContent = l.filter(x => x.aberta).length;
     }
+    let versaoRenderCrono = 0;
     async function hcRender(){
+      const sessao = sessaoPortal;
+      const versao = ++versaoRenderCrono;
       const meses = hcMesesVisiveis();
       await Promise.all(meses.map(hcCarregarMes));
+      if (sessao !== sessaoPortal || versao !== versaoRenderCrono) return;
       const body = document.getElementById('hcBody'), tit = document.getElementById('hcTitulo'), av = document.getElementById('hcAviso');
       const erros = meses.filter(m => HC.erro[m]);
       av.className = 'hc-aviso' + (erros.length ? ' erro' : '');
@@ -752,8 +770,8 @@
       hcRender();
     }
 
-    async function abrirPortal(user) {
-      let nomeCompleto = user.email.split('@')[0];
+    async function abrirPortal(user, sessao) {
+      let nomeCompleto = (user.email || user.uid).split('@')[0];
       let perms = {};
       try {
         const snap = await get(ref(db, `admin/usuarios/${user.uid}`));
@@ -765,13 +783,17 @@
         }
       } catch(e) { console.warn('[abrirPortal] permissões:', e.message); }
 
+      if (sessao !== sessaoPortal) return;
+
       // Monta UI completa antes de revelar
+      carregarLogoGlobal(['#logoHeader']);
+      carregarClinica();
       const primeiroNome = nomeCompleto.split(' ')[0];
       document.getElementById('pUserNome').textContent = primeiroNome;
       sessionStorage.setItem('usuario',      nomeCompleto);
       sessionStorage.setItem('primeiroNome', primeiroNome);
       sessionStorage.setItem('uid',          user.uid);
-      sessionStorage.setItem('email',        user.email);
+      sessionStorage.setItem('email',        user.email || '');
       sessionStorage.setItem('perms',        JSON.stringify(perms));
 
       const isAdmin = !!perms.admin;
@@ -830,21 +852,10 @@
 
     window.sair = function() {
       signOut(auth).then(() => {
-        sessionStorage.clear();
-        // Reseta TODOS os cards para o próximo usuário não ver cards errados
-        TODOS_CARDS.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.style.display = 'none';
-        });
-        document.getElementById('telaPortal').style.display = 'none';
-        document.getElementById('telaLogin').style.display  = 'flex';
         document.getElementById('fEmail').value = '';
         document.getElementById('fSenha').value = '';
         limparErro();
-        document.getElementById('homeCronograma').style.display = 'none'; // [v1.5]
-        document.getElementById('hcKpis').style.display = 'none'; // [v1.6]
-        HC.dias = {}; HC.carregado = {}; HC.erro = {}; HC.filtro = ''; HC.filtroEsp = ''; HC.sdia = null; HC.folha = false; // [v1.5] não vaza dados entre usuários
-      });
+      }).catch(() => alert('Não foi possível sair. Tente novamente.'));
     };
 
     window.abrirSistema = function(arquivo, nome) {
@@ -857,8 +868,10 @@
     window.toggleOlho = function() {
       const i = document.getElementById('fSenha');
       const e = document.getElementById('eyeIco');
-      if (i.type === 'password') { i.type = 'text'; e.className = 'fas fa-eye-slash'; }
-      else                       { i.type = 'password'; e.className = 'fas fa-eye'; }
+      const mostrar = i.type === 'password';
+      i.type = mostrar ? 'text' : 'password';
+      e.className = mostrar ? 'fas fa-eye-slash' : 'fas fa-eye';
+      e.closest('button').setAttribute('aria-pressed', String(mostrar));
     };
 
     function erro(msg) {

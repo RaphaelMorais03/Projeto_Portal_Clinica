@@ -271,6 +271,7 @@
       .layout{overflow:visible;}
     }
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -283,7 +284,7 @@
     <div class="header-right">
       <div class="user-pill"><div class="user-dot" id="userAvatar">--</div><span id="userName" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span></div>
       <button class="btn-sair" id="logoutBtn"><i class="fas fa-right-from-bracket"></i> Sair</button>
-      <button class="back-btn" onclick="window.location.replace('../login.html')"><i class="fas fa-home"></i> Portal</button>
+      <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
     </div>
   </div>
 
@@ -309,7 +310,7 @@
           <div class="sbar-label">Administração</div>
           <input type="file" class="file-input" id="fileInput" accept=".xlsx,.xls">
           <button class="btn-chip-sm" id="importBtn"><i class="fas fa-file-arrow-up"></i> Importar planilha</button>
-          <button class="btn-chip-sm" id="loadSeedBtn"><i class="fas fa-database"></i> Base inicial</button>
+          <button class="btn-chip-sm" id="loadSeedBtn" style="display:none;"><i class="fas fa-database"></i> Base inicial</button><!-- [v2.1] oculto em Pirituba; ID mantido -->
         </div>
       </div>
     </aside>
@@ -702,6 +703,7 @@
   <script type="module">
     import { initializeApp }       from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
     import { getFirestore, collection, doc, getDocs, writeBatch }
                                    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -714,16 +716,23 @@
       return n.split(/[\s@]/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0,2) || '??';
     }
 
-    let currentUser = null;
-    onAuthStateChanged(auth, user => {
-      if (!user) { window.location.replace('../login.html'); return; }
-      currentUser = user;
-      document.getElementById('userAvatar').textContent = initialsFor(user);
-      document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
+    let perfilAdmin = false;
+    onAuthStateChanged(auth, async user => {
+      if (!user) { voltarAoLogin(); return; }
       try {
-        const perms = JSON.parse(sessionStorage.getItem('perms') || '{}');
-        if (perms.admin) document.getElementById('sbar-admin').style.display = 'flex';
-      } catch(e) {}
+        const snap = await get(ref(getDatabase(_app), 'admin/usuarios/' + user.uid));
+        if (auth.currentUser?.uid !== user.uid) return;
+        const perms = (snap.val() || {}).perms || {};
+        if (!perms.admin && !perms.orcamento) { irPara('../login.html'); return; }
+        perfilAdmin = !!perms.admin;
+      } catch (e) {
+        console.warn('[orçamentos] acesso:', e);
+        irPara('../login.html');
+        return;
+      }
+      document.getElementById('userAvatar').textContent = initialsFor(user);
+      document.getElementById('userName').textContent = user.displayName || (user.email || user.uid).split('@')[0];
+      document.getElementById('sbar-admin').style.display = perfilAdmin ? 'flex' : 'none';
       loadExamsFromFirestore();
     });
     document.getElementById('logoutBtn').addEventListener('click', () =>
@@ -909,7 +918,7 @@
         exams = [...mesclarExamesInternos(internos),
                  ...loadPartnerExams()];
         if (exams.length === 0) {
-          document.getElementById('results').innerHTML = `<div class="empty"><i class="fas fa-database"></i><h3>Nenhum exame na base ainda</h3><p>Clique em <strong>Base inicial</strong> para importar os exames pré-cadastrados,<br>ou em <strong>Importar</strong> para carregar sua planilha.</p></div>`;
+          document.getElementById('results').innerHTML = `<div class="empty"><i class="fas fa-database"></i><h3>Nenhum exame na base ainda</h3><p>Um administrador pode carregar a base em <strong>Importar planilha</strong>.</p></div>`;
           document.getElementById('categoryChips').innerHTML = '';
           document.getElementById('resultsMeta').textContent = '';
           return;
@@ -1679,27 +1688,47 @@
       pdf.save(`orcamento-${Date.now()}.pdf`);
     });
 
+    let importandoCatalogo = false;
+    function estadoImportacao(ocupado) {
+      importandoCatalogo = ocupado;
+      document.getElementById('loadSeedBtn').disabled = ocupado;
+      document.getElementById('importBtn').disabled = ocupado;
+    }
+
     document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
     document.getElementById('fileInput').addEventListener('change',async ev=>{
-      const file=ev.target.files[0]; if(!file)return;
-      if(!confirm(`Importar exames de "${file.name}"?\n\nIsso vai SUBSTITUIR a base atual de ${exams.length} exames.`)){ev.target.value='';return;}
+      const file=ev.target.files[0]; if(!file || !perfilAdmin || importandoCatalogo) return;
+      estadoImportacao(true);
       try{
         const buf=await file.arrayBuffer(), wb=XLSX.read(buf,{type:'array'}), parsed=parseWorkbook(wb);
         if(parsed.length===0){toast('Nenhum exame encontrado na planilha','error',3500);return;}
-        if(!confirm(`${parsed.length} exames encontrados. Importar agora?`))return;
+        if (!confirm(`Substituir o catálogo importado por ${parsed.length} exames de "${file.name}"?`)) return;
         await saveAllExams(parsed); toast(`${parsed.length} exames importados!`,'success',3000); await loadExamsFromFirestore();
-      }catch(err){toast('Erro: '+err.message,'error',4000);}finally{ev.target.value='';}
+      }catch(err){toast('Erro: '+err.message,'error',4000);}finally{ev.target.value='';estadoImportacao(false);}
     });
     document.getElementById('loadSeedBtn').addEventListener('click',async()=>{
+      if (!perfilAdmin || importandoCatalogo) return;
       if(!confirm('Carregar a base inicial?\n\nIsso vai SUBSTITUIR a base atual.'))return;
+      estadoImportacao(true);
       try{
         document.getElementById('results').innerHTML='<div class="loader"><div class="spinner"></div><p>Carregando base inicial…</p></div>';
-        const res=await fetch('exams-seed.json'); if(!res.ok)throw new Error('Arquivo exams-seed.json não encontrado');
+        const res=await fetch('../data/exams-seed.json'); if(!res.ok)throw new Error('Arquivo exams-seed.json não encontrado');
         const seed=await res.json(); await saveAllExams(seed); toast(`${seed.length} exames carregados!`,'success',3000); await loadExamsFromFirestore();
-      }catch(err){toast('Erro: '+err.message,'error',4000);}
+      }catch(err){toast('Erro: '+err.message,'error',4000);await loadExamsFromFirestore();}
+      finally{estadoImportacao(false);}
     });
 
-    function parsePrice(v){if(v==null||v==='')return null;if(typeof v==='number')return v;const m=String(v).trim().match(/(\d{1,3}(?:[\.\s]\d{3})*(?:,\d{1,2})?|\d+(?:[\.,]\d{1,2})?)/);if(!m)return null;const n=parseFloat(m[1].replace(/\./g,'').replace(',','.'));return isNaN(n)?null:n;}
+    // [v2.7] Lê preços inteiros e centavos sem converter descrições em valores.
+    function parsePrice(valor) {
+      if (typeof valor === 'number') return Number.isFinite(valor) ? valor : null;
+      const texto = String(valor ?? '').trim().replace(/^R\$\s*/i, '');
+      let normalizado = texto.replace(/\s/g, '');
+      if (/^[+-]?\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/.test(normalizado)) {
+        normalizado = normalizado.replace(/\./g, '');
+      }
+      if (!/^[+-]?\d+(?:[.,]\d{1,2})?$/.test(normalizado)) return null;
+      return Number(normalizado.replace(',', '.'));
+    }
     function cleanStr(v){return v==null?'':String(v).trim().replace(/\n/g,' ').replace(/\\n/g,' ');}
     function looksLikeExamName(s){if(!s||s.length<3)return false;const u=s.toUpperCase();const bad=['NOME DO EXAME','CARTÃO DE TODOS','PARTICULAR','VALOR TOTAL','VALOR GUIA','AGENDAMENTO','OBSERVAÇÃO','PROCEDIMENTO ','PRESTADOR','OBS:','WHATSAPP','CONTRASTE','ENDEREÇO','CNPJ','NÃO AGENDAR','TODOS OS EXAMES','COBRADO','COD ','PROCEDIMENTO P','DR BRENO','DR LUIS','REPASSE DR'];for(const b of bad)if(u.startsWith(b))return false;if(['NAN','-','.'].includes(u))return false;return true;}
     function parseWorkbook(wb){
@@ -1726,9 +1755,40 @@
       }
       result.forEach((e,i)=>e.id=`exam_${String(i+1).padStart(4,'0')}`);return result;
     }
-    async function saveAllExams(list){
-      const existing=await getDocs(collection(db,'orcamentos_exames'));let cur=writeBatch(db),cnt=0;const del=[];existing.forEach(d=>{cur.delete(d.ref);if(++cnt>=400){del.push(cur);cur=writeBatch(db);cnt=0;}});if(cnt>0)del.push(cur);for(const b of del)await b.commit();
-      cur=writeBatch(db);cnt=0;const ins=[];for(const e of list){const ref=doc(db,'orcamentos_exames',e.id);const{id,...data}=e;cur.set(ref,{...data,createdAt:new Date().toISOString(),createdBy:currentUser.email});if(++cnt>=400){ins.push(cur);cur=writeBatch(db);cnt=0;}}if(cnt>0)ins.push(cur);for(const b of ins)await b.commit();
+    // [v2.7] Entradas antigas só são removidas depois de confirmar todas as gravações.
+    async function saveAllExams(lista) {
+      if (!lista.length || !auth.currentUser || !perfilAdmin) throw new Error('Importação sem itens ou sem acesso.');
+      const novos = new Map(lista.map(exame => [exame.id, exame]));
+      if (novos.size !== lista.length || [...novos.keys()].some(id => typeof id !== 'string' || !id)) {
+        throw new Error('A base contém identificadores vazios ou duplicados.');
+      }
+      const existentes = await getDocs(collection(db, 'orcamentos_exames'));
+      const obsoletos = [];
+      existentes.forEach(docExistente => {
+        if (!novos.has(docExistente.id)) obsoletos.push(docExistente.ref);
+      });
+      const usuario = auth.currentUser.email || auth.currentUser.uid;
+      const criadoEm = new Date().toISOString();
+
+      if (lista.length + obsoletos.length <= 400) {
+        const lote = writeBatch(db);
+        lista.forEach(({id, ...dados}) => lote.set(doc(db, 'orcamentos_exames', id), { ...dados, createdAt: criadoEm, createdBy: usuario }));
+        obsoletos.forEach(refExame => lote.delete(refExame));
+        await lote.commit();
+        return;
+      }
+      for (let i = 0; i < lista.length; i += 400) {
+        const lote = writeBatch(db);
+        lista.slice(i, i + 400).forEach(({id, ...dados}) =>
+          lote.set(doc(db, 'orcamentos_exames', id), { ...dados, createdAt: criadoEm, createdBy: usuario })
+        );
+        await lote.commit();
+      }
+      for (let i = 0; i < obsoletos.length; i += 400) {
+        const lote = writeBatch(db);
+        obsoletos.slice(i, i + 400).forEach(refExame => lote.delete(refExame));
+        await lote.commit();
+      }
     }
   </script>
 <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v2.6 · 30/07/2026</span>

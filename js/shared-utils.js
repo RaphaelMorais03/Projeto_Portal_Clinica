@@ -24,6 +24,20 @@ window.irPara = function(arquivo) {
   window.location.replace(base + arquivo);
 };
 
+/* [v1.2] Uma sessão encerrada volta ao login também no painel embutido. */
+window.voltarAoLogin = function() {
+  var destino = new URL('../login.html', window.location.href).href;
+  if (window.__EMBED) {
+    try {
+      if (window.parent.location.origin === window.location.origin) {
+        window.parent.location.replace(destino);
+        return;
+      }
+    } catch (e) { /* Um iframe externo não pode navegar o pai. */ }
+  }
+  window.location.replace(destino);
+};
+
 /* [v1.1] Modo embed: ?embed=1 esconde, só visualmente, o que duplicaria o Dashboard (logo/título do cabeçalho,
    botão "Portal", "Sair", usuário). Não remove nem altera nenhum elemento: ids, funções e demais botões
    (data, status, ações do módulo) continuam funcionando. Sem ?embed=1 nada disso é aplicado. */
