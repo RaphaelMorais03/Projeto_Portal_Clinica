@@ -310,7 +310,7 @@
           <div class="sbar-label">Administração</div>
           <input type="file" class="file-input" id="fileInput" accept=".xlsx,.xls">
           <button class="btn-chip-sm" id="importBtn"><i class="fas fa-file-arrow-up"></i> Importar planilha</button>
-          <button class="btn-chip-sm" id="loadSeedBtn"><i class="fas fa-database"></i> Base inicial</button>
+          <button class="btn-chip-sm" id="loadSeedBtn" style="display:none;"><i class="fas fa-database"></i> Base inicial</button><!-- [v2.1] oculto em Pirituba; ID mantido -->
         </div>
       </div>
     </aside>
@@ -918,7 +918,7 @@
         exams = [...mesclarExamesInternos(internos),
                  ...loadPartnerExams()];
         if (exams.length === 0) {
-          document.getElementById('results').innerHTML = `<div class="empty"><i class="fas fa-database"></i><h3>Nenhum exame na base ainda</h3><p>Clique em <strong>Base inicial</strong> para importar os exames pré-cadastrados,<br>ou em <strong>Importar</strong> para carregar sua planilha.</p></div>`;
+          document.getElementById('results').innerHTML = `<div class="empty"><i class="fas fa-database"></i><h3>Nenhum exame na base ainda</h3><p>Um administrador pode carregar a base em <strong>Importar planilha</strong>.</p></div>`;
           document.getElementById('categoryChips').innerHTML = '';
           document.getElementById('resultsMeta').textContent = '';
           return;
