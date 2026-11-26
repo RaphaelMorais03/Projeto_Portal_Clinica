@@ -1,5 +1,6 @@
 ﻿<!-- VERSION: v1.3 | contratos.html | 30/10/2026 | visual: layout Soft UI da Conciliação; fix: contrato e guia sempre emitem com a logo oficial (admin/logo); contrato impresso nas normas ABNT (NBR 14724). v1.2 | 03/08/2026 | fix: logo real na guia de encaminhamento -->
 <!DOCTYPE html>
+<!-- VERSION: v2.0 | contratos.html | 24/11/2026 | Visual unificado: passa a usar ../css/portal-theme.css (mesmos valores da v1.3). Só CSS; impressão ABNT e guia intactas. -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -8,54 +9,23 @@
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/portal-theme.css">
   <style>
-    /* [v1.3] Visual "Modern SaaS / Soft UI" (mesmo modelo da Conciliação): fundo neutro, cards brancos com borda 1px e sombra mínima.
-       Nomes de classes preservados (só mudou a aparência). */
-    :root {
-      --bg:#f9fafb; --line:#e5e7eb; --ink:#111827; --muted:#6b7280;
-      --navy:#0A1F44; --navy-mid:#122b5e;
-      --red:#C62828;  --red-h:#ad1f1f; --red-bg:#fef2f2;
-      --teal:#0f766e;
-      --green:#15803d; --green-bg:#ecfdf5;
-      --amber:#b45309; --amber-bg:#fffbeb;
-      --gray-50:#f9fafb; --gray-100:#f3f4f6; --gray-200:#e5e7eb;
-      --gray-300:#d1d5db; --gray-400:#9ca3af; --gray-500:#6b7280;
-      --gray-600:#4b5563; --gray-800:#1f2937;
-      --r:10px; --rl:16px;
-      --shadow:0 1px 3px rgba(0,0,0,.03);
-    }
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
-    .red-bar{display:none;}
-    /* HEADER */
-    .s-header{background:#fff;border-bottom:1px solid var(--line);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-    .s-logo{display:flex;align-items:center;gap:12px;}
-    .s-logo-icon{width:36px;height:36px;border-radius:10px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);}
-    .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
-    .s-logo-name{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
-    .s-logo-sub{font-size:11px;color:var(--muted);}
-    .header-right{display:flex;align-items:center;gap:10px;}
+    /* [v2.0] Visual unificado: tokens, cabecalho, abas, campos e botoes vivem em
+       ../css/portal-theme.css (mesmos valores que esta pagina ja usava desde a
+       v1.3). Aqui ficam so as regras proprias. Os dois blocos de impressao
+       (ABNT e guia de encaminhamento) nao foram tocados. */
     .user-pill{background:var(--gray-100);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:7px;}
     .user-dot{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
     .btn-header{background:#fff;border:1px solid var(--line);color:var(--gray-600);border-radius:var(--r);padding:7px 14px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;text-decoration:none;}
     .btn-header:hover{background:var(--gray-100);}
     /* LAYOUT */
     .page-body{max-width:1240px;margin:0 auto;padding:24px 20px 60px;}
-    /* TABS (pílula) */
-    .tabs{display:inline-flex;gap:2px;margin-bottom:20px;background:var(--gray-100);border-radius:12px;padding:4px;max-width:100%;overflow-x:auto;}
-    .tab-btn{padding:8px 16px;border:none;background:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:7px;white-space:nowrap;}
-    .tab-btn:hover{color:var(--ink);}
-    .tab-btn.active{color:var(--ink);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06);}
-    .tab-pane{display:none;}
-    .tab-pane.active{display:block;}
     /* CARDS */
     .card{background:#fff;border:1px solid var(--line);border-radius:var(--rl);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:14px;}
     .card-hdr{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:16px;display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);}
     .card-hdr i{width:30px;height:30px;border-radius:9px;background:var(--gray-100);display:inline-flex;align-items:center;justify-content:center;font-size:13px;}
     /* FORM */
-    .f-label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;}
-    .f-input,.f-select{width:100%;padding:9px 12px;border:1px solid var(--gray-300);border-radius:var(--r);font-size:14px;font-family:inherit;outline:none;color:var(--ink);background:#fff;}
-    .f-input:focus,.f-select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,31,68,.08);}
     .f-input::placeholder{color:var(--gray-400);}
     .f-input.ok{border-color:var(--green);background:var(--green-bg);}
     .field{margin-bottom:14px;}
@@ -102,7 +72,7 @@
     .btn-green:hover{background:#166534;}
     .btn-row{display:flex;gap:10px;padding-top:14px;border-top:1px solid var(--gray-100);margin-top:14px;flex-wrap:wrap;}
     /* TOAST */
-    .toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:500;opacity:0;transform:translateX(100%);transition:all .3s;z-index:2000;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.12);}
+    .toast{animation:none;position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:500;opacity:0;transform:translateX(100%);transition:all .3s;z-index:2000;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.12);}
     .toast.show{opacity:1;transform:translateX(0);}
     .toast.success{background:var(--green);}
     /* SEC LABEL */
