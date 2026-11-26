@@ -314,7 +314,11 @@
     /* Oculta abas horizontais (agora vivem na sidebar) */
     .header-right .main-tab{display:none !important;}
     .main-tabs{display:none !important;}
-    #btnLancProd{display:none !important;}
+    /* [v7.2] marcas do topo/menu e botão do topo ocultos; elementos e IDs mantidos.
+       O Lançamento Manual agora fica na aba Produção (#btnLancProd). */
+    .s-header .s-logo-icon,
+    .saas-logo,
+    #btnLancamentoHeader{display:none !important;}
     .content > div:first-child{
       display:none !important;
     }
@@ -1037,7 +1041,6 @@
         <button class="main-tab" id="mainTabContratos" onclick="switchMainTab('contratos')"><i class="fas fa-file-contract"></i> Contratos</button>
         <button class="main-tab" id="mainTabOdonto" onclick="switchMainTab('odonto')"><i class="fas fa-tooth"></i> Caixa Odonto</button>
       </div>
-      <button class="btn-lancamento" id="btnLancProd" onclick="abrirLancamento()"><i class="fas fa-plus"></i> Lançamento Manual</button>
     </div>
 
     <!-- PAINEL HOJE (landing) -->
@@ -1126,6 +1129,8 @@
         <button id="btnExportComissoes" onclick="exportarComissoes()" style="display:none;padding:7px 14px;background:#15803d;color:white;border:none;border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;align-items:center;gap:6px;white-space:nowrap;" title="Exportar comissões para Excel">
           <i class="fas fa-file-excel"></i> Exportar comissões
         </button>
+        <!-- [v7.2] movido do cabeçalho para a aba Produção -->
+        <button class="btn-lancamento" id="btnLancProd" onclick="abrirLancamento()"><i class="fas fa-plus"></i> Lançamento Manual</button>
       </div>
       <div id="mainContent"><div class="loading"><i class="fas fa-spinner fa-spin"></i></div></div>
     </div>
