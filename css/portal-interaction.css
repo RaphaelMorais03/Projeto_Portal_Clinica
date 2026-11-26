@@ -1,0 +1,40 @@
+/* [v1.0] Controles compartilhados pelas páginas do portal, somente em tela. */
+:is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  :is(.tabs, .tabs-bar, .nav-tabs) {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  :is(.tabs, .tabs-bar, .nav-tabs) > :is(button, a) {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .dsh-emb-bar {
+    height: auto;
+    min-height: 36px;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding-block: 5px;
+  }
+
+  .dsh-emb-bar b {
+    overflow-wrap: anywhere;
+  }
+
+  .exam-history-scroll {
+    overflow-x: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.s-header, .tabs, .tabs-bar, .nav-tabs, .dsh-emb-bar) :is(button, a) {
+    transition: none;
+  }
+}

@@ -13,29 +13,29 @@
   <script src="../js/firebase-config.js"></script>
   <script src="../js/shared-utils.js"></script>
   <style>
-    .red-bar{height:3px;background:#C62828;position:fixed;top:0;left:0;right:0;z-index:1000;}
-    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--green:#15803d;--success:#2ecc71;--danger:#C62828;--employee:#9b59b6;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--card-bg:#ffffff;--input-bg:#ffffff;--border:rgba(0,0,0,0.12);--shadow:0 4px 20px rgba(10,31,68,.1);--primary:#0A1F44;--primary-dark:#122b5e;}
+    .red-bar{display:none;} /* [v2.0] Superfícies claras do portal */
+    :root{--navy:#0A1F44;--navy-mid:#122b5e;--red:#C62828;--red-h:#ad1f1f;--teal:#61C1D0;--teal-h:#4fa8b8;--green:#15803d;--success:#2ecc71;--danger:#C62828;--employee:#9b59b6;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--gray:#334155;--card-bg:#ffffff;--input-bg:#ffffff;--border:rgba(0,0,0,0.12);--shadow:0 4px 20px rgba(10,31,68,.1);--primary:#0A1F44;--primary-dark:#122b5e;}
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#0d2b6b 0%,#1a3a7c 30%,#0a4a6e 65%,#0a4a5a 100%) fixed;color:var(--gray-800);min-height:100vh;}
+    body{font-family:'Inter',sans-serif;background:#f9fafb;color:var(--gray-800);min-height:100vh;}
     .hidden{display:none!important;}
     /* ── Header estilo caixa ── */
-    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:3px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .s-header{background:white;border-bottom:2px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.05);}
     .s-logo{display:flex;align-items:center;gap:12px;}
     .s-logo-icon{width:40px;height:40px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
     .s-logo-icon img{width:100%;height:100%;object-fit:contain;}
     .s-logo-name{font-size:16px;font-weight:800;color:var(--navy);}
     .s-logo-sub{font-size:10px;color:var(--gray-400);}
     .header-right{display:flex;align-items:center;gap:10px;}
-    .back-btn-h{background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
-    .back-btn-h:hover{background:var(--red-h);}
+    .back-btn-h{background:#fff;color:var(--navy);border:1px solid var(--gray-300);border-radius:10px;padding:7px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .back-btn-h:hover{background:var(--gray-100);}
     .content{max-width:1100px;margin:0 auto;padding:24px 24px 60px;}
     /* ── Banner responsável ── */
-    .user-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);border-radius:16px;padding:20px 24px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(10,31,68,.25);}
+    .user-banner{background:var(--card-bg);border:1px solid var(--gray-200);border-radius:16px;padding:20px 24px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);}
     .user-banner-info{display:flex;flex-direction:column;gap:4px;}
-    .user-banner-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;}
-    .user-banner-name{font-size:22px;font-weight:900;color:white;letter-spacing:-.3px;}
-    .user-banner-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;}
-    .user-banner-icon{width:56px;height:56px;background:rgba(255,255,255,.12);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;}
+    .user-banner-label{font-size:11px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:.5px;}
+    .user-banner-name{font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-.3px;}
+    .user-banner-sub{font-size:12px;color:var(--gray-600);margin-top:2px;}
+    .user-banner-icon{width:56px;height:56px;background:var(--gray-100);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--navy);}
     #mainSystem{display:block;max-width:1100px;margin:0 auto;}
     header{text-align:center;margin-bottom:24px;position:relative;}
     .form-group{margin-bottom:18px;}
@@ -89,17 +89,15 @@
     .modal-content{background:var(--card-bg);padding:30px;border-radius:16px;max-width:400px;width:90%;text-align:center;color:var(--gray);box-shadow:var(--shadow);}
     .modal-buttons{display:flex;gap:15px;justify-content:center;margin-top:25px;}
     footer{text-align:center;margin-top:40px;padding:20px;color:var(--gray);border-top:1px solid rgba(0,0,0,0.1);}
-    .back-portal{position:fixed;bottom:20px;right:20px;background:#C62828;color:white;border:none;border-radius:10px;padding:10px 16px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;box-shadow:0 4px 16px rgba(10,31,68,0.3);transition:all .2s;z-index:999;}
-    .back-portal:hover{background:#ad1f1f;transform:translateY(-1px);}
     @media(max-width:900px){.steps,.form-row,.professional-info{grid-template-columns:1fr;}}
     @media(max-width:768px){.item-row{grid-template-columns:1fr;gap:8px;}.step-actions{flex-direction:column;}.step-actions button{width:100%;}}
     @media print{.no-print,header,.steps,footer,.step-actions,#toastBox,#confirmModal,.back-portal{display:none!important;}body,#mainSystem{background:white!important;color:black!important;padding:0!important;margin:0!important;}}
 
     /* ── Tabs ── */
-    .tabs-bar{display:flex;gap:0;border-bottom:2px solid rgba(0,0,0,0.1);margin:-4px -4px 22px;}
-    .tab-btn{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 22px;font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-500,#64748b);cursor:pointer;transition:all .15s;border-radius:6px 6px 0 0;display:inline-flex;align-items:center;gap:8px;}
+    .tabs-bar{display:inline-flex;gap:2px;background:var(--gray-100);border-radius:12px;padding:4px;margin-bottom:22px;}
+    .tab-btn{background:none;border:none;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-500,#64748b);cursor:pointer;transition:all .15s;border-radius:9px;display:inline-flex;align-items:center;gap:8px;}
     .tab-btn:hover{color:#0A1F44;background:rgba(10,31,68,.05);}
-    .tab-btn.active{color:#0A1F44;border-bottom-color:#0A1F44;}
+    .tab-btn.active{color:var(--navy);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.08);}
     .tab-pane{animation:tabIn .18s ease;}
     @keyframes tabIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
@@ -120,6 +118,7 @@
     .prof-none i{display:block;font-size:28px;margin-bottom:8px;opacity:.4;}
     .panel{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -180,7 +179,6 @@
     </div>
   </div>
 
-  <button class="back-portal no-print" onclick="irPara('../login.html')">🏠 Voltar ao Portal</button>
 
   <div class="content">
   <div id="mainSystem">
@@ -208,7 +206,6 @@
         <span id="badgeResponsavel" style="font-size:13px;font-weight:600;color:#0A1F44;">—</span>
       </div>
       <div class="theme-toggle no-print">
-        <button id="themeToggle" class="btn-small"><i class="fas fa-moon"></i> Tema Escuro</button>
       </div>
     </header>
 
@@ -311,7 +308,7 @@
       <div id="semResultado" class="empty-state"><i class="fas fa-calculator"></i><p>Faça o cálculo para visualizar o resultado.</p></div>
       <div class="step-actions no-print">
         <button class="btn-secondary" onclick="voltarParaCalculo()"><i class="fas fa-arrow-left"></i> Voltar</button>
-        <button class="btn-success" onclick="gerarRecibo()"><i class="fas fa-receipt"></i> Gerar Recibo</button>
+        <button class="btn-success" onclick="gerarRecibo(this)"><i class="fas fa-receipt"></i> Gerar Recibo</button>
       </div>
     </div>
 
@@ -458,10 +455,6 @@
     if (usuSessao) window._setUsuario(usuSessao);
     // Logo sempre lida do sessionStorage na hora de gerar o recibo
 
-    function salvarTema(e){localStorage.setItem('theme',e?'dark':'light');}
-    function aplicarTemaSalvo(){const t=localStorage.getItem('theme');if(t==='dark')document.body.classList.add('dark-theme');atualizarBotaoTema();}
-    function atualizarBotaoTema(){const b=document.getElementById('themeToggle');if(!b)return;b.innerHTML=document.body.classList.contains('dark-theme')?'<i class="fas fa-sun"></i> Tema Claro':'<i class="fas fa-moon"></i> Tema Escuro';}
-    function toggleTheme(){document.body.classList.toggle('dark-theme');salvarTema(document.body.classList.contains('dark-theme'));atualizarBotaoTema();}
 
     function atualizarEtapas(){
       [1,2,3].forEach(n=>{const s=document.getElementById(`step${n}`);s.classList.remove('active','done');if(n<currentStep)s.classList.add('done');if(n===currentStep)s.classList.add('active');});
@@ -686,38 +679,48 @@
       return`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Repasse Consolidado</title><style>@page{size:A4;margin:0}body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#000}.recibo{width:210mm;min-height:297mm;box-sizing:border-box;padding:8mm;margin:0 auto}.cabecalho img{height:60px;width:auto;max-width:150px;object-fit:contain;flex-shrink:0;}.cabecalho{display:flex;align-items:center;justify-content:space-between;margin-bottom:8mm}.titulo-container{flex:1;text-align:center}.titulo{font-size:26px;font-weight:500}.linha-topo{border:none;border-top:1px solid #000;margin:0 0 8mm 0}.topo{display:grid;grid-template-columns:1fr 1fr;gap:6mm;font-size:12px}.topo .dir{text-align:right}.pagoa{margin:8mm 0 6mm;font-size:14px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:6px 8px;vertical-align:middle}th{text-align:center}.col-qtd{width:10%;text-align:center}.col-valor{width:22.5%;text-align:right}.col-liquido{font-weight:700}.linha-totais td{font-weight:700}.impostos{margin-top:4mm;font-size:12px}.validacao{margin:6mm 0 4mm;text-align:center;font-size:12px;line-height:1.5}.rodape{margin-top:10mm;padding-top:6mm;font-size:12px}.rodape-assinatura{display:flex;justify-content:space-between;margin-bottom:8mm;gap:30mm}.assin{text-align:center;width:80mm;flex:1}.assin .label{font-size:12px}.info-pagamento{margin-top:2mm;font-size:12px;line-height:1.6}.info-pagamento .titulo-info{font-weight:700;margin-bottom:3mm;text-transform:uppercase}.quitado{margin-top:3mm;font-weight:600}</style></head><body><div class="recibo"><div class="cabecalho"><div style="width:80px;display:flex;align-items:center;">${logoVal?`<img src="${logoVal}" style="height:60px;width:auto;object-fit:contain;" alt="Logo">`:'<span style="font-size:12px;font-weight:700;">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</span>'}</div><div class="titulo-container"><div class="titulo">Repasse Consolidado</div></div><div style="width:80px"></div></div><hr class="linha-topo"><div class="topo"><div><div style="font-weight:700">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div>Avenida Doutor Felipe Pinel — Pirituba / São Paulo/SP</div><div>Data/Hora: ${data} ${hora} - Pagamento: ${fmtPag}</div></div><div class="dir"><div>Usuário: ${esc(nomeU)}</div></div></div><div class="pagoa"><strong>Pago a: ${esc(dados.profissional.nome)}</strong> / CPF/CNPJ: <strong>${esc(dados.profissional.documento)}</strong></div><table><thead><tr><th>Qtd</th><th>Item</th><th>Valor Bruto</th><th>Valor Líquido</th></tr></thead><tbody>${linhas}</tbody></table>${imp?`<div class="impostos">${esc(imp)}</div>`:''}<div class="validacao">Declaro que conferi e validei os serviços prestados, estando de acordo com os valores apurados, ciente de que o pagamento desta agenda será realizado conforme calendário financeiro da clínica.</div><div class="rodape"><div class="rodape-assinatura"><div class="assin"><div style="width:55%;margin:0 auto;border-bottom:1px solid #000;height:14px;margin-bottom:4px;"></div><div class="label">Carimbo e Assinatura do Médico</div></div>${(dados.formaPagamento==='dinheiro'&&pago)?`<div class="assin"><div style="width:55%;margin:0 auto;border-bottom:1px solid #000;height:14px;margin-bottom:4px;"></div><div class="label">Assinatura do Responsável</div></div>`:''}</div><div class="info-pagamento"><div class="titulo-info">INFORMAÇÕES DE PAGAMENTO</div><p>Forma de pagamento: (${dados.formaPagamento==='transferencia'?'X':' '}) Transferência &nbsp;&nbsp;(${dados.formaPagamento==='dinheiro'?'X':' '}) Dinheiro &nbsp;&nbsp;Data: ${dataPag}</p><p class="quitado">${pago?'☑':'☐'} Quitado conforme comprovante bancário em anexo</p></div></div></div><sc`+'ript>window.print();<'+'/script></body></html>';
     }
 
-    function gerarRecibo(){
-      if(!dadosCalculo){toast('Calcule primeiro','error');return;}
-      // Salva no Firebase antes de imprimir
-      if (window._fbSet && window._userUid) {
-        const id = Date.now();
-        const registro = {
-          id: id,
-          profissional: dadosCalculo.profissional,
-          formaPagamento: dadosCalculo.formaPagamento,
-          itens: dadosCalculo.itens,
-          subtotal: dadosCalculo.subtotal,
-          pis: dadosCalculo.pis,
-          csll: dadosCalculo.csll,
-          irrf: dadosCalculo.irrf,
-          cofins: dadosCalculo.cofins,
-          totalDescontos: dadosCalculo.totalDescontos,
-          liquido: dadosCalculo.liquido,
-          criadoEm: new Date().toISOString(),
-          criadoPor: usuario || '—',
-          criadoPorUid: window._userUid,
-          pagoHoje: document.getElementById('pagoHojeCheckbox') ? document.getElementById('pagoHojeCheckbox').checked : false
-        };
-        window._fbSet('fechamento/registros/' + id, registro).catch(()=>{});
+    // [v2.0] Confirma o registro do repasse antes de liberar o recibo.
+    async function gerarRecibo(botao) {
+      if (botao.disabled) return;
+      if (!dadosCalculo) { toast('Calcule primeiro', 'error'); return; }
+      if (!window._fbSet || !window._userUid) { toast('Aguarde a conexão para gerar o recibo.', 'error'); return; }
+      const w = window.open('', '_blank');
+      if (!w) { toast('Permita pop-ups para gerar o recibo.', 'error'); return; }
+      const html = montarHtmlRecibo(dadosCalculo);
+      const id = Date.now();
+      const registro = {
+        id: id,
+        profissional: dadosCalculo.profissional,
+        formaPagamento: dadosCalculo.formaPagamento,
+        itens: dadosCalculo.itens,
+        subtotal: dadosCalculo.subtotal,
+        pis: dadosCalculo.pis,
+        csll: dadosCalculo.csll,
+        irrf: dadosCalculo.irrf,
+        cofins: dadosCalculo.cofins,
+        totalDescontos: dadosCalculo.totalDescontos,
+        liquido: dadosCalculo.liquido,
+        criadoEm: new Date().toISOString(),
+        criadoPor: usuario || '—',
+        criadoPorUid: window._userUid,
+        pagoHoje: document.getElementById('pagoHojeCheckbox') ? document.getElementById('pagoHojeCheckbox').checked : false
+      };
+      botao.disabled = true;
+      try {
+        await window._fbSet('fechamento/registros/' + id, registro);
+      } catch (e) {
+        w.close();
+        toast('Não foi possível salvar o repasse: ' + e.message, 'error');
+        return;
+      } finally {
+        botao.disabled = false;
       }
-      const w=window.open('','_blank');
-      if(!w){toast('Pop-up bloqueado — permita pop-ups para imprimir','error');return;}
-      w.document.write(montarHtmlRecibo(dadosCalculo));w.document.close();
+      if (w.closed) { toast('Repasse salvo. Consulte o histórico para imprimir.', 'info'); return; }
+      w.document.write(html);
+      w.document.close();
     }
 
     document.addEventListener('DOMContentLoaded',function(){
-      aplicarTemaSalvo();
-
       // ── Busca Step 1 (Profissional) ──
       document.getElementById('buscaProfissional').addEventListener('keyup',buscarDebounced);
       document.getElementById('resultadosBusca').addEventListener('click',function(e){
@@ -759,7 +762,6 @@
         if(e.target===this)fecharModalCadastro();
       });
 
-      document.getElementById('themeToggle').addEventListener('click',toggleTheme);
       atualizarResumoProfissional(null);
       window.atualizarListaGeralFechamento();
       if(!itens.length)adicionarItem();
@@ -778,62 +780,69 @@
     const _auth = getAuth(_app);
     window.initFirebaseUtils(_db, ref, get);
 
-    onAuthStateChanged(_auth, user => {
-      if (!user) { irPara('../login.html'); return; }
-      window._fbSet    = (path, data) => set(ref(_db, path), data);
-      window._userUid  = user.uid;
-      carregarLogoGlobal(['#headerLogo']);
-      // Garante logo disponível para o recibo
-      get(ref(_db, 'admin/logo')).then(snap => {
-        const d = snap.val();
-        if (d && d.dataUrl) {
-          sessionStorage.setItem('logoDataUrl', d.dataUrl);
-          window._logoUrl = d.dataUrl;
-          // Atualiza também os elementos de logo na página
-          const imgs = document.querySelectorAll('#headerLogo, #logoHeader');
-          imgs.forEach(img => { if (img) img.src = d.dataUrl; });
-        }
-      }).catch(()=>{});
-      // Busca nome completo do usuário no Firebase
-      get(ref(_db, 'admin/usuarios/' + user.uid)).then(snap => {
-        if (snap.exists() && snap.val().nomeCompleto) {
-          if (typeof window._setUsuario === 'function') window._setUsuario(snap.val().nomeCompleto);
-        } else if (user.email && typeof window._setUsuario === 'function') {
-          window._setUsuario(user.email.split('@')[0]);
-        }
-      }).catch(()=>{});
-    });
-
-    // Carrega profissionais do painel admin como base primária (admin/profissionais)
-    onValue(ref(_db, 'admin/profissionais'), snap => {
-      const d = snap.val();
-      if (d && typeof d === 'object') {
-        window._baseProfFirebase = Object.values(d)
-          .filter(p => p && p.nome && p.documento)
-          .map(p => ({
-            nome: p.nome,
-            documento: p.documento,
-            regime: p.regime || 'pj-presumido',
-            categoria: 'repasse',
-            id: p.documento.replace(/\D/g,'')
-          }));
-      } else {
-        window._baseProfFirebase = []; // Firebase vazio → usa hardcoded como fallback
+    const listenersFechamento = [];
+    onAuthStateChanged(_auth, async user => {
+      listenersFechamento.splice(0).forEach(cancelar => cancelar());
+      if (!user) { voltarAoLogin(); return; }
+      try {
+        const perfil = (await get(ref(_db, 'admin/usuarios/' + user.uid))).val() || {};
+        if (_auth.currentUser?.uid !== user.uid) return;
+        const perms = perfil.perms || {};
+        if (!perms.admin && !perms.fechamento) { irPara('../login.html'); return; }
+        window._setUsuario(perfil.nomeCompleto || (user.email || user.uid).split('@')[0]);
+      } catch (e) {
+        console.warn('[fechamento] acesso:', e);
+        irPara('../login.html');
+        return;
       }
-      window.atualizarListaGeralFechamento();
+      window._fbSet = (path, data) => set(ref(_db, path), data);
+      window._userUid = user.uid;
+      carregarLogoGlobal(['#headerLogo', '#logoHeader']);
+      carregarProfissionaisFechamento();
+      window.saveFechamentoExtras = arr => set(ref(_db, 'fechamento/profissionais_extras'), arr);
+      window.saveFechamentoDeleted = arr => set(ref(_db, 'fechamento/profissionais_apagados'), arr);
     });
 
-    onValue(ref(_db, 'fechamento/profissionais_extras'), snap => {
-      window.fechamentoExtras = snap.val() || [];
-      window.atualizarListaGeralFechamento();
-    });
-    onValue(ref(_db, 'fechamento/profissionais_apagados'), snap => {
-      window.fechamentoDeleted = snap.val() || [];
-      window.atualizarListaGeralFechamento();
-    });
+    function carregarProfissionaisFechamento() {
+      const observar = (path, fn, erro) => {
+        listenersFechamento.push(onValue(ref(_db, path), fn, e => {
+          console.warn('[fechamento] ' + path, e);
+          if (erro) erro();
+          else toast('Não foi possível atualizar o cadastro de profissionais.', 'error');
+        }));
+      };
+      // Carrega profissionais do painel admin como base primária (admin/profissionais)
+      observar('admin/profissionais', snap => {
+        const d = snap.val();
+        if (d && typeof d === 'object') {
+          window._baseProfFirebase = Object.values(d)
+            .filter(p => p && p.nome && p.documento)
+            .map(p => ({
+              nome: p.nome,
+              documento: p.documento,
+              regime: p.regime || 'pj-presumido',
+              categoria: 'repasse',
+              id: p.documento.replace(/\D/g,'')
+            }));
+        } else {
+          window._baseProfFirebase = []; // Firebase vazio → usa hardcoded como fallback
+        }
+        window.atualizarListaGeralFechamento();
+      }, () => {
+        window._baseProfFirebase = [];
+        window.atualizarListaGeralFechamento();
+        toast('Cadastro principal indisponível. Confira a lista local antes de gerar um repasse.', 'info');
+      });
 
-    window.saveFechamentoExtras  = async arr => set(ref(_db, 'fechamento/profissionais_extras'), arr);
-    window.saveFechamentoDeleted = async arr => set(ref(_db, 'fechamento/profissionais_apagados'), arr);
+      observar('fechamento/profissionais_extras', snap => {
+        window.fechamentoExtras = snap.val() || [];
+        window.atualizarListaGeralFechamento();
+      });
+      observar('fechamento/profissionais_apagados', snap => {
+        window.fechamentoDeleted = snap.val() || [];
+        window.atualizarListaGeralFechamento();
+      });
+    }
   </script>
 </body>
 </html>

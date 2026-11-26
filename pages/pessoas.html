@@ -44,6 +44,7 @@
     .prev li{margin-left:16px;}
     .note{background:var(--amber-bg);border:1px solid #fde68a;color:var(--amber);border-radius:var(--r-ctl);padding:10px 12px;font-size:12px;line-height:1.5;margin-top:12px;}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -539,9 +540,10 @@
 
     /* ───────── gate de acesso (mesmo padrão do admin.html / cadastros.html: só admin) ───────── */
     onAuthStateChanged(auth, async (user) => {
-      if (!user) { irPara('../login.html'); return; }
+      if (!user) { voltarAoLogin(); return; }
       try {
         const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
+        if (auth.currentUser?.uid !== user.uid) return; // [v1.5] Ignora checagem de uma sessão encerrada.
         const perms = snap.exists() ? (snap.val().perms || {}) : {};
         if (!perms.admin) { irPara('../login.html'); return; }
       } catch (e) { irPara('../login.html'); return; }

@@ -907,6 +907,7 @@
     #viewNflote #nfl-page-sinaxys input[type=file]::file-selector-button{background:#6d28d9;color:#fff;border:none;border-radius:8px;padding:8px 14px;margin-right:12px;font-weight:700;cursor:pointer;}
     @media(max-width:640px){#viewNflote .nflx-lbl{display:none;}#viewNflote .nflx-res3{grid-template-columns:1fr;}#viewNflote .nflx-fix-f{grid-template-columns:1fr;}}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div id="toastBox"></div>
@@ -1136,7 +1137,6 @@
         <select class="f-select" id="cxMesSelect" onchange="renderCaixaTab()" style="width:160px;"></select>
         <button class="btn-sec" style="font-size:12px;padding:7px 12px;white-space:nowrap;" onclick="toggleTodosCaixaCards(true)"><i class="fas fa-compress-alt"></i> Recolher todos</button>
         <button class="btn-sec" style="font-size:12px;padding:7px 12px;white-space:nowrap;" onclick="toggleTodosCaixaCards(false)"><i class="fas fa-expand-alt"></i> Expandir todos</button>
-        <button onclick="abrirExportCaixa()" style="font-size:12px;padding:7px 14px;white-space:nowrap;background:var(--navy);color:white;border:none;border-radius:9px;font-family:inherit;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"><i class="fas fa-file-arrow-down"></i> Exportar</button>
       </div>
       <div id="caixaTabContent"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div></div>
     </div>
@@ -3411,7 +3411,7 @@
     };
 
     onAuthStateChanged(_auth, async user => {
-      if (!user) { irPara('../login.html'); return; }
+      if (!user) { voltarAoLogin(); return; }
       try {
         const snapUser = await get(ref(_db, 'admin/usuarios/' + user.uid));
         const perms    = (snapUser.val() || {}).perms || {};
@@ -8824,18 +8824,14 @@
       var linksAntigos = ['nps.html','cadastros.html','admin.html'].map(function(h){ return Q('.saas-nav[data-href="' + h + '"]'); });
 
       /* ---------- painel embutido ---------- */
-      var panel = null, bar = null, body = null, tit = null, ext = null, frames = {}, atual = null, btns = {};
+      var panel = null, body = null, tit = null, ext = null, frames = {}, atual = null, btns = {};
       function montarPanel(){
         panel = document.createElement('div'); panel.className = 'dsh-emb-panel'; panel.id = 'dshEmbPanel';
         panel.innerHTML = '<div class="dsh-emb-bar"><b id="dshEmbTit"></b><span class="sp"></span>' +
-          '<button type="button" id="dshEmbReload"><i class="fas fa-rotate-right"></i> Recarregar</button>' +
           '<a id="dshEmbExt" target="_blank" rel="noopener"><i class="fas fa-up-right-from-square"></i> Abrir em tela cheia</a></div>' +
           '<div class="dsh-emb-body" id="dshEmbBody"></div>';
         document.body.appendChild(panel);
         tit = panel.querySelector('#dshEmbTit'); ext = panel.querySelector('#dshEmbExt'); body = panel.querySelector('#dshEmbBody');
-        panel.querySelector('#dshEmbReload').addEventListener('click', function(){
-          var f = atual && frames[atual]; if (f) { f.classList.remove('loaded'); f.src = f.src; }
-        });
       }
       function urlEmbed(u){ return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'embed=1'; }
       window.dshEmbAbrir = function(id){
@@ -8844,10 +8840,12 @@
         if (!frames[id]) {
           var f = document.createElement('iframe'); f.title = m.l; f.setAttribute('data-mod', id);
           var ld = document.createElement('div'); ld.className = 'dsh-emb-load'; ld.textContent = 'Carregando ' + m.l + '…';
-          f.addEventListener('load', function(){ if (ld.parentNode) ld.parentNode.removeChild(ld); });
+          f.addEventListener('load', function(){ ld.remove(); });
+          ld.dataset.mod = id; ld.setAttribute('role', 'status');
           body.appendChild(ld); f.src = urlEmbed(m.u); body.appendChild(f); frames[id] = f;
         }
         Object.keys(frames).forEach(function(k){ frames[k].classList.toggle('show', k === id); });
+        body.querySelectorAll('.dsh-emb-load').forEach(function(el){ el.style.display = el.dataset.mod === id ? '' : 'none'; });
         atual = id; tit.textContent = m.l; ext.href = m.u;
         panel.classList.add('show');
         sb.querySelectorAll('.saas-nav').forEach(function(b){ b.classList.toggle('active', b === btns[id]); });
@@ -8904,6 +8902,7 @@
       /* "voltar ao portal" vindo de dentro de um módulo embutido (shared-utils v1.1) → volta para "Hoje" */
       window.addEventListener('message', function(e){
         if (e.origin !== location.origin || !e.data || e.data.tipo !== 'portal:voltar') return;
+        if (!atual || e.source !== frames[atual].contentWindow) return;
         window.dshEmbFechar();
         try { if (typeof window.switchMainTab === 'function') window.switchMainTab('hoje'); } catch(x) {}
         sb.querySelectorAll('.saas-nav').forEach(function(b){ b.classList.toggle('active', b === antigos.hoje); });
@@ -8915,7 +8914,6 @@
   })();
   </script>
 
-  <span id="version-badge" style="position:fixed;bottom:6px;right:8px;background:rgba(0,0,0,.35);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;z-index:9999;letter-spacing:.3px;pointer-events:none;">v6.0 · 13/10/2026</span>
   <!-- [v1.1] Pesquisa de satisfação (modal de estrelas) — config em js/pesquisa-satisfacao.js -->
   <script type="module" src="../js/pesquisa-satisfacao.js"></script>
 </body>

@@ -352,6 +352,7 @@
     .cron-ln i{font-size:9px;opacity:.7;}
     @media(max-width:700px){.cron-grid2{grid-template-columns:1fr;}.cron-add{grid-template-columns:1fr;}.cron-v-grid{grid-template-columns:78px repeat(var(--cols,2),minmax(0,1fr));}.cron-seg button{padding:7px 10px;}}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -3211,23 +3212,23 @@
 
     onAuthStateChanged(_auth, async user => {
       _authUnsubs.splice(0).forEach(fn => { try { fn(); } catch(e){} });   // [v1.7]
-      if (!user) { window._pessoasCentral = null; irPara('../login.html'); return; }   // [v1.7] sem sessão: não abre listeners; volta ao login
-      if (user) {
-        set(ref(_db, 'admin_logs/' + Date.now()), { tipo:'info', msg:(user.email||user.uid)+' acessou o Cronograma', ts:new Date().toISOString() }).catch(()=>{});
-        carregarLogoGlobal(['#headerLogo']);
-        if (!sessionStorage.getItem('usuario')) {
-          try {
-            const snap = await get(ref(_db, 'admin/usuarios/' + user.uid));
-            const dados = snap.exists() ? snap.val() : null;
-            const nome = (dados && dados.nomeCompleto) ? dados.nomeCompleto : (user.email || user.uid).split('@')[0];
-            sessionStorage.setItem('usuario',      nome);
-            sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
-            sessionStorage.setItem('uid',          user.uid);
-            sessionStorage.setItem('email',        user.email || '');
-            sessionStorage.setItem('perms',        JSON.stringify((dados && dados.perms) || {}));
-          } catch(e) { console.warn('[cronograma] Não foi possível carregar nome:', e); }
-        }
-      }
+      if (!user) { window._pessoasCentral = null; voltarAoLogin(); return; }   // [v1.7] sem sessão: não abre listeners; volta ao login
+      // [v2.1] Mesmo perfil da vitrine. Configuração permanece exclusiva de admin.
+      let perfil;
+      try { perfil = (await get(ref(_db, 'admin/usuarios/' + user.uid))).val() || {}; }
+      catch (e) { console.warn('[cronograma] acesso:', e); irPara('../login.html'); return; }
+      if (_auth.currentUser?.uid !== user.uid) return;
+      const perms = perfil.perms || {};
+      if (!perms.admin && !perms.cronograma) { irPara('../login.html'); return; }
+      window.calIsAdmin = perms.admin === true;
+      const nome = perfil.nomeCompleto || (user.email || user.uid).split('@')[0];
+      sessionStorage.setItem('usuario', nome);
+      sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
+      sessionStorage.setItem('uid', user.uid);
+      sessionStorage.setItem('email', user.email || '');
+      sessionStorage.setItem('perms', JSON.stringify(perms));
+      set(ref(_db, 'admin_logs/' + Date.now()), { tipo:'info', msg:(user.email||user.uid)+' acessou o Cronograma', ts:new Date().toISOString() }).catch(()=>{});
+      carregarLogoGlobal(['#headerLogo']);
 
       // 1. Agenda semanal
       _onA(ref(_db, 'crono/agenda'), snap => {
@@ -3274,17 +3275,9 @@
         if (typeof window.renderCli === 'function') window.renderCli();
       });
 
-      // 6. [v1.1 cal] Calendário de agendas (1ª aba): abre já e confirma se o usuário é admin
-      if (user) {
-        if (typeof window.calAbrir === 'function') window.calAbrir();
-        try {
-          const ps = await get(ref(_db, 'admin/usuarios/' + user.uid + '/perms'));
-          const pv = ps.exists() ? ps.val() : null;
-          window.calIsAdmin = !!(pv && pv.admin === true);
-          if (typeof window.calRender === 'function') window.calRender();
-        } catch (e) { console.warn('[cronograma] perms (calendário):', e.message); }
-        if (typeof window.cronAplicarPerfil === 'function') window.cronAplicarPerfil(); // [v1.3] mostra Cronograma/Configuração só para admin
-      }
+      if (typeof window.calAbrir === 'function') window.calAbrir();
+      if (typeof window.cronAplicarPerfil === 'function') window.cronAplicarPerfil();
+      if (new URLSearchParams(location.search).get('gerar') === '1' && typeof window.abrirGen === 'function') window.abrirGen();
     });
   </script>
 
@@ -3293,17 +3286,7 @@
        ?gerar=1  → usado pela tela inicial (botão "Gerar agenda"): abre o mesmo Gerador de Agenda do módulo. -->
   <style>body.embed .s-header{display:none !important;}body.embed .content{padding-top:14px;}</style>
   <script>
-  (function () {
-    try {
-      var q = new URLSearchParams(location.search);
-      if (q.get('embed') === '1') document.body.classList.add('embed');
-      if (q.get('gerar') === '1') {
-        window.addEventListener('load', function () {
-          setTimeout(function () { if (typeof window.abrirGen === 'function') window.abrirGen(); }, 400);
-        });
-      }
-    } catch (e) { console.warn('[cronograma v1.6] modo por URL:', e && e.message); }
-  })();
+    if (window.__EMBED) document.body.classList.add('embed');
   </script>
 </body>
 </html>

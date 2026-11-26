@@ -117,6 +117,7 @@
     @media(max-width:768px){.stats-bar{grid-template-columns:1fr 1fr;}.form-row{grid-template-columns:1fr;}.exames-grid{grid-template-columns:1fr;}.content{padding:16px 14px 60px;}}
     .panel,.stat-card,.exame-card{background:rgba(255,255,255,0.82)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,0.5)!important;}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -143,7 +144,7 @@
             style="background:#f8fafc;">
         </div>
         <div style="display:flex;gap:10px;">
-          <button style="flex:1;padding:11px;background:var(--navy);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;" onclick="confirmarBaixa()">
+          <button style="flex:1;padding:11px;background:var(--navy);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;" onclick="confirmarBaixa(this)">
             <i class="fas fa-check"></i> Confirmar Retirada
           </button>
           <button style="padding:11px 18px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;" onclick="fecharModal()">Cancelar</button>
@@ -311,7 +312,7 @@
           <div class="filtro-wrap" style="max-width:160px;"><input class="f-input" type="date" id="filtroHistData" onchange="renderHistorico()"></div>
           <button onclick="exportarHistorico()" style="padding:9px 16px;background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="fas fa-file-csv"></i> Exportar CSV</button>
         </div>
-        <div id="histContainer"><div class="loading-state"><div class="spinner"></div>Carregando histórico...</div></div>
+        <div id="histContainer" class="exam-history-scroll"><div class="loading-state"><div class="spinner"></div>Carregando histórico...</div></div>
       </div>
     </div>
   </div>
@@ -323,7 +324,8 @@
       <div style="font-size:20px;font-weight:900;color:var(--navy);margin-bottom:8px;">Importação concluída!</div>
       <div style="font-size:14px;color:var(--gray-500);margin-bottom:6px;" id="importSuccessMsg">—</div>
       <div id="importSuccessBreakdown" style="display:flex;justify-content:center;gap:12px;margin:16px 0;flex-wrap:wrap;"></div>
-      <button onclick="fecharImportModal()" style="background:var(--navy);color:white;border:none;border-radius:12px;padding:12px 32px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;">Ver na Gaveta</button>
+      <button type="button" onclick="imprimirUltimoCadastro()" class="back-btn" style="display:inline-flex;">Imprimir relatório</button>
+      <button type="button" onclick="fecharImportModal()" style="background:var(--navy);color:white;border:none;border-radius:12px;padding:12px 32px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;">Ver na Gaveta</button>
     </div>
   </div>
   <div id="importLoadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(10,31,68,.6);z-index:8999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
@@ -331,16 +333,13 @@
       <div style="width:52px;height:52px;border:4px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px;"></div>
       <div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:6px;" id="importLoadingTxt">Importando exames...</div>
       <div style="font-size:13px;color:var(--gray-400);" id="importLoadingSub">Salvando no Firebase</div>
-      <div style="width:100%;background:var(--gray-200);border-radius:8px;height:6px;margin-top:16px;overflow:hidden;">
-        <div id="importLoadingBar" style="height:100%;background:var(--navy);border-radius:8px;width:0%;transition:width .25s;"></div>
-      </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getDatabase, ref, push, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getDatabase, ref, push, get, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
     const app  = initializeApp(window.FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -357,25 +356,28 @@
     });
 
     let examesPendentes = {}, examesRetirados = {};
+    let erroHistorico = false;
 
     onAuthStateChanged(auth, async user => {
-      const grid = document.getElementById('gavetaGrid');
-      if (!user) {
-        if (grid) grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-lock"></i><p>Sessão expirada. <a href="login.html">Fazer login</a></p></div>';
-        return;
-      }
+      if (!user) { voltarAoLogin(); return; }
 
-      if (!sessionStorage.getItem('usuario')) {
-        try {
-          const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
-          const dados = snap.exists() ? snap.val() : null;
-          const nome = (dados && dados.nomeCompleto) ? dados.nomeCompleto : (user.email || user.uid).split('@')[0];
-          sessionStorage.setItem('usuario',      nome);
-          sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
-          sessionStorage.setItem('uid',          user.uid);
-          sessionStorage.setItem('email',        user.email || '');
-          sessionStorage.setItem('perms',        JSON.stringify((dados && dados.perms) || {}));
-        } catch(e) { console.warn('[exames] Não foi possível carregar nome:', e); }
+      // [v2.1] Usa a mesma permissão exibida no portal, inclusive no acesso direto.
+      try {
+        const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
+        if (auth.currentUser?.uid !== user.uid) return;
+        const dados = snap.val() || {};
+        const perms = dados.perms || {};
+        if (!perms.admin && !perms.exames) { irPara('../login.html'); return; }
+        const nome = dados.nomeCompleto || (user.email || user.uid).split('@')[0];
+        sessionStorage.setItem('usuario', nome);
+        sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
+        sessionStorage.setItem('uid', user.uid);
+        sessionStorage.setItem('email', user.email || '');
+        sessionStorage.setItem('perms', JSON.stringify(perms));
+      } catch (e) {
+        console.warn('[exames] acesso:', e);
+        irPara('../login.html');
+        return;
       }
 
       // Preenche atendente com usuário logado (via sessionStorage)
@@ -392,13 +394,21 @@
         examesPendentes = snap.val() || {};
         window.renderGaveta();
         atualizarStats();
-      }, err => { console.warn('Pendentes:', err.message); });
+      }, err => {
+        console.warn('Pendentes:', err.message);
+        document.getElementById('gavetaGrid').innerHTML = '<p class="hist-empty" role="status">Não foi possível carregar a gaveta. Atualize a página para tentar novamente.</p>';
+      });
 
       onValue(ref(db, 'exames/retirados'), snap => {
+        erroHistorico = false;
         examesRetirados = snap.val() || {};
         window.renderHistorico();
         atualizarStats();
-      }, err => { console.warn('Retirados:', err.message); });
+      }, err => {
+        console.warn('Retirados:', err.message);
+        erroHistorico = true;
+        window.renderHistorico();
+      });
     });
 
     function atualizarStats() {
@@ -496,6 +506,7 @@
       if (data)  lista = lista.filter(e => (e.retiradoEm ? e.retiradoEm.slice(0,10) : null) === data);
       lista.sort((a,b) => (b.retiradoEm||'').localeCompare(a.retiradoEm||''));
       const el = document.getElementById('histContainer');
+      if (erroHistorico) { el.innerHTML = '<p class="hist-empty" role="status">Não foi possível carregar o histórico. Atualize a página para tentar novamente.</p>'; return; }
       if (!lista.length) { el.innerHTML = '<div class="hist-empty">Nenhum exame retirado ainda</div>'; return; }
       el.innerHTML = `<table class="hist-table"><thead><tr><th>Paciente</th><th>Tipo de Exame</th><th>Retirado por</th><th>Data da Retirada</th></tr></thead><tbody>${lista.map(e=>`<tr><td><strong>${esc(e.paciente||'—')}</strong></td><td>${esc(e.tipo||'—')}</td><td>${esc(e.quemRetirou||'—')}</td><td>${e.retiradoEm?new Date(e.retiradoEm).toLocaleString('pt-BR'):'—'}</td></tr>`).join('')}</tbody></table>`;
     };
@@ -522,17 +533,30 @@
 
     window.fecharModal = function() { document.getElementById('modalOverlay').classList.remove('open'); baixaId = null; };
 
-    window.confirmarBaixa = function() {
+    // [v2.1] Uma operação atômica e a mesma chave evitam baixas duplicadas.
+    window.confirmarBaixa = async function(botao) {
       const quem = document.getElementById('mQuemRetirou').value.trim();
       const aten = document.getElementById('mAtendente').value.trim();
       if (!quem) { toast('Informe quem está retirando', 'error'); return; }
       if (!aten) { toast('Informe o atendente que entregou', 'error'); return; }
-      if (!baixaId) return;
-      const exame = examesPendentes[baixaId];
-      set(push(ref(db, 'exames/retirados')), { ...exame, quemRetirou:quem, atendenteEntregou:aten, retiradoEm:new Date().toISOString() })
-        .then(() => remove(ref(db, `exames/pendentes/${baixaId}`)))
-        .then(() => { toast(`Baixa registrada para ${exame.paciente}!`, 'success'); fecharModal(); })
-        .catch(e => toast('Erro: ' + e.message, 'error'));
+      const id = baixaId;
+      if (!id || botao.disabled) return;
+      const exame = examesPendentes[id];
+      if (!exame) { toast('O exame já saiu da gaveta.', 'info'); fecharModal(); return; }
+
+      botao.disabled = true;
+      try {
+        await update(ref(db), {
+          ['exames/pendentes/' + id]: null,
+          ['exames/retirados/' + id]: { ...exame, quemRetirou: quem, atendenteEntregou: aten, retiradoEm: new Date().toISOString() }
+        });
+        toast('Baixa registrada para ' + exame.paciente + '!', 'success');
+        if (baixaId === id) fecharModal();
+      } catch (e) {
+        toast('Erro ao registrar a retirada: ' + e.message, 'error');
+      } finally {
+        botao.disabled = false;
+      }
     };
 
     window.deletarExame = function(id) {
@@ -864,74 +888,67 @@
       if (chkAll) chkAll.checked = _cadItems.length > 0 && _cadItems.every(i => i.checked);
     };
 
+    let cadastroEmAndamento = false;
+    let ultimoCadastro = null;
+
+    window.fecharImportModal = function() {
+      document.getElementById('importSuccessModal').style.display = 'none';
+      mudarTab('gaveta');
+    };
+
+    window.imprimirUltimoCadastro = function() {
+      if (!ultimoCadastro) return;
+      const { selecionados, dataExame, usuario } = ultimoCadastro;
+      imprimirRelatorioExames(selecionados, dataExame, usuario);
+    };
+
+    // [v2.1] Relatório e exames são gravados juntos. Falha mantém a seleção para nova tentativa.
     window.adicionarCadastro = async function() {
       const selecionados = _cadItems.filter(i => i.checked);
-      if (!selecionados.length) return;
+      if (!selecionados.length || cadastroEmAndamento) return;
       const dataExame = document.getElementById('cadData').value || '';
-      const usuario   = sessionStorage.getItem('usuario') || 'Sistema';
-
-      document.getElementById('importLoadingOverlay').style.display = 'flex';
-      let ok = 0, erros = 0;
+      const usuario = sessionStorage.getItem('usuario') || 'Sistema';
+      const carregando = document.getElementById('importLoadingOverlay');
+      const alteracoes = {};
       const porTipo = {};
-      const total   = selecionados.reduce((s, i) => s + i.exames.length, 0);
+      const dataGeracao = new Date().toISOString();
+      cadastroEmAndamento = true;
+      carregando.style.display = 'flex';
 
-      for (const item of selecionados) {
-        for (const ex of item.exames) {
-          try {
-            const _dataPrazo = calcularDataPrazo(ex.tipo, dataExame);
-            await set(push(ref(db, 'exames/pendentes')), {
-              paciente:     item.paciente.toUpperCase(),
-              tipo:         ex.tipo,
-              dataExame:    dataExame,
-              dataPrazo:    _dataPrazo || null,
-              obs:          'Cadastrado via AMEI',
-              atendenteCad: usuario,
-              cadastradoEm: new Date().toISOString(),
-            });
-            ok++; porTipo[ex.tipo] = (porTipo[ex.tipo] || 0) + 1;
-          } catch(e) { erros++; console.error('[Cadastrar]', e.message); }
-          document.getElementById('importLoadingBar').style.width = Math.round((ok+erros)/total*100) + '%';
-        }
-      }
-
-      document.getElementById('importLoadingOverlay').style.display = 'none';
-      document.getElementById('importSuccessMsg').textContent =
-        `${ok} exame(s) adicionado(s) à gaveta` + (erros ? ` · ${erros} com erro` : '');
-      document.getElementById('importSuccessBreakdown').innerHTML =
-        Object.entries(porTipo).slice(0,6).map(([t,c]) =>
-          `<div style="background:var(--gray-100);border-radius:10px;padding:8px 14px;text-align:center;">
-            <div style="font-size:20px;font-weight:900;color:var(--navy);">${c}</div>
-            <div style="font-size:10px;color:var(--gray-500);">${t.length>20?t.slice(0,18)+'…':t}</div>
-          </div>`).join('');
-      document.getElementById('importSuccessModal').style.display = 'flex';
-
-      // Salvar relatório no Firebase + imprimir
-      if (ok > 0) {
-        const relKey = Date.now() + '_' + Math.random().toString(36).slice(2);
-        const relData = {
-          dataExame:    dataExame,
-          dataGeracao:  new Date().toISOString(),
-          usuario:      usuario,
-          totalPacientes: selecionados.length,
-          totalExames:  selecionados.reduce((s,i)=>s+i.exames.length,0),
-          itens: selecionados.map(item => ({
-            paciente: item.paciente.toUpperCase(),
-            exames:   item.exames.map(ex => ({
-              tipo:      ex.tipo,
-              dataPrazo: calcularDataPrazo(ex.tipo, dataExame) || null,
-            }))
-          }))
+      try {
+        const itens = selecionados.map(item => ({
+          paciente: item.paciente.toUpperCase(),
+          exames: item.exames.map(ex => {
+            const dataPrazo = calcularDataPrazo(ex.tipo, dataExame) || null;
+            const chave = push(ref(db, 'exames/pendentes')).key;
+            alteracoes['exames/pendentes/' + chave] = {
+              paciente: item.paciente.toUpperCase(), tipo: ex.tipo, dataExame, dataPrazo,
+              obs: 'Cadastrado via AMEI', atendenteCad: usuario, cadastradoEm: dataGeracao
+            };
+            porTipo[ex.tipo] = (porTipo[ex.tipo] || 0) + 1;
+            return { tipo: ex.tipo, dataPrazo };
+          })
+        }));
+        const totalExames = Object.keys(alteracoes).length;
+        const relKey = push(ref(db, 'exames/relatorios')).key;
+        alteracoes['exames/relatorios/' + relKey] = {
+          dataExame, dataGeracao, usuario, totalPacientes: itens.length, totalExames, itens
         };
-        try {
-          await set(ref(db, 'exames/relatorios/' + relKey), relData);
-        } catch(e) { console.error('[Relatorio]', e.message); }
-        imprimirRelatorioExames(selecionados, dataExame, usuario);
+        await update(ref(db), alteracoes);
+        ultimoCadastro = { selecionados, dataExame, usuario };
+        _cadItems = _cadItems.filter(i => !selecionados.includes(i));
+        renderCadastrar();
+        document.getElementById('importSuccessMsg').textContent = totalExames + ' exame(s) adicionado(s) à gaveta';
+        document.getElementById('importSuccessBreakdown').textContent =
+          Object.entries(porTipo).map(([tipo, total]) => tipo + ': ' + total).join(' · ');
+        document.getElementById('importSuccessModal').style.display = 'flex';
+      } catch (e) {
+        console.error('[exames] cadastro:', e);
+        toast('Não foi possível importar. A seleção foi mantida para tentar novamente.', 'error');
+      } finally {
+        cadastroEmAndamento = false;
+        carregando.style.display = 'none';
       }
-
-      // Limpa só os selecionados
-      _cadItems = _cadItems.filter(i => !i.checked);
-      renderCadastrar();
-      document.getElementById('cadChkAll').checked = false;
     };
 
     // ── IMPRIMIR RELATÓRIO DE EXAMES ──

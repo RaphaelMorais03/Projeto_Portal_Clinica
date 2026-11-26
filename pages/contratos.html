@@ -116,6 +116,7 @@
     .btn-rm:hover{color:var(--red);}
     @media(max-width:900px){.two-col{grid-template-columns:1fr;}.preview-col{position:static;}.grid2{grid-template-columns:1fr;}.grid3{grid-template-columns:1fr;}.page-body{padding:14px 12px 50px;}.s-header{padding:0 12px;}.user-pill{display:none;}}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -339,12 +340,20 @@
     function iniciais(u){const n=u.displayName||u.email||'';return n.split(/[\s@]/).filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'??';}
 
     onAuthStateChanged(auth, async user => {
-      if (!user) { window.location.replace('../login.html'); return; }
-      const snap  = await get(ref(db, 'admin/usuarios/' + user.uid));
-      const perms = (snap.exists() ? snap.val().perms : null) || {};
-      if (!perms.admin && !perms.contratos) { window.location.replace('../login.html'); return; }
+      if (!user) { voltarAoLogin(); return; }
+      // [v1.4] Falha na leitura do perfil segue o mesmo fluxo de acesso negado.
+      try {
+        const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
+        if (auth.currentUser?.uid !== user.uid) return;
+        const perms = (snap.val() || {}).perms || {};
+        if (!perms.admin && !perms.contratos) { irPara('../login.html'); return; }
+      } catch (e) {
+        console.warn('[contratos] acesso:', e);
+        irPara('../login.html');
+        return;
+      }
       document.getElementById('userAvatar').textContent = iniciais(user);
-      document.getElementById('userName').textContent   = user.displayName || user.email.split('@')[0];
+      document.getElementById('userName').textContent   = user.displayName || (user.email || user.uid).split('@')[0];
       // [v1.3] logo oficial (admin/logo) também no cabeçalho da tela, como nas demais páginas
       if (window.initFirebaseUtils) window.initFirebaseUtils(db, ref, get);
       if (window.carregarLogoGlobal) carregarLogoGlobal(['#headerLogo']);
@@ -537,7 +546,6 @@ ${CL('CLÁUSULA NONA:','O Laudo Psicológico de Avaliação Neuropsicológica se
       const _logoNeuro = await obterLogoDoc();
       const _logoNeuroHtml = `<img src="${_logoNeuro}" alt="Logo" style="height:56px;width:auto;object-fit:contain;">`;
       win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* [v1.3] ABNT NBR 14724: A4; margens sup/esq 3 cm e inf/dir 2 cm; Times New Roman 12; espaçamento 1,5; texto justificado;
    recuo de parágrafo 1,25 cm; paginação no canto superior direito a partir da 2ª página. */

@@ -93,6 +93,7 @@
     #loteResumo{font-size:12px;color:var(--muted);margin-top:12px;padding:8px 12px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-ctl);}
     @media(max-width:768px){.form-grid.g4{grid-template-columns:1fr;}}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -294,7 +295,7 @@
         <div style="display:flex;gap:10px;">
           <button class="btn-s" onclick="fecharModalRecibo()" style="flex:1;justify-content:center;"><i class="fas fa-xmark"></i> Cancelar</button>
           <button class="btn-g" onclick="gerarEImprimirRecibo()" style="flex:1;justify-content:center;"><i class="fas fa-print"></i> Gerar e Imprimir</button>
-          <button class="btn-p" onclick="salvarRecibo()" style="flex:2;justify-content:center;"><i class="fas fa-floppy-disk"></i> Salvar e Imprimir</button>
+          <button class="btn-p" onclick="salvarRecibo(this)" style="flex:2;justify-content:center;"><i class="fas fa-floppy-disk"></i> Salvar e Imprimir</button>
         </div>
       </div>
     </div>
@@ -626,7 +627,7 @@
     const logoHtml = logoSrc
       ? `<img src="${logoSrc}" alt="Logo">`
       : `<span style="font-size:11px;font-weight:bold;">${esc(clinicaNome)}</span>`;
-    const clinicaEnd = sessionStorage ? (sessionStorage.getItem('clinicaEnd') || 'Avenida Doutor Felipe Pinel, 367 — Pirituba/SP') : 'Avenida Doutor Felipe Pinel, 367 — Pirituba/SP';
+    const clinicaEnd = sessionStorage ? (sessionStorage.getItem('clinicaEndereco') || sessionStorage.getItem('clinicaEnd') || 'Avenida Doutor Felipe Pinel, 367 — Pirituba/SP') : 'Avenida Doutor Felipe Pinel, 367 — Pirituba/SP';
 
     return `<div class="recibo-print">
       <div class="rh">
@@ -954,7 +955,7 @@
     const c = colaboradores[colabAtualKey] || {};
     const dados = coletarDadosRecibo();
     if (!dados.isPadrao && !dados.descricao) { toast('Informe a descrição', 'error'); return; }
-    if (!dados.valor) { toast('Informe o valor', 'error'); return; }
+    if (dados.valor <= 0) { toast('Informe um valor maior que zero', 'error'); return; }
     const usuario = sessionStorage.getItem('usuario') || 'Financeiro';
     const w = window.open('', '_blank');
     if (!w) { toast('Pop-up bloqueado — permita pop-ups', 'error'); return; }
@@ -962,24 +963,37 @@
     w.document.close();
   }
 
-  async function salvarRecibo() {
-    const c = colaboradores[colabAtualKey] || {};
+  // [v3.4.2] Reserva a janela no clique e imprime depois de confirmar a gravação.
+  async function salvarRecibo(botao) {
+    if (botao.disabled) return;
+    const c = colaboradores[colabAtualKey];
+    if (!c) { toast('Selecione um colaborador válido.', 'error'); return; }
     const dados = coletarDadosRecibo();
     if (!dados.isPadrao && !dados.descricao) { toast('Informe a descrição', 'error'); return; }
-    if (!dados.valor) { toast('Informe o valor', 'error'); return; }
+    if (dados.valor <= 0) { toast('Informe um valor maior que zero', 'error'); return; }
     const usuario = sessionStorage.getItem('usuario') || 'Financeiro';
+    const w = window.open('', '_blank');
+    botao.disabled = true;
     try {
       await window._fbSet('financeiro/recibos/' + Date.now(), {
         colabKey: colabAtualKey, colabNome: c.nome || '—', colabCargo: c.cargo || '', colabCpf: c.cpf || '',
         ...dados, usuario, emitidoEm: new Date().toISOString()
       });
-      toast('Recibo salvo!', 'success');
-      fecharModalRecibo();
-    } catch(e) { toast('Erro ao salvar: ' + e.message, 'error'); }
-    const w = window.open('', '_blank');
-    if (!w) { toast('Pop-up bloqueado — permita pop-ups', 'error'); return; }
+    } catch (e) {
+      if (w) w.close();
+      toast('Erro ao salvar: ' + e.message, 'error');
+      return;
+    } finally {
+      botao.disabled = false;
+    }
+    fecharModalRecibo();
+    if (!w || w.closed) {
+      toast('Recibo salvo. Acesse o Histórico para imprimir.', 'info');
+      return;
+    }
     w.document.write(montarHtmlRecibo(c, {...dados, usuario}, usuario));
     w.document.close();
+    toast('Recibo salvo!', 'success');
   }
 
   // ── Histórico ──
@@ -1061,18 +1075,24 @@
     }, 15000);
 
     onAuthStateChanged(auth, async user => {
-      if (!user) { irPara('../login.html'); return; }
-      if (!sessionStorage.getItem('usuario')) {
-        try {
-          const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
-          const dados = snap.exists() ? snap.val() : null;
-          const nome = (dados && dados.nomeCompleto) ? dados.nomeCompleto : (user.email || user.uid).split('@')[0];
-          sessionStorage.setItem('usuario',      nome);
-          sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
-          sessionStorage.setItem('uid',          user.uid);
-          sessionStorage.setItem('email',        user.email || '');
-          sessionStorage.setItem('perms',        JSON.stringify((dados && dados.perms) || {}));
-        } catch(e) { console.warn('[financeiro] Não foi possível carregar nome:', e); }
+      if (!user) { voltarAoLogin(); return; }
+      // [v3.4.2] Mantém a permissão legada reconhecida no portal.
+      try {
+        const snap = await get(ref(db, 'admin/usuarios/' + user.uid));
+        if (auth.currentUser?.uid !== user.uid) return;
+        const dados = snap.val() || {};
+        const perms = dados.perms || {};
+        if (!perms.admin && !perms.financeiro && !dados.acessoFinanceiro) { irPara('../login.html'); return; }
+        const nome = dados.nomeCompleto || (user.email || user.uid).split('@')[0];
+        sessionStorage.setItem('usuario', nome);
+        sessionStorage.setItem('primeiroNome', nome.split(' ')[0]);
+        sessionStorage.setItem('uid', user.uid);
+        sessionStorage.setItem('email', user.email || '');
+        sessionStorage.setItem('perms', JSON.stringify(perms));
+      } catch (e) {
+        console.warn('[financeiro] acesso:', e);
+        irPara('../login.html');
+        return;
       }
       carregarLogoGlobal(['#headerLogo']).then(() => {
         window.LOGO_FIN = sessionStorage.getItem('logoDataUrl') || '';
@@ -1092,8 +1112,9 @@
         // Preencher filtro de meses
         const meses = [...new Set(todosRecibos.map(r => (r.emitidoEm||'').slice(0,7)).filter(Boolean))];
         const sel = document.getElementById('filtroMes');
-        sel.innerHTML = '<option value="">Todos os meses</option>' +
-          meses.map(m => `<option value="${m}">${m}</option>`).join('');
+        const mesSelecionado = sel.value;
+        sel.replaceChildren(new Option('Todos os meses', ''), ...meses.map(m => new Option(m, m)));
+        if (meses.includes(mesSelecionado)) sel.value = mesSelecionado;
         if (document.getElementById('paneHistorico').classList.contains('active')) renderHistorico();
       }, err => { console.error('[financeiro] erro ao ler financeiro/recibos:', err); window.falhaCarga('listaHistorico', 'financeiro/recibos', err); });   // [v3.4.1]
 

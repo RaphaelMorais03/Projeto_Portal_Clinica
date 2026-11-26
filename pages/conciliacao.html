@@ -133,6 +133,7 @@
     .barra{height:8px;background:var(--gray-100);border-radius:8px;overflow:hidden;margin:14px 0 8px;}
     .barra>i{display:block;height:100%;width:0;background:var(--navy);border-radius:8px;transition:width .2s;}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -694,7 +695,7 @@
 
     /* ───────── fechar / salvar ───────── */
     async function fechar() {
-      const r = S.res; if (!r) { toast('Faça a conciliação antes de fechar.', 'error'); return; }
+      const r = S.res; if (!r || r.dia !== $('cDia').value) { toast('Concilie a data selecionada antes de fechar.', 'error'); return; }
       if (concluido(r.dia)) { toast('Este dia está CONCLUÍDO e trancado. Peça ao administrador para reabrir em Pendências.', 'error'); return; }   /* [v2.4] */
       if (r.residuo !== 0) { toast('O cálculo não fechou (resíduo ' + M(r.residuo) + '). Não vou salvar; avise o administrador.', 'error'); return; }
       if (r._congelado) { toast('Este dia já está fechado. Para alterar, o administrador precisa reabrir.', 'info'); return; }
@@ -1042,11 +1043,14 @@
 
     /* ───────── acesso: admin ou financeiro ───────── */
     onAuthStateChanged(auth, async u => {
-      if (!u) { irPara('../login.html'); return; }
+      if (!u) { voltarAoLogin(); return; }
       user = u;
-      let perms = {};
-      try { const snap = await get(ref(db, 'admin/usuarios/' + u.uid)); perms = (snap.exists() && snap.val().perms) || {}; } catch (e) { console.warn('[conciliacao] perms:', e); }
-      if (!perms.admin && !perms.financeiro) { alert('Acesso restrito ao financeiro e administradores.'); irPara('../login.html'); return; }
+      let perfil = {};
+      try { perfil = (await get(ref(db, 'admin/usuarios/' + u.uid))).val() || {}; }
+      catch (e) { console.warn('[conciliacao] acesso:', e); }
+      if (auth.currentUser?.uid !== u.uid) return;
+      const perms = perfil.perms || {};
+      if (!perms.admin && !perms.financeiro && !perfil.acessoFinanceiro) { alert('Acesso restrito ao financeiro e administradores.'); irPara('../login.html'); return; }
       S.admin = !!perms.admin; document.body.classList.toggle('is-admin', S.admin);
       carregarLogoGlobal(['#headerLogo']);
       $('conteudo').style.display = 'block';

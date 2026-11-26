@@ -358,6 +358,7 @@
     @media(max-width:1024px){.kpi-grid{grid-template-columns:1fr 1fr 1fr;}.dash-grid{grid-template-columns:1fr;}}
     @media(max-width:640px){.kpi-grid{grid-template-columns:1fr 1fr;}.content{padding:14px 14px 60px;}.hist-card{flex-wrap:wrap;}.hist-actions{width:100%;justify-content:flex-end;}}
   </style>
+  <link rel="stylesheet" href="../css/portal-interaction.css" media="screen">
 </head>
 <body>
   <div class="red-bar"></div>
@@ -733,12 +734,17 @@
       parseFile(file);
     };
 
+    let importacaoNps = 0;
     function parseFile(file) {
+      // [v2.1] Ao ler outro arquivo, só o resultado da importação mais recente vale.
+      const tentativa = ++importacaoNps;
+      if (!window.Papa) { toast('O leitor de CSV não carregou. Atualize a página e tente novamente.', 'error'); return; }
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         transformHeader: h => h.replace(/^﻿/, '').trim(),
         complete(results) {
+          if (tentativa !== importacaoNps) return;
           if (!results.data.length) { toast('Arquivo vazio ou sem dados reconhecíveis.','error'); return; }
           _rawData = results.data;
           _headers = results.meta.fields || [];
@@ -750,7 +756,7 @@
             processData();
           }
         },
-        error(err) { toast('Erro ao ler o arquivo: ' + (err.message || err),'error'); }
+        error(err) { if (tentativa === importacaoNps) toast('Erro ao ler o arquivo: ' + (err.message || err),'error'); }
       });
     }
 
@@ -1676,7 +1682,7 @@
     window.fbNpsRemove = (path)       => remove(ref(_db, path));
 
     onAuthStateChanged(_auth, async user => {
-      if (!user) { irPara('../login.html'); return; }
+      if (!user) { voltarAoLogin(); return; }
       try {
         const snap  = await get(ref(_db, 'admin/usuarios/' + user.uid));
         const dados = snap.exists() ? snap.val() : null;
