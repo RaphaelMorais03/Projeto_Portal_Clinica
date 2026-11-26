@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <!-- VERSION: v2.1 | cronograma.html | 24/11/2026 | Visual unificado: passa a usar ../css/portal-theme.css (mesmos valores da v1.5). Só CSS de tela; folha impressa, regras de impressão, IDs e funções intactos. -->
 <html lang="pt-BR">
+<!-- VERSION: v2.2 | cronograma.html | 26/11/2026 | Gestão de agendas, etapa 1: subaba Configuração → Grades (só admin), ligada aos médicos do cadastro (crono/medicos). Nó novo crono/grades; precisa da Rule publicada. Não altera atendimentos. -->
 <!-- VERSION: v2.0 | cronograma.html | 23/11/2026 | Aba Semana: "Imprimir semana" e "PDF" para qualquer usuário (somente leitura de crono/dias, mesmo modelo A4 paisagem/PDF do Verificar), com navegação de semana. Não grava nada. -->
 <!-- VERSION: v1.9 | cronograma.html | 23/11/2026 | Usuário comum só vê a semana e gera agenda: botões Importar PDF / Colar Texto / Editar (e o salvamento de crono/agenda) ficam só para admin. Combina com a Rule de crono/agenda só admin. -->
 <!-- VERSION: v1.8 | cronograma.html | 23/11/2026 | Gerar agenda: não repete o mesmo médico quando o nome do cadastro central vem abreviado ou com sobrenome a mais (só na lista, sem vincular). v1.7: Etapa 5b — Gerar agenda inclui médicos ativos do cadastro central (pessoas); salvar médico preserva pessoaId e reflete nome/especialidade na central (novo médico cria a pessoa no mesmo update); listeners só com usuário logado e sem duplicar; removido fallback REST sem token. Perfis: admin = CRUD; cronograma = vê a semana + gera agenda. -->
@@ -269,6 +270,25 @@
     .cron-subnav button:hover{color:var(--ink);}
     .cron-subnav button.on{color:var(--ink);background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.06);}
     .cron-sub{display:none;}.cron-sub.active{display:block;}
+    /* [v2.2] grades de abertura */
+    .cron-grd-barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
+    .cron-grd-barra .f-input{flex:1 1 220px;max-width:320px;width:auto;margin:0;}.cron-grd-barra .f-select{flex:0 0 auto;width:auto;min-width:170px;margin:0;}
+    .cron-grd-sub{font-size:11px;color:var(--gray-500);font-weight:500;}
+    .cron-grd-obs{min-width:200px;max-width:360px;}
+    .cron-grd-pend{font-size:11px;font-weight:700;color:#92400e;margin-top:3px;}
+    .cron-grd-modal{max-width:760px;}
+    .grd-imp-med{min-width:200px;max-width:280px;font-size:12px;padding:6px 8px;}
+    .cron-grd-regra{border:1px solid var(--gray-200);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--gray-50);}
+    .cron-grd-cab,.cron-grd-bloco{display:grid;gap:8px;align-items:end;margin-bottom:8px;}
+    .cron-grd-cab{grid-template-columns:1fr 1fr 1.4fr auto;}
+    .cron-grd-bloco{grid-template-columns:1.25fr 1.25fr .9fr 1.3fr auto;}
+    .cron-grd-cab label,.cron-grd-bloco label{font-size:11px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;gap:4px;min-width:0;}
+    .cron-grd-cab .f-input,.cron-grd-cab .f-select,.cron-grd-bloco .f-input{width:100%;min-width:0;padding:7px 8px;font-size:13px;}
+    .cron-grd-cab .cron-ico,.cron-grd-bloco .cron-ico{margin-bottom:3px;}
+    .cron-grd-mini{font-size:12px;padding:6px 10px;}
+    .cron-grd-nao{display:flex;flex-wrap:wrap;gap:6px 14px;max-height:120px;overflow:auto;border:1px solid var(--gray-200);border-radius:10px;padding:10px;font-size:13px;}
+    .cron-grd-nao label{display:flex;align-items:center;gap:5px;cursor:pointer;}
+    @media(max-width:640px){.cron-grd-cab{grid-template-columns:1fr 1fr auto;}.cron-grd-cab label:nth-child(3){grid-column:1/3;grid-row:2;}.cron-grd-bloco{grid-template-columns:1fr 1fr auto;}.cron-grd-bloco .cron-ico{grid-column:3;grid-row:1;}.cron-modal .cron-grid2.cron-grd-g{grid-template-columns:1fr;}}
     .cron-help{font-size:13px;color:var(--gray-600);margin-bottom:12px;line-height:1.5;}
     .cron-tbl{width:100%;border-collapse:collapse;font-size:13px;}
     .cron-tbl th{text-align:left;color:var(--gray-500);font-size:10px;padding:6px;border-bottom:1px solid var(--gray-200);text-transform:uppercase;letter-spacing:.4px;}
@@ -623,6 +643,7 @@
     <div class="tab-pane" id="paneConfig">
       <div class="cron-subnav" id="cronSubnav">
         <button type="button" data-sub="medicos" class="on"><i class="fas fa-user-doctor"></i> Médicos</button>
+        <button type="button" data-sub="grades"><i class="fas fa-calendar-check"></i> Grades</button>
         <button type="button" data-sub="import"><i class="fas fa-file-excel"></i> Importar planilha</button>
         <button type="button" data-sub="coleta"><i class="fas fa-clipboard-check"></i> Coleta do mês</button>
         <button type="button" data-sub="atend"><i class="fas fa-pen-to-square"></i> Atendimentos</button>
@@ -644,6 +665,26 @@
         <!-- [v1.4] prévia da importação de profissionais (Admin + Fechamento) -->
         <div id="cronMedImpBox" style="display:none;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#f9fafb;"></div>
         <div class="cron-tw" id="cronMedLista"></div>
+      </div></div>
+
+      <!-- [v2.2] grades de abertura das agendas (crono/grades) -->
+      <div class="cron-sub" id="cronSubGrades"><div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-calendar-check"></i> Grades de abertura</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn-s" id="cronGrdBtnArquivo" title="Cria as grades de um arquivo, com prévia antes de gravar"><i class="fas fa-file-import"></i> Importar arquivo</button>
+            <button type="button" class="btn-p" onclick="cronGrdAbrir()"><i class="fas fa-plus"></i> Nova grade</button>
+          </div>
+        </div>
+        <p class="cron-help">Cadastre uma vez os dias, horários e intervalos de cada agenda, usando os médicos da aba Médicos. Esta tela guarda as grades; ela não cria nem altera atendimentos do cronograma.</p>
+        <input type="file" id="cronGrdFile" accept=".json,application/json" style="display:none">
+        <div id="cronGrdImpBox" style="display:none;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#f9fafb;"></div>
+        <div class="cron-grd-barra">
+          <input type="search" class="f-input" id="cronGrdBusca" placeholder="Buscar por médico ou especialidade" aria-label="Buscar grade por médico ou especialidade">
+          <select class="f-select" id="cronGrdFiltro" aria-label="Filtrar grades"><option value="ativas">Em uso</option><option value="pendencias">Com pendência</option><option value="inativas">Inativas</option><option value="todas">Todas</option></select>
+          <span class="cron-grd-sub" id="cronGrdResumo"></span>
+        </div>
+        <div class="cron-tw" id="cronGrdLista"></div>
       </div></div>
 
       <div class="cron-sub" id="cronSubImport"><div class="panel">
@@ -741,6 +782,31 @@
         <div class="full"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="cronMedAtivo" checked> Médico ativo (aparece na coleta e na planilha modelo)</label></div>
       </div>
       <div class="cron-mfoot"><button class="btn-s" onclick="cronMedFechar()">Cancelar</button><button class="btn-p" onclick="cronMedSalvar()"><i class="fas fa-check"></i> Salvar</button></div>
+    </div>
+  </div>
+
+  <!-- [v2.2] cadastro de grade -->
+  <div class="modal-bg" id="cronModalGrd">
+    <div class="cron-modal cron-grd-modal">
+      <div class="cron-mhead"><span id="cronGrdTitulo">Nova grade</span><button class="modal-close-btn" onclick="cronGrdFechar()" title="Fechar"><i class="fas fa-xmark"></i></button></div>
+      <input type="hidden" id="cronGrdId">
+      <div class="cron-grid2 cron-grd-g">
+        <div><label class="f-label" for="cronGrdMed">Médico (do cadastro)</label><select class="f-select" id="cronGrdMed" style="width:100%;"></select></div>
+        <div><label class="f-label" for="cronGrdRotulo">Identificação (opcional)</label><input class="f-input" id="cronGrdRotulo" maxlength="60" placeholder="Ex.: com outro médico, exames" style="width:100%;"></div>
+        <div><label class="f-label" for="cronGrdSit">Situação</label><select class="f-select" id="cronGrdSit" style="width:100%;"><option value="ativa">Ativa</option><option value="indefinida">Indefinida</option><option value="sob_demanda">Sob demanda</option></select></div>
+        <div><label class="f-label" for="cronGrdVinc">Depende da agenda de (opcional)</label><select class="f-select" id="cronGrdVinc" style="width:100%;"></select></div>
+        <div><label class="f-label" for="cronGrdDe">Vale a partir de (opcional)</label><input type="date" class="f-input" id="cronGrdDe" style="width:100%;"></div>
+        <div><label class="f-label" for="cronGrdAte">Vale até (opcional)</label><input type="date" class="f-input" id="cronGrdAte" style="width:100%;"></div>
+      </div>
+      <div class="f-label" style="margin-top:14px;">Dias e horários</div>
+      <div id="cronGrdRegras"></div>
+      <button type="button" class="btn-s cron-grd-mini" onclick="cronGrdMaisDia()"><i class="fas fa-plus"></i> Adicionar dia</button>
+      <div class="f-label" style="margin-top:14px;">Não pode coincidir com</div>
+      <div class="cron-grd-nao" id="cronGrdNao"></div>
+      <div style="margin-top:14px;"><label class="f-label" for="cronGrdObs">Observações</label><textarea class="f-input" id="cronGrdObs" maxlength="600" rows="3" style="width:100%;resize:vertical;"></textarea></div>
+      <div style="margin-top:10px;"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="cronGrdAtivo" checked> Grade em uso</label></div>
+      <div id="cronGrdMsg" style="margin-top:12px;"></div>
+      <div class="cron-mfoot"><button type="button" class="btn-s" onclick="cronGrdFechar()">Cancelar</button><button type="button" class="btn-p" id="cronGrdBtnSalvar" onclick="cronGrdSalvar()"><i class="fas fa-check"></i> Salvar</button></div>
     </div>
   </div>
 
@@ -1886,7 +1952,8 @@
     var ST_LBL = { canc: 'Cancelado', rem: 'Remarcado', aberta: 'Aberta', conf: 'Confirmado', est: 'Estendido', prev: 'Previsto' };
     var S = {
       medicos: {}, idx: {}, dias: {}, ouvindo: {}, carregado: {}, erro: {}, coleta: {}, coletaOuv: {}, historico: [],
-      view: 'mes', ref: new Date(), filtro: '', iniciado: false, autoAba: false, tocou: false, sub: 'medicos', profs: null, imp: null, acao: null
+      view: 'mes', ref: new Date(), filtro: '', iniciado: false, autoAba: false, tocou: false, sub: 'medicos', profs: null, imp: null, acao: null,
+      grades: {}, grdOk: false, grdErro: '', grdImp: null, grdMap: {}, grdOff: {}, medOk: false   // [v2.2]
     };
     S.ref.setHours(12, 0, 0, 0);
 
@@ -2166,7 +2233,7 @@
     window.cronSub = function (n) {
       S.sub = n;
       Array.prototype.forEach.call($('cronSubnav').querySelectorAll('button'), function (b) { b.classList.toggle('on', b.getAttribute('data-sub') === n); });
-      var mapa = { medicos: 'cronSubMedicos', import: 'cronSubImport', coleta: 'cronSubColeta', atend: 'cronSubAtend', abertura: 'cronSubAbertura', hist: 'cronSubHist' };
+      var mapa = { medicos: 'cronSubMedicos', grades: 'cronSubGrades', import: 'cronSubImport', coleta: 'cronSubColeta', atend: 'cronSubAtend', abertura: 'cronSubAbertura', hist: 'cronSubHist' };
       Object.keys(mapa).forEach(function (k) { $(mapa[k]).classList.toggle('active', k === n); });
       if (n === 'abertura' && typeof window.calAbrir === 'function') window.calAbrir();   // calendário de abertura (legado) realocado aqui
       renderSub();
@@ -2176,6 +2243,7 @@
       else if (S.sub === 'coleta') renderColeta();
       else if (S.sub === 'atend') renderAtend();
       else if (S.sub === 'hist') renderHist();
+      else if (S.sub === 'grades') { renderGrades(); renderGrdImp(); }   // [v2.2]
     }
     window.cronConfigAbrir = function () { iniciar(); window.cronSub(S.sub); };
 
@@ -2731,7 +2799,8 @@
     };
 
     // ── HISTÓRICO ──
-    var ACAO_LBL = { sala: 'Sala', periodo: 'Período', status: 'Status', obs: 'Observação', aberta: 'Abertura', removido: 'Removido', criado: 'Criado', remarcado: 'Remarcado', estendido: 'Estendido', importacao: 'Importação', medico: 'Médico' };
+    var ACAO_LBL = { sala: 'Sala', periodo: 'Período', status: 'Status', obs: 'Observação', aberta: 'Abertura', removido: 'Removido', criado: 'Criado', remarcado: 'Remarcado', estendido: 'Estendido', importacao: 'Importação', medico: 'Médico',
+      grade_criada: 'Grade criada', grade_editada: 'Grade editada', grade_inativada: 'Grade inativada', grade_reativada: 'Grade reativada', grade_importada: 'Grades importadas' };
     function renderHist() {
       var l = S.historico, box = $('cronHistLista');
       if (!l.length) { box.innerHTML = '<div class="cal-msg info">Nenhuma alteração registrada ainda.</div>'; return; }
@@ -3105,17 +3174,418 @@
       $('cronAtLista').addEventListener('change', mudouAtend);
       $('cronAtLista').addEventListener('click', cliqueAtend);
       ligarVerificar();
+      ligarGrades();   // [v2.2]
       var abas = document.querySelector('.tabs'); if (abas) abas.addEventListener('click', function () { S.tocou = true; }, true);
     }
     function iniciar() {
       if (S.iniciado || typeof window.cronFbOn !== 'function') return;
       S.iniciado = true; ligarEventos();
-      window.cronFbOn('crono/medicos', function (v) { S.medicos = v || {}; indexar(); redesenhar(); });
+      window.cronFbOn('crono/medicos', function (v) { S.medicos = v || {}; S.medOk = true; indexar(); redesenhar(); });
       if (typeof window.cronFbUltimos === 'function') window.cronFbUltimos('crono/historico', 150, function (v) {
         S.historico = Object.keys(v || {}).sort().reverse().map(function (k) { return v[k]; }); if (aba('paneConfig') && S.sub === 'hist') renderHist();
       });
       window.cronRender();
     }
+    // ── [v2.2] GRADES DE ABERTURA (crono/grades) — gestão de agendas, etapa 1 — prefixo cronGrd* — somente admin ──
+    var GRD_SIT = { ativa: 'Ativa', indefinida: 'Indefinida', sob_demanda: 'Sob demanda' };
+    var GRD_FREQ = { semanal: 'Semanal', quinzenal: 'Quinzenal' };
+    var GRD_ID = /^[A-Za-z0-9_-]{1,60}$/;
+    var GRD_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+    var GRD_SEM_ACESSO = 'Não foi possível ler as grades. Publique a Rule de crono/grades no Firebase e recarregue a página.';
+
+    function grdTxt(v, max) { return String(v == null ? '' : v).trim().slice(0, max); }
+    // o Realtime Database pode devolver listas como vetor ou como objeto
+    function grdArr(v) {
+      if (!v) return [];
+      if (Array.isArray(v)) return v.filter(Boolean);
+      return Object.keys(v).sort(function (a, b) { return a.localeCompare(b, 'pt', { numeric: true }); }).map(function (k) { return v[k]; }).filter(Boolean);
+    }
+    function grdMin(h) { return +h.slice(0, 2) * 60 + +h.slice(3, 5); }
+    function grdDataOk(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s) && iso(dataDe(s)) === s; }
+    // monta o registro só com os campos conhecidos (formulário e arquivo passam por aqui)
+    function grdLimpar(g) {
+      g = (g && typeof g === 'object') ? g : {};
+      var regras = {};
+      grdArr(g.regras).forEach(function (r, i) {
+        var blocos = grdArr(r.blocos).map(function (b) {
+          var n = (b.intervalo === '' || b.intervalo == null) ? null : Number(b.intervalo);
+          return { ini: grdTxt(b.ini, 5), fim: grdTxt(b.fim, 5), intervalo: (n !== null && isNaN(n)) ? -1 : n, tipo: grdTxt(b.tipo, 40) };
+        });
+        regras['r' + (i + 1)] = { diaSemana: Number(r.diaSemana), frequencia: grdTxt(r.frequencia, 12) || 'semanal', dataBase: grdTxt(r.dataBase, 10), blocos: blocos };
+      });
+      var nao = {};
+      Object.keys(g.naoCoincidirCom || {}).forEach(function (k) { if (GRD_ID.test(k) && g.naoCoincidirCom[k]) nao[k] = true; });
+      return {
+        nome: grdTxt(g.nome, 160), medicoId: grdTxt(g.medicoId, 80), rotulo: grdTxt(g.rotulo, 60), situacao: grdTxt(g.situacao, 20) || 'ativa', obs: grdTxt(g.obs, 600),
+        vigenciaDe: grdTxt(g.vigenciaDe, 10), vigenciaAte: grdTxt(g.vigenciaAte, 10), vinculadaA: GRD_ID.test(g.vinculadaA || '') ? g.vinculadaA : '',
+        naoCoincidirCom: nao, regras: regras, ativo: g.ativo !== false
+      };
+    }
+    // erros impedem salvar; avisos são pendências que podem ser resolvidas depois
+    function grdValidar(g) {
+      var er = [], av = [], regras = grdArr(g.regras);
+      if (!GRD_SIT[g.situacao]) er.push('Situação inválida.');
+      if (g.vigenciaDe && !grdDataOk(g.vigenciaDe)) er.push('Início da vigência inválido.');
+      if (g.vigenciaAte && !grdDataOk(g.vigenciaAte)) er.push('Fim da vigência inválido.');
+      if (g.vigenciaDe && g.vigenciaAte && g.vigenciaAte < g.vigenciaDe) er.push('O fim da vigência é anterior ao início.');
+      regras.forEach(function (r) {
+        if (!(r.diaSemana >= 1 && r.diaSemana <= 6) || r.diaSemana % 1 !== 0) { er.push('Há um dia da semana inválido.'); return; }
+        var dia = DOWL[r.diaSemana];
+        if (!GRD_FREQ[r.frequencia]) er.push(dia + ': frequência inválida.');
+        if (r.dataBase) {
+          if (!grdDataOk(r.dataBase)) er.push(dia + ': data-base inválida.');
+          else if (dataDe(r.dataBase).getDay() !== r.diaSemana) er.push(dia + ': a data-base ' + brData(r.dataBase) + ' cai em outro dia da semana.');
+        } else if (r.frequencia === 'quinzenal') av.push(dia + ': quinzenal sem data-base.');
+        var blocos = grdArr(r.blocos), validos = [];
+        if (!blocos.length) er.push(dia + ': informe ao menos um horário.');
+        blocos.forEach(function (b) {
+          if (!GRD_HORA.test(b.ini) || !GRD_HORA.test(b.fim)) { er.push(dia + ': preencha início e fim de cada horário.'); return; }
+          var dur = grdMin(b.fim) - grdMin(b.ini);
+          if (dur <= 0) { er.push(dia + ' ' + b.ini + ': o fim precisa ser depois do início.'); return; }
+          validos.push(b);
+          if (b.intervalo != null) {
+            if (!(b.intervalo >= 1 && b.intervalo <= 480) || b.intervalo % 1 !== 0) er.push(dia + ' ' + b.ini + ': intervalo inválido.');
+            else if (dur % b.intervalo !== 0) av.push(dia + ' ' + b.ini + '–' + b.fim + ': intervalo de ' + b.intervalo + ' min não fecha em ' + dur + ' min.');
+          }
+        });
+        validos.sort(function (a, b) { return a.ini.localeCompare(b.ini); });
+        for (var i = 1; i < validos.length; i++) if (validos[i].ini < validos[i - 1].fim) av.push(dia + ': horários sobrepostos (' + validos[i - 1].ini + ' e ' + validos[i].ini + ').');
+      });
+      if (g.situacao === 'ativa' && !regras.length) av.push('Ativa sem dias cadastrados.');
+      return { er: er, av: av };
+    }
+    // ── o nome da grade vem do cadastro de médicos do cronograma (crono/medicos) ──
+    function grdMed(g) { return (g.medicoId && S.medicos[g.medicoId]) || null; }
+    function grdNome(g) {
+      var m = grdMed(g); if (!m) return String(g.nome || '(sem médico)');
+      return nomeMed(m) + (g.rotulo ? ' — ' + g.rotulo : '');
+    }
+    function grdPendMed(g) {
+      if (!S.medOk) return '';
+      if (!g.medicoId) return 'Sem médico do cadastro.';
+      if (!grdMed(g)) return 'O médico desta grade não está mais no cadastro.';
+      return grdMed(g).ativo === false ? 'Médico inativo no cadastro.' : '';
+    }
+    // outra grade do mesmo médico com a mesma identificação
+    function grdMesma(medicoId, rotulo, fora) {
+      return Object.keys(S.grades).filter(function (k) { var g = S.grades[k] || {}; return k !== fora && g.medicoId === medicoId && norm(g.rotulo || '') === norm(rotulo || ''); })[0] || '';
+    }
+    function grdOpcoesMed(escolhido, nomeArquivo) {
+      var todos = medsOrdenados(false), parte = limpaNome(nomeArquivo || '').split(/\s+/).filter(function (p) { return p.length > 2 && !PREP[p]; });
+      var opc = function (r) {
+        return '<option value="' + esc(r.id) + '"' + (r.id === escolhido ? ' selected' : '') + '>' + esc(nomeMed(r.m) + (r.m.especialidade ? ' — ' + r.m.especialidade : '') + (r.m.ativo === false ? ' (inativo)' : '')) + '</option>';
+      };
+      var parecidos = parte.length ? todos.filter(function (r) {
+        var n = limpaNome(nomeMed(r.m)).split(/\s+/); return parte.some(function (p) { return n.indexOf(p) >= 0; });
+      }) : [];
+      var resto = todos.filter(function (r) { return parecidos.indexOf(r) < 0; });
+      return '<option value="">Escolha o médico</option>' + (parecidos.length
+        ? '<optgroup label="Nomes parecidos">' + parecidos.map(opc).join('') + '</optgroup><optgroup label="Demais médicos">' + resto.map(opc).join('') + '</optgroup>'
+        : todos.map(opc).join(''));
+    }
+    function grdOrdenarRegras(g) {
+      return grdArr(g.regras).slice().sort(function (a, b) {
+        var x = grdArr(a.blocos)[0] || {}, y = grdArr(b.blocos)[0] || {};
+        return a.diaSemana - b.diaSemana || String(x.ini || '').localeCompare(String(y.ini || ''));
+      });
+    }
+    function grdResumo(g) {
+      var l = grdOrdenarRegras(g).map(function (r) {
+        var h = grdArr(r.blocos).map(function (b) {
+          return b.ini + '–' + b.fim + (b.tipo ? ' ' + b.tipo : '') + (b.intervalo ? ' (' + b.intervalo + ' min)' : '');
+        }).join(' · ');
+        return '<div><b>' + esc(DOWC[r.diaSemana] || '?') + (r.frequencia === 'quinzenal' ? ' quinz.' : '') + '</b> ' + esc(h) +
+          (r.dataBase ? ' <span class="cron-grd-sub">base ' + esc(brCurta(r.dataBase)) + '</span>' : '') + '</div>';
+      }).join('');
+      return l || '<span class="cron-grd-sub">Sem dias fixos</span>';
+    }
+    function grdNomeDe(id) { return S.grades[id] ? grdNome(S.grades[id]) : id; }
+    function grdIds() {
+      return Object.keys(S.grades).sort(function (a, b) { return grdNomeDe(a).localeCompare(grdNomeDe(b), 'pt'); });
+    }
+    function renderGrades() {
+      var box = $('cronGrdLista'), res = $('cronGrdResumo'); if (!box) return;
+      if (S.grdErro) { res.textContent = ''; box.innerHTML = '<div class="cal-msg info">' + esc(GRD_SEM_ACESSO) + ' (' + esc(S.grdErro) + ')</div>'; return; }
+      if (!S.grdOk) { res.textContent = ''; box.innerHTML = '<div class="cal-msg">Carregando grades...</div>'; return; }
+      var ids = grdIds(), busca = norm($('cronGrdBusca').value), filtro = $('cronGrdFiltro').value, comPend = 0, linhas = [];
+      ids.forEach(function (id) {
+        var g = S.grades[id] || {}, v = grdValidar(grdLimpar(g)), pm = grdPendMed(g), pend = (pm ? [pm] : []).concat(v.er, v.av), inat = g.ativo === false;
+        if (!inat && pend.length) comPend++;
+        if (filtro === 'ativas' && inat) return;
+        if (filtro === 'inativas' && !inat) return;
+        if (filtro === 'pendencias' && (inat || !pend.length)) return;
+        var nome = grdNome(g), m = grdMed(g);
+        if (busca && norm(nome + ' ' + ((m && m.especialidade) || '')).indexOf(busca) < 0) return;
+        var cad = m ? [m.especialidade, m.salaHabitual ? salaRotulo(m.salaHabitual) : ''].filter(Boolean).join(' · ') : '';
+        var extra = [];
+        if (g.vinculadaA) extra.push('Depende de: ' + grdNomeDe(g.vinculadaA));
+        var nao = Object.keys(g.naoCoincidirCom || {});
+        if (nao.length) extra.push('Não coincidir com: ' + nao.map(grdNomeDe).join(', '));
+        if (g.vigenciaDe || g.vigenciaAte) extra.push('Vigência: ' + (g.vigenciaDe ? brData(g.vigenciaDe) : '…') + ' a ' + (g.vigenciaAte ? brData(g.vigenciaAte) : '…'));
+        linhas.push('<tr' + (inat ? ' class="jx"' : '') + '><td><b>' + esc(nome) + '</b><div class="cron-grd-sub">' + esc(cad) + '</div></td>' +
+          '<td>' + esc(inat ? 'Inativa' : (GRD_SIT[g.situacao] || g.situacao || '')) + '</td><td>' + grdResumo(g) + '</td>' +
+          '<td class="cron-grd-obs">' + esc(g.obs || '') + extra.map(function (t) { return '<div class="cron-grd-sub">' + esc(t) + '</div>'; }).join('') +
+          pend.map(function (t) { return '<div class="cron-grd-pend"><i class="fas fa-triangle-exclamation"></i> ' + esc(t) + '</div>'; }).join('') + '</td>' +
+          '<td style="white-space:nowrap;"><button class="cron-ico" data-grd="' + esc(id) + '" data-ac="edit" title="Editar"><i class="fas fa-pen"></i></button> ' +
+          '<button class="cron-ico' + (inat ? '' : ' del') + '" data-grd="' + esc(id) + '" data-ac="ativo" title="' + (inat ? 'Reativar' : 'Inativar') + '"><i class="fas ' + (inat ? 'fa-rotate-left' : 'fa-ban') + '"></i></button></td></tr>');
+      });
+      res.textContent = ids.length + ' grade(s) cadastrada(s)' + (comPend ? ' · ' + comPend + ' com pendência' : '');
+      if (!ids.length) { box.innerHTML = '<div class="cal-msg info">Nenhuma grade cadastrada. Use "Importar arquivo" ou "Nova grade".</div>'; return; }
+      box.innerHTML = linhas.length ? '<table class="cron-tbl"><thead><tr><th>Médico / agenda</th><th>Situação</th><th>Dias e horários</th><th>Observações e pendências</th><th></th></tr></thead><tbody>' + linhas.join('') + '</tbody></table>'
+        : '<div class="cal-msg info">Nenhuma grade neste filtro.</div>';
+    }
+    function grdPronto() {
+      if (!isAdmin()) { toast('Somente o admin altera as grades', 'error'); return false; }
+      if (S.grdOk && !S.grdErro) return true;
+      toast(S.grdErro ? GRD_SEM_ACESSO : 'As grades ainda estão carregando', 'error'); return false;
+    }
+
+    // ── formulário ──
+    function grdHtmlBloco(b) {
+      b = b || {};
+      return '<div class="cron-grd-bloco">' +
+        '<label>Início<input type="time" class="f-input grd-ini" value="' + esc(b.ini || '') + '"></label>' +
+        '<label>Fim<input type="time" class="f-input grd-fim" value="' + esc(b.fim || '') + '"></label>' +
+        '<label>Intervalo (min)<input type="number" min="1" max="480" step="1" class="f-input grd-int" value="' + (b.intervalo ? esc(String(b.intervalo)) : '') + '" placeholder="—"></label>' +
+        '<label>Tipo<input type="text" maxlength="40" class="f-input grd-tipo" value="' + esc(b.tipo || '') + '" placeholder="Consultas"></label>' +
+        '<button type="button" class="cron-ico del" data-ac="tira-bloco" title="Remover horário"><i class="fas fa-xmark"></i></button></div>';
+    }
+    function grdHtmlRegra(r) {
+      r = r || { diaSemana: 1, frequencia: 'semanal', blocos: [{}] };
+      var dias = [1, 2, 3, 4, 5, 6].map(function (d) { return '<option value="' + d + '"' + (r.diaSemana === d ? ' selected' : '') + '>' + DOWL[d] + '</option>'; }).join('');
+      var freq = Object.keys(GRD_FREQ).map(function (k) { return '<option value="' + k + '"' + (r.frequencia === k ? ' selected' : '') + '>' + GRD_FREQ[k] + '</option>'; }).join('');
+      var blocos = grdArr(r.blocos); if (!blocos.length) blocos = [{}];
+      return '<div class="cron-grd-regra"><div class="cron-grd-cab">' +
+        '<label>Dia<select class="f-select grd-dia">' + dias + '</select></label>' +
+        '<label>Frequência<select class="f-select grd-freq">' + freq + '</select></label>' +
+        '<label>Data-base (um dia em que atende)<input type="date" class="f-input grd-base" value="' + esc(r.dataBase || '') + '"></label>' +
+        '<button type="button" class="cron-ico del" data-ac="tira-regra" title="Remover dia"><i class="fas fa-trash"></i></button></div>' +
+        '<div class="cron-grd-blocos">' + blocos.map(grdHtmlBloco).join('') + '</div>' +
+        '<button type="button" class="btn-s cron-grd-mini" data-ac="mais-bloco"><i class="fas fa-plus"></i> Horário</button></div>';
+    }
+    window.cronGrdMaisDia = function () { $('cronGrdRegras').insertAdjacentHTML('beforeend', grdHtmlRegra()); };
+    window.cronGrdAbrir = function (id) {
+      if (!grdPronto()) return;
+      var g = (id && S.grades[id]) || {};
+      $('cronGrdTitulo').textContent = id ? 'Editar grade' : 'Nova grade';
+      $('cronGrdId').value = id || '';
+      $('cronGrdRotulo').value = g.rotulo || ''; $('cronGrdObs').value = g.obs || '';
+      $('cronGrdSit').value = GRD_SIT[g.situacao] ? g.situacao : 'ativa';
+      $('cronGrdDe').value = g.vigenciaDe || ''; $('cronGrdAte').value = g.vigenciaAte || '';
+      $('cronGrdAtivo').checked = g.ativo !== false;
+      $('cronGrdMed').innerHTML = grdOpcoesMed(g.medicoId, id && !grdMed(g) ? g.nome : '');
+      if (!grdMed(g)) $('cronGrdMed').value = '';
+      var outras = grdIds().filter(function (k) { return k !== id; });
+      $('cronGrdVinc').innerHTML = '<option value="">Não depende de outra</option>' + outras.map(function (k) { return '<option value="' + esc(k) + '">' + esc(grdNomeDe(k)) + '</option>'; }).join('');
+      $('cronGrdVinc').value = g.vinculadaA && S.grades[g.vinculadaA] ? g.vinculadaA : '';
+      var nao = g.naoCoincidirCom || {};
+      $('cronGrdNao').innerHTML = outras.length ? outras.map(function (k) {
+        return '<label><input type="checkbox" value="' + esc(k) + '"' + (nao[k] ? ' checked' : '') + '> ' + esc(grdNomeDe(k)) + '</label>';
+      }).join('') : '<span class="cron-grd-sub">Nenhuma outra grade cadastrada.</span>';
+      $('cronGrdRegras').innerHTML = grdOrdenarRegras(g).map(grdHtmlRegra).join('');
+      $('cronGrdMsg').innerHTML = '';
+      $('cronGrdBtnSalvar').disabled = false;
+      abrirModal('cronModalGrd');
+      $('cronModalGrd').firstElementChild.scrollTop = 0;
+    };
+    window.cronGrdFechar = function () { fecharModal('cronModalGrd'); };
+    // grade nova sem dias: começa com os "dias fixos" do cadastro do médico (os dias sugeridos são trocados se mudar o médico antes de preencher)
+    function grdSugerirDias() {
+      if ($('cronGrdId').value) return;
+      var box = $('cronGrdRegras');
+      if (box.querySelector('.cron-grd-regra:not([data-sug])')) return;   // há dia criado ou alterado por quem está preenchendo
+      var m = S.medicos[$('cronGrdMed').value] || {};
+      box.innerHTML = String(m.diasFixos || '').split(',').map(Number).filter(function (d) { return d >= 1 && d <= 6; })
+        .map(function (d) { return grdHtmlRegra({ diaSemana: d, frequencia: 'semanal', blocos: [{}] }); }).join('');
+      Array.prototype.forEach.call(box.children, function (r) { r.setAttribute('data-sug', '1'); });
+    }
+    function grdTocou(ev) { var r = ev.target.closest('.cron-grd-regra'); if (r) r.removeAttribute('data-sug'); }
+    function grdLerForm() {
+      var todos = function (el, sel) { return Array.prototype.slice.call(el.querySelectorAll(sel)); };
+      var nao = {};
+      todos($('cronGrdNao'), 'input:checked').forEach(function (c) { nao[c.value] = true; });
+      var regras = todos($('cronGrdRegras'), '.cron-grd-regra').map(function (r) {
+        return {
+          diaSemana: +r.querySelector('.grd-dia').value, frequencia: r.querySelector('.grd-freq').value, dataBase: r.querySelector('.grd-base').value,
+          blocos: todos(r, '.cron-grd-bloco').map(function (b) {
+            var n = b.querySelector('.grd-int');
+            return { ini: b.querySelector('.grd-ini').value, fim: b.querySelector('.grd-fim').value, intervalo: (n.validity && n.validity.badInput) ? -1 : n.value, tipo: b.querySelector('.grd-tipo').value };
+          })
+        };
+      });
+      var g = grdLimpar({ medicoId: $('cronGrdMed').value, rotulo: $('cronGrdRotulo').value, situacao: $('cronGrdSit').value, obs: $('cronGrdObs').value,
+        vigenciaDe: $('cronGrdDe').value, vigenciaAte: $('cronGrdAte').value, vinculadaA: $('cronGrdVinc').value, naoCoincidirCom: nao, regras: regras, ativo: $('cronGrdAtivo').checked });
+      g.nome = grdMed(g) ? grdNome(g).slice(0, 160) : '';
+      return g;
+    }
+    window.cronGrdSalvar = function () {
+      if (!grdPronto()) return;
+      var btn = $('cronGrdBtnSalvar'); if (btn.disabled) return;
+      var id = $('cronGrdId').value, obj = grdLerForm(), v = grdValidar(obj);
+      if (!grdMed(obj)) v.er.unshift('Escolha o médico no cadastro.');
+      if (v.er.length) { $('cronGrdMsg').innerHTML = '<div class="cron-v-sum bad">' + v.er.map(esc).join('<br>') + '</div>'; $('cronGrdMsg').scrollIntoView({ block: 'nearest' }); return; }
+      if (grdMesma(obj.medicoId, obj.rotulo, id) && !confirm('Este médico já tem uma grade ' + (obj.rotulo ? 'com essa identificação' : 'sem identificação') + '. Salvar mesmo assim?')) return;
+      var ant = (id && S.grades[id]) || {}, agora = new Date().toISOString();
+      // mantém campos que esta tela não edita (a gravação é completa)
+      var reg = Object.assign({}, ant, obj, { criadoEm: ant.criadoEm || agora, atualizadoEm: agora });
+      var gid = id || ('grd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5));
+      btn.disabled = true;
+      gravar('crono/grades/' + gid, reg).then(function (ok) {
+        btn.disabled = false; if (!ok) return;
+        hist({ acao: id ? 'grade_editada' : 'grade_criada', doc: grdNome(reg) });
+        toast('Grade salva', 'success'); window.cronGrdFechar();
+      });
+    };
+    function grdAlternar(id) {
+      if (!grdPronto()) return;
+      var g = S.grades[id]; if (!g) return;
+      var ativar = g.ativo === false;
+      if (!confirm((ativar ? 'Reativar' : 'Inativar') + ' a grade "' + grdNome(g) + '"?')) return;
+      var reg = Object.assign({}, g, { ativo: ativar, atualizadoEm: new Date().toISOString() });
+      gravar('crono/grades/' + id, reg).then(function (ok) {
+        if (!ok) return;
+        hist({ acao: ativar ? 'grade_reativada' : 'grade_inativada', doc: grdNome(g) });
+        toast(ativar ? 'Grade reativada' : 'Grade inativada', 'success');
+      });
+    }
+
+    // ── importação por arquivo (cada linha precisa de um médico do cadastro; só cria o que não existe, após confirmação) ──
+    function grdAnalisar(dados) {
+      var usados = {};
+      var l = Object.keys(dados).map(function (id) {
+        var g = grdLimpar(dados[id]), nomeArq = g.nome, v = grdValidar(g), it = { id: id, g: g, nomeArq: nomeArq, v: v, st: 'nova', existente: '', marcada: false, falta: [] };
+        // sugestão automática só quando o nome bate com um único médico do cadastro
+        var achado = S.idx[limpaNome(nomeArq)];
+        var escolhido = S.grdMap[id] !== undefined ? S.grdMap[id] : (achado && achado !== '?' ? achado : (S.medicos[g.medicoId] ? g.medicoId : ''));
+        g.medicoId = S.medicos[escolhido] ? escolhido : '';
+        g.nome = g.medicoId ? grdNome(g).slice(0, 160) : '';
+        var mesma = g.medicoId ? grdMesma(g.medicoId, g.rotulo, '') : '';
+        if (!GRD_ID.test(id)) { it.st = 'erro'; v.er.push('Identificador inválido no arquivo.'); }
+        else if (S.grades[id]) { it.st = 'existe'; it.existente = id; }
+        else if (mesma) { it.st = 'existe'; it.existente = mesma; }
+        else if (!nomeArq) { it.st = 'erro'; v.er.push('Linha sem nome no arquivo.'); }
+        else if (v.er.length) it.st = 'erro';
+        else if (!g.medicoId) it.st = 'sem';
+        else {
+          var chave = g.medicoId + '|' + norm(g.rotulo);
+          if (S.grdOff[id]) it.marcada = false;
+          else if (usados[chave]) it.st = 'repetida';
+          else { it.marcada = true; usados[chave] = true; }
+        }
+        return it;
+      });
+      // vínculos que apontam para grade que não será gravada nem existe
+      var destino = grdDestinos(l);
+      l.forEach(function (i) {
+        if (i.st !== 'nova') return;
+        var refs = Object.keys(i.g.naoCoincidirCom); if (i.g.vinculadaA) refs.push(i.g.vinculadaA);
+        refs.forEach(function (k) {
+          if (destino[k] || S.grades[k]) return;
+          var o = dados[k]; i.falta.push(String((o && o.nome) || k) + (o && o.rotulo ? ' — ' + o.rotulo : ''));
+        });
+      });
+      return l;
+    }
+    function grdDestinos(l) {
+      var d = {};
+      l.forEach(function (i) { if (i.st === 'existe') d[i.id] = i.existente; else if (i.st === 'nova' && i.marcada) d[i.id] = i.id; });
+      return d;
+    }
+    function grdLerArquivo(file) {
+      if (!grdPronto()) return;
+      if (file.size > 1024 * 1024) { toast('Arquivo muito grande para um cadastro de grades', 'error'); return; }
+      var r = new FileReader();
+      r.onload = function () {
+        var d = null; try { d = JSON.parse(r.result); } catch (e) {}
+        if (!d || d.tipo !== 'grades-agendas' || !d.grades || typeof d.grades !== 'object') { toast('Este não é um arquivo de grades', 'error'); return; }
+        S.grdImp = d.grades; S.grdMap = {}; S.grdOff = {}; renderGrdImp();
+      };
+      r.onerror = function () { toast('Não foi possível ler o arquivo', 'error'); };
+      r.readAsText(file, 'utf-8');
+    }
+    function renderGrdImp() {
+      var box = $('cronGrdImpBox'); if (!S.grdImp || !S.grdOk) { box.style.display = 'none'; box.innerHTML = ''; return; }
+      if (!S.medOk) { box.style.display = ''; box.innerHTML = '<div class="cal-msg">Carregando o cadastro de médicos...</div>'; return; }
+      var l = grdAnalisar(S.grdImp), conta = { nova: 0, existe: 0, sem: 0, erro: 0, repetida: 0 }, marcadas = 0;
+      l.forEach(function (i) { conta[i.st]++; if (i.marcada) marcadas++; });
+      var rolagem = box.querySelector('.cron-tw'), pos = rolagem ? rolagem.scrollTop : 0;
+      var ROT = { nova: 'Nova', existe: 'Já cadastrada', sem: 'Falta escolher o médico', erro: 'Erro', repetida: 'Mesmo médico e identificação de outra linha' };
+      box.style.display = '';
+      box.innerHTML = '<div class="cron-help"><b>Prévia:</b> ' + conta.nova + ' pronta(s) · ' + conta.sem + ' sem médico escolhido · ' + conta.existe + ' já cadastrada(s), que não serão alteradas' +
+        (conta.erro + conta.repetida ? ' · ' + (conta.erro + conta.repetida) + ' com problema' : '') + '. Nada foi gravado ainda. Confira o médico sugerido em cada linha. Quem não aparece na lista precisa ser cadastrado antes na aba Médicos.</div>' +
+        '<div class="cron-tw" style="max-height:420px;overflow:auto;"><table class="cron-tbl"><thead><tr><th></th><th>No arquivo</th><th>Médico do cadastro</th><th>Situação</th><th>Dias e horários</th><th>Resultado</th></tr></thead><tbody>' +
+        l.map(function (i) {
+          var nova = i.st === 'nova', rotulo = i.nomeArq + (i.g.rotulo ? ' — ' + i.g.rotulo : '');
+          var inativo = i.st !== 'existe' && grdMed(i.g) && grdMed(i.g).ativo === false ? ['Médico inativo no cadastro.'] : [];
+          var det = i.st === 'erro' ? i.v.er : inativo.concat(nova ? i.v.av.concat(i.falta.map(function (f) { return 'O vínculo com "' + f + '" não será gravado (marque as duas juntas).'; })) : []);
+          var sel = (i.st === 'existe' || i.st === 'erro') ? '—'
+            : '<select class="f-select grd-imp-med" data-id="' + esc(i.id) + '" aria-label="Médico para ' + esc(rotulo) + '">' + grdOpcoesMed(i.g.medicoId, i.nomeArq) + '</select>';
+          return '<tr class="' + (i.st === 'erro' || i.st === 'repetida' ? 'er' : (i.st === 'existe' ? 'jx' : '')) + '"><td><input type="checkbox" class="grd-imp" value="' + esc(i.id) + '"' + (i.marcada ? ' checked' : '') + (nova ? '' : ' disabled') + ' aria-label="Importar ' + esc(rotulo) + '"></td><td><b>' + esc(rotulo) + '</b></td><td>' + sel + '</td><td>' + esc(GRD_SIT[i.g.situacao] || i.g.situacao) + '</td><td>' +
+            (i.st === 'erro' ? '' : grdResumo(i.g)) + '</td><td>' + ROT[i.st] + det.map(function (t) { return '<div class="cron-grd-pend">' + esc(t) + '</div>'; }).join('') + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<div class="cron-mfoot"><button type="button" class="btn-s" data-ac="imp-cancelar">Cancelar</button>' +
+        '<button type="button" class="btn-p" data-ac="imp-confirmar" id="cronGrdBtnImp"' + (marcadas ? '' : ' disabled') + '><i class="fas fa-check"></i> Importar ' + marcadas + ' grade(s)</button></div>';
+      box.querySelector('.cron-tw').scrollTop = pos;
+    }
+    function grdImportar() {
+      if (!grdPronto() || !S.grdImp || !S.medOk) return;
+      var btn = $('cronGrdBtnImp'); if (!btn || btn.disabled) return;
+      var l = grdAnalisar(S.grdImp), destino = grdDestinos(l), agora = new Date().toISOString(), up = {}, n = 0;   // refeito na hora: o banco pode ter mudado
+      var alvo = function (id) { return destino[id] || (S.grades[id] ? id : ''); };
+      l.forEach(function (i) {
+        if (i.st !== 'nova' || !i.marcada) return;
+        var g = i.g, nao = {};
+        Object.keys(g.naoCoincidirCom).forEach(function (k) { var a = alvo(k); if (a) nao[a] = true; });
+        g.naoCoincidirCom = nao; g.vinculadaA = alvo(g.vinculadaA);
+        g.criadoEm = agora; g.atualizadoEm = agora;
+        up['crono/grades/' + i.id] = g; n++;
+      });
+      if (!n) { toast('Nenhuma grade marcada', 'info'); return; }
+      if (typeof window.cronFbUpdate !== 'function') { toast('Firebase ainda não carregou. Tente de novo.', 'error'); return; }
+      btn.disabled = true;
+      window.cronFbUpdate(up).then(function () {
+        hist({ acao: 'grade_importada', doc: n + ' grade(s)' });
+        toast(n + ' grade(s) importada(s)', 'success');
+        // as linhas gravadas passam a "Já cadastrada"; a prévia continua para as que faltaram
+        if (!grdAnalisar(S.grdImp).some(function (i) { return i.st === 'sem' || i.st === 'nova'; })) S.grdImp = null;
+        renderGrdImp();
+      }).catch(function (e) { btn.disabled = false; toast('Não foi possível importar: ' + ((e && (e.code || e.message)) || 'erro'), 'error'); });
+    }
+    function ligarGrades() {
+      $('cronGrdBusca').addEventListener('input', renderGrades);
+      $('cronGrdFiltro').addEventListener('change', renderGrades);
+      $('cronGrdBtnArquivo').addEventListener('click', function () { if (grdPronto()) $('cronGrdFile').click(); });
+      $('cronGrdFile').addEventListener('change', function () { if (this.files && this.files[0]) grdLerArquivo(this.files[0]); this.value = ''; });
+      $('cronGrdLista').addEventListener('click', function (ev) {
+        var b = ev.target.closest('button[data-grd]'); if (!b) return;
+        if (b.getAttribute('data-ac') === 'edit') window.cronGrdAbrir(b.getAttribute('data-grd')); else grdAlternar(b.getAttribute('data-grd'));
+      });
+      $('cronGrdImpBox').addEventListener('click', function (ev) {
+        var b = ev.target.closest('button[data-ac]'); if (!b) return;
+        if (b.getAttribute('data-ac') === 'imp-cancelar') { S.grdImp = null; renderGrdImp(); } else grdImportar();
+      });
+      $('cronGrdImpBox').addEventListener('change', function (ev) {
+        var t = ev.target;
+        if (t.classList.contains('grd-imp-med')) { var id = t.getAttribute('data-id'); S.grdMap[id] = t.value; delete S.grdOff[id]; }
+        else if (t.classList.contains('grd-imp')) { if (t.checked) delete S.grdOff[t.value]; else S.grdOff[t.value] = true; }
+        else return;
+        renderGrdImp();
+      });
+      $('cronGrdMed').addEventListener('change', grdSugerirDias);
+      $('cronGrdRegras').addEventListener('input', grdTocou);
+      $('cronGrdRegras').addEventListener('change', grdTocou);
+      $('cronGrdRegras').addEventListener('click', function (ev) {
+        var b = ev.target.closest('button[data-ac]'); if (!b) return;
+        var ac = b.getAttribute('data-ac'), regra = b.closest('.cron-grd-regra');
+        grdTocou(ev);
+        if (ac === 'tira-regra') regra.remove();
+        else if (ac === 'tira-bloco') b.closest('.cron-grd-bloco').remove();
+        else if (ac === 'mais-bloco') regra.querySelector('.cron-grd-blocos').insertAdjacentHTML('beforeend', grdHtmlBloco());
+      });
+      window.cronFbOn('crono/grades', function (v) { S.grades = v || {}; S.grdOk = true; S.grdErro = ''; if (aba('paneConfig') && S.sub === 'grades') renderSub(); },
+        function (e) { S.grdErro = (e && (e.code || e.message)) || 'erro'; console.warn('[cronograma] grades:', S.grdErro); if (S.sub === 'grades') renderGrades(); });
+    }
+
     // chamada pelo módulo Firebase quando o perfil (admin ou não) é conhecido
     window.cronAplicarPerfil = function () {
       var adm = isAdmin();
@@ -3191,6 +3661,7 @@
       const u = onValue(ref(_db, path), s => cb(s.val()), e => { if (errCb) errCb(e); });
       _unsubs.push(u); return u;
     };
+    window.cronFbUpdate = up => update(ref(_db), up);   // [v2.2] importação das grades: grava tudo de uma vez
     window.cronFbUltimos = (path, n, cb, errCb) => {
       const u = onValue(query(ref(_db, path), orderByKey(), limitToLast(n)), s => cb(s.val() || {}), e => { if (errCb) errCb(e); });
       _unsubs.push(u); return u;
