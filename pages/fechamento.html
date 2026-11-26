@@ -679,45 +679,99 @@
       return`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Repasse Consolidado</title><style>@page{size:A4;margin:0}body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#000}.recibo{width:210mm;min-height:297mm;box-sizing:border-box;padding:8mm;margin:0 auto}.cabecalho img{height:60px;width:auto;max-width:150px;object-fit:contain;flex-shrink:0;}.cabecalho{display:flex;align-items:center;justify-content:space-between;margin-bottom:8mm}.titulo-container{flex:1;text-align:center}.titulo{font-size:26px;font-weight:500}.linha-topo{border:none;border-top:1px solid #000;margin:0 0 8mm 0}.topo{display:grid;grid-template-columns:1fr 1fr;gap:6mm;font-size:12px}.topo .dir{text-align:right}.pagoa{margin:8mm 0 6mm;font-size:14px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:6px 8px;vertical-align:middle}th{text-align:center}.col-qtd{width:10%;text-align:center}.col-valor{width:22.5%;text-align:right}.col-liquido{font-weight:700}.linha-totais td{font-weight:700}.impostos{margin-top:4mm;font-size:12px}.validacao{margin:6mm 0 4mm;text-align:center;font-size:12px;line-height:1.5}.rodape{margin-top:10mm;padding-top:6mm;font-size:12px}.rodape-assinatura{display:flex;justify-content:space-between;margin-bottom:8mm;gap:30mm}.assin{text-align:center;width:80mm;flex:1}.assin .label{font-size:12px}.info-pagamento{margin-top:2mm;font-size:12px;line-height:1.6}.info-pagamento .titulo-info{font-weight:700;margin-bottom:3mm;text-transform:uppercase}.quitado{margin-top:3mm;font-weight:600}</style></head><body><div class="recibo"><div class="cabecalho"><div style="width:80px;display:flex;align-items:center;">${logoVal?`<img src="${logoVal}" style="height:60px;width:auto;object-fit:contain;" alt="Logo">`:'<span style="font-size:12px;font-weight:700;">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</span>'}</div><div class="titulo-container"><div class="titulo">Repasse Consolidado</div></div><div style="width:80px"></div></div><hr class="linha-topo"><div class="topo"><div><div style="font-weight:700">SIM CLINICA MÉDICA E ODONTOLOGICA LTDA</div><div>Avenida Doutor Felipe Pinel — Pirituba / São Paulo/SP</div><div>Data/Hora: ${data} ${hora} - Pagamento: ${fmtPag}</div></div><div class="dir"><div>Usuário: ${esc(nomeU)}</div></div></div><div class="pagoa"><strong>Pago a: ${esc(dados.profissional.nome)}</strong> / CPF/CNPJ: <strong>${esc(dados.profissional.documento)}</strong></div><table><thead><tr><th>Qtd</th><th>Item</th><th>Valor Bruto</th><th>Valor Líquido</th></tr></thead><tbody>${linhas}</tbody></table>${imp?`<div class="impostos">${esc(imp)}</div>`:''}<div class="validacao">Declaro que conferi e validei os serviços prestados, estando de acordo com os valores apurados, ciente de que o pagamento desta agenda será realizado conforme calendário financeiro da clínica.</div><div class="rodape"><div class="rodape-assinatura"><div class="assin"><div style="width:55%;margin:0 auto;border-bottom:1px solid #000;height:14px;margin-bottom:4px;"></div><div class="label">Carimbo e Assinatura do Médico</div></div>${(dados.formaPagamento==='dinheiro'&&pago)?`<div class="assin"><div style="width:55%;margin:0 auto;border-bottom:1px solid #000;height:14px;margin-bottom:4px;"></div><div class="label">Assinatura do Responsável</div></div>`:''}</div><div class="info-pagamento"><div class="titulo-info">INFORMAÇÕES DE PAGAMENTO</div><p>Forma de pagamento: (${dados.formaPagamento==='transferencia'?'X':' '}) Transferência &nbsp;&nbsp;(${dados.formaPagamento==='dinheiro'?'X':' '}) Dinheiro &nbsp;&nbsp;Data: ${dataPag}</p><p class="quitado">${pago?'☑':'☐'} Quitado conforme comprovante bancário em anexo</p></div></div></div><sc`+'ript>window.print();<'+'/script></body></html>';
     }
 
-    // [v2.0] Confirma o registro do repasse antes de liberar o recibo.
-    async function gerarRecibo(botao) {
+    // [v2.1] A impressão nunca depende do salvamento: o recibo sai na hora e o histórico é gravado em paralelo.
+    const FECH_ESPERA_SALVAR_MS = 8000;
+
+    function gerarRecibo(botao) {
       if (botao.disabled) return;
       if (!dadosCalculo) { toast('Calcule primeiro', 'error'); return; }
-      if (!window._fbSet || !window._userUid) { toast('Aguarde a conexão para gerar o recibo.', 'error'); return; }
       const w = window.open('', '_blank');
       if (!w) { toast('Permita pop-ups para gerar o recibo.', 'error'); return; }
-      const html = montarHtmlRecibo(dadosCalculo);
-      const id = Date.now();
-      const registro = {
-        id: id,
-        profissional: dadosCalculo.profissional,
-        formaPagamento: dadosCalculo.formaPagamento,
-        itens: dadosCalculo.itens,
-        subtotal: dadosCalculo.subtotal,
-        pis: dadosCalculo.pis,
-        csll: dadosCalculo.csll,
-        irrf: dadosCalculo.irrf,
-        cofins: dadosCalculo.cofins,
-        totalDescontos: dadosCalculo.totalDescontos,
-        liquido: dadosCalculo.liquido,
-        criadoEm: new Date().toISOString(),
-        criadoPor: usuario || '—',
-        criadoPorUid: window._userUid,
-        pagoHoje: document.getElementById('pagoHojeCheckbox') ? document.getElementById('pagoHojeCheckbox').checked : false
-      };
+      // Evita duas janelas no clique duplo
       botao.disabled = true;
-      try {
-        await window._fbSet('fechamento/registros/' + id, registro);
-      } catch (e) {
-        w.close();
-        toast('Não foi possível salvar o repasse: ' + e.message, 'error');
-        return;
-      } finally {
-        botao.disabled = false;
-      }
-      if (w.closed) { toast('Repasse salvo. Consulte o histórico para imprimir.', 'info'); return; }
+      setTimeout(function () { botao.disabled = false; }, 1500);
+      const calculo = dadosCalculo;
+      const html = montarHtmlRecibo(calculo);
+      // Grava antes de escrever o recibo: o print() da nova janela pode pausar esta página
+      salvarRepasse(calculo);
       w.document.write(html);
       w.document.close();
+    }
+
+    // [v2.1] Um registro por cálculo: reimprimir não duplica e uma nova tentativa usa o mesmo id.
+    function salvarRepasse(calculo) {
+      if (!window._fbSet || !window._userUid) {
+        avisoRepasse(calculo, 'erro', 'sem conexão com o sistema.');
+        return;
+      }
+      const pagoHoje = document.getElementById('pagoHojeCheckbox') ? document.getElementById('pagoHojeCheckbox').checked : false;
+      const envio = calculo.envio;
+      // Já salvo (ou a caminho) com a mesma marcação de pagamento: só reimprime
+      if (envio && envio.status !== 'erro' && envio.pagoHoje === pagoHoje) return;
+      const id = envio ? envio.id : Date.now();
+      const criadoEm = envio ? envio.criadoEm : new Date().toISOString();
+      const atual = { id: id, criadoEm: criadoEm, pagoHoje: pagoHoje, status: 'enviando' };
+      calculo.envio = atual;
+      const registro = {
+        id: id,
+        profissional: calculo.profissional,
+        formaPagamento: calculo.formaPagamento,
+        itens: calculo.itens,
+        subtotal: calculo.subtotal,
+        pis: calculo.pis,
+        csll: calculo.csll,
+        irrf: calculo.irrf,
+        cofins: calculo.cofins,
+        totalDescontos: calculo.totalDescontos,
+        liquido: calculo.liquido,
+        criadoEm: criadoEm,
+        criadoPor: usuario || '—',
+        criadoPorUid: window._userUid,
+        pagoHoje: pagoHoje
+      };
+      // Sem internet o Firebase não responde: avisa em vez de ficar em silêncio
+      const espera = setTimeout(function () {
+        if (calculo.envio === atual && atual.status === 'enviando') avisoRepasse(calculo, 'pendente');
+      }, FECH_ESPERA_SALVAR_MS);
+      let gravacao;
+      try { gravacao = Promise.resolve(window._fbSet('fechamento/registros/' + id, registro)); }
+      catch (e) { gravacao = Promise.reject(e); }
+      gravacao.then(function () {
+        clearTimeout(espera);
+        if (calculo.envio !== atual) return;
+        atual.status = 'salvo';
+        limparAvisoRepasse(calculo);
+        toast('Repasse salvo no histórico.', 'success');
+      }).catch(function (e) {
+        clearTimeout(espera);
+        if (calculo.envio !== atual) return;
+        atual.status = 'erro';
+        avisoRepasse(calculo, 'erro', e && e.message ? e.message : 'erro desconhecido.');
+      });
+    }
+
+    // [v2.1] Aviso fixo na tela (o toast some em poucos segundos). Não aparece no recibo impresso.
+    function avisoRepasse(calculo, tipo, detalhe) {
+      limparAvisoRepasse(calculo);
+      const nome = calculo.profissional.nome;
+      const caixa = document.createElement('div');
+      caixa.className = 'fech-aviso-salvar';
+      caixa.setAttribute('role', 'alert');
+      caixa.style.cssText = 'margin:0 0 14px;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;line-height:1.5;display:flex;gap:12px;align-items:flex-start;justify-content:space-between;' +
+        (tipo === 'erro' ? 'background:#fef2f2;border:1px solid #fecaca;color:#991b1b;' : 'background:#fef3c7;border:1px solid #fde68a;color:#92400e;');
+      const texto = tipo === 'erro'
+        ? 'O recibo de ' + nome + ' (R$ ' + formatarMoeda(calculo.liquido) + ') NÃO foi salvo no histórico: ' + String(detalhe).replace(/\.+$/, '') + '. Avise o administrador. Para tentar salvar de novo, clique em imprimir novamente antes de limpar.'
+        : 'O recibo de ' + nome + ' (R$ ' + formatarMoeda(calculo.liquido) + ') ainda não foi confirmado no histórico (conexão lenta ou sem internet). Não feche esta página até a confirmação.';
+      caixa.innerHTML = '<span>' + esc(texto) + '</span><button type="button" style="border:none;background:none;color:inherit;font:inherit;cursor:pointer;text-decoration:underline;white-space:nowrap;">Ciente</button>';
+      caixa.querySelector('button').addEventListener('click', function () { caixa.remove(); });
+      const destino = document.querySelector('.content') || document.body;
+      destino.insertBefore(caixa, destino.firstChild);
+      calculo.aviso = caixa;
+      caixa.scrollIntoView({ block: 'nearest' });
+    }
+
+    function limparAvisoRepasse(calculo) {
+      if (calculo.aviso) { calculo.aviso.remove(); calculo.aviso = null; }
     }
 
     document.addEventListener('DOMContentLoaded',function(){
