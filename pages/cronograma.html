@@ -3599,6 +3599,44 @@
         if (!S.tocou && (!ativa || ativa.id === 'tabAgenda')) window.tab('cronograma');
       }
     };
+
+    // [v2.3] Menu na barra lateral do Dashboard: o Dashboard troca de tela chamando cronNavLateral().
+    //        Sem essa chamada a página fica exatamente como antes (abas próprias visíveis).
+    //        Cada tela = [aba] ou [aba, visão/subaba]. Os nomes das chaves são os mesmos do dashboard.html.
+    var NAV_TELAS = {
+      dia: ['cronograma', 'dia'], semana: ['cronograma', 'semana'], mes: ['cronograma', 'mes'], atend: ['config', 'atend'],
+      aberturaAgendas: ['config', 'abertura'], coleta: ['config', 'coleta'],
+      medicos: ['config', 'medicos'], grades: ['config', 'grades'], import: ['config', 'import'],
+      salas: ['agenda'], modelo: ['semana'], checklist: ['abertura'], notas: ['notas'], hist: ['config', 'hist']
+    };
+    var navObs = null, navUltima = '';
+    function navTelaAtual() {
+      var b = document.querySelector('.content > .tabs .tab-btn.active'); if (!b) return '';
+      var nomeAba = b.id.replace('tab', '').toLowerCase();
+      var interna = nomeAba === 'cronograma' ? S.view : nomeAba === 'config' ? S.sub : '';
+      return Object.keys(NAV_TELAS).filter(function (k) { var t = NAV_TELAS[k]; return t[0] === nomeAba && (!t[1] || t[1] === interna); })[0] || '';
+    }
+    function navAvisar() {   // mantém o item marcado na barra quando a troca é feita por dentro da página
+      var tela = navTelaAtual();
+      if (!tela || tela === navUltima || window.parent === window) return;
+      navUltima = tela;
+      window.parent.postMessage({ tipo: 'crono:tela', tela: tela }, location.origin);
+    }
+    window.cronNavLateral = function (tela) {
+      if (!isAdmin() || !S.iniciado || !Object.prototype.hasOwnProperty.call(NAV_TELAS, tela)) return false;
+      var t = NAV_TELAS[tela];
+      S.autoAba = true;                       // a aba automática não pode sobrepor a escolha do menu
+      document.body.classList.add('nav-lateral');
+      if (t[0] === 'cronograma') S.view = t[1];
+      if (t[0] === 'config') S.sub = t[1];
+      window.tab(t[0]);
+      navUltima = tela;
+      if (!navObs) {
+        navObs = new MutationObserver(navAvisar);
+        navObs.observe(document.querySelector('.content'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+      }
+      return true;
+    };
   })();
   </script>
 
@@ -3742,6 +3780,8 @@
        ?embed=1  → usado pelo Dashboard (aba Cronograma do admin): esconde o cabeçalho próprio do módulo.
        ?gerar=1  → usado pela tela inicial (botão "Gerar agenda"): abre o mesmo Gerador de Agenda do módulo. -->
   <style>body.embed .s-header{display:none !important;}body.embed .content{padding-top:14px;}</style>
+  <!-- [v2.3] Aberto pela barra lateral do Dashboard: as abas próprias saem de cena para não duplicar o menu. -->
+  <style>body.nav-lateral .content > .tabs,body.nav-lateral #cronSubnav,body.nav-lateral #cronSeg{display:none !important;}</style>
   <script>
     if (window.__EMBED) document.body.classList.add('embed');
   </script>
