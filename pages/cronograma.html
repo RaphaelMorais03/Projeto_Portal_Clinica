@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <!-- VERSION: v2.1 | cronograma.html | 24/11/2026 | Visual unificado: passa a usar ../css/portal-theme.css (mesmos valores da v1.5). Só CSS de tela; folha impressa, regras de impressão, IDs e funções intactos. -->
 <html lang="pt-BR">
+<!-- VERSION: v2.7 | cronograma.html | 27/11/2026 | Confirmação com o médico (admin): tela com situação por dia, WhatsApp no cadastro do médico, texto padrão (crono/config/confirmacao/texto), nº de pacientes (campo agendados que já existia) e "Pedir no WhatsApp" na Coleta do mês. -->
 <!-- VERSION: v2.5 | cronograma.html | 27/11/2026 | Menu novo (etapa 1): aberto pelo Dashboard, cada item (Abertura, Agendas, Grades) mostra as suas telas em abas. Mesmas telas; nada novo no banco. -->
 <!-- VERSION: v2.2 | cronograma.html | 26/11/2026 | Gestão de agendas, etapa 1: subaba Configuração → Grades (só admin), ligada aos médicos do cadastro (crono/medicos). Nó novo crono/grades; precisa da Rule publicada. Não altera atendimentos. -->
 <!-- VERSION: v2.0 | cronograma.html | 23/11/2026 | Aba Semana: "Imprimir semana" e "PDF" para qualquer usuário (somente leitura de crono/dias, mesmo modelo A4 paisagem/PDF do Verificar), com navegação de semana. Não grava nada. -->
@@ -655,6 +656,7 @@
     <!-- [v1.3] CONFIGURAÇÃO DO CRONOGRAMA (edição) — somente admin -->
     <div class="tab-pane" id="paneConfig">
       <div class="cron-subnav" id="cronSubnav">
+        <button type="button" data-sub="confirmacao"><i class="fas fa-comment-dots"></i> Confirmação</button>
         <button type="button" data-sub="medicos" class="on"><i class="fas fa-user-doctor"></i> Médicos</button>
         <button type="button" data-sub="grades"><i class="fas fa-calendar-check"></i> Grades</button>
         <button type="button" data-sub="import"><i class="fas fa-file-excel"></i> Importar planilha</button>
@@ -662,6 +664,31 @@
         <button type="button" data-sub="atend"><i class="fas fa-pen-to-square"></i> Atendimentos</button>
         <button type="button" data-sub="abertura"><i class="fas fa-door-open"></i> Abertura de agendas</button>
         <button type="button" data-sub="hist"><i class="fas fa-clock-rotate-left"></i> Histórico</button>
+      </div>
+
+      <!-- [v2.7] Confirmação com o médico (prefixo cronConf*) — somente admin -->
+      <div class="cron-sub" id="cronSubConf">
+        <div class="cron-conf-passos" id="cronConfPassos" role="navigation" aria-label="Etapas do mês">
+          <button type="button" data-ir="grades"><i>1</i><span><b>Grades</b><small>cadastrar dias e horários</small></span></button>
+          <button type="button" data-ir="coleta"><i>2</i><span><b>Abertura</b><small>receber datas e abrir</small></span></button>
+          <button type="button" data-ir="dia"><i>3</i><span><b>Agendas</b><small>salas e impressão</small></span></button>
+          <button type="button" data-ir="confirmacao" aria-current="step"><i>4</i><span><b>Confirmação</b><small>um dia antes</small></span></button>
+        </div>
+        <div class="cron-conf-topo">
+          <div class="cron-conf-nav">
+            <button type="button" class="btn-s" id="cronConfAnt" aria-label="Dia anterior"><i class="fas fa-chevron-left"></i></button>
+            <b id="cronConfData" aria-live="polite"></b>
+            <button type="button" class="btn-s" id="cronConfProx" aria-label="Próximo dia"><i class="fas fa-chevron-right"></i></button>
+            <button type="button" class="btn-s" id="cronConfHoje">Hoje</button>
+          </div>
+          <div class="cron-conf-acoes">
+            <div class="cron-subnav" id="cronConfModo"><button type="button" data-modo="dia" class="on">Um dia</button><button type="button" data-modo="semana">Próximos 7 dias</button></div>
+            <button type="button" class="btn-s" id="cronConfTexto"><i class="fas fa-pen"></i> Editar mensagem</button>
+          </div>
+        </div>
+        <div class="cron-conf-chips" id="cronConfChips"></div>
+        <div id="cronConfLista"></div>
+        <p class="cron-help">O portal só abre o WhatsApp com o texto pronto; quem envia é você. A quantidade de pacientes vem do AMEI e é digitada à mão (opcional).</p>
       </div>
 
       <div class="cron-sub active" id="cronSubMedicos"><div class="panel">
@@ -790,6 +817,8 @@
         <div><label class="f-label" for="cronMedIdade">Idade de atendimento</label><input class="f-input" id="cronMedIdade" placeholder="Ex.: A partir de 14 anos"></div>
         <div><label class="f-label" for="cronMedPorAg">Nº por agenda</label><input class="f-input" id="cronMedPorAg" placeholder="Ex.: 40 agendamentos / Horários disponíveis"></div>
         <div><label class="f-label" for="cronMedProf">Vínculo com Profissionais (opcional)</label><select class="f-select" id="cronMedProf"></select></div>
+        <!-- [v2.7] número usado pela Confirmação e pela Coleta do mês (só admin lê crono/medicos) -->
+        <div class="full"><label class="f-label" for="cronMedWhats">WhatsApp (DDD + número)</label><input class="f-input" id="cronMedWhats" inputmode="tel" autocomplete="off" maxlength="25" placeholder="(11) 90000-0000"></div>
         <div class="full"><label class="f-label">Dias fixos na semana (referência)</label>
           <div class="cron-dias-chk" id="cronMedDias">
             <label><input type="checkbox" value="1"> Seg</label><label><input type="checkbox" value="2"> Ter</label><label><input type="checkbox" value="3"> Qua</label><label><input type="checkbox" value="4"> Qui</label><label><input type="checkbox" value="5"> Sex</label><label><input type="checkbox" value="6"> Sáb</label>
@@ -799,6 +828,25 @@
         <div class="full"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="cronMedAtivo" checked> Médico ativo (aparece na coleta e na planilha modelo)</label></div>
       </div>
       <div class="cron-mfoot"><button class="btn-s" onclick="cronMedFechar()">Cancelar</button><button class="btn-p" onclick="cronMedSalvar()"><i class="fas fa-check"></i> Salvar</button></div>
+    </div>
+  </div>
+
+  <!-- [v2.7] mensagem de WhatsApp (confirmação e pedido de datas) -->
+  <div class="modal-bg" id="cronModalMsg">
+    <div class="cron-modal">
+      <div class="cron-mhead"><span id="cronMsgTitulo">Mensagem</span><button class="modal-close-btn" onclick="cronMsgFechar()" title="Fechar"><i class="fas fa-xmark"></i></button></div>
+      <div class="cron-help" id="cronMsgNum"></div>
+      <div class="cron-msg-previa" id="cronMsgPrevia"></div>
+      <div id="cronMsgModeloBox">
+        <label class="f-label" for="cronMsgModelo">Texto padrão (vale para todos os médicos)</label>
+        <textarea class="f-input" id="cronMsgModelo" rows="6" maxlength="1000"></textarea>
+        <p class="cron-help">Use {nome}, {dia}, {data}, {horario} e {pacientes}. Sem nome de paciente. A linha de pacientes some quando o número estiver vazio.</p>
+      </div>
+      <div class="cron-mfoot">
+        <button type="button" class="btn-s" id="cronMsgSalvar">Salvar texto padrão</button>
+        <button type="button" class="btn-s" id="cronMsgCopiar"><i class="fas fa-copy"></i> Copiar texto</button>
+        <button type="button" class="cron-conf-zap" id="cronMsgAbrir"><i class="fab fa-whatsapp"></i> Abrir no WhatsApp</button>
+      </div>
     </div>
   </div>
 
@@ -2264,6 +2312,7 @@
     function redesenhar() {
       if (aba('paneCronograma')) window.cronRender();
       if (aba('paneConfig')) renderSub();
+      confAvisar();   // [v2.7] contador do menu
     }
 
     // ── CONFIGURAÇÃO: sub-abas ──
@@ -2280,7 +2329,7 @@
       if (n === 'import' && document.body.classList.contains('grd-ativo')) n = 'grades';   // [v2.4]
       S.sub = n;
       Array.prototype.forEach.call($('cronSubnav').querySelectorAll('button'), function (b) { b.classList.toggle('on', b.getAttribute('data-sub') === n); });
-      var mapa = { medicos: 'cronSubMedicos', grades: 'cronSubGrades', import: 'cronSubImport', coleta: 'cronSubColeta', atend: 'cronSubAtend', abertura: 'cronSubAbertura', hist: 'cronSubHist' };
+      var mapa = { medicos: 'cronSubMedicos', grades: 'cronSubGrades', import: 'cronSubImport', coleta: 'cronSubColeta', confirmacao: 'cronSubConf', atend: 'cronSubAtend', abertura: 'cronSubAbertura', hist: 'cronSubHist' };
       Object.keys(mapa).forEach(function (k) { $(mapa[k]).classList.toggle('active', k === n); });
       if (n === 'abertura' && typeof window.calAbrir === 'function') window.calAbrir();   // calendário de abertura (legado) realocado aqui
       renderSub();
@@ -2288,6 +2337,7 @@
     function renderSub() {
       if (S.sub === 'medicos') renderMedicos();
       else if (S.sub === 'coleta') renderColeta();
+      else if (S.sub === 'confirmacao') renderConf();   // [v2.7]
       else if (S.sub === 'atend') renderAtend();
       else if (S.sub === 'hist') renderHist();
       else if (S.sub === 'grades') { renderGrades(); renderGrdImp(); grdMostrarDatas(); }   // [v2.2]
@@ -2320,6 +2370,7 @@
       $('cronMedSala').innerHTML = optSalas(m.salaHabitual || '', 'Sem sala fixa');
       $('cronMedEnc').value = typeof m.limiteEncaixes === 'number' ? m.limiteEncaixes : '';
       $('cronMedIdade').value = m.idadeAtend || ''; $('cronMedPorAg').value = m.porAgenda || '';
+      $('cronMedWhats').value = zapFmt(m.whatsapp) || m.whatsapp || '';   // [v2.7]
       var ps = S.profs || {}, pk = Object.keys(ps).sort(function (a, b) { return String((ps[a] || {}).nome || '').localeCompare(String((ps[b] || {}).nome || ''), 'pt'); });
       $('cronMedProf').innerHTML = '<option value="">Sem vínculo</option>' + pk.map(function (k) { return '<option value="' + esc(k) + '"' + (m.profKey === k ? ' selected' : '') + '>' + esc((ps[k] || {}).nome || k) + '</option>'; }).join('');
       var dias = String(m.diasFixos || '').split(',');
@@ -2332,6 +2383,8 @@
       var nome = $('cronMedNome').value.trim(); if (!nome) { toast('Informe o nome', 'error'); return; }
       var encRaw = $('cronMedEnc').value.trim(), enc = encRaw === '' ? null : parseInt(encRaw, 10);
       if (enc !== null && (isNaN(enc) || enc < 0)) { toast('Limite de encaixes inválido', 'error'); return; }
+      var zapDigitado = $('cronMedWhats').value.trim(), zap = zapNumero(zapDigitado);   // [v2.7]
+      if (zapDigitado && !zap) { toast('WhatsApp inválido: informe DDD + número', 'error'); return; }
       var id = $('cronMedId').value, sobre = $('cronMedSobrenome').value.trim(), chave = limpaNome(nome + ' ' + sobre);
       var dup = Object.keys(S.medicos).some(function (k) { return k !== id && limpaNome(nomeMed(S.medicos[k] || {})) === chave; });
       if (dup && !confirm('Já existe um médico com esse nome e sobrenome. Salvar mesmo assim?')) return;
@@ -2342,6 +2395,7 @@
         idadeAtend: $('cronMedIdade').value.trim(), porAgenda: $('cronMedPorAg').value.trim() };
       // [v1.4] preserva a origem de quem foi importado
       if (ant.origem) obj.origem = ant.origem;
+      if (zap) obj.whatsapp = zap;   // [v2.7] campo vazio remove o número
       if (ant.pessoaId) obj.pessoaId = ant.pessoaId;   // [v1.7] a gravação é completa: sem isto o vínculo com o cadastro central se perderia
       var nid = id || ('med_' + Date.now().toString(36));
       // [v1.7] médico NOVO: grava crono/medicos + pessoas no mesmo update (null = não foi possível, segue o fluxo antigo)
@@ -2670,12 +2724,360 @@
       l.forEach(function (r) { var s = (col[r.id] || {}).status; if (s === 'recebida') rec++; else if (s === 'sem') sem++; else pen++; });
       $('cronColetaResumo').innerHTML = '<b>' + rec + '</b> recebida(s) · <b>' + sem + '</b> sem atendimento · <b>' + pen + '</b> pendente(s)';
       if (!l.length) { $('cronColetaLista').innerHTML = '<div class="cal-msg info">Cadastre os médicos na aba Médicos para controlar a coleta.</div>'; return; }
-      $('cronColetaLista').innerHTML = '<table class="cron-tbl"><thead><tr><th>Médico</th><th>Especialidade</th><th>Situação da agenda</th><th>Atendimentos previstos</th><th>Atualizado</th></tr></thead><tbody>' + l.map(function (r) {
+      $('cronColetaLista').innerHTML = '<table class="cron-tbl"><thead><tr><th>Médico</th><th>Especialidade</th><th>Situação da agenda</th><th>Pedir datas</th><th>Atendimentos previstos</th><th>Atualizado</th></tr></thead><tbody>' + l.map(function (r) {
         var c = col[r.id] || {}, s = c.status || 'pendente';
         return '<tr><td><b>' + esc(nomeMed(r.m)) + '</b></td><td>' + esc(r.m.especialidade || '') + '</td><td><select class="f-select cron-col-st" data-med="' + esc(r.id) + '" style="max-width:190px;">' +
           [['pendente', 'Pendente'], ['recebida', 'Recebida'], ['sem', 'Sem atendimento']].map(function (o) { return '<option value="' + o[0] + '"' + (s === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
-          '</select></td><td>' + (cont[r.id] || 0) + '</td><td style="font-size:11px;color:var(--gray-500);">' + (c.em ? esc(brData(c.em.slice(0, 10)) + (c.por ? ' · ' + c.por : '')) : '—') + '</td></tr>';
+          '</select></td><td>' + (s === 'pendente' ? coletaBotao(r) : '—') + '</td><td>' + (cont[r.id] || 0) + '</td><td style="font-size:11px;color:var(--gray-500);">' + (c.em ? esc(brData(c.em.slice(0, 10)) + (c.por ? ' · ' + c.por : '')) : '—') + '</td></tr>';
       }).join('') + '</tbody></table>';
+    }
+
+    // ── [v2.7] CONFIRMAÇÃO COM O MÉDICO (prefixo conf*) ──
+    //    Situação: crono/dias/{dia}/itens/{id}/confirmacao = { situacao, em, por, statusAntes }
+    //    "Pacientes" é o campo agendados do item (o mesmo do detalhe do calendário).
+    var CONF_TEXTO = 'Olá, {nome}! Confirma sua agenda de {dia}, {data}, das {horario}?\nPacientes marcados: {pacientes}.\n\nResponda SIM ou NÃO.\n— AmorSaúde Pirituba';
+    var CONF_CAMINHO = 'crono/config/confirmacao/texto';
+    var CONF_LBL = { falta: 'Falta enviar', enviada: 'Aguardando resposta', confirmada: 'Confirmado', nao_vem: 'Não vem' };
+    var CONF_FILTROS = [['todos', 'Todos'], ['falta', '1. Falta enviar'], ['enviada', '2. Aguardando resposta'], ['confirmada', 'Confirmados'], ['nao_vem', 'Não vem']];
+    var CONF_PRAZO = 14;   // até onde procurar o próximo dia com agenda
+
+    function zapNumero(v) {   // só DDD + número (10 ou 11 dígitos); aceita com 55 na frente
+      var n = String(v || '').replace(/\D/g, '');
+      if (n.length > 11 && n.indexOf('55') === 0) n = n.slice(2);
+      return /^[1-9][1-9](9\d{8}|\d{8})$/.test(n) ? n : '';
+    }
+    function zapFmt(v) { var n = zapNumero(v); return n ? '(' + n.slice(0, 2) + ') ' + n.slice(2, -4) + '-' + n.slice(-4) : ''; }
+    function zapAbrir(numero, texto) { window.open('https://wa.me/55' + numero + '?text=' + encodeURIComponent(texto), '_blank', 'noopener'); }
+
+    function confSitItem(x) {
+      var s = x.conf.situacao;
+      // confirmado aqui e depois voltado para "previsto" em Atendimentos: precisa confirmar de novo
+      if (s === 'confirmada' && x.conf.statusAntes === 'previsto' && (x.status || 'previsto') === 'previsto') return 'falta';
+      if (s === 'enviada' || s === 'confirmada' || s === 'nao_vem') return s;
+      return x.status === 'confirmado' ? 'confirmada' : 'falta';   // confirmado marcado em Atendimentos também vale
+    }
+    // um cartão por profissional no dia; cancelada ou remarcada só aparece se foi marcada como "não vem"
+    function confCartoes(dia) {
+      var g = {};
+      itens(dia, true).forEach(function (x) {
+        var c = (itemBruto(dia, x.id) || {}).confirmacao;
+        x.conf = (c && typeof c === 'object') ? c : {};
+        if (inativo(x) && x.conf.situacao !== 'nao_vem') return;
+        var k = chaveMed(x); (g[k] = g[k] || { dia: dia, k: k, itens: [] }).itens.push(x);
+      });
+      return Object.keys(g).map(function (k) {
+        var cd = g[k]; cd.itens.sort(function (a, b) { return PERS.indexOf(a.periodo) - PERS.indexOf(b.periodo); });
+        cd.vivos = cd.itens.filter(function (x) { return !inativo(x); });
+        cd.med = medDe(cd.itens[0]);
+        cd.nome = cd.med ? nomeMed(cd.med.m) : rotuloNome(cd.itens[0]);
+        cd.zap = cd.med ? zapNumero(cd.med.m.whatsapp) : '';
+        var sits = (cd.vivos.length ? cd.vivos : cd.itens).map(confSitItem);
+        cd.sit = ['falta', 'enviada', 'confirmada', 'nao_vem'].filter(function (s) { return sits.indexOf(s) >= 0; })[0];
+        return cd;
+      }).sort(function (a, b) { return PERS.indexOf(a.itens[0].periodo) - PERS.indexOf(b.itens[0].periodo) || a.nome.localeCompare(b.nome, 'pt'); });
+    }
+    function confAchar(dia, k) { return confCartoes(dia).filter(function (c) { return c.k === k; })[0] || null; }
+
+    function confCarregado(de, ate) {
+      var meses = [de.slice(0, 7), ate.slice(0, 7)];
+      meses.forEach(garantirMes);
+      return meses.every(function (m) { return S.carregado[m]; });
+    }
+    // data padrão: o próximo dia com agenda, a partir de amanhã (o que foi marcado "não vem" continua contando)
+    function confDiaBase() {
+      var hoje = dataDe(hojeIso());
+      if (!confCarregado(hojeIso(), iso(addDias(hoje, CONF_PRAZO)))) return null;
+      for (var i = 1; i <= CONF_PRAZO; i++) { var d = iso(addDias(hoje, i)); if (confCartoes(d).length) return d; }
+      return iso(addDias(hoje, 1));
+    }
+    // contador do menu lateral: quantos ainda faltam confirmar no próximo dia
+    function confAvisar() {
+      if (!S.iniciado || !S.medOk || window.parent === window || !isAdmin()) return;
+      var d = confDiaBase(); if (!d) return;
+      var n = confCartoes(d).filter(function (c) { return c.sit === 'falta' || c.sit === 'enviada'; }).length;
+      if (n === S.confSelo) return;
+      S.confSelo = n;
+      window.parent.postMessage({ tipo: 'crono:confirmacao', pendentes: n }, location.origin);
+    }
+
+    function confQuando(c) {
+      var q = new Date(c.em || ''); if (isNaN(q)) return '';
+      return (iso(q) === hojeIso() ? 'hoje' : brCurta(iso(q))) + ' ' + pad(q.getHours()) + ':' + pad(q.getMinutes()) + (c.por ? ' por ' + c.por : '');
+    }
+    function confUnicos(l) { return l.filter(function (v, i) { return v && l.indexOf(v) === i; }); }
+    function confHtmlCartao(cd) {
+      var chave = esc(cd.dia + '|' + cd.k);
+      var linha = confUnicos([confUnicos(cd.itens.map(espDe)).join(' / '),
+        confUnicos(cd.itens.map(function (x) { return x.horario || x.periodo; })).join(' · '),
+        confUnicos(cd.itens.map(function (x) { return x.sala ? salaRotulo(x.sala) : ''; })).join(' / ') || 'sem sala']).join(' · ');
+      var bt = function (ac, texto, classe, extra) { return '<button type="button" class="' + (classe || 'btn-s') + '" data-ac="' + ac + '"' + (extra || '') + '>' + texto + '</button>'; };
+      var nota = '', botoes = '';
+      var primeiro = (cd.vivos.length ? cd.vivos : cd.itens).filter(function (x) { return confSitItem(x) === cd.sit; })[0], c = primeiro ? primeiro.conf : {};
+      if (cd.sit === 'enviada') nota = '<small>enviada ' + esc(confQuando(c)) + ' · ' + bt('desfazer', 'desfazer envio', 'cron-conf-link') + '</small>';
+      if (cd.sit === 'confirmada') nota = '<small>' + (c.situacao ? 'confirmado ' + esc(confQuando(c)) : 'confirmado nos Atendimentos') + '</small>';
+      if (cd.sit === 'nao_vem') {
+        var fim = confUnicos(cd.itens.map(function (x) { return x.status === 'remarcado' ? 'Remarcado para ' + (x.remarcadoPara ? brCurta(x.remarcadoPara) : 'outra data') : x.status === 'cancelado' ? 'Agenda cancelada' : ''; }));
+        nota = '<small>' + esc(['marcado ' + confQuando(c)].concat(fim).join(' · ')) + '</small>';
+      }
+      if (cd.sit === 'falta' || cd.sit === 'enviada') {
+        if (cd.med) botoes += cd.zap
+          ? (cd.sit === 'falta' ? bt('whats', '<i class="fab fa-whatsapp"></i> Abrir no WhatsApp', 'cron-conf-zap') : bt('whats', 'Reenviar'))
+          : bt('cadastrar', 'Cadastrar WhatsApp');
+        botoes += bt('confirmar', 'Confirmado', cd.sit === 'enviada' ? 'btn-p' : 'btn-s') + bt('naovem', 'Não vem');
+      } else if (cd.sit === 'confirmada') botoes = bt('reabrir', 'Reabrir');
+      else {
+        cd.vivos.forEach(function (x) { botoes += bt('remarcar', 'Remarcar' + (cd.vivos.length > 1 ? ' ' + esc(x.periodo.toLowerCase()) : ''), 'btn-s', ' data-id="' + esc(x.id) + '"'); });
+        if (cd.vivos.length) botoes += bt('cancelar', 'Cancelar agenda');
+        if (cd.itens.some(function (x) { return x.status !== 'remarcado'; })) botoes += bt('reabrir', 'Reabrir');
+      }
+      var pacs = cd.vivos.map(function (x) {
+        var qual = cd.vivos.length > 1 ? ' ' + x.periodo.toLowerCase() : '';
+        return '<label>Pacientes' + esc(qual) + ' <input type="number" min="0" max="999" step="1" inputmode="numeric" class="f-input cron-conf-pac" data-dia="' + esc(cd.dia) + '" data-id="' + esc(x.id) + '" value="' + (x.agendados === null ? '' : esc(String(x.agendados))) + '" placeholder="—" aria-label="' + esc('Pacientes marcados — ' + cd.nome + qual) + '"></label>';
+      }).join('');
+      return '<div class="cron-conf-card" data-k="' + chave + '" data-sit="' + cd.sit + '">' +
+        '<div class="cron-conf-info"><b class="cron-conf-nome">' + esc(cd.nome) + '</b><span>' + esc(linha) + '</span>' +
+        (!cd.med ? '<em class="cron-conf-aviso">fora do cadastro de médicos</em>' : !cd.zap ? '<em class="cron-conf-aviso">sem número cadastrado</em>' : '') + nota + '</div>' +
+        '<div class="cron-conf-pacs">' + pacs + '</div><span class="cron-conf-pill ' + cd.sit + '">' + CONF_LBL[cd.sit] + '</span>' +
+        '<div class="cron-conf-botoes">' + botoes + '</div></div>';
+    }
+    // redesenha depois do evento em curso, para o Tab entre os campos continuar funcionando
+    function renderConf() {
+      if (S.confT) return;
+      S.confT = setTimeout(function () { S.confT = 0; confDesenhar(); }, 0);
+    }
+    function confDesenhar() {
+      var box = $('cronConfLista'); if (!box || S.sub !== 'confirmacao') return;
+      var ae = document.activeElement, foco = null;
+      if (ae && ae.classList && ae.classList.contains('cron-conf-pac') && box.contains(ae)) {
+        var atual = itemBruto(ae.getAttribute('data-dia'), ae.getAttribute('data-id'));
+        // não apaga o número que ainda está sendo digitado
+        if (atual && ae.value !== String(typeof atual.agendados === 'number' ? atual.agendados : '')) return;
+        foco = ae.getAttribute('data-dia') + '|' + ae.getAttribute('data-id');
+      }
+      var base = S.confDia || confDiaBase(), semana = S.confModo === 'semana';
+      Array.prototype.forEach.call($('cronConfModo').querySelectorAll('button'), function (b) { b.classList.toggle('on', (b.getAttribute('data-modo') === 'semana') === semana); });
+      if (!base) { $('cronConfData').textContent = '…'; $('cronConfChips').innerHTML = ''; box.innerHTML = '<div class="cal-msg info">Carregando...</div>'; return; }
+      var dias = [base]; if (semana) for (var i = 1; i < 7; i++) dias.push(iso(addDias(dataDe(base), i)));
+      var hoje = hojeIso(), amanha = iso(addDias(dataDe(hoje), 1));
+      $('cronConfData').textContent = semana ? brCurta(dias[0]) + ' a ' + brCurta(dias[6])
+        : (base === hoje ? 'Hoje · ' : base === amanha ? 'Amanhã · ' : '') + DOWC[dataDe(base).getDay()].toLowerCase() + ' ' + brCurta(base);
+      var pronto = confCarregado(dias[0], dias[dias.length - 1]) && S.medOk;
+      var erro = S.erro[dias[0].slice(0, 7)] || S.erro[dias[dias.length - 1].slice(0, 7)];
+      var porDia = dias.map(function (d) { return { dia: d, cartoes: confCartoes(d) }; });
+      var cont = { todos: 0, falta: 0, enviada: 0, confirmada: 0, nao_vem: 0 };
+      porDia.forEach(function (p) { p.cartoes.forEach(function (c) { cont.todos++; cont[c.sit]++; }); });
+      var filtro = S.confF || 'todos';
+      $('cronConfChips').innerHTML = CONF_FILTROS.map(function (f) { return '<button type="button" data-f="' + f[0] + '" aria-pressed="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + cont[f[0]] + '</b></button>'; }).join('');
+      if (erro) { box.innerHTML = '<div class="cal-msg erro">Não foi possível ler o cronograma (' + esc(erro) + ').</div>'; return; }
+      if (!pronto) { box.innerHTML = '<div class="cal-msg info">Carregando...</div>'; return; }
+      var h = porDia.map(function (p) {
+        var l = p.cartoes.filter(function (c) { return filtro === 'todos' || c.sit === filtro; });
+        if (!l.length) return '';
+        return (semana ? '<div class="cron-conf-diatit">' + esc(NOMES_DIA[dataDe(p.dia).getDay()].toLowerCase() + ', ' + brCurta(p.dia)) + '</div>' : '') + l.map(confHtmlCartao).join('');
+      }).join('');
+      box.innerHTML = h || '<div class="cal-msg info">' + (cont.todos ? 'Nenhum profissional nesta situação.' : semana ? 'Nenhuma agenda nestes dias.' : 'Nenhuma agenda neste dia.') + '</div>';
+      if (foco) Array.prototype.some.call(box.querySelectorAll('input.cron-conf-pac'), function (el) {
+        if (el.getAttribute('data-dia') + '|' + el.getAttribute('data-id') !== foco) return false;
+        el.focus(); return true;
+      });
+    }
+
+    // grava a mudança em todas as agendas do cartão, de uma vez, e registra no histórico
+    function confGravar(cd, mudar, para, aviso) {
+      var up = {}, ids = [];
+      cd.itens.forEach(function (x) {
+        var m = mudar(x); if (!m) return;
+        Object.keys(m).forEach(function (campo) { up[baseItem(cd.dia, x.id) + '/' + campo] = m[campo]; });
+        ids.push(x.id);
+      });
+      if (!ids.length) return Promise.resolve(false);
+      return gravarVarios(up).then(function (ok) {
+        if (ok) { hist({ dia: cd.dia, itemId: ids[0], doc: cd.nome, acao: 'confirmacao', de: CONF_LBL[cd.sit], para: para }); if (aviso) toast(aviso, 'success'); }
+        return ok;
+      });
+    }
+    function confMarca(situacao) { return { situacao: situacao, em: new Date().toISOString(), por: quem() }; }
+    function confEnviada(cd) {
+      confGravar(cd, function (x) {
+        var s = confSitItem(x); if (inativo(x) || s === 'confirmada' || s === 'nao_vem') return null;
+        return { confirmacao: confMarca('enviada') };
+      }, CONF_LBL.enviada);
+    }
+    function confAcao(ac, cd, id) {
+      var nome = cd.nome, quando = brCurta(cd.dia);
+      if (ac === 'whats') msgConfirmar(cd);
+      else if (ac === 'cadastrar') confCadastrar(cd.med && cd.med.id);
+      else if (ac === 'desfazer') confGravar(cd, function (x) { return x.conf.situacao === 'enviada' ? { confirmacao: null } : null; }, CONF_LBL.falta);
+      else if (ac === 'confirmar') confGravar(cd, function (x) {
+        if (inativo(x) || x.conf.situacao === 'nao_vem') return null;
+        var c = confMarca('confirmada'), m = { confirmacao: c };
+        if (!x.status || x.status === 'previsto') { c.statusAntes = 'previsto'; m.status = 'confirmado'; }   // estendido continua estendido
+        return m;
+      }, CONF_LBL.confirmada, nome + ': confirmado');
+      else if (ac === 'naovem') {
+        if (!confirm(nome + ' não vem em ' + quando + '?\n\nA agenda continua no cronograma até você cancelar ou remarcar.')) return;
+        confGravar(cd, function (x) {
+          if (inativo(x)) return null;
+          var m = { confirmacao: confMarca('nao_vem') };
+          if (x.status === 'confirmado') m.status = 'previsto';
+          return m;
+        }, CONF_LBL.nao_vem);
+      } else if (ac === 'cancelar') {
+        if (!confirm('Cancelar a agenda de ' + nome + ' em ' + quando + '?')) return;
+        confGravar(cd, function (x) { return inativo(x) ? null : { status: 'cancelado', 'confirmacao/statusAntes': x.status || 'previsto' }; }, 'Cancelado', 'Agenda cancelada');
+      } else if (ac === 'reabrir') confGravar(cd, function (x) {
+        // remarcado: a nova data já existe. Reabrir um confirmado não mexe no que foi cancelado
+        if (x.status === 'remarcado' || (cd.sit === 'confirmada' && inativo(x))) return null;
+        var m = { confirmacao: null };
+        if (x.status === 'confirmado') m.status = 'previsto';
+        else if (x.status === 'cancelado') m.status = x.conf.statusAntes || 'previsto';
+        return m;
+      }, CONF_LBL.falta);
+      else if (ac === 'remarcar') { var x = cd.vivos.filter(function (a) { return a.id === id; })[0]; if (x) abrirAcao('rem', cd.dia, x); }
+    }
+    function confCadastrar(medicoId) {
+      if (!medicoId) return;
+      window.cronMedAbrir(medicoId);
+      setTimeout(function () { $('cronMedWhats').focus(); }, 30);
+    }
+
+    // ── mensagem ──
+    function confModelo() { return (S.confModelo && S.confModelo.trim()) ? S.confModelo : CONF_TEXTO; }
+    function confFraseHorario(l) {
+      var partes = [];
+      l.forEach(function (x) {
+        var re = /(\d{1,2}[:h]\d{2})\s*(?:–|—|-|às|as|até|a)\s*(\d{1,2}[:h]\d{2})/g, m, achou = false;
+        while ((m = re.exec(x.horario || ''))) { achou = true; partes.push('das ' + m[1] + ' às ' + m[2]); }
+        if (!achou) partes.push(x.horario ? 'no horário ' + x.horario : x.periodo === 'A definir' ? 'em horário a confirmar' : 'no período da ' + x.periodo.toLowerCase());
+      });
+      return confUnicos(partes).join(' e ');
+    }
+    function confDados(cd) {
+      var vem = cd.vivos.filter(function (x) { return x.conf.situacao !== 'nao_vem'; });
+      var l = vem.length ? vem : cd.itens, comNumero = l.filter(function (x) { return x.agendados !== null; });
+      return {
+        nome: String((cd.med && cd.med.m.nome) || cd.nome).trim(),
+        dia: NOMES_DIA[dataDe(cd.dia).getDay()].toLowerCase(), data: brCurta(cd.dia), horario: confFraseHorario(l),
+        pacientes: comNumero.length ? comNumero.reduce(function (s, x) { return s + x.agendados; }, 0) : null
+      };
+    }
+    // uma passada só: o que vem do cadastro nunca é interpretado como outro marcador
+    function confTexto(modelo, d) {
+      var semPac = d.pacientes === null;
+      var v = { nome: d.nome, dia: d.dia, data: d.data, horario: d.horario.replace(/^das /, ''), pacientes: String(d.pacientes) };
+      return String(modelo).split('\n').filter(function (l) { return !(semPac && l.indexOf('{pacientes}') >= 0); }).join('\n')
+        .replace(/\bdas \{horario\}|\{(nome|dia|data|horario|pacientes)\}/g, function (t, k) { return k ? v[k] : d.horario; }).trim();
+    }
+    function msgPrevia() {
+      var m = S.msg; if (!m) return;
+      if (m.tipo === 'pedir') { $('cronMsgPrevia').textContent = m.texto; return; }
+      var cd = confAchar(m.dia, m.k); if (cd) m.dados = confDados(cd);
+      $('cronMsgPrevia').textContent = confTexto($('cronMsgModelo').value, m.dados);
+    }
+    function msgAbrir(m, titulo, linha) {
+      S.msg = m;
+      $('cronMsgTitulo').textContent = titulo; $('cronMsgNum').textContent = linha;
+      $('cronMsgModelo').value = confModelo(); S.msgDigitou = false;
+      $('cronMsgModeloBox').style.display = m.tipo === 'pedir' ? 'none' : '';
+      $('cronMsgSalvar').style.display = m.tipo === 'pedir' ? 'none' : '';
+      $('cronMsgAbrir').style.display = m.numero ? '' : 'none';
+      msgPrevia(); abrirModal('cronModalMsg');
+    }
+    window.cronMsgFechar = function () { fecharModal('cronModalMsg'); S.msg = null; };
+    function msgConfirmar(cd) {
+      msgAbrir({ tipo: 'confirmar', dia: cd.dia, k: cd.k, numero: cd.zap, dados: confDados(cd) }, 'Mensagem para ' + cd.nome, 'WhatsApp ' + zapFmt(cd.zap));
+    }
+    function msgModelo() {   // "Editar mensagem": prévia com a primeira agenda da tela, ou um exemplo
+      var base = S.confDia || confDiaBase(), cd = base ? confCartoes(base)[0] : null;
+      var m = cd ? { tipo: 'modelo', dia: cd.dia, k: cd.k, numero: '', dados: confDados(cd) }
+        : { tipo: 'modelo', dia: '', k: '', numero: '', dados: { nome: 'Nome', dia: 'sábado', data: '00/00', horario: 'das 08:00 às 12:00', pacientes: 10 } };
+      msgAbrir(m, 'Texto da mensagem', cd ? 'Prévia com a agenda de ' + cd.nome : 'Prévia de exemplo');
+    }
+    function msgEnviar() {
+      var m = S.msg; if (!m || !m.numero) return;
+      msgPrevia();
+      var texto = $('cronMsgPrevia').textContent, cd = null;
+      if (!texto) { toast('A mensagem está vazia', 'error'); return; }
+      if (m.tipo === 'confirmar') {
+        cd = confAchar(m.dia, m.k);
+        if (!cd || !cd.vivos.length) { toast('Essa agenda mudou. Confira a tela antes de enviar.', 'info'); window.cronMsgFechar(); return; }
+      }
+      zapAbrir(m.numero, texto);
+      window.cronMsgFechar();
+      if (cd) confEnviada(cd);
+    }
+    function msgCopiar() {
+      var texto = $('cronMsgPrevia').textContent, erro = function () { toast('Não foi possível copiar. Selecione o texto e copie.', 'error'); };
+      if (!navigator.clipboard) { erro(); return; }
+      navigator.clipboard.writeText(texto).then(function () { toast('Texto copiado', 'success'); }, erro);
+    }
+    function msgSalvar() {
+      var texto = $('cronMsgModelo').value.trim().slice(0, 1000);
+      if (!texto) { toast('Escreva o texto antes de salvar', 'error'); return; }
+      if (typeof window.fbSet !== 'function') { toast('Firebase ainda não carregou. Tente de novo.', 'error'); return; }
+      window.fbSet(CONF_CAMINHO, texto).then(function () { S.confModelo = texto; S.msgDigitou = false; toast('Texto padrão salvo', 'success'); })
+        .catch(function (e) {
+          console.warn('[cronograma] texto da confirmação:', e && (e.code || e.message));
+          toast('Não foi possível salvar o texto padrão. Publique a Rule de crono/config no Firebase. O texto da tela ainda vale para este envio.', 'error');
+        });
+    }
+
+    // ── coleta do mês: pedir as datas ao médico ──
+    function coletaBotao(r) {
+      var tem = !!zapNumero(r.m.whatsapp);
+      return '<button type="button" class="btn-s" data-ac="' + (tem ? 'pedir' : 'cadastrar') + '" data-med="' + esc(r.id) + '" style="padding:6px 10px;font-size:12px;white-space:nowrap;">' +
+        (tem ? '<i class="fab fa-whatsapp"></i> Pedir no WhatsApp' : 'Cadastrar WhatsApp') + '</button>';
+    }
+    function coletaPedir(id) {
+      var m = S.medicos[id], numero = m ? zapNumero(m.whatsapp) : ''; if (!numero) return;
+      var ym = mesColeta(), mes = dataDe(ym + '-01').toLocaleDateString('pt-BR', { month: 'long' });
+      var texto = 'Olá, ' + String(m.nome || '').trim() + '! Pode me enviar suas datas de atendimento de ' + mes + ' de ' + ym.slice(0, 4) + '?\n— AmorSaúde Pirituba';
+      msgAbrir({ tipo: 'pedir', numero: numero, texto: texto }, 'Pedir datas — ' + nomeMed(m), 'WhatsApp ' + zapFmt(numero));
+    }
+
+    function ligarConfirmacao() {
+      var ir = function (dias) {
+        var base = S.confDia || confDiaBase() || hojeIso();
+        S.confDia = iso(addDias(dataDe(base), dias)); confDesenhar();
+      };
+      $('cronConfAnt').addEventListener('click', function () { ir(-1); });
+      $('cronConfProx').addEventListener('click', function () { ir(1); });
+      $('cronConfHoje').addEventListener('click', function () { S.confDia = hojeIso(); confDesenhar(); });
+      $('cronConfModo').addEventListener('click', function (ev) { var b = ev.target.closest('button[data-modo]'); if (b) { S.confModo = b.getAttribute('data-modo'); confDesenhar(); } });
+      $('cronConfChips').addEventListener('click', function (ev) { var b = ev.target.closest('button[data-f]'); if (b) { S.confF = b.getAttribute('data-f'); confDesenhar(); } });
+      $('cronConfPassos').addEventListener('click', function (ev) {
+        var b = ev.target.closest('button[data-ir]'); if (!b || b.getAttribute('aria-current')) return;
+        navIr(b.getAttribute('data-ir')); navAvisar();
+      });
+      $('cronConfTexto').addEventListener('click', msgModelo);
+      $('cronConfLista').addEventListener('click', function (ev) {
+        var b = ev.target.closest('button[data-ac]'); if (!b) return;
+        var chave = b.closest('.cron-conf-card').getAttribute('data-k'), corte = chave.indexOf('|');
+        var cd = confAchar(chave.slice(0, corte), chave.slice(corte + 1));   // relê: a agenda pode ter mudado
+        if (cd) confAcao(b.getAttribute('data-ac'), cd, b.getAttribute('data-id')); else confDesenhar();
+      });
+      $('cronConfLista').addEventListener('change', function (ev) {
+        var t = ev.target; if (!t.classList.contains('cron-conf-pac')) return;
+        var dia = t.getAttribute('data-dia'), id = t.getAttribute('data-id'), it = itemBruto(dia, id); if (!it) { confDesenhar(); return; }
+        var texto = t.value.trim(), n = texto === '' ? null : Number(texto);
+        if (t.validity.badInput || (n !== null && (Math.floor(n) !== n || n < 0 || n > 999))) {
+          toast('Informe um número de 0 a 999', 'error'); t.value = typeof it.agendados === 'number' ? it.agendados : ''; return;
+        }
+        gravar(baseItem(dia, id) + '/agendados', n).then(function (ok) { if (!ok) { var x = itemBruto(dia, id) || {}; t.value = typeof x.agendados === 'number' ? x.agendados : ''; } renderConf(); });
+      });
+      $('cronColetaLista').addEventListener('click', function (ev) {
+        var b = ev.target.closest('button[data-ac]'); if (!b) return;
+        if (b.getAttribute('data-ac') === 'pedir') coletaPedir(b.getAttribute('data-med')); else confCadastrar(b.getAttribute('data-med'));
+      });
+      $('cronMsgModelo').addEventListener('input', function () { S.msgDigitou = true; msgPrevia(); });
+      $('cronMsgAbrir').addEventListener('click', msgEnviar);
+      $('cronMsgCopiar').addEventListener('click', msgCopiar);
+      $('cronMsgSalvar').addEventListener('click', msgSalvar);
+      // texto padrão salvo; sem a Rule de crono/config vale o texto de fábrica
+      window.cronFbOn(CONF_CAMINHO, function (v) {
+        S.confModelo = typeof v === 'string' ? v : '';
+        if (S.msg && S.msg.tipo !== 'pedir' && !S.msgDigitou) { $('cronMsgModelo').value = confModelo(); msgPrevia(); }
+      }, function (e) { console.warn('[cronograma] texto da confirmação:', e && (e.code || e.message)); });
     }
 
     // ── ATENDIMENTOS (edição por dia) ──
@@ -2955,7 +3357,7 @@
 
     // ── HISTÓRICO ──
     var ACAO_LBL = { sala: 'Sala', periodo: 'Período', status: 'Status', obs: 'Observação', aberta: 'Abertura', removido: 'Removido', criado: 'Criado', remarcado: 'Remarcado', estendido: 'Estendido', importacao: 'Importação', medico: 'Médico',
-      grade_criada: 'Grade criada', grade_editada: 'Grade editada', grade_inativada: 'Grade inativada', grade_reativada: 'Grade reativada', grade_importada: 'Grades importadas', grade_datas: 'Datas das grades', horario: 'Horário', editado: 'Editado' };
+      grade_criada: 'Grade criada', grade_editada: 'Grade editada', grade_inativada: 'Grade inativada', grade_reativada: 'Grade reativada', grade_importada: 'Grades importadas', grade_datas: 'Datas das grades', horario: 'Horário', editado: 'Editado', confirmacao: 'Confirmação' };
     function renderHist() {
       var l = S.historico, box = $('cronHistLista');
       if (!l.length) { box.innerHTML = '<div class="cal-msg info">Nenhuma alteração registrada ainda.</div>'; return; }
@@ -3301,6 +3703,7 @@
       $('cronAtLista').addEventListener('click', cliqueAtend);
       ligarVerificar();
       ligarGrades();   // [v2.2]
+      ligarConfirmacao();   // [v2.7]
       var abas = document.querySelector('.tabs'); if (abas) abas.addEventListener('click', function () { S.tocou = true; }, true);
     }
     function iniciar() {
@@ -3902,7 +4305,7 @@
     }
     function grdAssinatura(x) { return [x.sala || '', x.doc || '', x.role || '', x.periodo || '', x.medicoId || '', x.horario || ''].join('|'); }
     function grdMexido(x) {
-      return x.aberta === true || (x.status || 'previsto') !== 'previsto' || !!x.obs || typeof x.agendados === 'number' || x.est === true || grdAssinatura(x) !== x.gradeBase;
+      return x.aberta === true || (x.status || 'previsto') !== 'previsto' || !!x.obs || typeof x.agendados === 'number' || !!x.confirmacao || x.est === true || grdAssinatura(x) !== x.gradeBase;   // [v2.7] confirmação conta como mexido
     }
     function grdMontar(g, gid, alvo, sala) {
       var m = S.medicos[g.medicoId];
@@ -4117,12 +4520,13 @@
     //        Cada tela = [aba] ou [aba, visão/subaba]. Os nomes das chaves são os mesmos do dashboard.html.
     var NAV_TELAS = {
       dia: ['cronograma', 'dia'], semana: ['cronograma', 'semana'], mes: ['cronograma', 'mes'], atend: ['config', 'atend'],
-      aberturaAgendas: ['config', 'abertura'], coleta: ['config', 'coleta'],
+      aberturaAgendas: ['config', 'abertura'], coleta: ['config', 'coleta'], confirmacao: ['config', 'confirmacao'],
       medicos: ['config', 'medicos'], grades: ['config', 'grades'], import: ['config', 'import'],
       salas: ['agenda'], modelo: ['semana'], checklist: ['abertura'], notas: ['notas'], hist: ['config', 'hist']
     };
     // [v2.5] Cada item da barra lateral reúne um grupo de telas, em abas (#cronNavAbas). Chaves iguais às do dashboard.html.
     var NAV_GRUPOS = {
+      confirmacao: [['confirmacao', 'Confirmação']],   // [v2.7]
       abertura: [['coleta', 'Coleta do mês'], ['aberturaAgendas', 'Abertura de agendas']],
       agendas: [['dia', 'Dia'], ['semana', 'Semana'], ['mes', 'Mês'], ['atend', 'Atendimentos'], ['salas', 'Salas do dia'],
         ['modelo', 'Modelo semanal'], ['checklist', 'Checklist de abertura'], ['notas', 'Notas'], ['hist', 'Histórico']],
@@ -4142,6 +4546,7 @@
         });
       }
       barra.setAttribute('data-tela', tela);
+      barra.hidden = NAV_GRUPOS[grupo].length < 2;   // [v2.7] item com uma tela só não precisa de abas
       Array.prototype.forEach.call(barra.children, function (b) {
         var on = b.getAttribute('data-tela') === tela; b.classList.toggle('on', on);
         if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -4183,6 +4588,7 @@
         navObs.observe(document.querySelector('.content'), { subtree: true, attributes: true, attributeFilter: ['class'] });
       }
       navAvisar();       // [v2.5] se a tela pedida estiver indisponível (ex.: Importar com grade ativa), avisa qual abriu
+      S.confSelo = null; confAvisar();   // [v2.7] reenvia o contador ao menu
       return true;
     };
   })();
@@ -4333,9 +4739,59 @@
   <!-- [v2.3] Aberto pela barra lateral do Dashboard: as abas próprias saem de cena para não duplicar o menu. -->
   <style>body.nav-lateral .content > .tabs,body.nav-lateral #cronSubnav,body.nav-lateral #cronSeg{display:none !important;}</style>
   <!-- [v2.5] Abas do item escolhido na barra lateral. -->
+  <!-- [v2.7] Confirmação com o médico -->
+  <style>
+    .cron-conf-passos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px;}
+    .cron-conf-passos button{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:12px;background:white;font-family:inherit;text-align:left;cursor:pointer;color:var(--navy);}
+    .cron-conf-passos button i{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0;border-radius:50%;background:var(--gray-100);font-style:normal;font-size:12px;font-weight:800;}
+    .cron-conf-passos button span{display:flex;flex-direction:column;min-width:0;}
+    .cron-conf-passos button b{font-size:13px;}
+    .cron-conf-passos button small{font-size:11px;color:var(--gray-500);}
+    .cron-conf-passos button[aria-current="step"]{background:var(--navy);border-color:var(--navy);color:white;}
+    .cron-conf-passos button[aria-current="step"] i{background:white;color:var(--navy);}
+    .cron-conf-passos button[aria-current="step"] small{color:rgba(255,255,255,.8);}
+    .cron-conf-topo{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;}
+    .cron-conf-nav,.cron-conf-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+    .cron-conf-nav b{font-size:15px;color:var(--navy);min-width:150px;text-align:center;}
+    .cron-conf-acoes .cron-subnav{margin-bottom:0;}
+    .cron-conf-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+    .cron-conf-chips button{display:flex;align-items:center;gap:8px;min-height:34px;padding:6px 14px;border:1px solid var(--gray-200);border-radius:999px;background:white;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;}
+    .cron-conf-chips button b{min-width:20px;padding:0 6px;border-radius:999px;background:var(--gray-100);color:var(--navy);font-size:11px;line-height:18px;text-align:center;}
+    .cron-conf-chips button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:white;}
+    .cron-conf-chips button[aria-pressed="true"] b{background:white;}
+    .cron-conf-diatit{margin:16px 0 8px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gray-500);}
+    .cron-conf-card{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-bottom:10px;padding:13px 16px;border:1px solid var(--gray-200);border-radius:12px;background:white;}
+    .cron-conf-info{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1 1 240px;min-width:0;}
+    .cron-conf-nome{font-size:14px;color:var(--navy);overflow-wrap:anywhere;}
+    .cron-conf-info span{font-size:12px;color:var(--gray-600);overflow-wrap:anywhere;}
+    .cron-conf-info small{font-size:11.5px;color:var(--gray-500);}
+    .cron-conf-aviso{margin-top:3px;padding:2px 9px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:11px;font-style:normal;font-weight:700;}
+    .cron-conf-link{border:0;background:none;padding:2px 0;font-family:inherit;font-size:11.5px;color:#1e40af;text-decoration:underline;cursor:pointer;}
+    .cron-conf-pacs{display:flex;flex-wrap:wrap;gap:8px;}
+    .cron-conf-pacs label{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--gray-600);}
+    .cron-conf-pacs input.cron-conf-pac{width:70px;padding:7px 8px;font-size:13px;text-align:center;}
+    .cron-conf-pill{padding:3px 10px;border-radius:999px;background:var(--gray-100);color:var(--gray-600);font-size:11.5px;font-weight:800;white-space:nowrap;}
+    .cron-conf-pill.enviada{background:#fef3c7;color:#92400e;}
+    .cron-conf-pill.confirmada{background:#dcfce7;color:#166534;}
+    .cron-conf-pill.nao_vem{background:#fee2e2;color:#991b1b;}
+    .cron-conf-botoes{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;margin-left:auto;}
+    .cron-conf-botoes button{min-height:36px;}
+    .cron-conf-zap{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:0;border-radius:9px;background:#15803d;color:white;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
+    .cron-conf-zap:hover{background:#166534;}
+    .cron-msg-previa{margin-bottom:14px;padding:14px 16px;border-radius:12px;background:#dcfce7;color:#14532d;font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;}
+    #cronModalMsg textarea{width:100%;resize:vertical;line-height:1.5;}
+    #cronModalMsg .cron-mfoot{flex-wrap:wrap;}
+    @media(max-width:640px){
+      .cron-conf-passos{grid-template-columns:1fr 1fr;}
+      .cron-conf-passos button small{display:none;}
+      .cron-conf-botoes{width:100%;justify-content:flex-start;margin-left:0;}
+      .cron-conf-botoes button,.cron-conf-chips button{min-height:40px;}
+    }
+  </style>
   <style>
     .cron-nav-abas{display:none;position:relative;}
     body.nav-lateral .cron-nav-abas{display:flex;}
+    body.nav-lateral .cron-nav-abas[hidden]{display:none;}
     body.grd-ativo .cron-nav-abas button[data-tela="import"]{display:none;}
     @media(max-width:640px){body.nav-lateral .cron-nav-abas{flex-wrap:nowrap;overflow-x:auto;width:100%;}.cron-nav-abas button{flex-shrink:0;min-height:40px;}}
   </style>
