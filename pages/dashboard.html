@@ -9014,7 +9014,9 @@
       /* a página do cronograma avisa quando a tela muda por dentro dela */
       window.addEventListener('message', function(e){
         var f = quadro();
-        if (e.origin !== location.origin || !f || e.source !== f.contentWindow || !e.data || e.data.tipo !== 'crono:tela') return;
+        if (e.origin !== location.origin || !f || e.source !== f.contentWindow || !e.data) return;
+        if (e.data.tipo === 'crono:modo') { if (itens['import']) itens['import'].el.style.display = e.data.gradesAtivas === true ? 'none' : ''; return; }   // [v7.4] com grade ativa, "Importar planilha" sai do menu
+        if (e.data.tipo !== 'crono:tela') return;
         if (!Object.prototype.hasOwnProperty.call(itens, e.data.tela)) return;
         atual = e.data.tela; marcar();
       });
