@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <!-- VERSION: v2.1 | cronograma.html | 24/11/2026 | Visual unificado: passa a usar ../css/portal-theme.css (mesmos valores da v1.5). Só CSS de tela; folha impressa, regras de impressão, IDs e funções intactos. -->
 <html lang="pt-BR">
+<!-- VERSION: v2.5 | cronograma.html | 27/11/2026 | Menu novo (etapa 1): aberto pelo Dashboard, cada item (Abertura, Agendas, Grades) mostra as suas telas em abas. Mesmas telas; nada novo no banco. -->
 <!-- VERSION: v2.2 | cronograma.html | 26/11/2026 | Gestão de agendas, etapa 1: subaba Configuração → Grades (só admin), ligada aos médicos do cadastro (crono/medicos). Nó novo crono/grades; precisa da Rule publicada. Não altera atendimentos. -->
 <!-- VERSION: v2.0 | cronograma.html | 23/11/2026 | Aba Semana: "Imprimir semana" e "PDF" para qualquer usuário (somente leitura de crono/dias, mesmo modelo A4 paisagem/PDF do Verificar), com navegação de semana. Não grava nada. -->
 <!-- VERSION: v1.9 | cronograma.html | 23/11/2026 | Usuário comum só vê a semana e gera agenda: botões Importar PDF / Colar Texto / Editar (e o salvamento de crono/agenda) ficam só para admin. Combina com a Rule de crono/agenda só admin. -->
@@ -506,6 +507,8 @@
       <button class="tab-btn"        id="tabAbertura" onclick="tab('abertura')"><i class="fas fa-door-open"></i> Abertura</button>
       <button class="tab-btn"        id="tabNotas"    onclick="tab('notas')"><i class="fas fa-list-check"></i> Notas</button>
     </div>
+    <!-- [v2.5] Telas do item escolhido na barra lateral do Dashboard (só aparece quando aberto por ela). -->
+    <nav class="cron-subnav cron-nav-abas" id="cronNavAbas" aria-label="Telas deste item do menu"></nav>
 
     <div class="tab-pane active" id="paneAgenda">
       <div class="panel">
@@ -4151,6 +4154,41 @@
       medicos: ['config', 'medicos'], grades: ['config', 'grades'], import: ['config', 'import'],
       salas: ['agenda'], modelo: ['semana'], checklist: ['abertura'], notas: ['notas'], hist: ['config', 'hist']
     };
+    // [v2.5] Cada item da barra lateral reúne um grupo de telas, em abas (#cronNavAbas). Chaves iguais às do dashboard.html.
+    var NAV_GRUPOS = {
+      abertura: [['coleta', 'Coleta do mês'], ['aberturaAgendas', 'Abertura de agendas']],
+      agendas: [['dia', 'Dia'], ['semana', 'Semana'], ['mes', 'Mês'], ['atend', 'Atendimentos'], ['salas', 'Salas do dia'],
+        ['modelo', 'Modelo semanal'], ['checklist', 'Checklist de abertura'], ['notas', 'Notas'], ['hist', 'Histórico']],
+      grades: [['grades', 'Grades'], ['medicos', 'Médicos'], ['import', 'Importar planilha']]
+    };
+    function navAbas(tela) {
+      var barra = $('cronNavAbas'); if (!barra) return;
+      var grupo = Object.keys(NAV_GRUPOS).filter(function (g) { return NAV_GRUPOS[g].some(function (p) { return p[0] === tela; }); })[0];
+      if (!grupo) return;
+      var mudou = barra.getAttribute('data-tela') !== tela;
+      if (barra.getAttribute('data-grupo') !== grupo) {
+        barra.setAttribute('data-grupo', grupo); barra.textContent = '';
+        NAV_GRUPOS[grupo].forEach(function (p) {
+          var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-tela', p[0]); b.textContent = p[1];
+          b.addEventListener('click', function () { navIr(p[0]); navAvisar(); });
+          barra.appendChild(b);
+        });
+      }
+      barra.setAttribute('data-tela', tela);
+      Array.prototype.forEach.call(barra.children, function (b) {
+        var on = b.getAttribute('data-tela') === tela; b.classList.toggle('on', on);
+        if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+        // no celular a fileira rola de lado: mantém a aba atual à vista (sem rolar a página)
+        if (on && mudou && (b.offsetLeft < barra.scrollLeft || b.offsetLeft + b.offsetWidth > barra.scrollLeft + barra.clientWidth)) barra.scrollLeft = b.offsetLeft - 4;
+      });
+    }
+    function navIr(tela) {
+      var t = NAV_TELAS[tela];
+      if (t[0] === 'cronograma') S.view = t[1];
+      if (t[0] === 'config') S.sub = t[1];
+      window.tab(t[0]);
+      navAbas(navTelaAtual());
+    }
     var navObs = null, navUltima = '';
     function navTelaAtual() {
       var b = document.querySelector('.content > .tabs .tab-btn.active'); if (!b) return '';
@@ -4160,24 +4198,24 @@
     }
     function navAvisar() {   // mantém o item marcado na barra quando a troca é feita por dentro da página
       var tela = navTelaAtual();
-      if (!tela || tela === navUltima || window.parent === window) return;
+      if (!tela) return;
+      navAbas(tela);   // [v2.5]
+      if (tela === navUltima || window.parent === window) return;
       navUltima = tela;
       window.parent.postMessage({ tipo: 'crono:tela', tela: tela }, location.origin);
     }
     window.cronNavLateral = function (tela) {
       if (!isAdmin() || !S.iniciado || !Object.prototype.hasOwnProperty.call(NAV_TELAS, tela)) return false;
-      var t = NAV_TELAS[tela];
       S.autoAba = true;                       // a aba automática não pode sobrepor a escolha do menu
       document.body.classList.add('nav-lateral');
       grdModoAvisar();   // [v2.4] o menu do Dashboard já está ouvindo
-      if (t[0] === 'cronograma') S.view = t[1];
-      if (t[0] === 'config') S.sub = t[1];
-      window.tab(t[0]);
+      navIr(tela);       // [v2.5]
       navUltima = tela;
       if (!navObs) {
         navObs = new MutationObserver(navAvisar);
         navObs.observe(document.querySelector('.content'), { subtree: true, attributes: true, attributeFilter: ['class'] });
       }
+      navAvisar();       // [v2.5] se a tela pedida estiver indisponível (ex.: Importar com grade ativa), avisa qual abriu
       return true;
     };
   })();
@@ -4327,6 +4365,13 @@
   <style>body.embed .s-header{display:none !important;}body.embed .content{padding-top:14px;}</style>
   <!-- [v2.3] Aberto pela barra lateral do Dashboard: as abas próprias saem de cena para não duplicar o menu. -->
   <style>body.nav-lateral .content > .tabs,body.nav-lateral #cronSubnav,body.nav-lateral #cronSeg{display:none !important;}</style>
+  <!-- [v2.5] Abas do item escolhido na barra lateral. -->
+  <style>
+    .cron-nav-abas{display:none;position:relative;}
+    body.nav-lateral .cron-nav-abas{display:flex;}
+    body.grd-ativo .cron-nav-abas button[data-tela="import"]{display:none;}
+    @media(max-width:640px){body.nav-lateral .cron-nav-abas{flex-wrap:nowrap;overflow-x:auto;width:100%;}.cron-nav-abas button{flex-shrink:0;min-height:40px;}}
+  </style>
   <script>
     if (window.__EMBED) document.body.classList.add('embed');
   </script>

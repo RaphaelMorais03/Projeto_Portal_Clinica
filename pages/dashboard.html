@@ -1,3 +1,4 @@
+<!-- VERSION: v7.5 | dashboard.html | 27/11/2026 | Menu do Cronograma na barra lateral passa a ter três itens: Abertura, Agendas e Grades (as telas viram abas dentro do cronograma). -->
 <!-- VERSION: v7.1 | dashboard.html | 19/11/2026 | Sidebar: item "Cadastro central" (pessoas.html) no grupo Pessoas, aberto em painel embutido. Sem outras alterações. -->
 <!-- VERSION: v7.0 | dashboard.html | 19/11/2026 | Sidebar reorganizada em grupos (Início / Operação / Análises / Pessoas / Administração) e módulos abrindo em painel embutido (?embed=1) com "Abrir em tela cheia". Só adições: nenhuma função, id ou caminho do Firebase alterado. ?mod=<id> abre um módulo direto. -->
 <!-- VERSION: v6.9 | dashboard.html | 17/11/2026 | Sidebar: novo grupo "Configuração" com item Cronograma (só admin) que abre o módulo em modo embed dentro do dashboard; ?tab=cronograma abre direto. Só adições. -->
@@ -8919,80 +8920,65 @@
   })();
   </script>
 
-  <!-- ═══════════ [v7.3] Cronograma em grupos na barra lateral ═══════════
-       Só adições: o botão #dshNavCrono sobe para a seção "Agendas" e ganha subitens, que trocam a tela do
-       cronograma já aberto no painel v6.9 (window.cronNavLateral, em cronograma.html v2.3).
-       Os subitens NÃO usam a classe .saas-nav, para não fecharem o painel. Para voltar: reverter o PR. -->
+  <!-- ═══════════ [v7.5] Cronograma na barra lateral: Abertura, Agendas e Grades ═══════════
+       Substitui o menu em grupos da v7.3. O botão #dshNavCrono fica na seção "Agendas" e ganha três itens;
+       cada um abre um grupo de telas do cronograma já aberto no painel v6.9 (window.cronNavLateral), e as
+       telas do grupo aparecem em abas dentro dele (cronograma.html v2.5).
+       Os itens NÃO usam a classe .saas-nav, para não fecharem o painel. Para voltar: reverter o PR. -->
   <style>
     .dsh-cr-menu{display:none;flex-direction:column;gap:1px;margin:2px 0 4px 18px;padding-left:8px;border-left:1px solid #e5e7eb;flex-shrink:0;}
-    .dsh-cr-menu.show,.dsh-cr-sub.show{display:flex;}
-    .dsh-cr-sub{display:none;flex-direction:column;gap:1px;margin-left:12px;}
-    .dsh-cr-item,.dsh-cr-grupo{display:flex;align-items:center;gap:8px;width:100%;min-height:32px;flex-shrink:0;padding:5px 10px;border:0;border-radius:8px;background:none;font:500 12.5px 'Inter',sans-serif;color:#475569;text-align:left;cursor:pointer;}
-    .dsh-cr-grupo{font-weight:700;justify-content:space-between;}
-    .dsh-cr-grupo i{font-size:10px;transition:transform .15s;}
-    .dsh-cr-grupo[aria-expanded="true"] i{transform:rotate(90deg);}
-    .dsh-cr-item:hover,.dsh-cr-grupo:hover{background:#f4f5f8;color:#0b1020;}
+    .dsh-cr-menu.show{display:flex;}
+    .dsh-cr-item{display:flex;align-items:center;gap:8px;width:100%;min-height:32px;flex-shrink:0;padding:5px 10px;border:0;border-radius:8px;background:none;font:500 12.5px 'Inter',sans-serif;color:#475569;text-align:left;cursor:pointer;}
+    .dsh-cr-item:hover{background:#f4f5f8;color:#0b1020;}
     .dsh-cr-item.on{background:#eef2ff;color:#3730a3;font-weight:700;}
-    @media(max-width:1024px){.dsh-cr-item,.dsh-cr-grupo{min-height:40px;}}
+    @media(max-width:1024px){.dsh-cr-item{min-height:40px;}}
   </style>
   <script>
   (function(){
     try {
       var sb = document.getElementById('saasSidebar'), btn = document.getElementById('dshNavCrono'); if (!sb || !btn) return;
-      /* [tela, rótulo] ou {grupo, itens}. As chaves de tela são as de NAV_TELAS em cronograma.html. */
-      var ARVORE = [
-        { grupo: 'Agenda', itens: [['dia','Dia'], ['semana','Semana'], ['mes','Mês'], ['atend','Atendimentos']] },
-        ['aberturaAgendas','Abertura de agendas'],
-        ['coleta','Coleta do mês'],
-        { grupo: 'Médicos e grades', itens: [['medicos','Médicos'], ['grades','Grades'], ['import','Importar planilha']] },
-        { grupo: 'Mais', itens: [['salas','Salas do dia'], ['modelo','Modelo semanal'], ['checklist','Checklist de abertura'], ['notas','Notas'], ['hist','Histórico']] }
+      /* As chaves de grupo e de tela são as de NAV_GRUPOS / NAV_TELAS em cronograma.html. A 1ª tela é a padrão. */
+      var GRUPOS = [
+        { id: 'abertura', nome: 'Abertura', telas: ['coleta','aberturaAgendas'] },
+        { id: 'agendas',  nome: 'Agendas',  telas: ['dia','semana','mes','atend','salas','modelo','checklist','notas','hist'] },
+        { id: 'grades',   nome: 'Grades',   telas: ['grades','medicos','import'] }
       ];
-      var itens = {}, grupos = [], atual = 'mes', aberto = false, espera = null;
+      var itens = {}, ultima = {}, atual = 'dia', aberto = false, espera = null;
       var menu = document.createElement('div'); menu.className = 'dsh-cr-menu';
 
+      function grupoDe(tela){ return GRUPOS.filter(function(g){ return g.telas.indexOf(tela) >= 0; })[0]; }
       function quadro(){ return document.querySelector('#dshCronoPanel iframe'); }
       /* o cronograma leva alguns segundos para carregar o perfil: tenta de novo por até 30 s */
       function levar(){
         clearTimeout(espera); var vezes = 0;
         (function tentar(){
           var ok = false, f = quadro();
-          try { var w = f && f.contentWindow; if (w && typeof w.cronNavLateral === 'function') ok = w.cronNavLateral(atual) === true; } catch(e) {}
+          try {
+            var w = f && f.contentWindow; if (w && typeof w.cronNavLateral === 'function') ok = w.cronNavLateral(atual) === true;
+            /* cronograma anterior à v2.5 ainda em cache: sem as abas novas, ele mantém as abas próprias */
+            if (ok && !w.document.getElementById('cronNavAbas')) w.document.body.classList.remove('nav-lateral');
+          } catch(e) {}
           if (!ok && ++vezes < 120) espera = setTimeout(tentar, 250);
         })();
       }
-      function abrirGrupo(g, abrir){
-        grupos.forEach(function(o){ var on = o === g && abrir; o.sub.classList.toggle('show', on); o.cab.setAttribute('aria-expanded', String(on)); });
-      }
       function marcar(){
+        var g = grupoDe(atual);
         Object.keys(itens).forEach(function(k){
-          var on = k === atual; itens[k].el.classList.toggle('on', on);
-          if (on) itens[k].el.setAttribute('aria-current', 'page'); else itens[k].el.removeAttribute('aria-current');
+          var on = !!g && k === g.id; itens[k].classList.toggle('on', on);
+          if (on) itens[k].setAttribute('aria-current', 'page'); else itens[k].removeAttribute('aria-current');
         });
-        if (itens[atual] && itens[atual].g) abrirGrupo(itens[atual].g, true);
       }
       function fecharNoCelular(){
         if (window.innerWidth <= 1024) { var o = document.getElementById('saasOverlayBg'); sb.classList.remove('open'); if (o) o.classList.remove('show'); }
       }
-      function novoItem(par, destino, g){
+      GRUPOS.forEach(function(g){
         var b = document.createElement('button'); b.type = 'button'; b.className = 'dsh-cr-item';
-        b.setAttribute('data-tela', par[0]); b.textContent = par[1];
+        b.setAttribute('data-grupo', g.id); b.textContent = g.nome;
         b.addEventListener('click', function(){
-          atual = par[0]; marcar();
+          atual = ultima[g.id] || g.telas[0]; marcar();
           if (!btn.classList.contains('active')) btn.click(); else { levar(); fecharNoCelular(); }
         });
-        itens[par[0]] = { el: b, g: g }; destino.appendChild(b);
-      }
-      ARVORE.forEach(function(no){
-        if (Array.isArray(no)) { novoItem(no, menu, null); return; }
-        var cab = document.createElement('button'); cab.type = 'button'; cab.className = 'dsh-cr-grupo'; cab.setAttribute('aria-expanded', 'false');
-        var nome = document.createElement('span'); nome.textContent = no.grupo;
-        var seta = document.createElement('i'); seta.className = 'fas fa-chevron-right';
-        cab.appendChild(nome); cab.appendChild(seta);
-        var sub = document.createElement('div'); sub.className = 'dsh-cr-sub';
-        var g = { cab: cab, sub: sub }; grupos.push(g);
-        cab.addEventListener('click', function(){ abrirGrupo(g, cab.getAttribute('aria-expanded') !== 'true'); });
-        menu.appendChild(cab); menu.appendChild(sub);
-        no.itens.forEach(function(par){ novoItem(par, sub, g); });
+        itens[g.id] = b; menu.appendChild(b);
       });
 
       /* posição: seção própria "Agendas", antes de "Operação"; se não achar, o submenu fica logo abaixo do botão atual */
@@ -9014,13 +9000,11 @@
       /* a página do cronograma avisa quando a tela muda por dentro dela */
       window.addEventListener('message', function(e){
         var f = quadro();
-        if (e.origin !== location.origin || !f || e.source !== f.contentWindow || !e.data) return;
-        if (e.data.tipo === 'crono:modo') { if (itens['import']) itens['import'].el.style.display = e.data.gradesAtivas === true ? 'none' : ''; return; }   // [v7.4] com grade ativa, "Importar planilha" sai do menu
-        if (e.data.tipo !== 'crono:tela') return;
-        if (!Object.prototype.hasOwnProperty.call(itens, e.data.tela)) return;
-        atual = e.data.tela; marcar();
+        if (e.origin !== location.origin || !f || e.source !== f.contentWindow || !e.data || e.data.tipo !== 'crono:tela') return;
+        var g = grupoDe(e.data.tela); if (!g) return;
+        atual = e.data.tela; ultima[g.id] = atual; marcar();
       });
-    } catch(e) { console.warn('[dashboard v7.3] menu do cronograma:', e); }
+    } catch(e) { console.warn('[dashboard v7.5] menu do cronograma:', e); }
   })();
   </script>
 
