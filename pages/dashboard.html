@@ -6,6 +6,7 @@
 <!-- VERSION: v6.0 | dashboard.html | 13/10/2026 | NF em Lote v6.0 — fluxo unificado: 2 abas (Emitir lote / Retorno Sinaxys), seletor de data único no topo (nflx_dia_ativo), layout da planilha por data (NFL_LAYOUTS, fallback na cascata), operador→Consulta/Exame no Mapear (admin/nfl_operadores), escrever Nº NF direto na planilha via Apps Script (fallback .xlsx) + _status processado, fila de incompletos (nfl_incompletos), downloads nomeados DD_MM_AAAA. -->
 <!-- VERSION: v4.9.4 | dashboard.html | 05/10/2026 | NF em Lote: validações Sinaxys/prefeitura (Número, Bairro, Cidade, CEP, lixo, CPF=telefone) v4.9.4; duplicata (mesmo CPF/data/valor) não bloqueia mais — emite as duas e só avisa. v4.9.2: Comparativo Sinaxys: "Falta emitir no período" (planilha × exportação Sinaxys Splitadas/De pacientes; somente leitura). v4.9.1: Comparativo Sinaxys: "Buscar direto da planilha" (usa a conexão NOTAS FISCAIS 3.0 já existente; lê a aba de cada dia do período e salva o lote no Firebase, sem Excel). Importar de Excel continua disponível, recolhido. -->
 <!-- v4.9 | dashboard.html | 03/10/2026 | NF em Lote agora no desenho do mockup: coluna central, abas substituídas por "Mais opções", telas Buscar/Encontrei/Mapear/CEP(lupa+barra)/Corrigir/Baixar e Comparativo no mesmo visual. Lógica nfl* intacta. -->
+<!-- v7.6 | dashboard.html | 27/11/2026 | Cronograma na barra lateral ganha "Confirmação" (primeiro item), com contador do que falta confirmar. -->
 <!-- v4.8 | dashboard.html | 03/10/2026 | NF em Lote: fluxos guiados (Mockup). NF do Dia/Gerar planilha: barra de 5 passos (Buscar, Mapear, CEP, Corrigir, Baixar), tela "Encontrei notas", agendados opcional, tela Corrigir (cards por paciente sincronizados com a tabela original) e Baixar lote Consulta/Exame separados. Comparativo Sinaxys: 4 passos (Lote, Retorno, Comparar, Enviar NF), cards/filtros do resultado e download .xlsx dos erros e do comparativo completo. Lógica nfl* existente intacta (só envolvida). -->
 <!-- VERSION: v5.1 | dashboard.html | 03/10/2026 | Hoje blindado (try/catch + fallback para Produção), badges em Hoje / NF em Lote / Fechamentos (somem se a leitura falhar), sidebar com atalhos externos NPS / Cadastros / Admin. Só adições. --><!-- VERSION: v5.0 | dashboard.html | 03/10/2026 | Nova página "Hoje" (landing): alertas (NF pendente / fechamentos sem pagamento), KPIs de ontem, gráfico de 7 dias, top produtores, últimas atividades e ações rápidas. Sidebar: item solo "Hoje" (com badge de pendências) + Operação/Análises/Gestão. Só adições — nenhuma função/ID existente alterado. --><!-- VERSION: v4.7 | dashboard.html | 03/10/2026 | Organização: menu lateral agrupado em Operação/Análises/Gestão e abas duplicadas do topo ocultas (sem mudança de lógica). Histórico: v4.6 | 01/10/2026 | Aba "🗓️ NF do Dia" ganha: botão "👥 Colaboradores" que expande e mostra o lote de cada colaborador que fechou caixa naquele dia (quantas Consultas/Exames/sem descrição cada um lançou); e "🗂️ Gerar lote Consulta" / "🩺 Gerar lote Exame" que baixam direto o .xlsx daquele dia já separado por tipo (aba "Modelo Importação" no formato de importação da Sinaxys), sem precisar passar pelo fluxo manual de "Gerar Planilha" — linha com CPF/nome/valor faltando entra também, mas listada numa 2ª aba "Pendências (não importar)" com o motivo, pra não travar a importação das demais. --><!-- VERSION: v4.5 | dashboard.html | 28/09/2026 | ViaCEP estava com ERR_CONNECTION_TIMED_OUT constante (bloqueio na rede, não instabilidade pontual) — nflFetchViaCep inverte a ordem: tenta BrasilAPI primeiro (timeout 3s) e só recorre ao ViaCEP se ela falhar. Corta o excesso de erros no console durante o Gerar Planilha das datas retroativas. --><!-- VERSION: v4.4 | dashboard.html | 28/09/2026 | nflFetchViaCep (usado em Gerar Planilha pras datas retroativas) agora dispara ViaCEP e BrasilAPI em paralelo (timeout 4s cada) e usa a que responder primeiro — mesmo problema do ViaCEP travando (ERR_CONNECTION_TIMED_OUT) que foi corrigido no Caixa. --><!-- VERSION: v4.3 | dashboard.html | 24/09/2026 | Nova aba "🗓️ NF do Dia" dentro de NF em Lote: lista todas as datas salvas pelo Caixa (nf_dia_relatorios), separando pendente/processada, com botão para levar direto pro fluxo de Gerar Planilha e botão para marcar como processada — pensada pros lotes NOVOS a partir de agora, enquanto o Gerar Planilha normal continua sendo usado pras datas retroativas. -->
 <!-- v4.2: Gerar Planilha ganha o botão "Puxar do Caixa" que traz direto do Firebase o que os colaboradores preencheram em "Preencher NF do Dia" no fechamento de Caixa daquele dia (nf_dia_relatorios/{data}/{uid}), agregando todos os colaboradores que fecharam caixa na data, sem depender de planilha/Excel -->
@@ -8932,6 +8933,8 @@
     .dsh-cr-item:hover{background:#f4f5f8;color:#0b1020;}
     .dsh-cr-item.on{background:#eef2ff;color:#3730a3;font-weight:700;}
     @media(max-width:1024px){.dsh-cr-item{min-height:40px;}}
+    .dsh-cr-badge{margin-left:auto;min-width:18px;padding:1px 6px;border-radius:999px;background:#c62828;color:#fff;font-size:10.5px;font-weight:800;line-height:16px;text-align:center;}
+    .dsh-cr-badge[hidden]{display:none;}
   </style>
   <script>
   (function(){
@@ -8939,6 +8942,7 @@
       var sb = document.getElementById('saasSidebar'), btn = document.getElementById('dshNavCrono'); if (!sb || !btn) return;
       /* As chaves de grupo e de tela são as de NAV_GRUPOS / NAV_TELAS em cronograma.html. A 1ª tela é a padrão. */
       var GRUPOS = [
+        { id: 'confirmacao', nome: 'Confirmação', telas: ['confirmacao'] },   /* [v7.6] */
         { id: 'abertura', nome: 'Abertura', telas: ['coleta','aberturaAgendas'] },
         { id: 'agendas',  nome: 'Agendas',  telas: ['dia','semana','mes','atend','salas','modelo','checklist','notas','hist'] },
         { id: 'grades',   nome: 'Grades',   telas: ['grades','medicos','import'] }
@@ -8978,6 +8982,9 @@
           atual = ultima[g.id] || g.telas[0]; marcar();
           if (!btn.classList.contains('active')) btn.click(); else { levar(); fecharNoCelular(); }
         });
+        if (g.id === 'confirmacao') {   /* [v7.6] contador enviado pelo cronograma */
+          var selo = document.createElement('span'); selo.className = 'dsh-cr-badge'; selo.hidden = true; b.appendChild(selo);
+        }
         itens[g.id] = b; menu.appendChild(b);
       });
 
@@ -9000,7 +9007,13 @@
       /* a página do cronograma avisa quando a tela muda por dentro dela */
       window.addEventListener('message', function(e){
         var f = quadro();
-        if (e.origin !== location.origin || !f || e.source !== f.contentWindow || !e.data || e.data.tipo !== 'crono:tela') return;
+        if (e.origin !== location.origin || !f || e.source !== f.contentWindow || !e.data) return;
+        if (e.data.tipo === 'crono:confirmacao') {   /* [v7.6] */
+          var s = itens.confirmacao.querySelector('.dsh-cr-badge'), n = Number(e.data.pendentes) || 0;
+          s.textContent = String(n); s.hidden = n <= 0; s.title = n + ' para confirmar';
+          return;
+        }
+        if (e.data.tipo !== 'crono:tela') return;
         var g = grupoDe(e.data.tela); if (!g) return;
         atual = e.data.tela; ultima[g.id] = atual; marcar();
       });
