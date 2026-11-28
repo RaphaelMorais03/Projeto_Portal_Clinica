@@ -427,6 +427,174 @@
     .hoje-qs{font-size:10.5px;color:#9ca3af;margin-top:1px;}
     @media(max-width:900px){.hoje-kpis{grid-template-columns:1fr 1fr;}.hoje-grid-2{grid-template-columns:1fr;}}
     @media(max-width:480px){.hoje-kpis{grid-template-columns:1fr;}.hoje-alert-item{flex-wrap:wrap;}}
+/* ═══════════════════════════════════════════════════════════════
+   [v8.1] Camada visual (só acrescenta; regras antigas ficam como estão)
+   Usa !important onde precisa vencer regras anteriores com !important.
+   NÃO mexe em position:fixed da sidebar (mantém o menu do celular).
+   NÃO toca em .oo-card / .oo-nps (1:1s), cabeçalhos de tabela nem taxas.
+═══════════════════════════════════════════════════════════════ */
+:root{
+  --accent:#1d4ed8;
+  --accent-h:#1e40af;
+  --accent-lt:#3b82f6;
+  --accent-grad:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  --accent-tint:rgba(29,78,216,.10);
+  --bg-grad:linear-gradient(135deg,#eff6ff 0%,#f0f9ff 45%,#f0fdfa 100%);
+  --glass:rgba(255,255,255,.82);
+  --glass-border:rgba(255,255,255,.65);
+  --glass-hi:rgba(255,255,255,.92);
+}
+
+/* Fundo geral — precisa !important (conflita com linhas 36, 233-241) */
+body{
+  background:var(--bg-grad) fixed !important;
+  transition:background .35s ease;
+}
+
+/* Header glass */
+.s-header{
+  background:var(--glass) !important;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--glass-border) !important;
+  box-shadow:0 1px 2px rgba(0,0,0,.04) !important;
+}
+.s-header .s-logo-name{color:#0f172a !important;}
+.s-header .s-logo-sub{color:#64748b !important;}
+.s-header .s-logo-icon{background:#f1f5f9 !important;}
+.s-header .back-btn{
+  background:rgba(255,255,255,.7) !important;
+  color:#374151 !important;
+  border:1px solid var(--glass-border) !important;
+}
+.s-header .back-btn:hover{background:#fff !important;}
+
+/* Sidebar — MANTÉM position:fixed (não trocar para sticky, quebra mobile) */
+.saas-sidebar{
+  background:var(--glass) !important;
+  border-right:1px solid var(--glass-border) !important;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+}
+.saas-nav{transition:all .15s;}
+.saas-nav:hover{
+  background:var(--accent-tint) !important;
+  color:var(--accent) !important;
+}
+.saas-nav.active{
+  background:var(--accent-grad) !important;
+  color:#fff !important;
+  box-shadow:0 6px 16px var(--accent-tint) !important;
+}
+.saas-nav.active i{color:#fff !important;}
+.saas-nav-section{color:#94a3b8 !important;}
+
+/* Cards — só aparência */
+.metric-card,
+.filters-bar,
+.table-card,
+.group-block,
+.fech-card,
+.caixa-card{
+  background:var(--glass-hi) !important;
+  border:1px solid var(--glass-border) !important;
+  border-radius:16px !important;
+  box-shadow:0 4px 16px rgba(30,58,138,.06) !important;
+}
+.metric-card{border-top:3px solid var(--accent) !important;}
+.metric-card.green{border-top-color:#15803d !important;}
+.metric-card.blue{border-top-color:#1d4ed8 !important;}
+.metric-card.purple{border-top-color:#6d28d9 !important;}
+.metric-card.amber{border-top-color:#b45309 !important;}
+.metric-card.teal{border-top-color:#0d9488 !important;}
+
+/* Botões primários */
+.btn-p,
+.btn-lancamento,
+#btnLancProd,
+#btnLancamentoHeader{
+  background:var(--accent-grad) !important;
+  box-shadow:0 4px 12px var(--accent-tint) !important;
+  border:none !important;
+}
+.btn-p:hover,
+.btn-lancamento:hover{filter:brightness(1.05);}
+
+/* Toggles e tabs */
+.toggle-btn.active,
+.mode-btn.active{
+  background:var(--accent-grad) !important;
+  color:#fff !important;
+}
+.main-tab.active{
+  color:var(--accent) !important;
+  border-bottom-color:var(--accent) !important;
+}
+
+/* Inputs e selects */
+.f-select,
+.modal-input,
+.modal-select,
+.caixa-search input{border-color:#e2e8f0 !important;}
+.f-select:focus,
+.modal-input:focus,
+.modal-select:focus,
+.caixa-search input:focus{
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 3px var(--accent-tint) !important;
+}
+
+/* ═══ SELETOR DE COR ═══ */
+.theme-picker{position:relative;display:inline-block;}
+.theme-btn{
+  width:38px;height:38px;border-radius:11px;
+  background:rgba(255,255,255,.7);
+  border:1px solid var(--glass-border);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:#64748b;font-size:15px;transition:all .15s;
+}
+.theme-btn:hover{background:#fff;color:var(--accent);transform:translateY(-1px);}
+.theme-popover{
+  position:absolute;top:calc(100% + 12px);right:0;
+  background:#fff;border:1px solid #e5e7eb;border-radius:18px;
+  padding:16px;width:290px;
+  box-shadow:0 20px 50px rgba(0,0,0,.15);
+  display:none;z-index:9999;
+}
+.theme-popover.open{display:block;animation:themePop .18s ease;}
+@keyframes themePop{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.theme-title{font-size:12px;font-weight:800;margin-bottom:4px;
+  display:flex;align-items:center;gap:7px;}
+.theme-title i{color:var(--accent);font-size:13px;}
+.theme-sub{font-size:11px;color:#64748b;margin-bottom:14px;line-height:1.4;}
+.theme-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.theme-swatch{aspect-ratio:1;border-radius:50%;border:3px solid transparent;
+  cursor:pointer;position:relative;transition:all .15s;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.theme-swatch:hover{transform:scale(1.12);}
+.theme-swatch.active{border-color:#0f172a;transform:scale(1.05);}
+.theme-swatch.active::after{content:'✓';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  font-weight:900;font-size:15px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+.theme-labels{display:grid;grid-template-columns:repeat(5,1fr);
+  gap:10px;margin-top:8px;}
+.theme-labels span{font-size:10px;font-weight:700;text-align:center;
+  color:#64748b;letter-spacing:.3px;}
+.theme-labels span.active{color:var(--accent);}
+.theme-foot{margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;
+  font-size:10.5px;color:#64748b;line-height:1.4;
+  display:flex;align-items:center;gap:6px;}
+.theme-foot i{color:var(--accent);font-size:11px;}
+
+@media(max-width:640px){
+  .theme-popover{position:fixed;top:64px;right:16px;left:16px;width:auto;}
+  /* título do topo não quebra com o botão novo */
+  .s-header{padding-right:14px !important;}
+  .s-header .header-right{gap:6px;}
+  .s-header .s-logo-name{font-size:14px;}
+  .s-header .s-logo-sub{display:none;}
+}
+/* ═══ FIM v8.1 ═══ */
   </style>
 
   <!-- ═══════════ NF EM LOTE — estilos nativos com tokens do dashboard ═══════════ -->
@@ -935,6 +1103,21 @@
         <i class="fas fa-plus"></i> Lançamento Manual
       </button>
       <button class="back-btn" onclick="irPara('../login.html')"><i class="fas fa-home"></i> Portal</button>
+<!-- [v8.1] Seletor de cor do sistema -->
+<div class="theme-picker" id="themePicker">
+  <button class="theme-btn" id="themeBtn" type="button"
+          title="Mudar cor" aria-label="Mudar cor do sistema">
+    <i class="fas fa-palette"></i>
+  </button>
+  <div class="theme-popover" id="themePopover">
+    <div class="theme-title"><i class="fas fa-palette"></i> Cor do sistema</div>
+    <div class="theme-sub">Escolha a sua favorita. Fica salva neste navegador.</div>
+    <div class="theme-grid" id="themeGrid"></div>
+    <div class="theme-labels" id="themeLabels"></div>
+    <div class="theme-foot"><i class="fas fa-circle-info"></i>
+      Só muda o visual. Cores de status (verde/azul/amarelo/vermelho) não trocam.</div>
+  </div>
+</div>
     </div>
   </header>
 
@@ -9021,6 +9204,93 @@
   })();
   </script>
 
+  <script>
+/* ═══ [v8.1] SISTEMA DE TEMAS — 5 cores (auto-contido, não interfere) ═══ */
+(function initThemeSystem(){
+  'use strict';
+  var THEMES = {
+    azul:    {label:'Azul',    accent:'#1d4ed8', accentH:'#1e40af', accentLt:'#3b82f6',
+              grad:'linear-gradient(135deg,#1d4ed8,#3b82f6)',
+              tint:'rgba(29,78,216,.10)',
+              bgGrad:'linear-gradient(135deg,#eff6ff 0%,#f0f9ff 45%,#f0fdfa 100%)'},
+    rosa:    {label:'Rosa',    accent:'#8b5cf6', accentH:'#7c3aed', accentLt:'#ec4899',
+              grad:'linear-gradient(135deg,#8b5cf6,#ec4899)',
+              tint:'rgba(139,92,246,.10)',
+              bgGrad:'linear-gradient(135deg,#eef2ff 0%,#fdf4ff 50%,#f0fdfa 100%)'},
+    verde:   {label:'Verde',   accent:'#0d9488', accentH:'#0f766e', accentLt:'#14b8a6',
+              grad:'linear-gradient(135deg,#0d9488,#14b8a6)',
+              tint:'rgba(13,148,136,.10)',
+              bgGrad:'linear-gradient(135deg,#f0fdfa 0%,#ecfdf5 50%,#f0fdf4 100%)'},
+    laranja: {label:'Laranja', accent:'#ea580c', accentH:'#c2410c', accentLt:'#f97316',
+              grad:'linear-gradient(135deg,#ea580c,#f97316)',
+              tint:'rgba(234,88,12,.10)',
+              bgGrad:'linear-gradient(135deg,#fff7ed 0%,#fef3c7 50%,#fef9c3 100%)'},
+    roxo:    {label:'Roxo',    accent:'#6d28d9', accentH:'#5b21b6', accentLt:'#a78bfa',
+              grad:'linear-gradient(135deg,#6d28d9,#a78bfa)',
+              tint:'rgba(109,40,217,.10)',
+              bgGrad:'linear-gradient(135deg,#f5f3ff 0%,#ede9fe 50%,#fdf4ff 100%)'}
+  };
+  var KEY = 'dash-theme-v8';
+  var btn    = document.getElementById('themeBtn');
+  var pop    = document.getElementById('themePopover');
+  var picker = document.getElementById('themePicker');
+  var grid   = document.getElementById('themeGrid');
+  var labels = document.getElementById('themeLabels');
+  if (!btn || !grid || !labels) return; // segurança
+
+  function build(){
+    grid.innerHTML = '';
+    labels.innerHTML = '';
+    Object.keys(THEMES).forEach(function(k){
+      var t = THEMES[k];
+      var sw = document.createElement('button');
+      sw.type = 'button';
+      sw.className = 'theme-swatch';
+      sw.dataset.theme = k;
+      sw.title = t.label;
+      sw.style.background = t.grad;
+      sw.addEventListener('click', function(){ apply(k); });
+      grid.appendChild(sw);
+      var lb = document.createElement('span');
+      lb.dataset.label = k;
+      lb.textContent = t.label;
+      labels.appendChild(lb);
+    });
+  }
+
+  function apply(name){
+    var t = THEMES[name] || THEMES.azul;
+    var r = document.documentElement.style;
+    r.setProperty('--accent', t.accent);
+    r.setProperty('--accent-h', t.accentH);
+    r.setProperty('--accent-lt', t.accentLt);
+    r.setProperty('--accent-grad', t.grad);
+    r.setProperty('--accent-tint', t.tint);
+    r.setProperty('--bg-grad', t.bgGrad);
+    try { localStorage.setItem(KEY, name); } catch(e){}
+    var sws = document.querySelectorAll('.theme-swatch');
+    for (var i=0; i<sws.length; i++)
+      sws[i].classList.toggle('active', sws[i].dataset.theme === name);
+    var lbs = document.querySelectorAll('.theme-labels span');
+    for (var j=0; j<lbs.length; j++)
+      lbs[j].classList.toggle('active', lbs[j].dataset.label === name);
+  }
+
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    pop.classList.toggle('open');
+  });
+  document.addEventListener('click', function(e){
+    if (picker && !picker.contains(e.target)) pop.classList.remove('open');
+  });
+
+  build();
+  var saved = 'azul';
+  try { saved = localStorage.getItem(KEY) || 'azul'; } catch(e){}
+  if (!THEMES[saved]) saved = 'azul';
+  apply(saved);
+})();
+  </script>
   <!-- [v1.1] Pesquisa de satisfação (modal de estrelas) — config em js/pesquisa-satisfacao.js -->
   <script type="module" src="../js/pesquisa-satisfacao.js"></script>
 </body>
