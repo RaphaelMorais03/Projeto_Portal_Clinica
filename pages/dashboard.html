@@ -1,3 +1,4 @@
+<!-- VERSION: v8.2 | dashboard.html | 28/11/2026 | Visual: avatar no topo, ícones dos indicadores do "Hoje" em caixas coloridas e barra lateral flutuante no computador. Já fazem parte deste arquivo: v7.6 (Confirmação no menu do Cronograma) e v8.1 (camada visual e seletor de cor). -->
 <!-- VERSION: v7.5 | dashboard.html | 27/11/2026 | Menu do Cronograma na barra lateral passa a ter três itens: Abertura, Agendas e Grades (as telas viram abas dentro do cronograma). -->
 <!-- VERSION: v7.1 | dashboard.html | 19/11/2026 | Sidebar: item "Cadastro central" (pessoas.html) no grupo Pessoas, aberto em painel embutido. Sem outras alterações. -->
 <!-- VERSION: v7.0 | dashboard.html | 19/11/2026 | Sidebar reorganizada em grupos (Início / Operação / Análises / Pessoas / Administração) e módulos abrindo em painel embutido (?embed=1) com "Abrir em tela cheia". Só adições: nenhuma função, id ou caminho do Firebase alterado. ?mod=<id> abre um módulo direto. -->
@@ -595,6 +596,19 @@ body{
   .s-header .s-logo-sub{display:none;}
 }
 /* ═══ FIM v8.1 ═══ */
+/* ═══ [v8.2] avatar no topo, ícones dos indicadores e barra lateral flutuante ═══ */
+.dsh-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;box-shadow:0 4px 12px var(--accent-tint);}
+.dsh-avatar[hidden]{display:none;}
+/* ícones: mesmas cores dos valores de cada indicador (não mudam com o tema) */
+.hoje-kpi .hoje-lbl i{width:30px;height:30px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-right:3px;background:rgba(10,31,68,.08);color:#0A1F44;}
+.hoje-kpi:nth-child(2) .hoje-lbl i{background:rgba(21,128,61,.12);color:#15803d;}
+.hoje-kpi:nth-child(3) .hoje-lbl i{background:rgba(124,58,237,.12);color:#7c3aed;}
+.hoje-kpi:nth-child(4) .hoje-lbl i{background:rgba(29,78,216,.12);color:#1d4ed8;}
+/* só no computador: no celular o menu continua encostado na lateral (abre pelo botão) */
+@media(min-width:1025px){
+  .saas-sidebar{left:8px;top:73px;bottom:10px;width:216px;padding:12px 6px;border:1px solid #e2e8f0 !important;border-radius:20px;box-shadow:0 8px 24px rgba(30,58,138,.08);}
+  .saas-sidebar .saas-nav{padding-left:10px;padding-right:6px;}   /* nome mais longo do menu em uma linha */
+}
   </style>
 
   <!-- ═══════════ NF EM LOTE — estilos nativos com tokens do dashboard ═══════════ -->
@@ -1118,6 +1132,8 @@ body{
       Só muda o visual. Cores de status (verde/azul/amarelo/vermelho) não trocam.</div>
   </div>
 </div>
+      <!-- [v8.2] avatar: inicial do usuário logado -->
+      <div class="dsh-avatar" id="dshAvatar" role="img" hidden></div>
     </div>
   </header>
 
@@ -9293,5 +9309,19 @@ body{
   </script>
   <!-- [v1.1] Pesquisa de satisfação (modal de estrelas) — config em js/pesquisa-satisfacao.js -->
   <script type="module" src="../js/pesquisa-satisfacao.js"></script>
+<script>
+/* [v8.2] avatar do topo: usa o nome que já aparece na saudação do "Hoje" (não lê nem grava no banco) */
+(function () {
+  var nome = document.getElementById('hojeNome'), av = document.getElementById('dshAvatar');
+  if (!nome || !av) return;
+  function pintar() {
+    var n = nome.textContent.trim();
+    if (!n || n === '—') { av.hidden = true; return; }
+    av.textContent = n.charAt(0).toUpperCase(); av.title = n; av.setAttribute('aria-label', 'Usuário: ' + n); av.hidden = false;
+  }
+  new MutationObserver(pintar).observe(nome, { childList: true, characterData: true, subtree: true });
+  pintar();
+})();
+</script>
 </body>
 </html>
