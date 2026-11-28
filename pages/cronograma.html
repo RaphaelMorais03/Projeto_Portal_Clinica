@@ -302,6 +302,26 @@
     .cron-grd-nao label{display:flex;align-items:center;gap:5px;cursor:pointer;}
     @media(max-width:640px){.cron-grd-cab{grid-template-columns:1fr 1fr auto;}.cron-grd-cab label:nth-child(3){grid-column:1/3;grid-row:2;}.cron-grd-bloco{grid-template-columns:1fr 1fr auto;}.cron-grd-bloco .cron-ico{grid-column:3;grid-row:1;}.cron-modal .cron-grid2.cron-grd-g{grid-template-columns:1fr;}}
     .cron-help{font-size:13px;color:var(--gray-600);margin-bottom:12px;line-height:1.5;}
+    /* [v2.8] abertura por médico (cronAbm*) */
+    #cronSubAbertura.abm-cal #cronAbmBox,#cronSubAbertura:not(.abm-cal) #paneOcupacao{display:none;}
+    .cron-abm-linha{display:grid;grid-template-columns:200px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--gray-200);}
+    .cron-abm-med b{display:block;font-size:13px;color:var(--navy);overflow-wrap:anywhere;}
+    .cron-abm-med small{display:block;font-size:11px;color:var(--gray-500);overflow-wrap:anywhere;}
+    .cron-abm-chips{display:flex;flex-wrap:wrap;gap:6px;}
+    .cron-abm-chip{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;min-width:32px;padding:4px 10px;border-radius:999px;border:1.5px solid transparent;font-family:inherit;font-size:12px;font-weight:800;line-height:1.2;white-space:nowrap;}
+    button.cron-abm-chip{cursor:pointer;}
+    button.cron-abm-chip:hover{filter:brightness(.95);}
+    .cron-abm-chip.s-aberta{background:var(--green-bg);color:#166534;border-color:#86efac;}
+    .cron-abm-chip.s-pend{background:var(--red-bg);color:var(--red);border-color:#fca5a5;}
+    .cron-abm-chip.s-canc{background:var(--gray-100);color:var(--gray-500);border-color:var(--gray-300);text-decoration:line-through;}
+    .cron-abm-chip.passado{opacity:.55;}
+    .cron-help .cron-abm-chip{min-height:0;min-width:0;padding:0 7px;vertical-align:1px;text-decoration:none;}
+    .cron-abm-acao{text-align:right;}
+    .cron-abm-todas{font-size:12px;padding:7px 12px;white-space:nowrap;}
+    .cron-abm-det dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin:0;}
+    .cron-abm-det dt{color:var(--gray-500);font-weight:600;}
+    .cron-abm-det dd{margin:0;color:var(--ink);overflow-wrap:anywhere;}
+    @media(max-width:700px){.cron-abm-linha{grid-template-columns:1fr;gap:8px;}.cron-abm-chip{min-height:40px;}.cron-help .cron-abm-chip{min-height:0;}.cron-abm-acao{text-align:left;}.cron-abm-acao:empty{display:none;}.cron-abm-todas{min-height:40px;}.cron-abm-filtros{display:grid;grid-template-columns:auto minmax(0,1fr);}.cron-abm-filtros .f-select{width:100%;min-width:0;}}
     .cron-tbl{width:100%;border-collapse:collapse;font-size:13px;}
     .cron-tbl th{text-align:left;color:var(--gray-500);font-size:10px;padding:6px;border-bottom:1px solid var(--gray-200);text-transform:uppercase;letter-spacing:.4px;}
     .cron-tbl td{padding:6px;border-bottom:1px solid var(--gray-100);vertical-align:middle;}
@@ -768,6 +788,28 @@
       </div></div>
 
       <div class="cron-sub" id="cronSubAbertura">
+        <!-- [v2.8] abertura por médico (prefixo cronAbm*): uma linha por médico, datas em sequência -->
+        <div class="cron-subnav" id="cronAbmVista" role="group" aria-label="Forma de ver a abertura"><button type="button" data-vista="medico" class="on" aria-pressed="true"><i class="fas fa-user-doctor"></i> Por médico</button><button type="button" data-vista="cal" aria-pressed="false"><i class="fas fa-calendar-days"></i> Calendário</button></div>
+        <div id="cronAbmBox"><div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-door-open"></i> Abertura por médico</div>
+            <div class="cal-nav">
+              <button type="button" class="day-nav-btn" id="cronAbmAnt" title="Mês anterior" aria-label="Mês anterior"><i class="fas fa-chevron-left"></i></button>
+              <div class="day-name" id="cronAbmMes" style="min-width:150px;" aria-live="polite">—</div>
+              <button type="button" class="day-nav-btn" id="cronAbmProx" title="Próximo mês" aria-label="Próximo mês"><i class="fas fa-chevron-right"></i></button>
+              <button type="button" class="btn-s" id="cronAbmHoje" style="font-size:12px;padding:7px 12px;">Hoje</button>
+            </div>
+          </div>
+          <div class="cal-toolbar cron-abm-filtros">
+            <label class="f-label" for="cronAbmMed" style="margin:0;">Médico</label>
+            <select class="f-select" id="cronAbmMed"><option value="">Todos</option></select>
+            <label class="f-label" for="cronAbmSit" style="margin:0;">Status</label>
+            <select class="f-select" id="cronAbmSit"><option value="">Todos</option><option value="pend">Pendentes</option><option value="aberta">Abertas</option><option value="canc">Canceladas</option></select>
+          </div>
+          <p class="cron-help">Marcar aqui <b>não abre a agenda no AMEI</b>: abra lá primeiro e depois marque. <span class="cron-abm-chip s-aberta" aria-hidden="true">✓</span> aberta (toque para ver ou desmarcar) · <span class="cron-abm-chip s-pend" aria-hidden="true">○</span> pendente (toque para marcar) · <span class="cron-abm-chip s-canc" aria-hidden="true">✕</span> cancelada. Datas esmaecidas já passaram.</p>
+          <div class="cron-help" id="cronAbmResumo"></div>
+          <div id="cronAbmLista"></div>
+        </div></div>
         <!-- [v1.3] calendário de abertura (v1.1/v1.2) realocado sem alterar IDs ou funções; a aba antiga fica oculta -->
         <div id="paneOcupacao">
       <div class="panel">
@@ -828,6 +870,15 @@
         <div class="full"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="cronMedAtivo" checked> Médico ativo (aparece na coleta e na planilha modelo)</label></div>
       </div>
       <div class="cron-mfoot"><button class="btn-s" onclick="cronMedFechar()">Cancelar</button><button class="btn-p" onclick="cronMedSalvar()"><i class="fas fa-check"></i> Salvar</button></div>
+    </div>
+  </div>
+
+  <!-- [v2.8] detalhes de uma data marcada como aberta -->
+  <div class="modal-bg" id="cronModalAbm">
+    <div class="cron-modal" role="dialog" aria-modal="true" aria-labelledby="cronAbmDetTitulo" style="max-width:420px;">
+      <div class="cron-mhead"><span id="cronAbmDetTitulo">Detalhes do dia</span><button type="button" class="modal-close-btn" title="Fechar" aria-label="Fechar"><i class="fas fa-xmark"></i></button></div>
+      <div id="cronAbmDetCorpo" class="cron-abm-det"></div>
+      <div class="cron-mfoot"><button type="button" class="btn-s" id="cronAbmDesmarcar"><i class="fas fa-rotate-left"></i> Desmarcar (voltar a pendente)</button></div>
     </div>
   </div>
 
@@ -1679,6 +1730,15 @@
       });
     }
 
+    // [v2.8] marca aberta / não aberta e registra em crono/historico o que mudou
+    function salvarAberta(dia, id, valor) {
+      var it = ((DIAS[dia] || {}).itens || {})[id] || {}, antes = it.aberta === true;
+      return salvar('crono/dias/' + dia + '/itens/' + id + '/aberta', valor).then(function (ok) {
+        if (ok && antes !== valor && typeof window.cronHistAbertura === 'function') window.cronHistAbertura(dia, id, it, valor);
+        return ok;
+      });
+    }
+
     // ── CALENDÁRIO MENSAL ──
     function fillFiltro() {
       var nomes = {};
@@ -1828,11 +1888,11 @@
       var b = ev.target.closest('[data-acao]'); if (!b || !ehAdmin()) return;
       var acao = b.getAttribute('data-acao'), id = b.getAttribute('data-id'), is = E.diaSel; if (!is) return;
       var base = 'crono/dias/' + is, it = ((DIAS[is] || {}).itens || {})[id];
-      if (acao === 'toggle') { if (it) salvar(base + '/itens/' + id + '/aberta', it.aberta !== true); }
+      if (acao === 'toggle') { if (it) salvarAberta(is, id, it.aberta !== true); }   // [v2.8]
       else if (acao === 'remover') { if (it && confirm('Remover ' + (it.doc || 'este profissional') + ' (' + (it.periodo || '') + ') deste dia?')) salvar(base + '/itens/' + id, null); }
       else if (acao === 'todas-abertas' || acao === 'todas-nao') {
         var v = acao === 'todas-abertas';
-        Promise.all(filtrados(is).map(function (x) { return salvar(base + '/itens/' + x.id + '/aberta', v); }));
+        Promise.all(filtrados(is).map(function (x) { return salvarAberta(is, x.id, v); }));   // [v2.8]
       }
       else if (acao === 'agd-dia') {
         var raw = document.getElementById('calAgdDia').value.trim(), n = raw === '' ? null : parseInt(raw, 10);
@@ -1853,11 +1913,11 @@
       var abrir = b.getAttribute('data-mes') === 'abrir', ym = E.ano + '-' + pad(E.mes + 1), hoje = hojeIso(), alvo = [], doc = '';
       Object.keys(DIAS).forEach(function (k) {
         if (k.indexOf(ym) !== 0 || k < hoje) return;
-        itensDoDia(k).forEach(function (x) { if (norm(x.doc) === E.filtro) { doc = x.doc; if (x.aberta !== abrir) alvo.push(k + '/itens/' + x.id); } });
+        itensDoDia(k).forEach(function (x) { if (norm(x.doc) === E.filtro) { doc = x.doc; if (x.aberta !== abrir) alvo.push({ dia: k, id: x.id }); } });
       });
       if (!alvo.length) { toast('Nada a alterar neste mês', 'info'); return; }
       if (!confirm((abrir ? 'Marcar como ABERTAS ' : 'Marcar como NÃO abertas ') + alvo.length + ' agenda(s) de ' + doc + ' neste mês (de hoje em diante)?')) return;
-      Promise.all(alvo.map(function (a) { return salvar('crono/dias/' + a + '/aberta', abrir); })).then(function (r) {
+      Promise.all(alvo.map(function (a) { return salvarAberta(a.dia, a.id, abrir); })).then(function (r) {   // [v2.8]
         if (r.every(Boolean)) toast(alvo.length + ' agenda(s) atualizada(s)', 'success');
       });
     }
@@ -2042,7 +2102,8 @@
     var S = {
       medicos: {}, idx: {}, dias: {}, ouvindo: {}, carregado: {}, erro: {}, coleta: {}, coletaOuv: {}, historico: [],
       view: 'mes', ref: new Date(), filtro: '', iniciado: false, autoAba: false, tocou: false, sub: 'medicos', profs: null, imp: null, acao: null,
-      grades: {}, grdOk: false, grdErro: '', grdImp: null, grdMap: {}, grdOff: {}, medOk: false   // [v2.2]
+      grades: {}, grdOk: false, grdErro: '', grdImp: null, grdMap: {}, grdOff: {}, medOk: false,   // [v2.2]
+      abmRef: null, abmMed: '', abmSit: '', abmDet: null   // [v2.8]
     };
     S.ref.setHours(12, 0, 0, 0);
 
@@ -2339,6 +2400,7 @@
       else if (S.sub === 'coleta') renderColeta();
       else if (S.sub === 'confirmacao') renderConf();   // [v2.7]
       else if (S.sub === 'atend') renderAtend();
+      else if (S.sub === 'abertura') renderAbm();   // [v2.8]
       else if (S.sub === 'hist') renderHist();
       else if (S.sub === 'grades') { renderGrades(); renderGrdImp(); grdMostrarDatas(); }   // [v2.2]
     }
@@ -3107,6 +3169,123 @@
       }).join('') + '</tbody></table>';
     }
     function baseItem(dia, id) { return 'crono/dias/' + dia + '/itens/' + id; }
+    // ── [v2.8] ABERTURA POR MÉDICO — prefixo cronAbm* — somente admin ──
+    // Só lê crono/dias e grava itens/{id}/aberta + crono/historico. A marca é um registro do portal: não abre nada no AMEI.
+    var ABM_SIT = { pend: { s: '○', t: 'pendente' }, aberta: { s: '✓', t: 'aberta' }, canc: { s: '✕', t: 'cancelada' } };
+    function abmSit(x) { return x.status === 'cancelado' ? 'canc' : (x.aberta ? 'aberta' : 'pend'); }
+    function abmYm() { if (!S.abmRef) { var h = new Date(); S.abmRef = new Date(h.getFullYear(), h.getMonth(), 1, 12); } return iso(S.abmRef).slice(0, 7); }
+    // um grupo por médico, com as datas do mês em ordem; remarcado fica de fora (a data nova já tem o próprio item)
+    function abmGrupos(ym) {
+      var g = {};
+      Object.keys(S.dias).filter(function (d) { return d.indexOf(ym) === 0; }).sort().forEach(function (d) {
+        itens(d, true).filter(function (x) { return x.status !== 'remarcado'; })
+          .sort(function (a, b) { return PERS.indexOf(a.periodo) - PERS.indexOf(b.periodo); })
+          .forEach(function (x) { var k = chaveMed(x); if (!g[k]) g[k] = { k: k, nome: rotuloNome(x), lista: [] }; g[k].lista.push(x); });
+      });
+      return Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt'); });
+    }
+    function abmUnicos(l) { return l.filter(function (v, i) { return v && l.indexOf(v) === i; }); }
+    function abmPendentes(g) { var hoje = hojeIso(); return g.lista.filter(function (x) { return x.dia >= hoje && abmSit(x) === 'pend'; }); }
+    function abmChip(x, repetida) {
+      var c = abmSit(x), passado = x.dia < hojeIso();
+      var rot = ABM_SIT[c].s + ' ' + brCurta(x.dia) + (repetida ? ' ' + (x.periodo === 'Manhã' ? 'M' : x.periodo === 'Tarde' ? 'T' : '?') : '');
+      var tip = DOWL[dataDe(x.dia).getDay()] + ', ' + brData(x.dia) + ' · ' + x.periodo + (x.horario ? ' · ' + x.horario : '') + ' · ' + salaRotulo(x.sala) + ' · ' + ABM_SIT[c].t +
+        (c === 'canc' && x.aberta ? ' (estava marcada como aberta: confira no AMEI)' : '') + (x.rotulo ? ' · ' + x.rotulo : '') + (x.obs ? ' · ' + x.obs : '');
+      var attr = ' class="cron-abm-chip s-' + c + (passado ? ' passado' : '') + '" data-dia="' + esc(x.dia) + '" data-id="' + esc(x.id) + '" title="' + esc(tip) + '"';
+      return c === 'canc' ? '<span' + attr + '>' + esc(rot) + '</span>' : '<button type="button"' + attr + ' aria-label="' + esc(tip) + '">' + esc(rot) + '</button>';
+    }
+    function renderAbm() {
+      var box = $('cronAbmLista'); if (!box || !isAdmin()) return;
+      var ym = abmYm();
+      garantirMes(ym);
+      $('cronAbmMes').textContent = cap(S.abmRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
+      var grupos = abmGrupos(ym), lido = !!S.carregado[ym];
+      var sel = $('cronAbmMed'), op = '<option value="">Todos</option>' + grupos.map(function (g) { return '<option value="' + esc(g.k) + '">' + esc(g.nome) + '</option>'; }).join('');
+      if (S.abmMed && lido && !grupos.some(function (g) { return g.k === S.abmMed; })) S.abmMed = '';
+      if (sel.getAttribute('data-h') !== op) { sel.innerHTML = op; sel.setAttribute('data-h', op); }
+      sel.value = S.abmMed; $('cronAbmSit').value = S.abmSit;
+
+      var doMed = grupos.filter(function (g) { return !S.abmMed || g.k === S.abmMed; });
+      var pend = 0, atras = 0, ab = 0, canc = 0, hoje = hojeIso();
+      doMed.forEach(function (g) { g.lista.forEach(function (x) { var c = abmSit(x); if (c === 'aberta') ab++; else if (c === 'canc') canc++; else if (x.dia >= hoje) pend++; else atras++; }); });
+      $('cronAbmResumo').innerHTML = grupos.length ? '<b>' + pend + ' pendente' + (pend === 1 ? '' : 's') + '</b> de hoje em diante · ' + ab + ' aberta' + (ab === 1 ? '' : 's') + ' · ' + canc + ' cancelada' + (canc === 1 ? '' : 's') +
+        (atras ? ' · ' + atras + ' sem marcar em data passada' : '') : '';
+
+      if (S.erro[ym]) { box.innerHTML = '<div class="cal-msg erro"><i class="fas fa-circle-exclamation"></i> Não foi possível ler as agendas deste mês (' + esc(S.erro[ym]) + ').</div>'; return; }
+      if (!grupos.length) { box.innerHTML = '<div class="cal-msg info">' + (lido ? 'Nenhuma agenda neste mês.' : '<i class="fas fa-spinner fa-spin"></i> Carregando agendas...') + '</div>'; return; }
+      var h = doMed.map(function (g) {
+        var vis = g.lista.filter(function (x) { return !S.abmSit || abmSit(x) === S.abmSit; });
+        if (!vis.length) return '';
+        var porDia = {}; g.lista.forEach(function (x) { porDia[x.dia] = (porDia[x.dia] || 0) + 1; });
+        var base = g.lista.filter(function (x) { return abmSit(x) !== 'canc'; }); if (!base.length) base = g.lista;
+        var salas = abmUnicos(base.map(function (x) { return x.sala ? salaRotulo(x.sala) : ''; }));
+        var sub = abmUnicos(g.lista.map(espDe)).concat(salas.length ? salas : ['Sem sala']).join(' · '), n = abmPendentes(g).length;
+        return '<div class="cron-abm-linha" data-med="' + esc(g.k) + '"><div class="cron-abm-med"><b>' + esc(g.nome) + '</b><small>' + esc(sub) + '</small></div>' +
+          '<div class="cron-abm-chips">' + vis.map(function (x) { return abmChip(x, porDia[x.dia] > 1); }).join('') + '</div>' +
+          '<div class="cron-abm-acao">' + (n ? '<button type="button" class="btn-s cron-abm-todas" data-med="' + esc(g.k) + '">Marcar ' + n + ' como aberta' + (n === 1 ? '' : 's') + '</button>' : '') + '</div></div>';
+      }).join('');
+      box.innerHTML = h || '<div class="cal-msg info">Nenhuma agenda com esse filtro neste mês.</div>';
+    }
+    function abmItem(dia, id) { return itens(dia, true).filter(function (x) { return x.id === id; })[0]; }
+    function abmHist(dia, id, x, aberta) {
+      return hist({ dia: dia, itemId: id, doc: rotuloNome(x), acao: 'aberta', de: aberta ? 'não' : 'sim', para: aberta ? 'sim' : 'não' });
+    }
+    window.cronHistAbertura = function (dia, id, it, aberta) { return abmHist(dia, id, { doc: String(it.doc || ''), medicoId: String(it.medicoId || '') }, aberta); };   // usado pelo calendário
+    function abmGravar(x, aberta) {
+      return gravar(baseItem(x.dia, x.id) + '/aberta', aberta).then(function (ok) { if (ok) abmHist(x.dia, x.id, x, aberta); return ok; });
+    }
+    function abmMarcar(x) {
+      if (!confirm('Já abriu no AMEI a agenda de ' + rotuloNome(x) + ' em ' + brCurta(x.dia) + ' (' + x.periodo + ')?\n\nOK marca como aberta no portal.')) return;
+      abmGravar(x, true);
+    }
+    function abmTodas(k) {
+      var g = abmGrupos(abmYm()).filter(function (a) { return a.k === k; })[0]; if (!g) return;
+      var l = abmPendentes(g), n = l.length; if (!n) return;
+      if (!confirm('Já abriu no AMEI ' + (n === 1 ? 'a agenda' : 'as ' + n + ' agendas') + ' de ' + g.nome + '?\n\n' +
+        l.map(function (x) { return brCurta(x.dia) + ' (' + x.periodo + ')'; }).join('\n') + '\n\nOK marca como aberta' + (n === 1 ? '' : 's') + ' no portal.')) return;
+      Promise.all(l.map(function (x) { return abmGravar(x, true); })).then(function (r) {
+        if (r.every(Boolean)) toast(n + ' agenda' + (n === 1 ? ' marcada como aberta' : 's marcadas como abertas'), 'success');
+      });
+    }
+    function abmDetalhe(x) {
+      S.abmDet = { dia: x.dia, id: x.id };
+      var linhas = [['Médico', rotuloNome(x)], ['Especialidade', espDe(x)], ['Data', DOWL[dataDe(x.dia).getDay()] + ', ' + brData(x.dia)], ['Período', x.periodo],
+        ['Horário', x.horario], ['Sala', salaRotulo(x.sala)], ['Situação', 'Aberta'], ['Observação', x.obs]];
+      $('cronAbmDetCorpo').innerHTML = '<dl>' + linhas.filter(function (l) { return l[1]; }).map(function (l) { return '<dt>' + l[0] + '</dt><dd>' + esc(l[1]) + '</dd>'; }).join('') + '</dl>';
+      abrirModal('cronModalAbm');
+    }
+    function abmFechar() { S.abmDet = null; fecharModal('cronModalAbm'); }
+    function abmLigar() {
+      $('cronAbmVista').addEventListener('click', function (ev) {
+        var b = ev.target.closest('button[data-vista]'); if (!b) return;
+        var cal = b.getAttribute('data-vista') === 'cal';
+        $('cronSubAbertura').classList.toggle('abm-cal', cal);
+        Array.prototype.forEach.call(this.children, function (c) { var on = c === b; c.classList.toggle('on', on); c.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+        if (cal) window.calRender(); else renderAbm();
+      });
+      function mover(d) { abmYm(); S.abmRef = new Date(S.abmRef.getFullYear(), S.abmRef.getMonth() + d, 1, 12); renderAbm(); }
+      $('cronAbmAnt').addEventListener('click', function () { mover(-1); });
+      $('cronAbmProx').addEventListener('click', function () { mover(1); });
+      $('cronAbmHoje').addEventListener('click', function () { S.abmRef = null; renderAbm(); });
+      $('cronAbmMed').addEventListener('change', function () { S.abmMed = this.value; renderAbm(); });
+      $('cronAbmSit').addEventListener('change', function () { S.abmSit = this.value; renderAbm(); });
+      $('cronAbmLista').addEventListener('click', function (ev) {
+        if (!isAdmin()) return;
+        var t = ev.target.closest('.cron-abm-todas'); if (t) { abmTodas(t.getAttribute('data-med')); return; }
+        var c = ev.target.closest('button.cron-abm-chip'); if (!c) return;
+        var x = abmItem(c.getAttribute('data-dia'), c.getAttribute('data-id')); if (!x) return;
+        if (abmSit(x) === 'pend') abmMarcar(x); else if (abmSit(x) === 'aberta') abmDetalhe(x);
+      });
+      var m = $('cronModalAbm');
+      m.addEventListener('click', function (ev) { if (ev.target === m || ev.target.closest('.modal-close-btn')) abmFechar(); });
+      document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && S.abmDet) abmFechar(); });
+      $('cronAbmDesmarcar').addEventListener('click', function () {
+        var d = S.abmDet; if (!d || !isAdmin()) return;
+        var x = abmItem(d.dia, d.id); abmFechar();
+        if (x && abmSit(x) === 'aberta') abmGravar(x, false);
+      });
+    }
+
     function mudouAtend(ev) {
       var t = ev.target, id = t.getAttribute && t.getAttribute('data-id'); if (!id) return;
       var dia = diaAtend(), it = itemBruto(dia, id); if (!it) return; var x = itens(dia, true).filter(function (a) { return a.id === id; })[0], b = baseItem(dia, id);
@@ -3709,6 +3888,7 @@
     function iniciar() {
       if (S.iniciado || typeof window.cronFbOn !== 'function') return;
       S.iniciado = true; ligarEventos();
+      abmLigar();   // [v2.8]
       carregarExternos();   // [v2.4]
       window.cronFbOn('crono/medicos', function (v) { S.medicos = v || {}; S.medOk = true; indexar(); redesenhar(); grdAuto(); });
       if (typeof window.cronFbUltimos === 'function') window.cronFbUltimos('crono/historico', 150, function (v) {
