@@ -1,3 +1,4 @@
+<!-- VERSION: v2.2 | login.html | 28/11/2026 | Cronograma da tela inicial mostra o texto escrito na sala (anotação) por inteiro, em cinza, e não o conta nos indicadores. -->
 <!-- VERSION: v2.1 | login.html | 27/11/2026 | "Imprimir semana" da tela inicial sai na mesma folha do Dashboard (js/cron-folha-semana.js). -->
 <!-- VERSION: v1.9 | login.html | 19/11/2026 | Vitrine do cronograma, KPIs e botão Gerar agenda só para admin ou perms.cronograma (sem leitura de crono/dias para os demais). Só adições. -->
 <!-- VERSION: v1.5 | login.html | 17/11/2026 | feat: tela inicial com saudação + vitrine do cronograma (Dia/Semana/Mês, somente leitura) acima dos cards; card Cronograma deixa de aparecer (módulo segue acessível pelo Dashboard/Gerar agenda). Só adições + 1 linha removida (exibição do cardCronograma). v1.4 | login.html | 30/10/2026 | fix: card Contratos visível também para usuários com perms.contratos (antes só admin). v1.3 | login.html | 16/10/2026 | feat: card "Emissão de notas" (somente admin) → pages/emissao-notas.html. v1.2 | 03/10/2026 | visual: novo login (card branco sobre fundo navy, tom índigo, splash escura) — sem alteração de lógica. v1.1 | 14/07/2026 | feat: card Contratos + botão de novidades com changelog -->
@@ -173,6 +174,7 @@
     .hs-conf{background:#dbeafe;border-color:#3b82f6;color:#1e40af;}
     .hs-aberta{background:#dcfce7;border-color:#22c55e;color:#14532d;}
     .hs-est{background:#ede9fe;border-color:#8b5cf6;color:#5b21b6;}
+    .hs-avulso{background:#f1f5f9;border-color:#64748b;color:#1e293b;}   /* [v2.2] anotação */
     /* Dia */
     .hc-dia{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;}
     .hc-room{border:1px solid var(--gray-200);border-left-width:4px;border-radius:10px;padding:10px 12px;background:var(--gray-50);}
@@ -501,7 +503,7 @@
     const HC_MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
     const HC_ORDEM = ['01','02','03','04','05','US','06','07','08','ACOL1','ACOL2','09','10','FISIO'];
     const HC_ESPECIAIS = { US:'ULTRASSOM:', ACOL1:'ACOLHIMENTO 1:', ACOL2:'ACOLHIMENTO 2:', FISIO:'Fisioterapia:' };
-    const HC_ST_LBL = { aberta:'Aberta', conf:'Confirmado', est:'Estendido', prev:'Previsto' };
+    const HC_ST_LBL = { aberta:'Aberta', conf:'Confirmado', est:'Estendido', prev:'Previsto', avulso:'Anotação' };
     function hcPad(n){ return ('0'+n).slice(-2); }
     function hcIso(d){ return d.getFullYear()+'-'+hcPad(d.getMonth()+1)+'-'+hcPad(d.getDate()); }
     function hcAdd(d,n){ const r=new Date(d.getTime()); r.setDate(r.getDate()+n); return r; }
@@ -514,7 +516,8 @@
     const HC_TIT = /^\s*(dr\(a\)\.?|dra\.?|dr\.?|prof\.?|profa\.?)\s+/i;
     function hcNome(doc){ const p=String(doc||'').replace(HC_TIT,'').trim().split(/\s+/).filter(Boolean); if(p.length>=2 && !/\.$/.test(p[p.length-1])) return p[0]+' '+p[p.length-1].charAt(0).toUpperCase()+'.'; return p.join(' '); }
     function hcChave(doc){ return String(doc||'').replace(HC_TIT,'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' '); }
-    function hcSt(x){ if (x.status==='estendido') return 'est'; if (x.aberta) return 'aberta'; if (x.status==='confirmado') return 'conf'; return 'prev'; }
+    function hcNomeDe(x){ return x.avulso ? x.doc : hcNome(x.doc); } // [v2.2] anotação sai inteira
+    function hcSt(x){ if (x.avulso) return 'avulso'; if (x.status==='estendido') return 'est'; if (x.aberta) return 'aberta'; if (x.status==='confirmado') return 'conf'; return 'prev'; }
     // raw=true ignora o filtro de profissional (usado no resumo de hoje)
     function hcItens(dia, raw){
       const d = HC.dias[dia]; if (!d || !d.itens) return [];
@@ -523,9 +526,10 @@
         const x = d.itens[id] || {};
         return { sala:String(x.sala||''), doc:String(x.doc||''), role:String(x.role||''), aberta:!!x.aberta,
                  periodo: x.periodo==='Tarde'?'Tarde':(x.periodo==='A definir'?'A definir':'Manhã'), status:String(x.status||''),
-                 medicoId:String(x.medicoId||''), rotulo:String(x.rotulo||'') }; // [v2.1] usados na folha impressa
+                 medicoId:String(x.medicoId||''), rotulo:String(x.rotulo||''), // [v2.1] usados na folha impressa
+                 origem:String(x.origem||''), avulso: x.origem==='avulso' && !x.medicoId }; // [v2.2]
       }).filter(x => x.status!=='cancelado' && x.status!=='remarcado' && (raw || ((!HC.filtro || hcChave(x.doc)===HC.filtro) && (!HC.filtroEsp || hcChave(x.role)===HC.filtroEsp))))  // [v1.8] 2º filtro: especialidade
-        .sort((a,b) => hcSalaChave(a.sala)-hcSalaChave(b.sala) || PER.indexOf(a.periodo)-PER.indexOf(b.periodo) || a.doc.localeCompare(b.doc,'pt'));
+        .sort((a,b) => hcSalaChave(a.sala)-hcSalaChave(b.sala) || PER.indexOf(a.periodo)-PER.indexOf(b.periodo) || a.avulso-b.avulso || a.doc.localeCompare(b.doc,'pt'));
     }
     async function hcCarregarMes(ym){
       const sessao = sessaoPortal;
@@ -545,7 +549,7 @@
     function hcPerBadge(p){ return '<span class="hc-per'+(p==='Tarde'?' t':'')+'">'+esc(p)+'</span>'; }
     // ── folha da semana (espelha htmlSemana do módulo) ──
     function hcRotLinha(s){ return /^\d+$/.test(s) ? parseInt(s,10)+'.' : (HC_ESPECIAIS[s] || (s+'.')); }
-    function hcTexto(x, esp){ const n = hcNome(x.doc).toUpperCase(); return esp || !x.role ? n : n+' ('+x.role.toUpperCase()+')'; }
+    function hcTexto(x, esp){ const n = hcNomeDe(x).toUpperCase(); return esp || !x.role ? n : n+' ('+x.role.toUpperCase()+')'; }
     function hcLinhas(lista, per, salas){
       const xs = lista.filter(x => x.periodo===per);
       const out = salas.map(sl => {
@@ -563,7 +567,7 @@
         if (per==='Tarde' && hcData(d).getDay()===6 && !l.some(x => x.periodo==='Tarde')) return '';
         return hcLinhas(l, per, salas).map(ln => {
           const c = ln.itens.length ? ' ativo hs-'+hcSt(ln.itens[0]) : ' vz'; // [v1.8]
-          return '<div class="hc-ln'+c+'" title="'+esc(ln.txt)+'">'+esc(ln.txt)+(ln.itens.some(x => x.aberta) ? ' <i class="fas fa-lock-open"></i>' : '')+'</div>';
+          return '<div class="hc-ln'+c+'" title="'+esc(ln.txt)+'">'+esc(ln.txt)+(ln.itens.some(x => x.aberta && !x.avulso) ? ' <i class="fas fa-lock-open"></i>' : '')+'</div>';
         }).join('');
       };
       const semA = listas.some(l => l.some(x => x.periodo==='A definir'));
@@ -589,7 +593,7 @@
     }
     function hcPreencherFiltro(){
       const mapa = {};
-      Object.keys(HC.dias).forEach(d => hcItens(d,true).forEach(x => { const k=hcChave(x.doc); if (k && !mapa[k]) mapa[k]=hcNome(x.doc); }));
+      Object.keys(HC.dias).forEach(d => hcItens(d,true).forEach(x => { const k=hcChave(x.doc); if (k && !mapa[k]) mapa[k]=hcNomeDe(x); }));
       const ch = Object.keys(mapa).sort((a,b) => mapa[a].localeCompare(mapa[b],'pt'));
       if (HC.filtro && !mapa[HC.filtro]) HC.filtro = '';
       const sel = document.getElementById('hcFiltro');
@@ -607,7 +611,7 @@
       se.value = HC.filtroEsp;
     }
     function hcResumo(){
-      const l = hcItens(hcIso(new Date()), true);
+      const l = hcItens(hcIso(new Date()), true).filter(x => !x.avulso); // [v2.2]
       document.getElementById('hcK1').textContent = l.length;
       document.getElementById('hcK2').textContent = new Set(l.map(x => hcChave(x.doc))).size;
       document.getElementById('hcK3').textContent = l.filter(x => x.aberta).length;
@@ -634,8 +638,8 @@
         tit.textContent = HC_DOW[HC.ref.getDay()] + ', ' + hcBr(di);
         body.innerHTML = HC.ref.getDay()===0 ? '<div class="hc-aviso">Domingo: sem agenda.</div>'
           : !l.length ? '<div class="hc-aviso">' + (erros.length ? '' : 'Nenhuma agenda cadastrada para este dia.') + '</div>'
-          : '<div class="hc-dia">' + l.map(x => { const c=hcSt(x), cor={prev:'#f59e0b',conf:'#3b82f6',aberta:'#22c55e',est:'#8b5cf6'}[c];
-              return '<div class="hc-room" style="border-left-color:'+cor+'"><div class="hc-room-n">'+esc(hcSalaRot(x.sala))+'</div><div class="hc-room-d">'+esc(x.doc)+'</div><div class="hc-room-r">'+esc(x.role)+'</div>'+hcPerBadge(x.periodo)+(x.aberta?' <span class="hc-per" style="background:#dcfce7;color:#166534;">Agenda aberta</span>':'')+'</div>'; }).join('') + '</div>';
+          : '<div class="hc-dia">' + l.map(x => { const c=hcSt(x), cor={prev:'#f59e0b',conf:'#3b82f6',aberta:'#22c55e',est:'#8b5cf6',avulso:'#64748b'}[c];
+              return '<div class="hc-room" style="border-left-color:'+cor+'"><div class="hc-room-n">'+esc(hcSalaRot(x.sala))+'</div><div class="hc-room-d">'+esc(x.doc)+'</div><div class="hc-room-r">'+esc(x.role)+'</div>'+hcPerBadge(x.periodo)+(x.aberta && !x.avulso?' <span class="hc-per" style="background:#dcfce7;color:#166534;">Agenda aberta</span>':'')+'</div>'; }).join('') + '</div>';
       } else if (HC.view==='semana'){
         const seg = hcSegunda(HC.ref), dias = [];
         for (let i=0;i<6;i++) dias.push(hcIso(hcAdd(seg,i)));
@@ -650,11 +654,11 @@
     // [v1.8] Mês panorâmico: tabela Seg–Sáb, cada dia lista as especialidades (agrupadas por role)
     function hcGrupos(l){
       const g = [], ix = {};
-      l.forEach(x => { const esp = (x.role||'').trim() || hcSalaRot(x.sala), k = hcChave(esp);
-        if (!(k in ix)){ ix[k] = g.length; g.push({ esp:esp, chave:hcChave(x.role), itens:[] }); }
+      l.forEach(x => { const esp = x.avulso ? x.doc : ((x.role||'').trim() || hcSalaRot(x.sala)), k = (x.avulso ? 'avulso:' : '') + hcChave(esp); // [v2.2]
+        if (!(k in ix)){ ix[k] = g.length; g.push({ esp:esp, chave:hcChave(x.role), avulso:x.avulso, itens:[] }); }
         g[ix[k]].itens.push(x); });
-      g.forEach(o => { o.docs = [...new Set(o.itens.map(x => hcNome(x.doc)).filter(Boolean))].join(' / '); });
-      return g;
+      g.forEach(o => { o.docs = o.avulso ? '' : [...new Set(o.itens.map(x => hcNome(x.doc)).filter(Boolean))].join(' / '); });
+      return g.sort((a,b) => !!a.avulso - !!b.avulso); // [v2.2] anotações no fim do dia
     }
     function hcMesHtml(hoje, tit){
       const a = HC.ref.getFullYear(), m0 = HC.ref.getMonth(), prim = new Date(a,m0,1,12), ultD = new Date(a,m0+1,0,12);
@@ -675,10 +679,10 @@
           const linhas = gr.map(o => {
             const m = (!HC.filtroEsp || o.chave===HC.filtroEsp) && (!HC.filtro || o.itens.some(x => hcChave(x.doc)===HC.filtro));
             if (temF && m) algum = true;
-            return '<div class="hc-mln hs-'+hcSt(o.itens[0])+(temF && m ? ' match' : '')+'" title="'+esc(o.esp+' · '+o.docs)+'"><b>'+esc(o.esp.toUpperCase())+'</b> <span>· '+esc(o.docs)+'</span></div>';
+            return '<div class="hc-mln hs-'+hcSt(o.itens[0])+(temF && m ? ' match' : '')+'" title="'+esc(o.esp+(o.docs?' · '+o.docs:''))+'"><b>'+esc(o.esp.toUpperCase())+'</b>'+(o.docs?' <span>· '+esc(o.docs)+'</span>':'')+'</div>';
           }).join('');
           h += '<td><div class="hc-mcell'+(di===hoje?' hoje':'')+(temF && !algum ? ' dim' : '')+'" onclick="hcAbrirDia(\''+di+'\')">' +
-            '<div class="hc-mhead"><span class="hc-mday">'+hcPad(dt.getDate())+(di===hoje?' <span class="hc-mtag-hoje">HOJE</span>':'')+'</span><span class="hc-mstats">'+(gr.length ? (typeof n==='number'?n+' ag. · ':'')+gr.length+' esp.' : '')+'</span></div>' +
+            '<div class="hc-mhead"><span class="hc-mday">'+hcPad(dt.getDate())+(di===hoje?' <span class="hc-mtag-hoje">HOJE</span>':'')+'</span><span class="hc-mstats">'+(gr.length ? (typeof n==='number'?n+' ag. · ':'')+gr.filter(o => !o.avulso).length+' esp.' : '')+'</span></div>' +
             '<div class="hc-mlist">'+linhas+'</div></div></td>';
         }
         h += '</tr>';
@@ -732,7 +736,7 @@
     function hcImprimirDia(){
       const di = hcIso(HC.ref), l = hcItens(di);
       let h = '<table><thead><tr><th style="width:16%">Sala</th><th>Profissional</th><th style="width:22%">Especialidade</th><th style="width:10%">Período</th><th style="width:12%">Situação</th></tr></thead><tbody>' +
-        (l.length ? l.map(x => '<tr><td>'+esc(hcSalaRot(x.sala))+'</td><td>'+esc(x.doc)+'</td><td>'+esc(x.role)+'</td><td>'+esc(x.periodo)+'</td><td>'+esc(HC_ST_LBL[hcSt(x)])+(x.aberta?' · aberta':'')+'</td></tr>').join('') : '<tr><td colspan="5">Sem agenda neste dia.</td></tr>') + '</tbody></table>';
+        (l.length ? l.map(x => '<tr><td>'+esc(hcSalaRot(x.sala))+'</td><td>'+esc(x.doc)+'</td><td>'+esc(x.role)+'</td><td>'+esc(x.periodo)+'</td><td>'+esc(HC_ST_LBL[hcSt(x)])+(x.aberta && !x.avulso?' · aberta':'')+'</td></tr>').join('') : '<tr><td colspan="5">Sem agenda neste dia.</td></tr>') + '</tbody></table>';
       const n = (HC.dias[di]||{}).agendados;
       hcJanela('Cronograma do dia · '+HC_DOW[HC.ref.getDay()]+', '+hcBr(di)+(typeof n==='number' ? ' · Agendados: '+n : ''), 'th{border:1.2px solid #111;background:#0A1F44;color:#fff;font-size:10px;padding:4px;text-align:left}td{border:1.2px solid #111;padding:3px 5px;font-size:10.5px}', h);
     }

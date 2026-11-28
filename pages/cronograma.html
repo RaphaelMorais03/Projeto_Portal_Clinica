@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <!-- VERSION: v2.1 | cronograma.html | 24/11/2026 | Visual unificado: passa a usar ../css/portal-theme.css (mesmos valores da v1.5). Só CSS de tela; folha impressa, regras de impressão, IDs e funções intactos. -->
 <html lang="pt-BR">
+<!-- VERSION: v3.0 | cronograma.html | 28/11/2026 | Verificar cronograma: escrever direto em uma sala, sem cadastro (agenda com origem "avulso"). Anotação divide sala com médico, sai na folha e no PDF e não entra em confirmação, abertura nem grades. -->
 <!-- VERSION: v2.7 | cronograma.html | 27/11/2026 | Confirmação com o médico (admin): tela com situação por dia, WhatsApp no cadastro do médico, texto padrão (crono/config/confirmacao/texto), nº de pacientes (campo agendados que já existia) e "Pedir no WhatsApp" na Coleta do mês. -->
 <!-- VERSION: v2.5 | cronograma.html | 27/11/2026 | Menu novo (etapa 1): aberto pelo Dashboard, cada item (Abertura, Agendas, Grades) mostra as suas telas em abas. Mesmas telas; nada novo no banco. -->
 <!-- VERSION: v2.2 | cronograma.html | 26/11/2026 | Gestão de agendas, etapa 1: subaba Configuração → Grades (só admin), ligada aos médicos do cadastro (crono/medicos). Nó novo crono/grades; precisa da Rule publicada. Não altera atendimentos. -->
@@ -243,6 +244,7 @@
     .s-conf{background:#dbeafe;border-color:#3b82f6;color:#1e40af;}
     .s-aberta{background:#dcfce7;border-color:#22c55e;color:#166534;}
     .s-est{background:#ede9fe;border-color:#8b5cf6;color:#5b21b6;}
+    .s-avulso{background:#f1f5f9;border-color:#64748b;color:#1e293b;}   /* [v3.0] texto escrito na sala */
     .s-canc,.s-rem{background:var(--gray-100);border-color:var(--gray-400);color:var(--gray-400);text-decoration:line-through;}
     .cron-dia{background:white;border:2px solid var(--gray-200);border-radius:10px;min-height:104px;padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:1px;transition:box-shadow .15s;}
     .cron-dia:hover{box-shadow:0 2px 10px rgba(10,31,68,.15);}
@@ -261,7 +263,7 @@
     .cron-wk tr.t td{background:var(--gray-50);}
     .cron-dia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:6px;}
     .cron-card{border:1.5px solid var(--gray-200);border-left:5px solid;border-radius:10px;padding:10px 12px;background:white;display:flex;flex-direction:column;gap:3px;}
-    .cron-card.s-prev{border-left-color:#f59e0b;}.cron-card.s-conf{border-left-color:#3b82f6;}.cron-card.s-aberta{border-left-color:#22c55e;}.cron-card.s-est{border-left-color:#8b5cf6;}.cron-card.s-canc,.cron-card.s-rem{border-left-color:var(--gray-400);}
+    .cron-card.s-prev{border-left-color:#f59e0b;}.cron-card.s-conf{border-left-color:#3b82f6;}.cron-card.s-aberta{border-left-color:#22c55e;}.cron-card.s-est{border-left-color:#8b5cf6;}.cron-card.s-avulso{border-left-color:#64748b;}.cron-card.s-canc,.cron-card.s-rem{border-left-color:var(--gray-400);}
     .cron-card{color:var(--gray-800);text-decoration:none;background:white;}
     .cron-card .sala{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gray-500);}
     .cron-card .nome{font-size:14px;font-weight:800;color:var(--navy);}
@@ -379,7 +381,10 @@
     .cron-vcol-h .pend{display:block;font-size:10px;color:#fecaca;font-weight:700;}
     .cron-vband{background:var(--gray-100);color:var(--navy);font-size:10px;font-weight:800;letter-spacing:1px;text-align:center;padding:3px;border-top:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);}
     .cron-vband small{font-weight:600;letter-spacing:0;color:var(--gray-500);}
-    .cron-vrow{display:grid;grid-template-columns:34px minmax(0,1fr);gap:3px;padding:2px 4px;align-items:stretch;}
+    .cron-vrow{display:grid;grid-template-columns:34px minmax(0,1fr) 20px;gap:3px;padding:2px 4px;align-items:stretch;}   /* [v3.0] 3ª coluna: botão de escrever */
+    .cron-vadd{border:none;background:transparent;cursor:pointer;color:var(--gray-400);font-size:10px;padding:0;border-radius:6px;}
+    .cron-vadd:hover,.cron-vadd:focus-visible{background:#e0f2fe;color:var(--navy);}
+    .cron-vnovo{width:100%;min-width:0;border:1.5px solid var(--navy);border-radius:6px;font:inherit;font-size:11px;padding:3px 5px;}
     .cron-vcol .cron-v-sala{padding:2px 3px;font-size:10px;justify-content:center;text-align:center;}
     .cron-vcol .cron-v-cell{min-height:24px;padding:2px;}
     .cron-vcol .cron-vchip{font-size:10.5px;padding:2px 5px;}
@@ -401,7 +406,7 @@
     .cron-ln{padding:2px 6px;border-bottom:1px solid #111;font-weight:800;font-size:11px;line-height:1.35;color:#111;overflow-wrap:anywhere;}
     .cron-ln:last-child{border-bottom:none;}
     .cron-ln.vz{color:#6b7280;font-weight:600;}
-    .cron-ln.s-prev,.cron-ln.s-conf,.cron-ln.s-aberta,.cron-ln.s-est{border-left-width:4px;border-left-style:solid;border-bottom-color:#111;}
+    .cron-ln.s-prev,.cron-ln.s-conf,.cron-ln.s-aberta,.cron-ln.s-est,.cron-ln.s-avulso{border-left-width:4px;border-left-style:solid;border-bottom-color:#111;}
     .cron-ln i{font-size:9px;opacity:.7;}
     @media(max-width:700px){.cron-grid2{grid-template-columns:1fr;}.cron-add{grid-template-columns:1fr;}.cron-v-grid{grid-template-columns:78px repeat(var(--cols,2),minmax(0,1fr));}.cron-seg button{padding:7px 10px;}}
     /* [v2.1] regras da própria página que o tema não cobre */
@@ -989,7 +994,7 @@
             <button class="btn-p" onclick="cronVerImprimir()" id="cronVerBtnImp"><i class="fas fa-print"></i> Imprimir</button>
             <button class="btn-r" onclick="cronVerPdf()" id="cronVerBtnPdf"><i class="fas fa-file-pdf"></i> Baixar PDF</button>
           </div>
-          <div class="cron-v-aviso"><i class="fas fa-circle-info"></i> Arraste o nome do profissional para outra sala (ou clique no nome e depois na sala). Use o lápis <i class="fas fa-pen"></i> para trocar o médico, o período ou remover. Confira tudo e só então imprima.</div>
+          <div class="cron-v-aviso"><i class="fas fa-circle-info"></i> Arraste o nome do profissional para outra sala (ou clique no nome e depois na sala). Para <b>escrever</b> numa sala sem cadastro, clique no <i class="fas fa-plus"></i> (ou na sala vazia), digite e tecle Enter. Use o lápis <i class="fas fa-pen"></i> para editar ou remover. Confira tudo e só então imprima.</div>
           <div id="cronVerCorpo"></div>
         </div>
       </div>
@@ -1001,6 +1006,7 @@
     <div class="cron-modal">
       <div class="cron-mhead"><span id="cronVedTitulo">Editar atendimento</span><button class="modal-close-btn" onclick="cronVedFechar()" title="Fechar"><i class="fas fa-xmark"></i></button></div>
       <div style="display:grid;gap:10px;">
+        <div id="cronVedTextoBox" style="display:none;"><label class="f-label" for="cronVedTexto">Texto escrito na sala</label><input class="f-input" id="cronVedTexto" maxlength="60"></div>
         <div><label class="f-label" for="cronVedMed">Médico / profissional</label><select class="f-select" id="cronVedMed"></select></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div><label class="f-label" for="cronVedPer">Período</label><select class="f-select" id="cronVedPer"><option>Manhã</option><option>Tarde</option></select></div>
@@ -1697,14 +1703,15 @@
           periodo: x.periodo === 'Tarde' ? 'Tarde' : (x.periodo === 'A definir' ? 'A definir' : 'Manhã'), aberta: x.aberta === true,
           agendados: (typeof x.agendados === 'number') ? x.agendados : null,
           est: x.est === true, obs: String(x.obs || ''), status: String(x.status || ''),   // [v1.2 cal] est = período/sala deduzidos (confirmar); obs = aviso curto; [v1.3] status
-          horario: String(x.horario || ''), rotulo: String(x.rotulo || '') };   // [v2.4]
+          horario: String(x.horario || ''), rotulo: String(x.rotulo || ''),   // [v2.4]
+          avulso: x.origem === 'avulso' && !x.medicoId };   // [v3.0] texto escrito na sala
       }).filter(function (x) { return x.status !== 'cancelado' && x.status !== 'remarcado'; })   // [v1.3] cancelado/remarcado saem da Agenda do dia e da abertura (continuam no Cronograma/Configuração)
       .sort(function (a, b) {
         return salaChave(a.sala) - salaChave(b.sala) || (PERIODOS_TODOS.indexOf(a.periodo) - PERIODOS_TODOS.indexOf(b.periodo)) || a.doc.localeCompare(b.doc, 'pt');
       });
     }
     function filtrados(is) {
-      var l = itensDoDia(is);
+      var l = itensDoDia(is).filter(function (x) { return !x.avulso; });   // [v3.0]
       return E.filtro ? l.filter(function (x) { return norm(x.doc) === E.filtro; }) : l;
     }
     function agendadosDoDia(is, itens) {
@@ -1759,7 +1766,7 @@
     // ── CALENDÁRIO MENSAL ──
     function fillFiltro() {
       var nomes = {};
-      Object.keys(DIAS).forEach(function (k) { itensDoDia(k).forEach(function (x) { if (x.doc && !nomes[norm(x.doc)]) nomes[norm(x.doc)] = x.doc; }); });
+      Object.keys(DIAS).forEach(function (k) { itensDoDia(k).forEach(function (x) { if (!x.avulso && x.doc && !nomes[norm(x.doc)]) nomes[norm(x.doc)] = x.doc; }); });
       var chaves = Object.keys(nomes).sort(), h = '<option value="">Todos</option>';
       chaves.forEach(function (k) { h += '<option value="' + esc(k) + '">' + esc(nomes[k]) + '</option>'; });
       var sel = document.getElementById('calFiltro');
@@ -1930,7 +1937,7 @@
       var abrir = b.getAttribute('data-mes') === 'abrir', ym = E.ano + '-' + pad(E.mes + 1), hoje = hojeIso(), alvo = [], doc = '';
       Object.keys(DIAS).forEach(function (k) {
         if (k.indexOf(ym) !== 0 || k < hoje) return;
-        itensDoDia(k).forEach(function (x) { if (norm(x.doc) === E.filtro) { doc = x.doc; if (x.aberta !== abrir) alvo.push({ dia: k, id: x.id }); } });
+        itensDoDia(k).forEach(function (x) { if (!x.avulso && norm(x.doc) === E.filtro) { doc = x.doc; if (x.aberta !== abrir) alvo.push({ dia: k, id: x.id }); } });
       });
       if (!alvo.length) { toast('Nada a alterar neste mês', 'info'); return; }
       if (!confirm((abrir ? 'Marcar como ABERTAS ' : 'Marcar como NÃO abertas ') + alvo.length + ' agenda(s) de ' + doc + ' neste mês (de hoje em diante)?')) return;
@@ -2056,7 +2063,7 @@
         if (itens.length) aviso = '<div class="cal-msg ' + (erro[ym] ? 'erro' : 'info') + '" style="grid-column:1/-1;margin:0;">' +
           (erro[ym] ? 'Não foi possível ler o calendário (' + esc(erro[ym]) + ').' : 'Este dia ainda não tem cronograma no Calendário.') + ' Mostrando o modelo semanal (aba Semana).</div>';
       }
-      var distintos = {}; itens.forEach(function (x) { distintos[norm(x.doc)] = 1; });
+      var distintos = {}; itens.forEach(function (x) { if (!x.avulso) distintos[norm(x.doc)] = 1; });
       document.getElementById('stMed').textContent = Object.keys(distintos).length;
       if (!itens.length) {
         el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray-400);"><i class="fas fa-moon" style="font-size:32px;opacity:.3;display:block;margin-bottom:10px;"></i>Sem agenda neste dia</div>';
@@ -2085,7 +2092,7 @@
         lanes.forEach(function (l) {
           h += '<div class="cal-ag-cell">' + itens.filter(function (x) { return x.sala === s && nasLanes(x).indexOf(l) >= 0; }).map(function (x) {
             return '<div class="cal-card cal-c' + cor(x.role || x.doc) + '"><div class="cal-card-doc">' + esc(x.doc) + (x.est ? '<span class="cal-est" title="Período/sala deduzidos">estimado</span>' : '') + '</div><div class="cal-card-role">' + esc(x.role) + '</div>' + (x.horario ? '<div class="cal-card-hor"><i class="fas fa-clock"></i> ' + esc(x.horario) + '</div>' : '') + (x.obs ? '<span class="cal-obs">' + esc(x.obs) + '</span>' : '') +
-              (x.aberta === true ? '<span class="cal-pill ab sm"><i class="fas fa-lock-open"></i> Aberta</span>' : x.aberta === false ? '<span class="cal-pill na sm"><i class="fas fa-lock"></i> Não aberta</span>' : '') +
+              (x.avulso ? '' : x.aberta === true ? '<span class="cal-pill ab sm"><i class="fas fa-lock-open"></i> Aberta</span>' : x.aberta === false ? '<span class="cal-pill na sm"><i class="fas fa-lock"></i> Não aberta</span>' : '') +
               (x.agendados !== null ? '<span class="cal-card-agd">' + x.agendados + ' agendados</span>' : '') + '</div>';
           }).join('') + '</div>';
         });
@@ -2115,7 +2122,7 @@
     var SALAS_CONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
     var SALAS = SALAS_CONS.concat(['FISIO', 'US', 'ACOL1', 'ACOL2']);
     var PERS = ['Manhã', 'Tarde', 'A definir'];
-    var ST_LBL = { canc: 'Cancelado', rem: 'Remarcado', aberta: 'Aberta', conf: 'Confirmado', est: 'Estendido', prev: 'Previsto' };
+    var ST_LBL = { canc: 'Cancelado', rem: 'Remarcado', aberta: 'Aberta', conf: 'Confirmado', est: 'Estendido', prev: 'Previsto', avulso: 'Anotação' };
     var S = {
       medicos: {}, idx: {}, dias: {}, ouvindo: {}, carregado: {}, erro: {}, coleta: {}, coletaOuv: {}, historico: [],
       view: 'mes', ref: new Date(), filtro: '', iniciado: false, autoAba: false, tocou: false, sub: 'medicos', profs: null, imp: null, acao: null,
@@ -2180,6 +2187,9 @@
       }, function (e) { S.erro[ym] = (e && (e.code || e.message)) || 'erro'; S.carregado[ym] = true; redesenhar(); });
     }
     function inativo(x) { return x.status === 'cancelado' || x.status === 'remarcado'; }
+    // [v3.0] anotação: texto escrito direto na sala, sem médico do cadastro (vira agenda normal se um médico for escolhido)
+    function avulso(x) { return x.origem === 'avulso' && !x.medicoId; }
+    function avulsoPorUltimo(a, b) { return (avulso(a) ? 1 : 0) - (avulso(b) ? 1 : 0); }
     function itens(dia, todos) {
       var d = S.dias[dia]; if (!d || !d.itens) return [];
       var l = Object.keys(d.itens).map(function (id) {
@@ -2212,6 +2222,7 @@
       });
     }
     function medDe(x) {
+      if (avulso(x)) return null;   // [v3.0] nunca casa por nome
       var id = (x.medicoId && S.medicos[x.medicoId]) ? x.medicoId : S.idx[limpaNome(x.doc)];
       return (id && id !== '?' && S.medicos[id]) ? { id: id, m: S.medicos[id] } : null;
     }
@@ -2221,6 +2232,7 @@
       return '';
     }
     function rotuloNome(x) {
+      if (avulso(x)) return String(x.doc || '');   // [v3.0] texto inteiro, sem abreviar
       var r = medDe(x);
       if (r) { var n = String(r.m.nome || '').trim(), s = inicialSobrenome(r.m.sobrenome); return s ? n + ' ' + s : n; }
       var p = String(x.doc || '').replace(TITULO, '').trim().split(/\s+/);
@@ -2232,6 +2244,7 @@
     function stEf(x) {
       if (x.status === 'cancelado') return 'canc';
       if (x.status === 'remarcado') return 'rem';
+      if (avulso(x)) return 'avulso';   // [v3.0]
       if (x.status === 'estendido') return 'est';
       if (x.aberta) return 'aberta';
       if (x.status === 'confirmado') return 'conf';
@@ -2243,10 +2256,10 @@
     // ── CRONOGRAMA LIMPO ──
     function chip(x, completo, mini) {
       var c = stEf(x), t = completo ? rotuloCompleto(x) : rotuloNome(x);
-      var tip = rotuloCompleto(x) + (x.horario ? ' · ' + x.horario : '') + ' · ' + ST_LBL[c] + (x.aberta ? ' · agenda aberta' : '') + (x.obs ? ' · ' + x.obs : '');
+      var tip = rotuloCompleto(x) + (x.horario ? ' · ' + x.horario : '') + ' · ' + ST_LBL[c] + (x.aberta && c !== 'avulso' ? ' · agenda aberta' : '') + (x.obs ? ' · ' + x.obs : '');
       var rot = !completo && x.rotulo ? '<span class="cron-rot"> · ' + esc(x.rotulo) + '</span>' : '';
       return '<div class="cron-chip s-' + c + '" title="' + esc(tip) + '"><span class="cron-t">' + esc(t) + rot + '</span>' +
-        (mini ? '<b>' + (x.periodo === 'Manhã' ? 'M' : x.periodo === 'Tarde' ? 'T' : '?') + '</b>' : (x.aberta && c !== 'canc' && c !== 'rem' ? '<i class="fas fa-lock-open"></i>' : '')) + '</div>';
+        (mini ? '<b>' + (x.periodo === 'Manhã' ? 'M' : x.periodo === 'Tarde' ? 'T' : '?') + '</b>' : (x.aberta && c !== 'canc' && c !== 'rem' && c !== 'avulso' ? '<i class="fas fa-lock-open"></i>' : '')) + '</div>';
     }
     function mesesVisiveis() {
       if (S.view === 'semana') { var seg = segundaDe(S.ref); return [iso(seg).slice(0, 7), iso(addDias(seg, 5)).slice(0, 7)]; }
@@ -2269,7 +2282,7 @@
       for (var v = 0; v < pr; v++) h += '<div class="cron-dia vazio"></div>';
       for (var d = 1; d <= n; d++) {
         var is = isoDe(a, m, d), lista = itens(is, true).filter(passaFiltro), at = lista.filter(function (x) { return !inativo(x); }), canc = lista.length - at.length;
-        at.forEach(function (x) { tot++; meds[chaveMed(x)] = 1; });
+        at.forEach(function (x) { if (avulso(x)) return; tot++; meds[chaveMed(x)] = 1; });
         h += '<div class="cron-dia' + (is === hoje ? ' hoje' : '') + (new Date(a, m, d).getDay() === 0 ? ' fds' : '') + '" data-dia="' + is + '" tabindex="0"><div class="cal-num">' + d + '</div>' +
           at.slice(0, 4).map(function (x) { return chip(x, false, true); }).join('') +
           (at.length > 4 ? '<div class="cron-mais">+' + (at.length - 4) + ' mais</div>' : '') +
@@ -2300,10 +2313,10 @@
     function linhasPeriodo(lista, per, salas) {
       var xs = lista.filter(function (x) { return x.periodo === per; });
       var out = salas.map(function (s) {
-        var is = xs.filter(function (x) { return x.sala === s; }), esp = !!ESPECIAIS[s], rot = rotLinha(s);
+        var is = xs.filter(function (x) { return x.sala === s; }).sort(avulsoPorUltimo), esp = !!ESPECIAIS[s], rot = rotLinha(s);
         return { sala: s, rot: rot, itens: is, txt: rot + (is.length ? ' ' + is.map(function (x) { return textoItem(x, esp); }).join(' / ') : '') };
       });
-      var sem = xs.filter(function (x) { return !x.sala; });
+      var sem = xs.filter(function (x) { return !x.sala; }).sort(avulsoPorUltimo);
       if (sem.length) out.push({ sala: '', rot: 'SEM SALA:', itens: sem, txt: 'SEM SALA: ' + sem.map(function (x) { return textoItem(x, false); }).join(' / ') });
       return out;
     }
@@ -2321,8 +2334,8 @@
       function celula(l, per, d) {
         if (per === 'Tarde' && dataDe(d).getDay() === 6 && !l.some(function (x) { return x.periodo === 'Tarde'; })) return '';   // sábado sem tarde, como na folha
         return linhasPeriodo(l, per, salas).map(function (ln) {
-          var c = ln.itens.length ? ' s-' + stEf(ln.itens[0]) : ' vz', tip = ln.itens.map(function (x) { return rotuloCompleto(x) + ' · ' + ST_LBL[stEf(x)] + (x.aberta ? ' · agenda aberta' : ''); }).join('\n');
-          return '<div class="cron-ln' + c + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + esc(ln.txt) + (ln.itens.some(function (x) { return x.aberta; }) && ln.itens.length ? ' <i class="fas fa-lock-open"></i>' : '') + '</div>';
+          var c = ln.itens.length ? ' s-' + stEf(ln.itens[0]) : ' vz', tip = ln.itens.map(function (x) { return rotuloCompleto(x) + ' · ' + ST_LBL[stEf(x)] + (x.aberta && !avulso(x) ? ' · agenda aberta' : ''); }).join('\n');
+          return '<div class="cron-ln' + c + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + esc(ln.txt) + (ln.itens.some(function (x) { return x.aberta && !avulso(x); }) ? ' <i class="fas fa-lock-open"></i>' : '') + '</div>';
         }).join('');
       }
       var semA = listas.some(function (l) { return l.some(function (x) { return x.periodo === 'A definir'; }); });
@@ -2354,7 +2367,7 @@
           return '<div class="cron-card s-' + c + '">' + (adm ? '<button type="button" class="cron-ico cron-card-ed" data-at-ed="' + esc(x.id) + '" title="Editar" aria-label="Editar ' + esc(rotuloNome(x)) + '"><i class="fas fa-pen"></i></button>' : '') +
             '<span class="sala">' + esc(salaRotulo(x.sala)) + '</span><span class="nome">' + esc(rotuloNome(x)) + '</span><span class="esp">' + esc(espDe(x)) + '</span>' +
             (x.horario ? '<span class="cron-hor"><i class="fas fa-clock"></i> ' + esc(x.horario) + '</span>' : '') +
-            '<span class="cron-pill s-' + c + '">' + ST_LBL[c] + (x.aberta && c !== 'aberta' && c !== 'canc' && c !== 'rem' ? ' · aberta' : '') + '</span>' +
+            '<span class="cron-pill s-' + c + '">' + ST_LBL[c] + (x.aberta && c !== 'aberta' && c !== 'canc' && c !== 'rem' && c !== 'avulso' ? ' · aberta' : '') + '</span>' +
             (x.remarcadoPara ? '<span class="esp">Remarcado para ' + esc(brData(x.remarcadoPara)) + '</span>' : '') +
             (x.obs ? '<span class="esp">' + esc(x.obs) + '</span>' : '') + (x.agendados !== null ? '<span class="esp">' + x.agendados + ' agendados</span>' : '') + '</div>';
         }).join('') + '</div>';
@@ -2743,7 +2756,7 @@
         linhas.forEach(function (l) {
           if (l.erro) return;
           var existe = Object.keys(ex[l.dia]).some(function (id) {
-            var x = ex[l.dia][id] || {}; if (x.status === 'cancelado' || x.status === 'remarcado') return false;
+            var x = ex[l.dia][id] || {}; if (x.status === 'cancelado' || x.status === 'remarcado' || avulso(x)) return false;
             var per = x.periodo === 'Tarde' ? 'Tarde' : (x.periodo === 'A definir' ? 'A definir' : 'Manhã');
             return per === l.periodo && ((x.medicoId && x.medicoId === l.medId) || limpaNome(x.doc) === limpaNome(l.med.nome) || limpaNome(x.doc) === limpaNome(nomeMed(l.med)));
           });
@@ -2841,7 +2854,7 @@
       itens(dia, true).forEach(function (x) {
         var c = (itemBruto(dia, x.id) || {}).confirmacao;
         x.conf = (c && typeof c === 'object') ? c : {};
-        if (inativo(x) && x.conf.situacao !== 'nao_vem') return;
+        if (avulso(x) || (inativo(x) && x.conf.situacao !== 'nao_vem')) return;   // [v3.0] anotação não se confirma
         var k = chaveMed(x); (g[k] = g[k] || { dia: dia, k: k, itens: [] }).itens.push(x);
       });
       return Object.keys(g).map(function (k) {
@@ -3179,7 +3192,7 @@
           '<td><input class="f-input cron-at-hor" data-id="' + e + '" value="' + esc(x.horario) + '" maxlength="60" placeholder="—" aria-label="Horário" style="min-width:96px;"' + (rem ? ' disabled' : '') + '></td>' +
           '<td><select class="f-select cron-at-sala" data-id="' + e + '"' + (rem ? ' disabled' : '') + '>' + optSalas(x.sala, 'Sem sala') + (x.sala && SALAS.indexOf(x.sala) < 0 ? '<option selected value="' + esc(x.sala) + '">' + esc(x.sala) + '</option>' : '') + '</select></td>' +
           '<td>' + (rem ? 'Remarcado → ' + esc(x.remarcadoPara ? brCurta(x.remarcadoPara) : '') : '<select class="f-select cron-at-st" data-id="' + e + '">' + [['previsto', 'Previsto'], ['confirmado', 'Confirmado'], ['estendido', 'Estendido'], ['cancelado', 'Cancelado']].map(function (o) { return '<option value="' + o[0] + '"' + ((x.status || 'previsto') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') + '</td>' +
-          '<td><button class="cal-pill ' + (x.aberta ? 'ab' : 'na') + ' sm" data-ac="aberta" data-id="' + e + '"' + (rem ? ' disabled' : '') + '>' + (x.aberta ? '<i class="fas fa-lock-open"></i> Aberta' : '<i class="fas fa-lock"></i> Não aberta') + '</button></td>' +
+          '<td>' + (avulso(x) ? '<small>Anotação</small>' : '<button class="cal-pill ' + (x.aberta ? 'ab' : 'na') + ' sm" data-ac="aberta" data-id="' + e + '"' + (rem ? ' disabled' : '') + '>' + (x.aberta ? '<i class="fas fa-lock-open"></i> Aberta' : '<i class="fas fa-lock"></i> Não aberta') + '</button>') + '</td>' +
           '<td><input class="f-input cron-at-obs" data-id="' + e + '" value="' + esc(x.obs) + '" placeholder="Obs" style="min-width:110px;"></td>' +
           '<td style="white-space:nowrap;">' + (rem ? '' : '<button class="cron-ico" data-ac="rem" data-id="' + e + '" title="Remarcar"><i class="fas fa-right-left"></i></button> <button class="cron-ico" data-ac="est" data-id="' + e + '" title="Estender"><i class="fas fa-up-right-and-down-left-from-center"></i></button> ') +
           '<button class="cron-ico del" data-ac="del" data-id="' + e + '" title="Remover"><i class="fas fa-trash"></i></button></td></tr>';
@@ -3195,7 +3208,7 @@
     function abmGrupos(ym) {
       var g = {};
       Object.keys(S.dias).filter(function (d) { return d.indexOf(ym) === 0; }).sort().forEach(function (d) {
-        itens(d, true)
+        itens(d, true).filter(function (x) { return !avulso(x); })   // [v3.0] anotação não é agenda para abrir
           .sort(function (a, b) { return PERS.indexOf(a.periodo) - PERS.indexOf(b.periodo); })
           .forEach(function (x) { var k = chaveMed(x); if (!g[k]) g[k] = { k: k, nome: rotuloNome(x), lista: [] }; g[k].lista.push(x); });
       });
@@ -3497,6 +3510,7 @@
         if (r && r.id !== x.medicoId) {
           muda('medico', x.doc, String(r.m.nome || '').trim()); delete up[b + '/medico'];
           up[b + '/medicoId'] = r.id; up[b + '/doc'] = String(r.m.nome || '').trim(); up[b + '/role'] = x.rotulo || r.m.especialidade || '';
+          if (avulso(x)) { up[b + '/origem'] = 'manual'; up[b + '/aberta'] = false; f.aberta = x.aberta; }   // [v3.0] anotação vira agenda (ainda não aberta)
         } else r = null;
         if (f.periodo !== x.periodo) muda('periodo', x.periodo, f.periodo);
         if (f.sala !== x.sala) muda('sala', x.sala, f.sala);
@@ -3540,7 +3554,7 @@
     window.cronAcFechar = function () { fecharModal('cronModalAcao'); S.acao = null; };
     window.cronAcConfirmar = function () {
       var A = S.acao; if (!A) return; var x = A.x, dia = A.dia, nome = rotuloNome(x), mid = (medDe(x) || {}).id || x.medicoId || '';
-      var copia = function (per, status, origem, extra) { var o = { sala: '', doc: x.doc, role: x.role, periodo: per, aberta: false, status: status, origem: origem }; if (mid) o.medicoId = mid; if (x.rotulo) o.rotulo = x.rotulo; if (origem === 'remarcacao' && x.horario && per === x.periodo) o.horario = x.horario; return Object.assign(o, extra || {}); };   // [v2.4] rótulo (e horário no mesmo período)
+      var copia = function (per, status, origem, extra) { var o = { sala: '', doc: x.doc, role: x.role, periodo: per, aberta: false, status: status, origem: origem }; if (mid) o.medicoId = mid; if (x.rotulo) o.rotulo = x.rotulo; if (origem === 'remarcacao' && x.horario && per === x.periodo) o.horario = x.horario; if (avulso(x)) { o.origem = 'avulso'; o.aberta = true; } return Object.assign(o, extra || {}); };   // [v2.4] rótulo (e horário no mesmo período)
       (async function () {
         if (A.tipo === 'rem') {
           var nd = $('cronAcData').value, per = $('cronAcPer').value;
@@ -3592,10 +3606,10 @@
     }
 
     // ── VERIFICAR ANTES DE IMPRIMIR (semana) ──
-    var V = { itens: [], dias: [], sel: null, open: {}, drag: null };
+    var V = { itens: [], dias: [], sel: null, open: {}, drag: null, escrever: null };   // [v3.0] escrever = campo aberto numa sala
     window.cronAbrirVerificar = function () {
       var seg = segundaDe(S.ref); V.dias = []; for (var i = 0; i < 6; i++) V.dias.push(iso(addDias(seg, i)));
-      V.itens = []; V.sel = null; V.open = {};
+      V.itens = []; V.sel = null; V.open = {}; V.escrever = null;
       V.dias.forEach(function (d) { itens(d, false).forEach(function (x) { x.salaNova = x.sala; V.itens.push(x); }); });
       $('cronVerTitulo').textContent = 'Verificar cronograma — ' + brCurta(V.dias[0]) + ' a ' + brData(V.dias[5]);
       renderVer(); abrirModal('cronModalVer');
@@ -3611,12 +3625,12 @@
       var grupos = {};
       V.itens.forEach(function (x) {
         var nome = rotuloNome(x) + ' (' + DOWC[dataDe(x.dia).getDay()] + ' ' + brCurta(x.dia) + ' ' + x.periodo + ')';
-        if (!x.aberta) bl.push({ msg: nome + ': agenda não aberta', abrir: x.dia + '|' + x.id });
+        if (!x.aberta && !avulso(x)) bl.push({ msg: nome + ': agenda não aberta', abrir: x.dia + '|' + x.id });
         if (x.periodo === 'A definir') bl.push({ msg: nome + ': período a definir (ajuste em Configuração → Atendimentos)' });
         if (!x.salaNova) bl.push({ msg: nome + ': sem sala' });
-        else { var k = x.dia + '|' + x.periodo + '|' + x.salaNova; (grupos[k] = grupos[k] || []).push(x); }
+        else if (!avulso(x)) { var k = x.dia + '|' + x.periodo + '|' + x.salaNova; (grupos[k] = grupos[k] || []).push(x); }   // [v3.0] anotação pode dividir a sala
         if (x.est) av.push(nome + ': período/sala estimados — confira');
-        if (!medDe(x)) av.push(nome + ': médico sem cadastro (abreviação automática)');
+        if (!medDe(x) && !avulso(x)) av.push(nome + ': médico sem cadastro (abreviação automática)');
       });
       Object.keys(grupos).forEach(function (k) {
         if (grupos[k].length > 1) { var p = k.split('|'); bl.push({ msg: salaRotulo(p[2]) + ' duplicada em ' + DOWC[dataDe(p[0]).getDay()] + ' ' + brCurta(p[0]) + ' (' + p[1] + '): ' + grupos[k].map(rotuloNome).join(' e ') }); }
@@ -3642,23 +3656,51 @@
       if (V.itens.some(function (x) { return x.periodo === 'A definir'; })) lanes.push('A definir');
       var corpo = '<div class="cron-vw">' + V.dias.map(function (d, i) {
         var lista = listasV[i], sab = dataDe(d).getDay() === 6;
-        var nPend = lista.filter(function (x) { return !x.aberta || !x.salaNova || x.periodo === 'A definir' || (R.dup[d + '|' + x.periodo + '|' + x.salaNova] || []).length > 1; }).length;
+        var nPend = lista.filter(function (x) { return (!x.aberta && !avulso(x)) || !x.salaNova || x.periodo === 'A definir' || (!avulso(x) && (R.dup[d + '|' + x.periodo + '|' + x.salaNova] || []).length > 1); }).length;
         var col = '<div class="cron-vcol" data-d="' + d + '"><div class="cron-vcol-h">' + esc(DOWL[dataDe(d).getDay()]) + ' ' + brCurta(d) + (nPend ? '<span class="pend">⚠ ' + nPend + ' pendência(s)</span>' : '') + '</div>';
         lanes.forEach(function (l) {
           col += '<div class="cron-vband">' + esc(l.toUpperCase()) + (sab && l === 'Tarde' ? ' <small>(não sai na impressão)</small>' : '') + '</div>';
           (temSem ? [''] : []).concat(salasV).forEach(function (s) {
-            var xs = lista.filter(function (x) { return x.salaNova === s && x.periodo === l; });
+            var xs = lista.filter(function (x) { return x.salaNova === s && x.periodo === l; }).sort(avulsoPorUltimo);
             if (s === '' && !xs.length) return;
-            var dup = xs.length > 1, rot = s === '' ? 'SEM' : (ESPECIAIS[s] ? s : s);
-            col += '<div class="cron-vrow"><div class="cron-v-sala" title="' + esc(salaRotulo(s)) + '">' + esc(rot) + '</div><div class="cron-v-cell' + (dup ? ' dup' : '') + '" data-d="' + d + '" data-s="' + esc(s) + '" data-p="' + esc(l) + '">' + xs.map(function (x) {
-              var c = stEf(x), bad = !x.aberta || dup || !x.salaNova, k = esc(x.dia + '|' + x.id);
-              return '<div class="cron-chip cron-vchip s-' + c + (bad ? ' bad' : '') + (V.sel === x.dia + '|' + x.id ? ' sel' : '') + '" draggable="true" data-k="' + k + '" title="' + esc(rotuloCompleto(x) + (x.aberta ? ' · agenda aberta' : ' · agenda NÃO aberta')) + '"><span class="cron-t">' + esc(rotuloCompleto(x)) + '</span><button type="button" class="cron-vedit" data-ed="' + k + '" title="Editar médico / período"><i class="fas fa-pen"></i></button><i class="fas fa-' + (x.aberta ? 'lock-open' : 'lock') + '"></i></div>';
-            }).join('') + '</div></div>';
+            var dup = xs.filter(function (x) { return !avulso(x); }).length > 1, rot = s === '' ? 'SEM' : (ESPECIAIS[s] ? s : s);
+            var pode = s !== '' && l !== 'A definir' && !(sab && l === 'Tarde');   // [v3.0] onde dá para escrever (o que sai na folha)
+            var onde = ' data-d="' + d + '" data-s="' + esc(s) + '" data-p="' + esc(l) + '"', E = V.escrever;
+            col += '<div class="cron-vrow"><div class="cron-v-sala" title="' + esc(salaRotulo(s)) + '">' + esc(rot) + '</div><div class="cron-v-cell' + (dup ? ' dup' : '') + '"' + onde + '>' + xs.map(function (x) {
+              var a = avulso(x), c = stEf(x), bad = a ? !x.salaNova : (!x.aberta || dup || !x.salaNova), k = esc(x.dia + '|' + x.id);
+              return '<div class="cron-chip cron-vchip s-' + c + (bad ? ' bad' : '') + (V.sel === x.dia + '|' + x.id ? ' sel' : '') + '" draggable="true" data-k="' + k + '" title="' + esc(rotuloCompleto(x) + (a ? ' · anotação' : x.aberta ? ' · agenda aberta' : ' · agenda NÃO aberta')) + '"><span class="cron-t">' + esc(rotuloCompleto(x)) + '</span><button type="button" class="cron-vedit" data-ed="' + k + '" title="' + (a ? 'Editar texto / remover' : 'Editar médico / período') + '"><i class="fas fa-pen"></i></button>' + (a ? '' : '<i class="fas fa-' + (x.aberta ? 'lock-open' : 'lock') + '"></i>') + '</div>';
+            }).join('') +
+              (pode && E && E.d === d && E.s === s && E.p === l ? '<input type="text" class="cron-vnovo" maxlength="60" placeholder="Escreva + Enter" aria-label="Escrever na ' + esc(salaRotulo(s)) + '" value="' + esc(E.texto) + '">' : '') + '</div>' +
+              (pode ? '<button type="button" class="cron-vadd"' + onde + ' title="Escrever nesta sala" aria-label="Escrever na ' + esc(salaRotulo(s)) + '"><i class="fas fa-plus"></i></button>' : '<span></span>') + '</div>';
           });
         });
         return col + '</div>';
       }).join('') + '</div>';
-      $('cronVerCorpo').innerHTML = corpo;
+      V.desenhando = true; $('cronVerCorpo').innerHTML = corpo; V.desenhando = false;   // [v3.0] trocar o HTML não conta como sair do campo
+      var campo = $('cronVerCorpo').querySelector('.cron-vnovo');   // [v3.0] mantém o cursor no campo aberto
+      if (campo) { campo.focus(); campo.setSelectionRange(campo.value.length, campo.value.length); }
+    }
+    // [v3.0] escrever direto numa sala, sem cadastro: grava na hora uma agenda com origem "avulso"
+    function abrirEscrita(d, s, p) { V.sel = null; V.escrever = { d: d, s: s, p: p, texto: '' }; renderVer(); }
+    // redesenhar: false quando a saída foi um clique fora (redesenhar na hora engoliria o clique)
+    function concluirEscrita(campo, redesenhar) {
+      var E = V.escrever; if (!E) return;
+      var texto = String(campo.value || '').trim().slice(0, 60);
+      V.escrever = null;
+      if (!texto) { if (redesenhar) renderVer(); else campo.remove(); return; }
+      var id = 'avl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      var it = { sala: E.s, doc: texto, role: '', periodo: E.p, aberta: true, status: 'previsto', origem: 'avulso' };
+      var x = { dia: E.d, id: id, sala: E.s, salaNova: E.s, doc: texto, role: '', periodo: E.p, aberta: true, est: false, obs: '', status: 'previsto', medicoId: '', remarcadoPara: '', agendados: null, horario: '', rotulo: '', origem: 'avulso', gradeId: '' };
+      V.itens.push(x);   // aparece já (e entra na impressão); sai se a gravação falhar
+      campo.disabled = true; if (redesenhar) renderVer();
+      gravar(baseItem(E.d, id), it).then(function (ok) {
+        if (ok) hist({ dia: E.d, itemId: id, doc: texto, acao: 'criado', de: '', para: E.p + ' ' + E.s, obs: 'escrito na sala' });
+        else {
+          V.itens = V.itens.filter(function (y) { return y !== x; });
+          if (!V.escrever) V.escrever = { d: E.d, s: E.s, p: E.p, texto: texto };   // devolve o texto para tentar de novo
+        }
+        renderVer();
+      });
     }
     function acharItem(k) { return V.itens.filter(function (x) { return x.dia + '|' + x.id === k; })[0]; }
     function moverPara(k, d, s, p) {
@@ -3709,7 +3751,8 @@
       var x = acharItem(k); if (!x) return; VED = k;
       var r = medDe(x), ids = Object.keys(S.medicos).filter(function (id) { return S.medicos[id] && S.medicos[id].ativo !== false; }).sort(function (a, b) { return nomeMed(S.medicos[a]).localeCompare(nomeMed(S.medicos[b]), 'pt'); });
       $('cronVedTitulo').textContent = 'Editar — ' + DOWC[dataDe(x.dia).getDay()] + ' ' + brCurta(x.dia);
-      $('cronVedMed').innerHTML = '<option value="">' + (r ? '' : '(sem cadastro) ') + esc(x.doc || 'manter atual') + ' — manter</option>' + ids.map(function (id) {
+      $('cronVedTextoBox').style.display = avulso(x) ? '' : 'none'; $('cronVedTexto').value = avulso(x) ? x.doc : '';   // [v3.0]
+      $('cronVedMed').innerHTML = '<option value="">' + (r ? '' : avulso(x) ? '(texto escrito) ' : '(sem cadastro) ') + esc(x.doc || 'manter atual') + ' — manter</option>' + ids.map(function (id) {
         var m = S.medicos[id]; return '<option value="' + esc(id) + '"' + (r && r.id === id ? ' selected' : '') + '>' + esc(nomeMed(m) + (m.especialidade ? ' — ' + m.especialidade : '')) + '</option>';
       }).join('');
       $('cronVedPer').value = x.periodo === 'Tarde' ? 'Tarde' : 'Manhã';
@@ -3721,8 +3764,18 @@
       var x = acharItem(VED); if (!x) return window.cronVedFechar();
       (async function () {
         var b = baseItem(x.dia, x.id), mid = $('cronVedMed').value, per = $('cronVedPer').value, nome = rotuloNome(x);
+        if (avulso(x) && !(mid && S.medicos[mid])) {   // [v3.0] só o texto
+          var texto = $('cronVedTexto').value.trim().slice(0, 60);
+          if (!texto) { toast('Escreva o texto ou use Remover', 'error'); return; }
+          if (texto !== x.doc) {
+            if (!(await gravar(b + '/doc', texto))) return;
+            await hist({ dia: x.dia, itemId: x.id, doc: texto, acao: 'editado', de: nome, para: texto, obs: 'editado no Verificar' });
+            x.doc = texto;
+          }
+        }
         if (mid && S.medicos[mid] && (!medDe(x) || medDe(x).id !== mid)) {
           var m = S.medicos[mid];
+          if (avulso(x)) { if (!(await gravar(b + '/origem', 'manual')) || !(await gravar(b + '/aberta', false))) return; x.origem = 'manual'; x.aberta = false; }   // [v3.0]
           if (!(await gravar(b + '/doc', String(m.nome || '').trim())) || !(await gravar(b + '/role', m.especialidade || '')) || !(await gravar(b + '/medicoId', mid))) return;
           await hist({ dia: x.dia, itemId: x.id, doc: nomeMed(m), acao: 'medico', de: nome, para: nomeMed(m), obs: 'editado no Verificar' });
           x.doc = String(m.nome || '').trim(); x.role = m.especialidade || ''; x.medicoId = mid;
@@ -3776,12 +3829,26 @@
         var k = V.drag || ''; try { k = ev.dataTransfer.getData('text/plain') || k; } catch (e) {}
         V.drag = null; moverPara(k, c.getAttribute('data-d'), c.getAttribute('data-s'), c.getAttribute('data-p'));
       });
+      // [v3.0] campo de escrita
+      corpo.addEventListener('input', function (ev) { if (V.escrever && ev.target.classList.contains('cron-vnovo')) V.escrever.texto = ev.target.value; });
+      corpo.addEventListener('keydown', function (ev) {
+        if (!ev.target.classList.contains('cron-vnovo')) return;
+        if (ev.key === 'Enter') { ev.preventDefault(); concluirEscrita(ev.target, true); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); V.escrever = null; renderVer(); }
+      });
+      corpo.addEventListener('focusout', function (ev) {
+        var t = ev.target; if (V.desenhando || !t.classList.contains('cron-vnovo') || t.disabled) return;
+        concluirEscrita(t, false);
+      });
       corpo.addEventListener('click', function (ev) {
+        if (ev.target.closest('.cron-vnovo')) return;
+        var add = ev.target.closest('.cron-vadd'); if (add) { abrirEscrita(add.getAttribute('data-d'), add.getAttribute('data-s'), add.getAttribute('data-p')); return; }
         var ed = ev.target.closest('.cron-vedit'); if (ed) { ev.stopPropagation(); window.cronVedAbrir(ed.getAttribute('data-ed')); return; }   // [v1.6]
         var chipEl = ev.target.closest('.cron-vchip');
         if (chipEl) { var k = chipEl.getAttribute('data-k'); V.sel = V.sel === k ? null : k; renderVer(); return; }
         var cell = ev.target.closest('.cron-v-cell');
         if (cell && V.sel) moverPara(V.sel, cell.getAttribute('data-d'), cell.getAttribute('data-s'), cell.getAttribute('data-p'));
+        else if (cell && cell.parentNode.querySelector('.cron-vadd') && !cell.querySelector('.cron-vchip')) abrirEscrita(cell.getAttribute('data-d'), cell.getAttribute('data-s'), cell.getAttribute('data-p'));   // [v3.0] sala vazia
       });
       corpo.addEventListener('toggle', function (ev) { var d = ev.target && ev.target.getAttribute && ev.target.getAttribute('data-d'); if (d && ev.target.tagName === 'DETAILS') V.open[d] = ev.target.open; }, true);
       $('cronVerResumo').addEventListener('click', function (ev) {
@@ -4506,7 +4573,7 @@
     function grdCompativel(a, b) { var x = grdTokens(a), y = grdTokens(b); return grdPrefixos(x, y) || grdPrefixos(y, x); }
     // o atendimento "x" é deste médico (ou desta agenda)?
     function grdEhDele(x, g) {
-      var m = S.medicos[g.medicoId]; if (!m) return false;
+      var m = S.medicos[g.medicoId]; if (!m || avulso(x)) return false;   // [v3.0]
       var pid = pessoaDoMedico(g.medicoId);
       if (x.medicoId && S.medicos[x.medicoId]) return x.medicoId === g.medicoId || limpaNome(nomeMed(S.medicos[x.medicoId])) === limpaNome(nomeMed(m)) || (!!pid && pessoaDoMedico(x.medicoId) === pid);
       return [nomeMed(m), g.rotulo, String(g.nome || '').split(' — ')[0]].concat(nomesCentrais(pid)).some(function (n) { return n && grdCompativel(x.doc, n); });

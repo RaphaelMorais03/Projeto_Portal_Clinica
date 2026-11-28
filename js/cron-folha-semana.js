@@ -1,4 +1,5 @@
-/* [v1.0] Folha semanal impressa do cronograma (A4 paisagem) — modelo único.
+/* [v1.1] Texto escrito na sala (origem "avulso" sem medicoId): sai inteiro e depois do médico.
+   [v1.0] Folha semanal impressa do cronograma (A4 paisagem) — modelo único.
    Usada por pages/cronograma.html (Dashboard e aba Semana) e por login.html (tela inicial).
    Mudou o desenho aqui, muda nos dois lugares. Não lê nem grava no banco. Depende de window.esc (shared-utils.js). */
 (function () {
@@ -15,6 +16,7 @@
   function diaCurto(s) { var p = s.split('-'); return p[2] + '/' + MES_ABR[+p[1] - 1]; }
   function norm(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
   function limpaNome(s) { return norm(String(s || '').replace(TITULO, '')); }
+  function avulso(x) { return x.origem === 'avulso' && !x.medicoId; }   // [v1.1]
 
   /* Nome e especialidade de cada agenda para quem não tem as funções do módulo (tela inicial).
      Mesma regra de rotuloNome() e espDe() do pages/cronograma.html.
@@ -28,6 +30,7 @@
       });
     });
     function medDe(x) {
+      if (avulso(x)) return null;   // [v1.1]
       var id = (x.medicoId && meds[x.medicoId]) ? x.medicoId : idx[limpaNome(x.doc)];
       return (id && id !== '?' && meds[id]) ? meds[id] : null;
     }
@@ -38,6 +41,7 @@
     }
     return {
       nome: function (x) {
+        if (avulso(x)) return String(x.doc || '');   // [v1.1]
         var m = medDe(x);
         if (m) { var n = String(m.nome || '').trim(), s = inicialSobrenome(m.sobrenome); return s ? n + ' ' + s : n; }
         var p = String(x.doc || '').replace(TITULO, '').trim().split(/\s+/);
@@ -67,7 +71,8 @@
       var cheias = 0;
       var tds = dias.map(function (d, i) {
         if (per === 'Tarde' && dataDe(d).getDay() === 6) return '<td></td>';   // sábado à tarde não tem agenda: fica em branco
-        var is = listas[i].filter(function (x) { return x.periodo === per && x.sala === sl; });
+        var is = listas[i].filter(function (x) { return x.periodo === per && x.sala === sl; })
+          .sort(function (a, b) { return (avulso(a) ? 1 : 0) - (avulso(b) ? 1 : 0); });   // [v1.1]
         if (!is.length && !sl) return '<td></td>';
         if (is.length) cheias++;
         var t = is.map(function (x) { var e = o.especialidade(x); return esc(o.nome(x).toUpperCase()) + (esp || !e ? '' : ' <i>(' + esc(e.toUpperCase()) + ')</i>'); }).join(' / ');
